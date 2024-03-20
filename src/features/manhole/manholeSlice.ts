@@ -3,7 +3,7 @@ import { Bookmark } from "@novorender/data-js-api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
-import { RootState } from "app/store";
+import { RootState } from "app";
 import { resetView, selectBookmark } from "features/render";
 import { flip } from "features/render/utils";
 

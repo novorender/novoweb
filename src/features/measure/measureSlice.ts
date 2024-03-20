@@ -2,7 +2,7 @@ import { DuoMeasurementValues, MeasureEntity, MeasureSettings } from "@novorende
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
-import { RootState } from "app/store";
+import { RootState } from "app";
 import { DeepMutable, resetView, selectBookmark } from "features/render";
 import { ExtendedMeasureEntity } from "types/misc";
 

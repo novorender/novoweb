@@ -3,7 +3,7 @@ import { Box, Button, Checkbox, FormControlLabel, Typography, useTheme } from "@
 import { ChangeEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Divider, ScrollBox, TextField } from "components";
 import { renderActions, selectDeviceProfile } from "features/render";
 

@@ -18,7 +18,7 @@ import { css } from "@mui/styled-engine";
 import { MouseEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { Tooltip } from "components";
 import { selectUser } from "slices/authSlice";
 import { selectHasAdminCapabilities } from "slices/explorer";

@@ -2,7 +2,7 @@ import { FollowParametricObject, MeasureEntity } from "@novorender/api";
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncState, AsyncStatus } from "types/misc";
 

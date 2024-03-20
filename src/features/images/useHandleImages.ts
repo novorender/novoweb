@@ -1,7 +1,7 @@
 import { downloadGLTF, RenderStateDynamicObject, View } from "@novorender/api";
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraType, renderActions, selectViewMode } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
@@ -10,7 +10,8 @@ import { handleImageResponse } from "utils/bcf";
 import { getAssetUrl } from "utils/misc";
 import { sleep } from "utils/time";
 
-import { Image, imagesActions, ImageType, PanoramaImage, selectActiveImage } from "./imagesSlice";
+import { imagesActions, selectActiveImage } from "./imagesSlice";
+import { Image, ImageType, PanoramaImage } from "./types";
 
 export function useHandleImages() {
     const {

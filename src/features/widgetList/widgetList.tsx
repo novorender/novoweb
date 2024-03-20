@@ -1,6 +1,6 @@
 import { MemoryRouter, Route, Switch } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { featuresConfig, WidgetKey } from "config/features";
 import { explorerActions, selectWidgets } from "slices/explorer";
 

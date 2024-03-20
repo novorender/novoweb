@@ -1,7 +1,6 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import { dataV2Api } from "apis/dataV2/dataV2Api";
-import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
 import { arcgisSlice } from "features/arcgis";
 import { arcgisApi } from "features/arcgis/arcgisApi";
@@ -94,5 +93,3 @@ setupListeners(store.dispatch);
 
 export type RootState = ReturnType<typeof rootReducer>;
 export type AppDispatch = typeof store.dispatch;
-export const useAppDispatch = () => useDispatch<AppDispatch>();
-export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

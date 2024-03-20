@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { dataApi } from "apis/dataV1";
 
-import { dataApi } from "app";
-import { RootState } from "app/store";
+import { RootState } from "app";
 import { AsyncStatus } from "types/misc";
 
 import { FeedFilters } from "./slice";

@@ -2,7 +2,7 @@ import { Add, Close, FlightTakeoff } from "@mui/icons-material";
 import { Box, Button, IconButton, Typography } from "@mui/material";
 import { quat } from "gl-matrix";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Divider } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraType, renderActions, selectStamp, StampKind } from "features/render";

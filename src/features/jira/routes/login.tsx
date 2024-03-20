@@ -3,7 +3,7 @@ import { Box, CircularProgress, Typography, useTheme } from "@mui/material";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";

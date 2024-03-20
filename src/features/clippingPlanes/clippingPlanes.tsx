@@ -2,7 +2,7 @@ import { DeleteSweep } from "@mui/icons-material";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { IosSwitch, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { Picker, renderActions, selectClippingPlanes, selectPicker } from "features/render";

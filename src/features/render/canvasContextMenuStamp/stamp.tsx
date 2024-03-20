@@ -14,7 +14,7 @@ import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { vec3, vec4 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Divider, LinearProgress } from "components";
 import { canvasContextMenuConfig, canvasContextMenuConfig as config } from "config/canvasContextMenu";
 import { useExplorerGlobals } from "contexts/explorerGlobals";

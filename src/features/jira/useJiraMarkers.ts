@@ -1,7 +1,7 @@
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { isRealVec } from "utils/misc";
 
 import { useGetIssuesQuery } from "./jiraApi";

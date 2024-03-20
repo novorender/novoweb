@@ -2,7 +2,7 @@ import { ArrowDownward, ColorLens } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, Slider, Typography } from "@mui/material";
 import { ChangeEvent, MouseEvent, SyntheticEvent, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Divider, IosSwitch, LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";

@@ -3,7 +3,7 @@ import { Box, Button, FormControlLabel, List, ListItemButton, Typography, useThe
 import { useEffect } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 
 import {

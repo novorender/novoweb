@@ -1,6 +1,6 @@
 import { vec2, vec3 } from "gl-matrix";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectCanvasContextMenuFeatures } from "slices/explorer";

@@ -1,12 +1,13 @@
 import { useGetArcgisWidgetConfigQuery } from "apis/dataV2/dataV2Api";
 import { useEffect } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
-import { arcgisActions, FeatureServer, selectArcgisFeatureServersStatus } from "../arcgisSlice";
+import { arcgisActions, selectArcgisFeatureServersStatus } from "../arcgisSlice";
+import { FeatureServer } from "../types";
 
 export function useLoadArcgisWidgetConfig() {
     const dispatch = useAppDispatch();

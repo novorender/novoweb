@@ -1,6 +1,6 @@
 import { Box, MenuItem } from "@mui/material";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { MAX_FLOAT, selectStamp, StampKind } from "features/render";
 
 export function DeviationStamp() {

@@ -1,7 +1,7 @@
 import { Bookmark, ExplorerBookmarkState } from "@novorender/data-js-api";
 import { ReadonlyVec3 } from "gl-matrix";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useLazyHidden } from "contexts/hidden";
 import { HighlightCollection, useLazyHighlightCollections } from "contexts/highlightCollections";

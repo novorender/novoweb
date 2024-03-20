@@ -1,8 +1,8 @@
 import { OfflineViewState, View } from "@novorender/api";
+import { dataApi } from "apis/dataV1";
 import { useCallback, useEffect } from "react";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";

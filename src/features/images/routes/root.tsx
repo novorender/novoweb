@@ -7,7 +7,8 @@ import { useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
 
-import { store, useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
+import { store } from "app/store";
 import { IosSwitch, LinearProgress, withCustomScrollbar } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectProjectSettings } from "features/render";
@@ -16,15 +17,14 @@ import { AsyncStatus, hasFinished } from "types/misc";
 
 import { ImageListItem } from "../imageListItem";
 import {
-    Image,
     ImageFilter,
     imagesActions,
-    ImageType,
     selectActiveImage,
     selectImageFilter,
     selectImages,
     selectShowImageMarkers,
 } from "../imagesSlice";
+import { Image, ImageType } from "../types";
 
 const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 

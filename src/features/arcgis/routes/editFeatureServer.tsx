@@ -14,12 +14,13 @@ import {
 import { FormEventHandler, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Confirmation, TextField } from "components";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { arcgisActions, FeatureServer, selectArcgisFeatureServers } from "../arcgisSlice";
+import { arcgisActions, selectArcgisFeatureServers } from "../arcgisSlice";
 import { FeatureServerDefinition } from "../arcgisTypes";
+import { FeatureServer } from "../types";
 
 export function EditFeatureServer() {
     const history = useHistory();

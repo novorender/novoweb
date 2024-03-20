@@ -4,7 +4,7 @@ import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api
 import { CSSProperties, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import {
     AdvancedSearchInputs,
     LinearProgress,

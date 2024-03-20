@@ -1,7 +1,7 @@
 import { BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 import { minutesToSeconds } from "date-fns";
 
-import { type RootState } from "app/store";
+import { type RootState } from "app";
 import { ArcgisWidgetConfig } from "features/arcgis";
 import { selectConfig } from "slices/explorer";
 

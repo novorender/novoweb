@@ -5,7 +5,7 @@ import { CSSProperties, useEffect } from "react";
 import { Link, useHistory, useParams } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Divider, FixedSizeVirualizedList, ImgTooltip, LinearProgress, Tooltip } from "components";
 import { Topic } from "types/bcf";
 

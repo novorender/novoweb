@@ -3,7 +3,7 @@ import { Box, Button, List, ListItemButton, useTheme } from "@mui/material";
 import { format } from "date-fns";
 import { Link, useHistory } from "react-router-dom";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { Divider, LinearProgress, ScrollBox } from "components";
 
 import { useGetLogPointsQuery } from "../api";

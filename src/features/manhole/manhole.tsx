@@ -4,7 +4,7 @@ import { CylinerMeasureType, MeasurementValues } from "@novorender/api";
 import { vec3 } from "gl-matrix";
 import { useEffect, useRef, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import {
     Accordion,
     AccordionDetails,

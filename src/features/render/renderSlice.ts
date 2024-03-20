@@ -11,7 +11,7 @@ import type { EnvironmentDescription } from "@novorender/webgl-api";
 import { createAction, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { quat, vec3, vec4 } from "gl-matrix";
 
-import type { RootState } from "app/store";
+import type { RootState } from "app";
 import type { ProjectType } from "slices/explorer";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 import { VecRGB, VecRGBA } from "utils/color";

@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-import { RootState } from "app/store";
+import { RootState } from "app";
 import { initScene } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 

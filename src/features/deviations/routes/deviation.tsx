@@ -14,12 +14,12 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
+import { dataApi } from "apis/dataV1";
 import { ChangeEvent, MouseEvent, useState } from "react";
 import { ColorResult } from "react-color";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ColorPicker } from "features/colorPicker";

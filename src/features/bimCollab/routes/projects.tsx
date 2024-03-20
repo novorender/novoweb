@@ -2,7 +2,7 @@ import { Box, List, ListItem, Typography, useTheme } from "@mui/material";
 import { ReactEventHandler, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { ImgModal, ImgTooltip, LinearProgress, ScrollBox } from "components";
 import { useToggle } from "hooks/useToggle";
 import fallbackImage from "media/img/bimcollab_fallback.png";

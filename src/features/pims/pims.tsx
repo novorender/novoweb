@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { FormEventHandler, Fragment, useEffect, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import {
     Accordion,
     AccordionDetails,

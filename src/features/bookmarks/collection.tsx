@@ -3,7 +3,7 @@ import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } fro
 import { MouseEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { selectHasAdminCapabilities } from "slices/explorer";
 

@@ -2,7 +2,7 @@ import { ArrowDownward, DeleteSweep, SyncAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, Switch } from "@mui/material";
 import { ChangeEvent, useCallback } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import {
     Accordion,
     AccordionDetails,

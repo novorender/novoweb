@@ -18,7 +18,7 @@ import { ChangeEvent, CSSProperties, forwardRef, MouseEventHandler, MutableRefOb
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
 
-import { useAppDispatch } from "app/store";
+import { useAppDispatch } from "app";
 import { FixedSizeVirualizedList, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden, useIsHidden } from "contexts/hidden";

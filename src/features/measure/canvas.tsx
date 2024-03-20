@@ -2,7 +2,7 @@ import { DrawableEntity, DrawProduct, MeasureSettings, View } from "@novorender/
 import { ReadonlyVec2, vec2, vec3 } from "gl-matrix";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { Canvas2D } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraState, drawPart, drawProduct, getCameraState, vec3Sum } from "features/engine2D";

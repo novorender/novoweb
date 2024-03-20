@@ -1,7 +1,7 @@
 import { Delete, Sync } from "@mui/icons-material";
 import { Box, Button, Typography } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import {
     Accordion,
     AccordionDetails,

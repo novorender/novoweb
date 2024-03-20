@@ -1,7 +1,7 @@
 import { ReadonlyVec2 } from "gl-matrix";
 import { MutableRefObject, useCallback, useLayoutEffect } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectMeasure } from "features/measure";
 import { MeasureInteractionPositions } from "features/measure/measureInteractions";

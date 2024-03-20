@@ -1,36 +1,11 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { quat, vec3 } from "gl-matrix";
 
-import { RootState } from "app/store";
+import { RootState } from "app";
 import { resetView } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 
+import { type FlatImage, type Image, ImageType, type PanoramaImage } from "./types";
 import { isPanorama } from "./utils";
-
-type ImageBase = {
-    name: string;
-    preview: string;
-    guid: string;
-};
-
-export type FlatImage = ImageBase & {
-    src: string;
-    position: vec3;
-};
-
-export type PanoramaImage = ImageBase & {
-    gltf: string;
-    src: string;
-    position: vec3;
-    rotation?: quat;
-};
-
-export type Image = FlatImage | PanoramaImage;
-
-export enum ImageType {
-    Flat = "flat",
-    Panorama = "panorama",
-}
 
 const initialState = {
     filter: {

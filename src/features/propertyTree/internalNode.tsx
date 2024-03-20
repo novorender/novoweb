@@ -23,7 +23,7 @@ import { useGetPropertyTreeFavoritesQuery, useSetPropertyTreeFavoritesMutation }
 import pMap from "p-map";
 import { FocusEvent, MouseEvent, MutableRefObject, useEffect, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { LinearProgress } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";

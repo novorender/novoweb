@@ -3,7 +3,7 @@ import { Box, Button, Typography, useTheme } from "@mui/material";
 import { MouseEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import {
     HighlightCollection,

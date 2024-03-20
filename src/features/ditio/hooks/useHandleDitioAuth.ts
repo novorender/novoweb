@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { featuresConfig } from "config/features";
 import { useSceneId } from "hooks/useSceneId";
 import { selectEnabledWidgets } from "slices/explorer";

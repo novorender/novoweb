@@ -1,7 +1,7 @@
 import { Box, Grid, IconButton, Typography, useTheme } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { ScrollBox, WidgetMenuButtonWrapper } from "components";
 import { featuresConfig, FeatureTag, featureTags, FeatureType, Widget, WidgetKey } from "config/features";
 import { ShareLink } from "features/shareLink";

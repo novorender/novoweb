@@ -2,7 +2,7 @@ import { FileDownload } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { matchPath, MemoryRouter, Route, Switch, useHistory, useLocation } from "react-router-dom";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useSelectionBasket } from "contexts/selectionBasket";

@@ -1,7 +1,7 @@
 import { css, styled, Theme } from "@mui/material";
 import { SVGProps } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 
 import { useDitioFeedMarkers } from "../hooks/useDitioFeedMarkers";

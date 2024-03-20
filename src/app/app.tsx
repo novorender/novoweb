@@ -3,13 +3,13 @@ import { CircularProgress, CssBaseline, Paper, Snackbar, snackbarContentClasses 
 import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { dataApi } from "apis/dataV1";
 import enLocale from "date-fns/locale/en-GB";
 import { useEffect, useRef, useState } from "react";
 import { generatePath, Redirect, Route, Switch, useHistory, useLocation, useParams } from "react-router-dom";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { theme } from "app/theme";
 import { Loading } from "components";
 import { StorageKey } from "config/storage";

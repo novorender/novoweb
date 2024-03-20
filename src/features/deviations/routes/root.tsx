@@ -2,7 +2,7 @@ import { Settings } from "@mui/icons-material";
 import { Box, Button, List, ListItemButton, Typography, useTheme } from "@mui/material";
 import { Redirect, useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { renderActions, selectDeviations } from "features/render";
 import { AsyncStatus, hasFinished } from "types/misc";

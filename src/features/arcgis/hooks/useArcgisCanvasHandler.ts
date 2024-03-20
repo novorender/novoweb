@@ -1,17 +1,12 @@
 import { vec2 } from "gl-matrix";
 import { MouseEvent } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus } from "types/misc";
 
-import {
-    arcgisActions,
-    FeatureServer,
-    selectArcgisFeatureServers,
-    selectArcgisSelectedFeature,
-    SelectedFeatureId,
-} from "../arcgisSlice";
+import { arcgisActions, selectArcgisFeatureServers, selectArcgisSelectedFeature } from "../arcgisSlice";
+import { FeatureServer, SelectedFeatureId } from "../types";
 import { areSelectedFeatureIdsEqual, findHitFeatures } from "../utils";
 import { useIsCameraSetCorrectly } from "./useIsCameraSetCorrectly";
 

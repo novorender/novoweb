@@ -4,7 +4,7 @@ import { useGetOmega365DocumentLinksQuery, useIsOmega365ConfiguredForProjectQuer
 import { Omega365Document } from "apis/dataV2/omega365Types";
 import { Fragment, useMemo } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import {
     Accordion,
     AccordionDetails,

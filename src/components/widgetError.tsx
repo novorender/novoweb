@@ -1,4 +1,4 @@
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig, WidgetKey } from "config/features";
 import WidgetList from "features/widgetList/widgetList";

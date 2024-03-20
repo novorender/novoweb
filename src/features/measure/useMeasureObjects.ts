@@ -1,7 +1,7 @@
 import { DuoMeasurementValues, MeasureSettings } from "@novorender/api";
 import { useEffect, useRef, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ExtendedMeasureEntity } from "types/misc";
 

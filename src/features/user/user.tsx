@@ -1,9 +1,9 @@
 import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, Grid } from "@mui/material";
+import { dataApi } from "apis/dataV1";
 import { useState } from "react";
 
-import { dataApi } from "app";
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";

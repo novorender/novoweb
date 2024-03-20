@@ -1,7 +1,7 @@
 import { SearchPattern } from "@novorender/webgl-api";
 import { ReactNode, useEffect } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
 import { HiddenProvider } from "contexts/hidden";
 import { HighlightCollectionsProvider } from "contexts/highlightCollections";

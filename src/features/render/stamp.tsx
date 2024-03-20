@@ -1,6 +1,6 @@
 import { Menu, popoverClasses } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { DeviationStamp } from "features/deviations";
 import { DitioMachineStamp } from "features/ditio";
 import { PropertiesStamp } from "features/properties";

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { getCameraDir } from "features/engine2D/utils";
 import { CameraType, selectCamera } from "features/render";
 

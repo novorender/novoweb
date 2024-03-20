@@ -11,7 +11,7 @@ import {
     useTheme,
 } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { ButtonKey, featuresConfig } from "config/features";
 import { CameraSpeed } from "features/cameraSpeed";
 import { FlyToSelected } from "features/flyToSelected";

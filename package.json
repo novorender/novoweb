@@ -12,7 +12,7 @@
         "eslint": "eslint src/ --max-warnings=0",
         "start": "node server.mjs",
         "dependencies": "node scripts/dependencies.cjs",
-        "madge": "madge --warning --image dep.png --circular src/features/home/home.tsx"
+        "madge": "madge --warning --extensions ts,tsx --image dep.png --circular src/index.tsx"
     },
     "repository": {
         "type": "git",
@@ -116,7 +116,8 @@
         "tsConfig": "./tsconfig.json",
         "detectiveOptions": {
             "ts": {
-                "skipTypeImports": true
+                "skipTypeImports": true,
+                "mixedImports": true
             }
         }
     }

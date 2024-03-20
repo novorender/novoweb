@@ -10,8 +10,7 @@ import {
     WheelEvent,
 } from "react";
 
-import { isIpad, isIphone } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { isIpad, isIphone, useAppDispatch, useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectShowTracer } from "features/followPath";
 import { measureActions, selectMeasureHoverSettings } from "features/measure";

@@ -2,7 +2,7 @@ import { Box, css, styled } from "@mui/material";
 import { glMatrix } from "gl-matrix";
 import { RefCallback, useCallback, useRef, useState } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { LinearProgress, Loading } from "components";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHandleClipping } from "features/clippingPlanes";

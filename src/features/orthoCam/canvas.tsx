@@ -1,7 +1,7 @@
 import { vec3 } from "gl-matrix";
 import { MutableRefObject, useCallback, useEffect, useState } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { Canvas2D } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { drawPart, drawTexts, getCameraState } from "features/engine2D";

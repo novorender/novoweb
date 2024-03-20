@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 
 import { selectXsiteManageMachineLocations, selectXsiteManageShowMachineMarkers } from "../slice";
 import { MachineLocation } from "../types";

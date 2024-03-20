@@ -3,7 +3,7 @@ import { Box, Button, FormControlLabel, Link as MuiLink, Radio, RadioGroup, Typo
 import { MouseEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Divider, IosSwitch, ScrollBox } from "components";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";

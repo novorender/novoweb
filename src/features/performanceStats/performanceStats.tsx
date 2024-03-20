@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import { packageVersion as webglApiVersion } from "@novorender/api";
 import { useEffect, useRef } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectDeviceProfile } from "features/render";
 import { selectIsOnline } from "slices/explorer";

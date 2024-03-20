@@ -1,6 +1,6 @@
 import type { SpeedDialActionProps } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
 import { renderActions, selectSelectMultiple } from "features/render";

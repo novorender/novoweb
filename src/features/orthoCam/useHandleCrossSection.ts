@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { CameraType, renderActions, selectCameraType, selectViewMode } from "features/render";
 import { ViewMode } from "types/misc";
 

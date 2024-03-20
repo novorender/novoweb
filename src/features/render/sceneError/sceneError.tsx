@@ -1,10 +1,10 @@
 import { LoadingButton } from "@mui/lab";
 import { Alert, Box, CircularProgress, Paper, Typography, useTheme } from "@mui/material";
 import { packageVersion as webglApiVersion } from "@novorender/api";
+import { dataApi } from "apis/dataV1";
 import { useCallback, useEffect, useState } from "react";
 
-import { dataApi } from "app";
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { StorageKey } from "config/storage";
 import { useSceneId } from "hooks/useSceneId";

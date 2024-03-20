@@ -2,23 +2,17 @@ import { DrawModule } from "@novorender/api";
 import { ColorRGBA } from "@novorender/webgl-api";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { Canvas2D } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraState, drawPart, getCameraState } from "features/engine2D";
 import { ColorSettings } from "features/engine2D/utils";
 import { AsyncStatus } from "types/misc";
 
-import {
-    FeatureGeometryPoint,
-    FeatureGeometryPolygon,
-    FeatureGeometryPolyline,
-    LayerFeature,
-    selectArcgisFeatureServers,
-    selectArcgisSelectedFeature,
-} from "../arcgisSlice";
+import { selectArcgisFeatureServers, selectArcgisSelectedFeature } from "../arcgisSlice";
 import { FeatureSymbol, LayerDrawingInfo, LayerGeometryType } from "../arcgisTypes";
 import { useIsCameraSetCorrectly } from "../hooks/useIsCameraSetCorrectly";
+import { FeatureGeometryPoint, FeatureGeometryPolygon, FeatureGeometryPolyline, LayerFeature } from "../types";
 import { b64toBlob, doAabb2Intersect, getAabb2MaxSize, getOrthoCameraExtent } from "../utils";
 
 export function ArcgisCanvas({

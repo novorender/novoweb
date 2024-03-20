@@ -12,7 +12,7 @@ import {
     useRouteMatch,
 } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
@@ -34,6 +34,8 @@ export default function Ditio() {
     const minimized = useAppSelector(selectMinimized) === featuresConfig.ditio.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.ditio.key);
     const lastViewedPath = useAppSelector(selectLastViewedPath);
+
+    console.log("suppp");
 
     return (
         <MemoryRouter initialEntries={["/", lastViewedPath]} initialIndex={1}>

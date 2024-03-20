@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 
 import { useGetAllLogPointsQuery } from "../api";
 import {

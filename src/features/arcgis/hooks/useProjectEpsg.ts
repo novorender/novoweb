@@ -1,6 +1,6 @@
 import { useGetProjectQuery } from "apis/dataV2/dataV2Api";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectProjectSettings } from "features/render";
 

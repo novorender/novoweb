@@ -1,7 +1,7 @@
+import { dataApi } from "apis/dataV1";
 import { useHistory, useParams } from "react-router-dom";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Confirmation } from "components";
 import { useSceneId } from "hooks/useSceneId";
 

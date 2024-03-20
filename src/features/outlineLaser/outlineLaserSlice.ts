@@ -1,7 +1,7 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { ReadonlyVec3, ReadonlyVec4 } from "gl-matrix";
 
-import { RootState } from "app/store";
+import { RootState } from "app";
 import { selectBookmark } from "features/render";
 import { VecRGB } from "utils/color";
 

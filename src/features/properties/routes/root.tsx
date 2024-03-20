@@ -17,7 +17,7 @@ import type { ObjectData, ObjectId } from "@novorender/webgl-api";
 import { useDrag } from "@use-gesture/react";
 import { ChangeEvent, ChangeEventHandler, MouseEvent, MutableRefObject, useEffect, useRef, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import {
     Accordion,
     AccordionDetails,

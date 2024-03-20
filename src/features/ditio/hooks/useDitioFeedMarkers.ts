@@ -1,7 +1,7 @@
 import { vec3 } from "gl-matrix";
 import { useEffect, useRef, useState } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { selectIsTopDown } from "features/orthoCam";
 import { CameraType, selectCameraType, selectProjectSettings } from "features/render";
 import { latLon2Tm } from "features/render/utils";

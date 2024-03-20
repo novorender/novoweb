@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { FocusEvent, MouseEvent, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { GroupStatus } from "contexts/objectGroups";
 import { ColorPicker } from "features/colorPicker";
 import { rgbToVec, VecRGBA, vecToHex } from "utils/color";

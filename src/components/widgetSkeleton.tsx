@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig, WidgetKey } from "config/features";
 import { selectMaximized, selectMinimized } from "slices/explorer";

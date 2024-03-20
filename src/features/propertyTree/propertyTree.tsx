@@ -3,7 +3,7 @@ import { Box, Button, IconButton, List, Snackbar, snackbarContentClasses } from 
 import { useGetPropertyTreeFavoritesQuery } from "apis/dataV2/dataV2Api";
 import { useEffect, useRef, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import {
     Accordion,
     AccordionDetails,

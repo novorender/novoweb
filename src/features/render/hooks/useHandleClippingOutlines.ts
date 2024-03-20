@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { clippingOutlineLaserActions, OutlineGroup, selectOutlineGroups } from "features/outlineLaser";
 import { selectIsOnline } from "slices/explorer";

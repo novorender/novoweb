@@ -2,7 +2,7 @@ import { Close } from "@mui/icons-material";
 import { Box, IconButton, Typography } from "@mui/material";
 import { Fragment } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Divider } from "components";
 import { renderActions, selectStamp, StampKind } from "features/render";
 import { capitalize } from "utils/misc";

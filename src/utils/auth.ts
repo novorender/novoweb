@@ -1,6 +1,6 @@
 import { AuthenticationHeader } from "@novorender/data-js-api";
+import { dataApi } from "apis/dataV1";
 
-import { dataApi } from "app";
 import { store } from "app/store";
 import { WidgetKey } from "config/features";
 import { User } from "slices/authSlice";

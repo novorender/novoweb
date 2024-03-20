@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { NavigationCube } from "features/navigationCube";
 import { PrimaryMenu } from "features/primaryMenu";
 import { selectNavigationCube } from "features/render";

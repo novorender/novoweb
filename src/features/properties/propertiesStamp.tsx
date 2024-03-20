@@ -3,7 +3,7 @@ import { Box, IconButton, List, Typography } from "@mui/material";
 import { useDrag } from "@use-gesture/react";
 import { useEffect, useRef, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Divider, ScrollBox, Tooltip } from "components";
 import { renderActions, selectStamp, StampKind } from "features/render";
 import { getFileNameFromPath, getFilePathFromObjectPath, getPropertyDisplayName, isUrl } from "utils/objectData";

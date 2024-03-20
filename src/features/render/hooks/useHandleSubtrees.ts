@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ViewMode } from "types/misc";
 

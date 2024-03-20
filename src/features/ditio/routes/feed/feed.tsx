@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { Link, Redirect, useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Divider, FixedSizeVirualizedList, ImgTooltip, IosSwitch, LinearProgress, Tooltip } from "components";
 import { featuresConfig } from "config/features";
 import { FormattedText } from "features/ditio/formattedText";

@@ -6,7 +6,7 @@ import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { useState } from "react";
 import { Link, useHistory, useParams } from "react-router-dom";
 
-import { useAppDispatch } from "app/store";
+import { useAppDispatch } from "app";
 import {
     Accordion,
     AccordionDetails,

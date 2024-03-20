@@ -5,7 +5,7 @@ import { getGPUTier } from "detect-gpu";
 import { quat, vec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch } from "app/store";
+import { useAppDispatch } from "app";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,

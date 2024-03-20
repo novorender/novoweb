@@ -2,7 +2,7 @@ import { TextField } from "@mui/material";
 import { FormEvent, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Confirmation } from "components";
 import { renderActions, selectDeviations } from "features/render";
 

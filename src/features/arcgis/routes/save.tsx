@@ -2,20 +2,14 @@ import { usePutArcgisWidgetConfigMutation } from "apis/dataV2/dataV2Api";
 import { FormEvent } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Confirmation } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus } from "types/misc";
 
-import {
-    arcgisActions,
-    ArcgisWidgetConfig,
-    FeatureServer,
-    FeatureServerConfig,
-    LayerConfig,
-    selectArcgisFeatureServers,
-    selectArcgisSaveStatus,
-} from "../arcgisSlice";
+import { ArcgisWidgetConfig } from "..";
+import { arcgisActions, selectArcgisFeatureServers, selectArcgisSaveStatus } from "../arcgisSlice";
+import { FeatureServer, FeatureServerConfig, LayerConfig } from "../types";
 
 export function Save() {
     const history = useHistory();

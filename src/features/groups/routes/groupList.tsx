@@ -2,7 +2,7 @@ import { AddCircle, CheckCircle, MoreVert, Save, Visibility } from "@mui/icons-m
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import {
     GroupStatus,

@@ -1,7 +1,7 @@
 import { css, styled } from "@mui/material";
 import { SVGProps } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { featuresConfig } from "config/features";
 import { explorerActions } from "slices/explorer";
 

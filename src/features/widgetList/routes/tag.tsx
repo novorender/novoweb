@@ -2,7 +2,7 @@ import { ArrowBack } from "@mui/icons-material";
 import { Box, Button, Grid, IconButton, Typography, useTheme } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app";
 import { Divider, ScrollBox, WidgetMenuButtonWrapper } from "components";
 import { FeatureTagKey, WidgetKey } from "config/features";
 import { selectEnabledWidgets, selectIsOnline, selectLockedWidgets, selectWidgets } from "slices/explorer";

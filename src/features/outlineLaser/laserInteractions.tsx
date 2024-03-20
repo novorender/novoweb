@@ -1,7 +1,7 @@
 import { css, styled, Theme } from "@mui/material";
 import { Fragment, SVGProps } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { getOutlineLaser } from "./getOutlineLaser";

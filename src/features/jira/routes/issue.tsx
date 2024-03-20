@@ -1,11 +1,11 @@
 import { AddCircle, ArrowBack, Close, FlightTakeoff, OpenInNew, Room } from "@mui/icons-material";
 import { Box, Button, IconButton, Snackbar, Typography, useTheme } from "@mui/material";
+import { dataApi } from "apis/dataV1";
 import { format, parse } from "date-fns";
 import { Fragment, useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app";
 import { Divider, ImgModal, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
