@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery, retry } from "@reduxjs/toolkit/query/react";
 
-import { RootState } from "app";
+import { type RootState } from "app";
 import { AsyncStatus } from "types/misc";
 
 import { selectXsiteManageAccessToken } from "./slice";

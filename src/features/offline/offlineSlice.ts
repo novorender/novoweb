@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-import { RootState } from "app";
+import { type RootState } from "app";
 
 const initialState = {
     scenes: {} as {

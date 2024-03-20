@@ -1,6 +1,6 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-import { RootState } from "app";
+import { type RootState } from "app";
 import { resetView } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 

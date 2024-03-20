@@ -1,7 +1,7 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
-import { dataV2Api } from "apis/dataV2/dataV2Api";
 
+import { dataV2Api } from "apis/dataV2/dataV2Api";
 import { arcgisSlice } from "features/arcgis";
 import { arcgisApi } from "features/arcgis/arcgisApi";
 import { areaReducer } from "features/area";

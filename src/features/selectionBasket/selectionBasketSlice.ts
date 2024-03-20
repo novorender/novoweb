@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-import { RootState } from "app";
+import { type RootState } from "app";
 
 const initialState = {
     flyOnSelect: true,

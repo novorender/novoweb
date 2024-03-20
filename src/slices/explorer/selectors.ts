@@ -1,6 +1,6 @@
 import { createSelector } from "@reduxjs/toolkit";
 
-import { RootState } from "app";
+import { type RootState } from "app";
 import { featuresConfig, Widget } from "config/features";
 
 import { ProjectType, SceneType, UrlSearchQuery, UserRole } from "./types";

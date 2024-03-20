@@ -4,7 +4,7 @@ import { HierarcicalObjectReference, ObjectId } from "@novorender/webgl-api";
 import { useEffect, useState } from "react";
 import { useStore } from "react-redux";
 
-import { RootState } from "app";
+import { type RootState } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useLazyHidden } from "contexts/hidden";
 import { useLazyHighlighted } from "contexts/highlighted";

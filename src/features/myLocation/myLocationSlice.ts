@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
-import { RootState } from "app";
+import { type RootState } from "app";
 
 export enum LocationStatus {
     Idle,

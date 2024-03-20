@@ -2,7 +2,7 @@ import { IFeature } from "@esri/arcgis-rest-request";
 import { AABB2 } from "@novorender/api/types/measure/worker/brep";
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-import { RootState } from "app";
+import { type RootState } from "app";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { FeatureServerDefinition } from "./arcgisTypes";

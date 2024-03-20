@@ -3,21 +3,22 @@ import { CircularProgress, CssBaseline, Paper, Snackbar, snackbarContentClasses 
 import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { dataApi } from "apis/dataV1";
 import enLocale from "date-fns/locale/en-GB";
 import { useEffect, useRef, useState } from "react";
 import { generatePath, Redirect, Route, Switch, useHistory, useLocation, useParams } from "react-router-dom";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
-import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { theme } from "app/theme";
+import { dataApi } from "apis/dataV1";
 import { Loading } from "components";
 import { StorageKey } from "config/storage";
-import { Explorer } from "pages/explorer";
+// import { Explorer } from "pages/explorer";
 import { authActions } from "slices/authSlice";
 import { explorerActions, selectConfig } from "slices/explorer";
 import { getOAuthState, getUser } from "utils/auth";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
+
+import { useAppDispatch, useAppSelector } from "./redux-store-interactions";
+import { theme } from "./theme";
 
 enum Status {
     Initial,

@@ -1,7 +1,7 @@
 import { Bookmark } from "@novorender/data-js-api";
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-import { RootState } from "app";
+import { type RootState } from "app";
 
 export enum BookmarksStatus {
     Initial,

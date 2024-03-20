@@ -1,7 +1,7 @@
 import { Box, Table, TableBody, TableHead, TableRow } from "@mui/material";
 import { ReadonlyVec3, vec3 } from "gl-matrix";
 
-import { TableCell } from "components";
+import { TableCell } from "./tableCell";
 
 export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: ReadonlyVec3 }) {
     const delta = vec3.sub(vec3.create(), end, start);

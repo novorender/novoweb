@@ -1,6 +1,6 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-import { RootState } from "app";
+import { type RootState } from "app";
 import { GroupStatus } from "contexts/objectGroups";
 import { resetView, selectBookmark } from "features/render";
 import { AsyncStatus } from "types/misc";
