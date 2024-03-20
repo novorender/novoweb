@@ -2,11 +2,12 @@ import { Box, Grid, IconButton, Typography, useTheme } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
-import { ScrollBox, WidgetMenuButtonWrapper } from "components";
 import { featuresConfig, FeatureTag, featureTags, FeatureType, Widget, WidgetKey } from "config/features";
 import { ShareLink } from "features/shareLink";
 import { selectEnabledWidgets, selectIsOnline, selectLockedWidgets, selectWidgets } from "slices/explorer";
 
+import { ScrollBox } from "../../../components/scrollBox";
+import { WidgetMenuButtonWrapper } from "../../../components/widgetMenuButtonWrapper";
 import { sorting } from "../sorting";
 
 export function Root({

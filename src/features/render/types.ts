@@ -3,8 +3,8 @@ import type { BoundingSphere, Camera, Internal } from "@novorender/webgl-api";
 import { quat, vec3 } from "gl-matrix";
 
 import { type DitioMachine } from "features/ditio";
-import { LogPoint, MachineLocation } from "features/xsiteManage";
-import { CustomProperties } from "types/project";
+import { type LogPoint, type MachineLocation } from "features/xsiteManage";
+import { type CustomProperties } from "types/project";
 
 export enum CameraSpeedLevel {
     Slow = "slow",

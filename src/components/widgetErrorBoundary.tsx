@@ -1,6 +1,6 @@
 import { Component, ErrorInfo, PropsWithChildren } from "react";
 
-import { WidgetKey } from "config/features";
+import { type WidgetKey } from "config/features";
 
 import { WidgetError } from "./widgetError";
 
