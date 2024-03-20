@@ -3,7 +3,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { Form, FormGLtfAsset, Template } from "./types";
+import { FormGLtfAsset, FormRecord, Template } from "./types";
 
 const initialState = {
     currentFormsList: null,
@@ -27,7 +27,7 @@ const initialState = {
     selectedFormId: undefined,
 } as {
     currentFormsList: string | null;
-    locationForms: { templateId: string; form: Partial<Form> }[];
+    locationForms: (FormRecord & { id: string; templateId: string })[];
     lastViewedPath: string;
     formFilters: {
         name: string;
@@ -74,6 +74,15 @@ export const formsSlice = createSlice({
                 status: AsyncStatus.Success,
                 data: [...state.templates.data.filter((t) => t.id !== template.id), template],
             };
+        },
+        addLocationForms: (state, action: PayloadAction<State["locationForms"]>) => {
+            const newForms = action.payload;
+            state.locationForms = [
+                ...state.locationForms.filter(
+                    (f) => !newForms.some((nf) => nf.templateId === f.templateId && nf.id === f.id)
+                ),
+                ...newForms,
+            ];
         },
         setAssets: (state, action: PayloadAction<State["assets"]>) => {
             state.assets = action.payload;

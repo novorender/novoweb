@@ -30,6 +30,14 @@ export function Template({ templateId }: { templateId: TemplateId }) {
     useEffect(() => {
         if (template) {
             dispatch(formsActions.templateLoaded(template));
+            if (template.type === TemplateType.Location) {
+                const forms = Object.entries(template.forms || {}).map(([id, f]) => ({
+                    ...f,
+                    templateId: template.id!,
+                    id: id!,
+                }));
+                dispatch(formsActions.addLocationForms(forms));
+            }
         }
     }, [dispatch, template]);
 

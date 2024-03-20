@@ -42,11 +42,11 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
         const templateMap = new Map(templates.data.map((t) => [t.id, t]));
 
         const result = locationForms
-            .filter(({ form }) => form.location)
-            .map(({ templateId, form }) => {
-                const template = templateMap.get(templateId)! as LocationTemplate;
+            .filter((form) => form.location)
+            .map((form) => {
+                const template = templateMap.get(form.templateId)! as LocationTemplate;
                 return {
-                    id: form.id!,
+                    id: form.id,
                     marker: template.marker,
                     location: form.location!,
                 };

@@ -10,6 +10,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
+import { useGoToSelectedForm } from "./hooks/useGoToSelectedForm";
 import { useRenderLocationFormAssets } from "./hooks/useRenderLocationFormAssets";
 import { Create, FormsList, LocationInstance, Object, SearchInstance, Templates } from "./routes";
 import { formsActions } from "./slice";
@@ -88,6 +89,8 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
         },
         [dispatch, history.location.pathname]
     );
+
+    useGoToSelectedForm();
 
     return <Switch {...props} />;
 }

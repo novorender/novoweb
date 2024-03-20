@@ -5,13 +5,12 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useCreateLocationFormMutation } from "../api";
-import { formsActions, selectCurrentFormsList, selectLocationForms } from "../slice";
+import { formsActions, selectCurrentFormsList } from "../slice";
 import { useFetchAssetList } from "./useFetchAssetList";
 
 export function useCreateLocationForm() {
     useFetchAssetList();
 
-    const currentForms = useAppSelector(selectLocationForms);
     const templateId = useAppSelector(selectCurrentFormsList);
     const dispatch = useAppDispatch();
 
@@ -27,26 +26,26 @@ export function useCreateLocationForm() {
                     return;
                 }
 
-                createForm({
+                const id = await createForm({
                     projectId: sceneId,
                     form: { id: templateId, location },
-                });
+                }).unwrap();
 
+                // It's not required to add form to the list here, because it would've been added
+                // on forms refetch (which is triggered by RTK cache invalidation) anyway
+                // but here we can do it slightly sooner
                 dispatch(
-                    formsActions.setLocationForms([
-                        ...currentForms,
+                    formsActions.addLocationForms([
                         {
-                            form: {
-                                id: window.crypto.randomUUID(),
-                                state: "new",
-                                location,
-                            },
                             templateId: templateId,
+                            id,
+                            state: "new",
+                            location,
                         },
                     ])
                 );
             }
         },
-        [dispatch, currentForms, templateId, sceneId, createForm]
+        [dispatch, templateId, sceneId, createForm]
     );
 }

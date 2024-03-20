@@ -83,6 +83,15 @@ export function FormsList() {
                     id: Number(id),
                 })) ?? []
             );
+            dispatch(
+                formsActions.addLocationForms(
+                    Object.entries(template.forms || {}).map(([id, f]) => ({
+                        ...f,
+                        templateId: template.id!,
+                        id: id!,
+                    }))
+                )
+            );
         } else if (template.type === TemplateType.Search) {
             setItems(
                 template.objects!.map((object: FormObject) => ({
@@ -92,7 +101,7 @@ export function FormsList() {
                 })) ?? []
             );
         }
-    }, [template]);
+    }, [dispatch, template]);
 
     useEffect(() => {
         if (!template || template.type !== TemplateType.Search) {

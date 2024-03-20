@@ -16,17 +16,24 @@ import { useAbortController } from "hooks/useAbortController";
 import { AsyncStatus } from "types/misc";
 
 import { useFormsGlobals } from "../formsGlobals";
-import { selectAssets, selectLocationForms, selectSelectedFormId, selectTemplates } from "../slice";
+import {
+    selectAssets,
+    selectCurrentFormsList,
+    selectLocationForms,
+    selectSelectedFormId,
+    selectTemplates,
+} from "../slice";
 import { FormGLtfAsset, LocationTemplate } from "../types";
 
 type RenderedForm = {
+    templateId: string;
     id: string;
     marker: string;
     location: ReadonlyVec3;
 };
 
 function areRenderedFormsEqual(a: RenderedForm, b: RenderedForm) {
-    return a.id === b.id && a.marker === b.marker && a.location === b.location;
+    return a.templateId === b.templateId && a.id === b.id && a.marker === b.marker && a.location === b.location;
 }
 
 const MAX_ASSET_COUNT = 100_000;
@@ -41,6 +48,7 @@ export function useRenderLocationFormAssets() {
     const locationForms = useAppSelector(selectLocationForms);
     const assetInfoList = useAppSelector(selectAssets);
     const [abortController, abort] = useAbortController();
+    const selectedTemplateId = useAppSelector(selectCurrentFormsList);
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const selectedMeshCache = useRef(new WeakMap<RenderStateDynamicMesh, RenderStateDynamicMesh>());
     const active = useAppSelector(selectCameraType) === CameraType.Pinhole;
@@ -55,10 +63,15 @@ export function useRenderLocationFormAssets() {
         const templateMap = new Map(templates.data.map((t) => [t.id, t]));
 
         const result = locationForms
-            .filter(({ form }) => form.location)
-            .map(({ templateId, form }) => {
-                const template = templateMap.get(templateId)! as LocationTemplate;
-                return { id: form.id!, marker: template.marker, location: form.location! };
+            .filter((form) => form.location)
+            .map((form) => {
+                const template = templateMap.get(form.templateId)! as LocationTemplate;
+                return {
+                    templateId: template.id,
+                    id: form.id,
+                    marker: template.marker,
+                    location: form.location!,
+                };
             });
 
         if (areArraysEqual(result, prevRenderedForms.current, areRenderedFormsEqual)) {
@@ -153,14 +166,14 @@ export function useRenderLocationFormAssets() {
                 })
             );
 
-            const objectIdToFormIdMap = new Map<number, string>();
+            const objectIdToFormIdMap = new Map<number, { templateId: string; formId: string }>();
 
             for (const form of renderedForms) {
                 const asset = assetMap.get(form.marker)!;
                 for (const { ref, instances, selectedInstances } of asset) {
                     for (const refInst of ref.instances) {
                         let objectId: number;
-                        if (selectedFormId === form.id) {
+                        if (selectedTemplateId === form.templateId && selectedFormId === form.id) {
                             objectId = ref.baseObjectId! + SELECTED_OBJECT_ID_OFFSET + selectedInstances.length;
                             selectedInstances.push({
                                 ...refInst,
@@ -175,7 +188,7 @@ export function useRenderLocationFormAssets() {
                             });
                         }
 
-                        objectIdToFormIdMap.set(objectId, form.id);
+                        objectIdToFormIdMap.set(objectId, { templateId: form.templateId, formId: form.id });
                     }
                 }
             }
@@ -224,7 +237,16 @@ export function useRenderLocationFormAssets() {
             view.modifyRenderState({ dynamic: { objects } });
             setFormsGlobals((s) => ({ ...s, objectIdToFormIdMap }));
         }
-    }, [renderedForms, view, assetInfoList, abortController, setFormsGlobals, selectedFormId, active]);
+    }, [
+        renderedForms,
+        view,
+        assetInfoList,
+        abortController,
+        setFormsGlobals,
+        selectedTemplateId,
+        selectedFormId,
+        active,
+    ]);
 }
 
 const HIGHLIGHT_COLOR: RGBA = [1, 0, 0, 1];
@@ -239,28 +261,6 @@ function createSelectedMesh(mesh: RenderStateDynamicMesh): RenderStateDynamicMes
 }
 
 const ASSET_CACHE = new Map<string, readonly RenderStateDynamicObject[]>();
-const ASSET_CACHE_PROMISES = new Map<string, Promise<readonly RenderStateDynamicObject[]>>();
-
-async function loadAsset2(name: string, asset: FormGLtfAsset, abortController: AbortController) {
-    let loadedGltfList = ASSET_CACHE.get(name);
-    if (!loadedGltfList) {
-        let promise = ASSET_CACHE_PROMISES.get(name);
-        if (!promise) {
-            try {
-                const url = getAssetGlbUrl(asset.name);
-                promise = downloadGLTF(new URL(url), asset.baseObjectId, abortController);
-                ASSET_CACHE_PROMISES.set(name, promise);
-                loadedGltfList = await promise;
-                ASSET_CACHE.set(name, loadedGltfList);
-            } finally {
-                ASSET_CACHE_PROMISES.delete(name);
-            }
-        } else {
-            loadedGltfList = await promise;
-        }
-    }
-    return loadedGltfList;
-}
 
 async function loadAsset(name: string, asset: FormGLtfAsset, abortController: AbortController) {
     let loadedGltfList = ASSET_CACHE.get(name);
