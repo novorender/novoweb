@@ -1,1 +1,2 @@
-export { Instance } from "./instance";
+export { SearchInstance } from "./searchInstance";
+export { LocationInstance } from "./locationInstance";

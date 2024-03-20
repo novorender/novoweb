@@ -11,7 +11,7 @@ import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
 
 import { useRenderLocationFormAssets } from "./hooks/useRenderLocationFormAssets";
-import { Create, FormsList, Instance, Object, Templates } from "./routes";
+import { Create, FormsList, LocationInstance, Object, SearchInstance, Templates } from "./routes";
 import { formsActions } from "./slice";
 
 export default function Forms() {
@@ -39,8 +39,11 @@ export default function Forms() {
                             <Route path="/forms/:templateId">
                                 <FormsList />
                             </Route>
-                            <Route path="/instance/:objectGuid-:formId">
-                                <Instance />
+                            <Route path="/search-instance/:objectGuid-:formId">
+                                <SearchInstance />
+                            </Route>
+                            <Route path="/location-instance/:templateId-:formId">
+                                <LocationInstance />
                             </Route>
                             <Route path="/object/:id">
                                 <Object />

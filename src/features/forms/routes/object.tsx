@@ -23,7 +23,7 @@ import { renderActions } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
 
-import { useGetFormsQuery } from "../api";
+import { useGetSearchFormsQuery } from "../api";
 import { selectCurrentFormsList } from "../slice";
 import { type FormObjectGuid } from "../types";
 import { idsToObjects } from "../utils";
@@ -89,7 +89,7 @@ export function Object() {
         data: forms,
         isLoading: formsLoading,
         isUninitialized,
-    } = useGetFormsQuery(
+    } = useGetSearchFormsQuery(
         object?.guid
             ? {
                   projectId: sceneId,
@@ -103,7 +103,7 @@ export function Object() {
             <Redirect
                 push={false}
                 to={{
-                    pathname: `/instance/${object.guid}-${currentFormsList || forms[0].id}`,
+                    pathname: `/search-instance/${object.guid}-${currentFormsList || forms[0].id}`,
                     state: { objectId: object.id },
                 }}
             />
@@ -164,7 +164,7 @@ export function Object() {
                                         onClick={() => {
                                             if (object?.guid) {
                                                 history.push({
-                                                    pathname: `/instance/${object.guid}-${form.id}`,
+                                                    pathname: `/search-instance/${object.guid}-${form.id}`,
                                                     state: { objectId: object.id },
                                                 });
                                             }

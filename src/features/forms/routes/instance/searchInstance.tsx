@@ -12,12 +12,12 @@ import { selectCurrentFormsList } from "features/forms/slice";
 import { ObjectVisibility, renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
 
-import { useGetFormQuery, useUpdateFormMutation } from "../../api";
+import { useGetSearchFormQuery, useUpdateSearchFormMutation } from "../../api";
 import { type FormId, type FormItem as FItype, FormItemType, type FormObjectGuid } from "../../types";
 import { toFormFields, toFormItems } from "../../utils";
 import { FormItem } from "./formItem";
 
-export function Instance() {
+export function SearchInstance() {
     const { objectGuid, formId } = useParams<{ objectGuid: FormObjectGuid; formId: FormId }>();
     const theme = useTheme();
     const history = useHistory();
@@ -32,13 +32,13 @@ export function Instance() {
     const [items, setItems] = useState<FItype[]>([]);
     const [isUpdated, setIsUpdated] = useState(false);
 
-    const { data: form, isLoading: isFormLoading } = useGetFormQuery({
+    const { data: form, isLoading: isFormLoading } = useGetSearchFormQuery({
         projectId: sceneId,
         objectGuid,
         formId,
     });
 
-    const [updateForm, { isLoading: isFormUpdating }] = useUpdateFormMutation();
+    const [updateForm, { isLoading: isFormUpdating }] = useUpdateSearchFormMutation();
 
     useEffect(() => {
         const id = (history.location?.state as { objectId?: number })?.objectId;
@@ -129,10 +129,12 @@ export function Instance() {
                             <ArrowBack sx={{ mr: 1 }} />
                             Back
                         </Button>
-                        <Button color="grey" onClick={handleClearClick}>
-                            <Clear sx={{ mr: 1 }} />
-                            Clear
-                        </Button>
+                        {items?.length && (
+                            <Button color="grey" onClick={handleClearClick}>
+                                <Clear sx={{ mr: 1 }} />
+                                Clear
+                            </Button>
+                        )}
                     </Box>
                 </>
             </Box>
@@ -145,6 +147,7 @@ export function Instance() {
                 <Typography fontWeight={600} mb={2}>
                     {form?.title}
                 </Typography>
+                {items?.length === 0 && <Typography px={0}>Selected object don't have any forms.</Typography>}
                 {items?.map((item, idx, array) => {
                     return (
                         <Fragment key={item.id}>

@@ -1,12 +1,10 @@
 import { Circle } from "@mui/icons-material";
 import { ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
-import { ObjectId } from "@novorender/api/types/data";
 import { useHistory } from "react-router-dom";
 
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { FormId, FormObject, FormRecord, type FormState } from "features/forms/types";
 import { VecRGBA } from "utils/color";
-
-import { FormId, FormObject, type FormState } from "../../types";
 
 const HIGHLIGHT_COLOR = [1, 0.4, 0.7, 1] as VecRGBA;
 
@@ -14,7 +12,7 @@ export function FormsListItem({
     item,
     formId,
 }: {
-    item: FormObject & { id: ObjectId; formState: FormState };
+    item: (FormObject & { formState: FormState }) | (FormRecord & { id: number; formState: FormState });
     formId: FormId;
 }) {
     const history = useHistory();
@@ -24,16 +22,27 @@ export function FormsListItem({
         return null;
     }
 
+    const searchForm = "guid" in item;
+
     const handleClick = () => {
-        history.push(`/instance/${item.guid}-${formId}`);
+        const id = searchForm ? item.guid : item.id;
+        if (searchForm) {
+            history.push(`/search-instance/${id}-${formId}`);
+        } else {
+            history.push(`/location-instance/${formId}-${id}`);
+        }
     };
 
     const handleMouseEnter = () => {
-        dispatchHighlighted(highlightActions.set({ color: HIGHLIGHT_COLOR, ids: [item.id] }));
+        if (searchForm) {
+            dispatchHighlighted(highlightActions.set({ color: HIGHLIGHT_COLOR, ids: [item.id] }));
+        }
     };
 
     const handleMouseLeave = () => {
-        dispatchHighlighted(highlightActions.remove([item.id]));
+        if (searchForm) {
+            dispatchHighlighted(highlightActions.remove([item.id]));
+        }
     };
 
     return (
@@ -59,7 +68,7 @@ export function FormsListItem({
                     fontSize="inherit"
                 />
             </ListItemIcon>
-            <ListItemText>{item.name}</ListItemText>
+            <ListItemText>{"name" in item ? item.name : "title" in item && item.title}</ListItemText>
         </ListItemButton>
     );
 }

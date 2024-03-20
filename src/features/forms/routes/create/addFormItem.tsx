@@ -76,7 +76,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
     return (
         <ScrollBox p={1} pt={2} pb={3} component="form" onSubmit={handleSubmit}>
             <Typography fontWeight={600} mb={1}>
-                form item
+                Form item
             </Typography>
             <TextField label="Title" value={title} onChange={handleTitleChange} fullWidth />
             <Divider sx={{ my: 1 }} />

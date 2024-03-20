@@ -5,7 +5,7 @@ import { useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useGetTemplateQuery } from "features/forms/api";
 import { formsActions, selectTemplatesFilters } from "features/forms/slice";
-import { type SearchTemplate, type TemplateId, TemplateType } from "features/forms/types";
+import { type TemplateId, TemplateType } from "features/forms/types";
 import { useSceneId } from "hooks/useSceneId";
 
 export function Template({ templateId }: { templateId: TemplateId }) {
@@ -34,12 +34,19 @@ export function Template({ templateId }: { templateId: TemplateId }) {
     }, [dispatch, template]);
 
     const count = useMemo(() => {
-        if (!template || template.type === TemplateType.Location) {
+        if (!template) {
             return "";
         }
         const finished = Object.values(template.forms || {}).filter((s) => s.state === "finished").length;
-        const total = (template as SearchTemplate)!.objects.length || 0;
-        return `${finished} / ${total}`;
+
+        if (template.type === TemplateType.Search) {
+            return `${finished} / ${template.objects?.length}`;
+        }
+
+        if (template.type === TemplateType.Location) {
+            const total = Object.keys(template.forms || {}).length;
+            return total === 0 ? "" : `${finished} / ${total}`;
+        }
     }, [template]);
 
     const handleClick = useCallback(() => {

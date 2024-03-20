@@ -2,7 +2,9 @@ import { ReadonlyVec3 } from "gl-matrix";
 import { useCallback } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
+import { useSceneId } from "hooks/useSceneId";
 
+import { useCreateLocationFormMutation } from "../api";
 import { formsActions, selectCurrentFormsList, selectLocationForms } from "../slice";
 import { useFetchAssetList } from "./useFetchAssetList";
 
@@ -13,6 +15,9 @@ export function useCreateLocationForm() {
     const templateId = useAppSelector(selectCurrentFormsList);
     const dispatch = useAppDispatch();
 
+    const sceneId = useSceneId();
+    const [createForm] = useCreateLocationFormMutation();
+
     return useCallback(
         ({ location }: { location: ReadonlyVec3 }) => {
             createLocationForm();
@@ -21,6 +26,11 @@ export function useCreateLocationForm() {
                 if (!templateId) {
                     return;
                 }
+
+                createForm({
+                    projectId: sceneId,
+                    form: { id: templateId, location },
+                });
 
                 dispatch(
                     formsActions.setLocationForms([
@@ -37,6 +47,6 @@ export function useCreateLocationForm() {
                 );
             }
         },
-        [dispatch, currentForms, templateId]
+        [dispatch, currentForms, templateId, sceneId, createForm]
     );
 }

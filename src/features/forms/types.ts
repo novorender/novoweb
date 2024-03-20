@@ -129,9 +129,10 @@ type LocationTemplateHeader = BaseTemplateHeader & { type: TemplateType.Location
 export type FormRecord = {
     title?: string;
     state: FormState;
+    location?: vec3;
 };
 
-type formInstanceNumber = number;
+export type FormInstanceId = string;
 
 type TemplateBase = {
     fields: FormField[];
@@ -149,12 +150,11 @@ export type SearchTemplate = TemplateBase & {
 } & SearchTemplateHeader;
 
 export type LocationTemplate = TemplateBase & {
-    forms?: { [key: formInstanceNumber]: FormRecord };
+    forms?: { [key: FormInstanceId]: FormRecord };
 } & LocationTemplateHeader;
 
 export type Template = SearchTemplate | LocationTemplate;
 
-// TODO: Update this type.
 export type Form = {
     id: FormId;
     title: string;

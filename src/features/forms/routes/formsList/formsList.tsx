@@ -49,18 +49,50 @@ export function FormsList() {
         templateId,
     });
 
-    const [items, setItems] = useState<(FormObject & { formState: FormState })[]>(
+    const [items, setItems] = useState<
+        (FormObject & { formState: FormState })[] | (FormRecord & { id: number; formState: FormState })[]
+    >(
         template?.type === TemplateType.Search
-            ? template.objects!.map((object) => ({
+            ? template.objects!.map((object: FormObject) => ({
                   ...object,
                   id: -1,
                   formState: template.forms![object.guid].state,
+              }))
+            : template?.type === TemplateType.Location
+            ? Object.entries(template?.forms ?? {}).map(([id, form]: [string, FormRecord]) => ({
+                  ...form,
+                  formState: form.state,
+                  id: Number(id),
               }))
             : []
     );
     const [loadingItems, setLoadingItems] = useState(false);
 
     const abortSignal = abortController.current.signal;
+
+    useEffect(() => {
+        if (!template) {
+            return;
+        }
+
+        if (template.type === TemplateType.Location) {
+            setItems(
+                Object.entries(template?.forms ?? {}).map(([id, form]: [string, FormRecord]) => ({
+                    ...form,
+                    formState: form.state,
+                    id: Number(id),
+                })) ?? []
+            );
+        } else if (template.type === TemplateType.Search) {
+            setItems(
+                template.objects!.map((object: FormObject) => ({
+                    ...object,
+                    id: -1,
+                    formState: template.forms![object.guid].state,
+                })) ?? []
+            );
+        }
+    }, [template]);
 
     useEffect(() => {
         if (!template || template.type !== TemplateType.Search) {
@@ -78,8 +110,8 @@ export function FormsList() {
 
             setItems((prevItems) =>
                 prevItems.map((item) => {
-                    const id = map[item.guid];
-                    return { ...item, id };
+                    const id = map[(item as FormObject).guid];
+                    return { ...item, id } as FormObject & { formState: FormState };
                 })
             );
             setLoadingItems(false);
@@ -98,7 +130,7 @@ export function FormsList() {
         () => () => {
             if (
                 willUnmount.current &&
-                !history.location.pathname.startsWith("/instance") &&
+                !history.location.pathname.startsWith("/search-instance") &&
                 !history.location.pathname.startsWith("/object") &&
                 template?.type === TemplateType.Search
             ) {
@@ -120,8 +152,8 @@ export function FormsList() {
     }, [dispatch, templateId, currentFormsList]);
 
     const filterItems = useCallback(
-        (item: FormObject & { formState: FormState }) => {
-            const name = item.name ?? "";
+        (item: (FormObject & { formState: FormState }) | (FormRecord & { id: number; formState: FormState })) => {
+            const name = ("name" in item ? item.name : "title" in item ? item.title : "") ?? "";
             const formState = item.formState;
 
             const activeStateFilters = Object.entries(formFilters)
@@ -164,6 +196,9 @@ export function FormsList() {
     }, [items, formFilters, dispatch, dispatchHighlightCollections, filterItems, template]);
 
     const handleBackClick = () => {
+        if (isPickingLocation) {
+            dispatch(renderActions.stopPicker(Picker.FormLocation));
+        }
         history.push("/");
     };
 
@@ -232,9 +267,10 @@ export function FormsList() {
                 <Typography px={1} fontWeight={600} mb={1}>
                     {template?.title ?? ""}
                 </Typography>
+                {items.length === 0 && <Typography px={1}>No forms have been added yet.</Typography>}
                 <List dense disablePadding>
                     {items?.filter(filterItems).map((item) => (
-                        <FormsListItem key={item.guid} item={item} formId={templateId} />
+                        <FormsListItem key={"guid" in item ? item.guid : item.id} item={item} formId={templateId} />
                     ))}
                 </List>
             </ScrollBox>

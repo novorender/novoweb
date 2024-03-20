@@ -1,6 +1,14 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-import { type Form, type FormId, type FormObjectGuid, type ProjectId, type Template, type TemplateId } from "./types";
+import {
+    type Form,
+    type FormId,
+    type FormInstanceId,
+    type FormObjectGuid,
+    type ProjectId,
+    type Template,
+    type TemplateId,
+} from "./types";
 
 export const formsApi = createApi({
     reducerPath: "formsApi",
@@ -8,31 +16,11 @@ export const formsApi = createApi({
     tagTypes: ["Template", "Form", "Object"],
     keepUnusedDataFor: 60 * 5,
     endpoints: (builder) => ({
-        listObjectsWithForms: builder.query<FormObjectGuid[], { projectId: ProjectId }>({
-            query: ({ projectId }) => `projects/${projectId}/objects`,
-            providesTags: [{ type: "Object" as const, id: "ID_LIST" }],
-        }),
-        listFormsForObject: builder.query<FormId[], { projectId: ProjectId; objectGuid: FormObjectGuid }>({
-            query: ({ projectId, objectGuid }) => `projects/${projectId}/objects/${objectGuid}/forms/ids`,
-            providesTags: (_result, _error, { projectId, objectGuid }) => [
-                { type: "Form" as const, id: `ID_LIST-${projectId}-${objectGuid}` },
-            ],
-        }),
         listTemplates: builder.query<TemplateId[], { projectId: ProjectId }>({
             query: ({ projectId }) => `projects/${projectId}/templates/ids`,
             providesTags: [{ type: "Template" as const, id: "ID_LIST" }],
         }),
-        getTemplates: builder.query<Template[], { projectId: ProjectId }>({
-            query: ({ projectId }) => `projects/${projectId}/templates`,
-            providesTags: (result, _error, { projectId }) =>
-                result?.length
-                    ? [
-                          { type: "Template" as const, id: "LIST" },
-                          ...result.map(({ id }) => ({ type: "Template" as const, id: `${projectId}-${id}` })),
-                      ]
-                    : [{ type: "Template" as const, id: "LIST" }],
-        }),
-        createForm: builder.mutation<TemplateId, { projectId: ProjectId; template: Partial<Template> }>({
+        createSearchForm: builder.mutation<TemplateId, { projectId: ProjectId; template: Partial<Template> }>({
             query: ({ projectId, template }) => ({
                 body: template,
                 url: `projects/${projectId}/forms`,
@@ -43,15 +31,36 @@ export const formsApi = createApi({
                 },
             }),
             invalidatesTags: (result, _error, { projectId }) => [
-                { type: "Form" as const, id: "LIST" },
-                { type: "Template" as const, id: "LIST" },
                 { type: "Template" as const, id: "ID_LIST" },
                 { type: "Template" as const, id: `${projectId}-${result}` },
-                { type: "Form" as const, id: `ID_LIST-${projectId}-${result}` },
                 { type: "Form" as const, id: `LIST-${projectId}` },
+                { type: "Form" as const, id: `${projectId}-${result}` },
             ],
         }),
-        getForm: builder.query<Partial<Form>, { projectId: ProjectId; objectGuid: FormObjectGuid; formId: FormId }>({
+        createLocationForm: builder.mutation<FormInstanceId, { projectId: ProjectId; form: Partial<Form> }>({
+            query: ({ projectId, form }) => ({
+                body: form,
+                url: `projects/${projectId}/location`,
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (result, _error, { projectId, form }) => [
+                { type: "Template" as const, id: `ID_LIST` },
+                { type: "Template" as const, id: `${projectId}-${form.id}` },
+                { type: "Form" as const, id: `${projectId}-${result}` },
+                {
+                    type: "Form" as const,
+                    id: `${projectId}-${form.id}-${result}`,
+                },
+            ],
+        }),
+        getSearchForm: builder.query<
+            Partial<Form>,
+            { projectId: ProjectId; objectGuid: FormObjectGuid; formId: FormId }
+        >({
             query: ({ projectId, objectGuid, formId }) => `projects/${projectId}/objects/${objectGuid}/forms/${formId}`,
             providesTags: (_result, _error, { projectId, objectGuid, formId }) => [
                 {
@@ -60,7 +69,18 @@ export const formsApi = createApi({
                 },
             ],
         }),
-        getForms: builder.query<Partial<Form>[], { projectId: ProjectId; objectGuid: FormObjectGuid }>({
+        getLocationForm: builder.query<Partial<Form>, { projectId: ProjectId; templateId: TemplateId; formId: FormId }>(
+            {
+                query: ({ projectId, templateId, formId }) => `projects/${projectId}/location/${templateId}/${formId}`,
+                providesTags: (_result, _error, { projectId, templateId, formId }) => [
+                    {
+                        type: "Form" as const,
+                        id: `${projectId}-${templateId}-${formId}`,
+                    },
+                ],
+            }
+        ),
+        getSearchForms: builder.query<Partial<Form>[], { projectId: ProjectId; objectGuid: FormObjectGuid }>({
             query: ({ projectId, objectGuid }) => `projects/${projectId}/objects/${objectGuid}/forms`,
             providesTags: (result, _error, { projectId, objectGuid }) =>
                 result?.length
@@ -79,7 +99,7 @@ export const formsApi = createApi({
                 { type: "Template" as const, id: `${projectId}-${templateId}` },
             ],
         }),
-        updateForm: builder.mutation<
+        updateSearchForm: builder.mutation<
             void,
             { projectId: ProjectId; formId: FormId; objectGuid: FormObjectGuid; form: Partial<Form> }
         >({
@@ -92,23 +112,50 @@ export const formsApi = createApi({
                     "Content-Type": "application/json",
                 },
             }),
-            invalidatesTags: (result, _error, { projectId, objectGuid, formId }) => [
-                { type: "Form" as const, id: "LIST" },
-                { type: "Form" as const, id: `${projectId}-${objectGuid}-${formId}` },
+            invalidatesTags: (_result, _error, { projectId, objectGuid, formId }) => [
+                { type: "Template" as const, id: "ID_LIST" },
                 { type: "Template" as const, id: `${projectId}-${formId}` },
+                { type: "Form" as const, id: `LIST-${projectId}` },
+                {
+                    type: "Form" as const,
+                    id: `${projectId}-${objectGuid}-${formId}`,
+                },
+                { type: "Form" as const, id: `${projectId}-${formId}` },
+            ],
+        }),
+        updateLocationForm: builder.mutation<
+            void,
+            { projectId: ProjectId; formId: FormId; templateId: TemplateId; form: Partial<Form> }
+        >({
+            query: ({ projectId, templateId, formId, form }) => ({
+                body: form,
+                url: `projects/${projectId}/location/${templateId}/${formId}`,
+                method: "PATCH",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (_result, _error, { projectId, templateId, formId }) => [
+                { type: "Template" as const, id: "ID_LIST" },
+                { type: "Template" as const, id: `${projectId}-${templateId}` },
+                {
+                    type: "Form" as const,
+                    id: `${projectId}-${templateId}-${formId}`,
+                },
             ],
         }),
     }),
 });
 
 export const {
-    useListObjectsWithFormsQuery,
     useListTemplatesQuery,
-    useListFormsForObjectQuery,
-    useGetTemplatesQuery,
-    useGetFormsQuery,
+    useGetSearchFormQuery,
+    useGetLocationFormQuery,
+    useGetSearchFormsQuery,
     useGetTemplateQuery,
-    useCreateFormMutation,
-    useGetFormQuery,
-    useUpdateFormMutation,
+    useCreateSearchFormMutation,
+    useCreateLocationFormMutation,
+    useUpdateSearchFormMutation,
+    useUpdateLocationFormMutation,
 } = formsApi;

@@ -24,7 +24,7 @@ import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { useCreateFormMutation } from "../../api";
+import { useCreateSearchFormMutation } from "../../api";
 import { FormItem, Template, TemplateType } from "../../types";
 import { getFormItemTypeDisplayName, idsToObjects, toFormFields } from "../../utils";
 
@@ -55,7 +55,7 @@ export function CreateForm({
     } = useExplorerGlobals(true);
 
     const sceneId = useSceneId();
-    const [createForm, { isLoading: creatingForm }] = useCreateFormMutation();
+    const [createForm, { isLoading: creatingForm }] = useCreateSearchFormMutation();
 
     const user = useAppSelector(selectUser);
 
