@@ -2,7 +2,7 @@ import { FormEvent } from "react";
 import { useHistory } from "react-router-dom";
 
 import { usePutArcgisWidgetConfigMutation } from "apis/dataV2/dataV2Api";
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus } from "types/misc";

@@ -16,7 +16,7 @@ import { MeasureError, Profile } from "@novorender/api";
 import { ParentSize } from "@visx/responsive";
 import { useEffect, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Divider,
     IosSwitch,

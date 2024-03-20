@@ -1,7 +1,7 @@
 import { Search } from "@mui/icons-material";
 import { Checkbox, InputAdornment, Menu, MenuItem, MenuProps, Typography, useTheme } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { TextField } from "components";
 import { selectUser } from "slices/authSlice";
 

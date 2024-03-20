@@ -10,7 +10,7 @@ import {
     useTheme,
 } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { renderActions } from "features/render";
 import NovorenderIcon from "media/icons/novorender-small.svg?react";
 import { selectIsOnline } from "slices/explorer";

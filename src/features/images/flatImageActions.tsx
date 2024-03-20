@@ -1,7 +1,7 @@
 import { Cameraswitch, ChevronLeft, ChevronRight, FlightTakeoff } from "@mui/icons-material";
 import { Box, IconButton } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { imagesActions, isPanorama, selectActiveImage, selectImagesData } from "features/images";
 import { CameraType, renderActions } from "features/render";

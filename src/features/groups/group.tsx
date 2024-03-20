@@ -16,7 +16,7 @@ import {
 import { MouseEvent, useState } from "react";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
-import { useAppSelector } from "app";
+import { useAppSelector } from "app/redux-store-interactions";
 import { Tooltip } from "components";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { ColorPicker } from "features/colorPicker";

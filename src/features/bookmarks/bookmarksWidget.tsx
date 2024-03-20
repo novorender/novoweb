@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Switch } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
 import { dataApi } from "apis/dataV1";
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";

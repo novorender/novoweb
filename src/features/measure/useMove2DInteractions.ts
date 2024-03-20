@@ -1,7 +1,7 @@
 import { ReadonlyVec2 } from "gl-matrix";
 import { MutableRefObject, useCallback, useLayoutEffect } from "react";
 
-import { useAppSelector } from "app";
+import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { MeasureInteractionPositions } from "./measureInteractions";

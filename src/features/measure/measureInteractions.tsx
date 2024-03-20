@@ -2,7 +2,7 @@ import { css, styled } from "@mui/material";
 import { vec2 } from "gl-matrix";
 import { Fragment, SVGProps } from "react";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areaActions, selectAreas } from "features/area";

@@ -4,7 +4,7 @@ import { packageVersion as webglApiVersion } from "@novorender/api";
 import { useCallback, useEffect, useState } from "react";
 
 import { dataApi } from "apis/dataV1";
-import { useAppSelector } from "app";
+import { useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { StorageKey } from "config/storage";
 import { useSceneId } from "hooks/useSceneId";

@@ -2,7 +2,7 @@ import { MyLocation as MyLocationIcon } from "@mui/icons-material";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { vec3 } from "gl-matrix";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Divider,
     IosSwitch,

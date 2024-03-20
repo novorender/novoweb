@@ -2,7 +2,7 @@ import { Close, FlightTakeoff } from "@mui/icons-material";
 import { Box, Button, IconButton, Typography } from "@mui/material";
 import { quat } from "gl-matrix";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraType, renderActions, selectStamp, StampKind } from "features/render";

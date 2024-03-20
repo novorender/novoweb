@@ -3,7 +3,7 @@ import { Box, Button, FormControlLabel, useTheme } from "@mui/material";
 import { FormEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox, Switch as SwitchInput } from "components";
 
 import { initialFilters, jiraActions, JiraFilterType, selectJiraFilters } from "../jiraSlice";

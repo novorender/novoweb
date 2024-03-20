@@ -1,11 +1,13 @@
-import { useAppSelector } from "app";
-import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
+import { useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig, WidgetKey } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorer";
 
+import { LogoSpeedDial } from "./logoSpeedDial";
 import { ScrollBox } from "./scrollBox";
+import { WidgetContainer } from "./widgetContainer";
+import { WidgetHeader } from "./widgetHeader";
 
 export function WidgetError({ widgetKey }: { widgetKey: WidgetKey }) {
     const config = featuresConfig[widgetKey];

@@ -1,6 +1,6 @@
 import { useTheme } from "@mui/material";
 
-import { useAppSelector } from "app";
+import { useAppSelector } from "app/redux-store-interactions";
 
 import { LocationStatus, selectCurrentLocation, selectLocationStatus } from "./myLocationSlice";
 

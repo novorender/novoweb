@@ -1,6 +1,6 @@
 import { quat, vec3 } from "gl-matrix";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";

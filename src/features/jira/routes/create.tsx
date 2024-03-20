@@ -21,7 +21,7 @@ import { useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";

@@ -2,7 +2,7 @@ import { IQueryFeaturesResponse } from "@esri/arcgis-rest-feature-service";
 import { IFeature, request } from "@esri/arcgis-rest-request";
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { arcgisActions, selectArcgisFeatureServers } from "../arcgisSlice";

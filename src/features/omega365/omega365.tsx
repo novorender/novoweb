@@ -4,7 +4,7 @@ import { Fragment, useMemo } from "react";
 
 import { useGetOmega365DocumentLinksQuery, useIsOmega365ConfiguredForProjectQuery } from "apis/dataV2/dataV2Api";
 import { Omega365Document } from "apis/dataV2/omega365Types";
-import { useAppSelector } from "app";
+import { useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
     AccordionDetails,

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
-import { useAppSelector } from "app";
+import { useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { canvasContextMenuConfig } from "config/canvasContextMenu";
 import { featuresConfig, FeatureType } from "config/features";

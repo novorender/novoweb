@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { MemoryRouter, Route, Switch } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, Tooltip, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";

@@ -1,7 +1,7 @@
 import { EnvironmentDescription, View } from "@novorender/api";
 import { useEffect } from "react";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus } from "types/misc";
 

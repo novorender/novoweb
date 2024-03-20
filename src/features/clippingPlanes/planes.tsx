@@ -3,7 +3,7 @@ import { Box, Button, Slider } from "@mui/material";
 import { ReadonlyQuat, ReadonlyVec3, vec3, vec4 } from "gl-matrix";
 import { SyntheticEvent, useEffect, useRef, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { getSnapToPlaneParams } from "features/orthoCam/utils";
 import { CameraType, renderActions, selectCameraType, selectClippingPlanes } from "features/render";

@@ -1,7 +1,7 @@
 import { vec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectProjectSettings } from "features/render";
 import { latLon2Tm } from "features/render/utils";

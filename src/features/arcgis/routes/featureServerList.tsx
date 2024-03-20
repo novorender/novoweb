@@ -26,7 +26,7 @@ import { vec3 } from "gl-matrix";
 import { useCallback, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary, ScrollBox } from "components";
 import { CameraType, renderActions } from "features/render";
 import { selectHasAdminCapabilities } from "slices/explorer";

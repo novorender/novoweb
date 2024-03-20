@@ -23,7 +23,7 @@ import pMap from "p-map";
 import { FocusEvent, MouseEvent, MutableRefObject, useEffect, useState } from "react";
 
 import { useGetPropertyTreeFavoritesQuery, useSetPropertyTreeFavoritesMutation } from "apis/dataV2/dataV2Api";
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";

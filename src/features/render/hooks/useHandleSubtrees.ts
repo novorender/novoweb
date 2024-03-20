@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { useAppSelector } from "app";
+import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ViewMode } from "types/misc";
 

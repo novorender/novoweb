@@ -3,7 +3,7 @@ import { Autocomplete, Box, Button, createFilterOptions, Typography, useTheme } 
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { renderActions, selectProjectSettings } from "features/render";
 

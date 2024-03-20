@@ -3,7 +3,7 @@ import { Box, Button, IconButton, List, Snackbar, snackbarContentClasses } from 
 import { useEffect, useRef, useState } from "react";
 
 import { useGetPropertyTreeFavoritesQuery } from "apis/dataV2/dataV2Api";
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
     AccordionDetails,

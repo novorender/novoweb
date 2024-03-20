@@ -4,7 +4,7 @@ import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { useEffect, useRef, useState } from "react";
 import { FixedSizeList, ListOnScrollProps } from "react-window";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";

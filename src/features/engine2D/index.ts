@@ -1,5 +1,3 @@
-export { Engine2D } from "./engine2D";
-export { Engine2DInteractions } from "./engine2DInteractions";
 export {
     drawPart,
     getInteractionPositions,
@@ -11,5 +9,6 @@ export {
     drawLineStrip,
     type CameraState,
     vec3Sum,
+    type ColorSettings,
 } from "./utils";
 export { measurementFillColor } from "./config";

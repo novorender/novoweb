@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { useEffect } from "react";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { ClearSelection } from "features/clearSelection";
 import { ClearView } from "features/clearView";
 import { HideSelected } from "features/hideSelected";

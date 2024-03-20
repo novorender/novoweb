@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 
-import { useAppSelector } from "app";
+import { useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig, WidgetKey } from "config/features";
 import { selectMaximized, selectMinimized } from "slices/explorer";
 

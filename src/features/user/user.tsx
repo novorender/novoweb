@@ -3,7 +3,7 @@ import { Box, CircularProgress, Grid } from "@mui/material";
 import { useState } from "react";
 
 import { dataApi } from "apis/dataV1";
-import { useAppSelector } from "app";
+import { useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";

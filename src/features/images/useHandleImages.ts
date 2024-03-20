@@ -1,7 +1,7 @@
 import { downloadGLTF, RenderStateDynamicObject, View } from "@novorender/api";
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraType, renderActions, selectViewMode } from "features/render";
 import { useAbortController } from "hooks/useAbortController";

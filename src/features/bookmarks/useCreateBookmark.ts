@@ -1,7 +1,7 @@
 import { Bookmark, ExplorerBookmarkState } from "@novorender/data-js-api";
 import { ReadonlyVec3 } from "gl-matrix";
 
-import { useAppSelector } from "app";
+import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useLazyHidden } from "contexts/hidden";
 import { HighlightCollection, useLazyHighlightCollections } from "contexts/highlightCollections";
@@ -23,7 +23,7 @@ import {
     TraceMeasurement,
 } from "features/outlineLaser";
 import { selectPointLines } from "features/pointLine";
-import { selectPropertyTreeBookmarkState } from "features/propertyTree/slice";
+import { selectPropertyTreeBookmarkState } from "features/propertyTree";
 import {
     selectBackground,
     selectClippingPlanes,

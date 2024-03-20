@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { StorageKey } from "config/storage";
 import { selectConfig } from "slices/explorer";
 import { AsyncStatus } from "types/misc";

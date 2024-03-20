@@ -5,7 +5,7 @@ import { Fragment, useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ImgModal, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";

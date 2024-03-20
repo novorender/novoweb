@@ -1,7 +1,7 @@
 import { css, styled, Theme } from "@mui/material";
 import { SVGProps } from "react";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 
 import { jiraActions, selectJiraActiveIssue, selectJiraHoveredEntity } from "./jiraSlice";

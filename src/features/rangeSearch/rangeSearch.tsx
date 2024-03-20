@@ -5,7 +5,7 @@ import { format, isValid, parse } from "date-fns";
 import { CSSProperties, FormEvent, useCallback, useRef, useState } from "react";
 import { ListOnScrollProps } from "react-window";
 
-import { useAppSelector } from "app";
+import { useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, LogoSpeedDial, ScrollBox, Switch, TextField, WidgetContainer, WidgetHeader } from "components";
 import { rangeSearchDateFormat } from "config/app";
 import { featuresConfig } from "config/features";

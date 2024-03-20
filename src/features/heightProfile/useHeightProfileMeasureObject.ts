@@ -2,7 +2,7 @@ import { MeasureEntity } from "@novorender/api";
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus } from "types/misc";
 

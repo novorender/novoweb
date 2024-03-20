@@ -2,7 +2,7 @@ import type { ObjectGroup, SceneData } from "@novorender/data-js-api";
 import type { BoundingSphere, Camera, Internal } from "@novorender/webgl-api";
 import { quat, vec3 } from "gl-matrix";
 
-import { DitioMachine } from "features/ditio";
+import { type DitioMachine } from "features/ditio";
 import { LogPoint, MachineLocation } from "features/xsiteManage";
 import { CustomProperties } from "types/project";
 

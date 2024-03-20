@@ -2,7 +2,7 @@ import { css, styled, useTheme } from "@mui/material";
 import { mat3, quat, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 import { Fragment, useEffect, useRef, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHighlighted } from "contexts/highlighted";
 import { renderActions, selectCameraType } from "features/render";

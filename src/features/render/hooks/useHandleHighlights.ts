@@ -7,7 +7,7 @@ import {
 import { useEffect, useRef } from "react";
 
 import { dataApi } from "apis/dataV1";
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHidden } from "contexts/hidden";
 import { useHighlightCollections } from "contexts/highlightCollections";

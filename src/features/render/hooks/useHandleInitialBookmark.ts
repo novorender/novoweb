@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 import { dataApi } from "apis/dataV1";
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
 import { useSceneId } from "hooks/useSceneId";

@@ -2,11 +2,11 @@ import { DrawModule } from "@novorender/api";
 import { ColorRGBA } from "@novorender/webgl-api";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
-import { useAppSelector } from "app";
+import { useAppSelector } from "app/redux-store-interactions";
 import { Canvas2D } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraState, drawPart, getCameraState } from "features/engine2D";
-import { ColorSettings } from "features/engine2D/utils";
+import { type ColorSettings } from "features/engine2D";
 import { AsyncStatus } from "types/misc";
 
 import { selectArcgisFeatureServers, selectArcgisSelectedFeature } from "../arcgisSlice";

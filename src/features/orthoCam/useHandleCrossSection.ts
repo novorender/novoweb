@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { CameraType, renderActions, selectCameraType, selectViewMode } from "features/render";
 import { ViewMode } from "types/misc";
 

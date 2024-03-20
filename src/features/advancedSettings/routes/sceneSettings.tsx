@@ -4,7 +4,7 @@ import { quat, vec3 } from "gl-matrix";
 import { MouseEvent, SyntheticEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
     AccordionDetails,
