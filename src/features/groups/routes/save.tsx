@@ -1,8 +1,8 @@
 import { Box, Checkbox, FormControlLabel, useTheme } from "@mui/material";
-import { dataApi } from "apis/dataV1";
 import { FormEvent } from "react";
 import { useHistory } from "react-router-dom";
 
+import { dataApi } from "apis/dataV1";
 import { useAppDispatch, useAppSelector } from "app";
 import { Confirmation } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";

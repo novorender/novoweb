@@ -3,13 +3,14 @@ import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { selectCamera, selectClippingPlanes } from "features/render";
+
 import {
     clippingOutlineLaserActions,
     OutlineLaser,
     selectOutlineLaserPlane,
     selectOutlineLasers,
-} from "features/outlineLaser";
-import { selectCamera, selectClippingPlanes } from "features/render";
+} from "./outlineLaserSlice";
 
 export function useHandleOutlineLasers() {
     const {

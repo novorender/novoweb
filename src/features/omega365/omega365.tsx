@@ -1,9 +1,9 @@
 import { Download, OpenInNew } from "@mui/icons-material";
 import { Box, Button, useTheme } from "@mui/material";
-import { useGetOmega365DocumentLinksQuery, useIsOmega365ConfiguredForProjectQuery } from "apis/dataV2/dataV2Api";
-import { Omega365Document } from "apis/dataV2/omega365Types";
 import { Fragment, useMemo } from "react";
 
+import { useGetOmega365DocumentLinksQuery, useIsOmega365ConfiguredForProjectQuery } from "apis/dataV2/dataV2Api";
+import { Omega365Document } from "apis/dataV2/omega365Types";
 import { useAppSelector } from "app";
 import {
     Accordion,

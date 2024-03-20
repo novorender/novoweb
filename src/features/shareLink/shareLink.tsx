@@ -1,9 +1,9 @@
 import { Close } from "@mui/icons-material";
 import { IconButton, Snackbar, Typography } from "@mui/material";
-import { dataApi } from "apis/dataV1";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
+import { dataApi } from "apis/dataV1";
 import { useAppSelector } from "app";
 import { WidgetMenuButtonWrapper } from "components";
 import { featuresConfig } from "config/features";

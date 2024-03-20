@@ -1,9 +1,9 @@
 import { Box } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
-import { dataApi } from "apis/dataV1";
 import { useCallback, useEffect, useState } from "react";
 import { Route, Switch, useParams, useRouteMatch } from "react-router-dom";
 
+import { dataApi } from "apis/dataV1";
 import { LinearProgress } from "components";
 import { objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
 import { useToggle } from "hooks/useToggle";

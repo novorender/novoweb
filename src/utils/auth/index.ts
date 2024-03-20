@@ -1,5 +1,4 @@
 import { dataApi } from "apis/dataV1";
-
 import { WidgetKey } from "config/features";
 import { User } from "slices/authSlice";
 import { base64UrlEncode, generateRandomString, sha256 } from "utils/misc";

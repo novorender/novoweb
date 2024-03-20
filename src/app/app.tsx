@@ -11,7 +11,7 @@ import { useRegisterSW } from "virtual:pwa-register/react";
 import { dataApi } from "apis/dataV1";
 import { Loading } from "components";
 import { StorageKey } from "config/storage";
-// import { Explorer } from "pages/explorer";
+import { Explorer } from "pages/explorer";
 import { authActions } from "slices/authSlice";
 import { explorerActions, selectConfig } from "slices/explorer";
 import { getOAuthState, getUser } from "utils/auth";

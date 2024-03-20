@@ -8,8 +8,8 @@ import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlo
 import { useHandleClipping } from "features/clippingPlanes";
 import { useHandleDeviations } from "features/deviations";
 import { useHandleDitioAuth } from "features/ditio";
-import { Engine2D } from "features/engine2D";
 import { Engine2DInteractions } from "features/engine2D";
+import { Engine2D } from "features/engine2D/";
 import { useHandleImages } from "features/images";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { useHandleManhole } from "features/manhole";

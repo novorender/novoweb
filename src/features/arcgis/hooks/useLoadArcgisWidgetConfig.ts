@@ -1,6 +1,6 @@
-import { useGetArcgisWidgetConfigQuery } from "apis/dataV2/dataV2Api";
 import { useEffect } from "react";
 
+import { useGetArcgisWidgetConfigQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectProjectIsV2 } from "slices/explorer";

@@ -4,9 +4,9 @@ import {
     createTransparentHighlight,
     RenderStateHighlightGroup,
 } from "@novorender/api";
-import { dataApi } from "apis/dataV1";
 import { useEffect, useRef } from "react";
 
+import { dataApi } from "apis/dataV1";
 import { useAppDispatch, useAppSelector } from "app";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHidden } from "contexts/hidden";

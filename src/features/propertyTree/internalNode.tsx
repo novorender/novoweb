@@ -19,10 +19,10 @@ import {
     MenuItem,
     Typography,
 } from "@mui/material";
-import { useGetPropertyTreeFavoritesQuery, useSetPropertyTreeFavoritesMutation } from "apis/dataV2/dataV2Api";
 import pMap from "p-map";
 import { FocusEvent, MouseEvent, MutableRefObject, useEffect, useState } from "react";
 
+import { useGetPropertyTreeFavoritesQuery, useSetPropertyTreeFavoritesMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app";
 import { LinearProgress } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";

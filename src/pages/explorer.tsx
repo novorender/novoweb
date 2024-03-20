@@ -1,7 +1,7 @@
 import { SearchPattern } from "@novorender/webgl-api";
 import { ReactNode, useEffect } from "react";
 
-import { useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
 import { HiddenProvider } from "contexts/hidden";
 import { HighlightCollectionsProvider } from "contexts/highlightCollections";

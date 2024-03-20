@@ -1,9 +1,9 @@
 import { computeRotation, rotationFromDirection } from "@novorender/api";
 import { SceneData, SceneLoadFail } from "@novorender/data-js-api";
 import { GeoLocation, Internal } from "@novorender/webgl-api";
-import { dataApi } from "apis/dataV1";
 import { quat, vec3, vec4 } from "gl-matrix";
 
+import { dataApi } from "apis/dataV1";
 import { CustomProperties } from "types/project";
 
 import { CadCamera, SceneConfig, Subtrees, SubtreeStatus } from "./types";

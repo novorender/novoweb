@@ -1,8 +1,8 @@
 import { Close, DeleteSweep, OpenInNew } from "@mui/icons-material";
 import { Box, Button, IconButton, List, Snackbar, snackbarContentClasses } from "@mui/material";
-import { useGetPropertyTreeFavoritesQuery } from "apis/dataV2/dataV2Api";
 import { useEffect, useRef, useState } from "react";
 
+import { useGetPropertyTreeFavoritesQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app";
 import {
     Accordion,
