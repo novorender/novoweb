@@ -1,11 +1,10 @@
 import { AuthenticationHeader } from "@novorender/data-js-api";
 
-export async function getAuthHeader(): Promise<AuthenticationHeader> {
-    // const {
-    //     auth: { accessToken },
-    // } = store.getState();
+import { StorageKey } from "config/storage";
+import { getFromStorage } from "utils/storage";
 
-    const accessToken = ""; //todo
+export async function getAuthHeader(): Promise<AuthenticationHeader> {
+    const accessToken = getFromStorage(StorageKey.AccessToken);
 
     if (!accessToken) {
         return { header: "", value: "" };

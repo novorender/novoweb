@@ -5,14 +5,14 @@
     "description": "Novorender frontend",
     "main": "index.js",
     "scripts": {
-        "build": "npm run eslint && npm run typescript && vite build",
+        "build": "npm run eslint && npm run typescript && npm run skott && vite build",
         "dev": "vite",
         "preview": "vite preview",
         "typescript": "tsc --noEmit",
         "eslint": "eslint src/ --max-warnings=0",
         "start": "node server.mjs",
         "dependencies": "node scripts/dependencies.cjs",
-        "madge": "madge --warning --extensions ts,tsx --image dep.png --circular src/index.tsx"
+        "skott": "skott src/index.tsx -s -m file-tree -nit"
     },
     "repository": {
         "type": "git",
@@ -46,8 +46,8 @@
         "eslint-plugin-simple-import-sort": "^10.0.0",
         "husky": "^7.0.2",
         "lint-staged": "^11.1.2",
-        "madge": "^6.1.0",
         "prettier": "^2.3.2",
+        "skott": "^0.33.2",
         "typescript": "^5.1.6",
         "vite": "^5.0.12",
         "vite-plugin-env-compatible": "^2.0.1",
@@ -88,7 +88,6 @@
         "react-router-dom": "^5.3.3",
         "react-virtualized-auto-sizer": "^1.0.6",
         "react-window": "^1.8.6",
-        "skott": "^0.33.2",
         "uuid": "^8.3.2",
         "vite-plugin-circular-dependency": "^0.4.0"
     },

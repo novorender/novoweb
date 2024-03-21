@@ -182,6 +182,7 @@ export function App() {
                             })
                         );
                         dispatch(authActions.login({ accessToken: res.access_token, user }));
+                        saveToStorage(StorageKey.AccessToken, res.access_token);
                     }
                 }
             } else {
@@ -232,6 +233,7 @@ export function App() {
                             );
 
                             dispatch(authActions.login({ accessToken: res.access_token, user }));
+                            saveToStorage(StorageKey.AccessToken, res.access_token);
                         }
                     }
                 } catch (e) {
@@ -261,6 +263,7 @@ export function App() {
 
             if (accessToken && user) {
                 dispatch(authActions.login({ accessToken, user }));
+                saveToStorage(StorageKey.AccessToken, accessToken);
             }
             setAuthStatus(Status.Ready);
         }

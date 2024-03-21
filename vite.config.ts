@@ -4,7 +4,6 @@ import basicSsl from "@vitejs/plugin-basic-ssl";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 import { defineConfig, loadEnv, ServerOptions } from "vite";
-import circleDependency from "vite-plugin-circular-dependency";
 import envCompatible from "vite-plugin-env-compatible";
 import { VitePWA, VitePWAOptions } from "vite-plugin-pwa";
 import svgr from "vite-plugin-svgr";
@@ -193,7 +192,6 @@ export default defineConfig(({ mode }) => {
         },
         envPrefix: "REACT_APP_",
         plugins: [
-            circleDependency({ outputFilePath: "./circleDep", include: "./src/features/render/**/*" }),
             react(),
             envCompatible(),
             svgr({ svgrOptions: { titleProp: true } }),

@@ -14,15 +14,15 @@ import {
     selectManholeCollisionSettings,
     selectManholeCollisionTarget,
     selectManholeMeasureValues,
-} from "features/manhole";
-import { selectMeasure } from "features/measure";
+} from "features/manhole/manholeSlice";
+import { selectMeasure } from "features/measure/measureSlice";
 import {
     getMeasurePointsFromTracer,
     selectOutlineLaserPlane,
     selectOutlineLasers,
     TraceMeasurement,
-} from "features/outlineLaser";
-import { selectPointLines } from "features/pointLine";
+} from "features/outlineLaser/outlineLaserSlice";
+import { selectPointLines } from "features/pointLine/pointLineSlice";
 import { selectPropertyTreeBookmarkState } from "features/propertyTree";
 import {
     selectBackground,
@@ -35,8 +35,8 @@ import {
     selectSubtrees,
     selectTerrain,
     selectViewMode,
-    SubtreeStatus,
-} from "features/render";
+} from "features/render/renderSlice";
+import { SubtreeStatus } from "features/render/types";
 import { ViewMode } from "types/misc";
 
 export function useCreateBookmark() {
