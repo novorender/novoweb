@@ -8,8 +8,8 @@ import { HighlightCollection, useLazyHighlightCollections } from "contexts/highl
 import { useLazyHighlighted } from "contexts/highlighted";
 import { GroupStatus, isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
-import { selectAreas } from "features/area";
-import { selectFollowPath } from "features/followPath";
+import { selectAreas } from "features/area/areaSlice";
+import { selectFollowPath } from "features/followPath/followPathSlice";
 import {
     selectManholeCollisionSettings,
     selectManholeCollisionTarget,

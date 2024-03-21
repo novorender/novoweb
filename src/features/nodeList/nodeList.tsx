@@ -18,7 +18,7 @@ import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
 
 import { useLazyGetFileDownloadLinkQuery } from "apis/dataV2/dataV2Api";
-import { useAppDispatch } from "app";
+import { useAppDispatch } from "app/redux-store-interactions";
 import { FixedSizeVirualizedList, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden, useIsHidden } from "contexts/hidden";

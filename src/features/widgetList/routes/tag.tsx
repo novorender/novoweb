@@ -3,7 +3,9 @@ import { Box, Button, Grid, IconButton, Typography, useTheme } from "@mui/materi
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
-import { Divider, ScrollBox, WidgetMenuButtonWrapper } from "components";
+import { Divider } from "components/divider";
+import { ScrollBox } from "components/scrollBox";
+import { WidgetMenuButtonWrapper } from "components/widgetMenuButtonWrapper";
 import { FeatureTagKey, WidgetKey } from "config/features";
 import { selectEnabledWidgets, selectIsOnline, selectLockedWidgets, selectWidgets } from "slices/explorer";
 

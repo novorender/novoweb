@@ -3,7 +3,7 @@ import { FollowParametricObject } from "@novorender/api";
 import { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch } from "app";
+import { useAppDispatch } from "app/redux-store-interactions";
 import { LinearProgress } from "components";
 import { Picker, renderActions } from "features/render";
 import { AsyncStatus } from "types/misc";

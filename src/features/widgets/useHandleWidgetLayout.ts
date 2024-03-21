@@ -1,7 +1,7 @@
 import { useMediaQuery, useTheme } from "@mui/material";
 import { useEffect } from "react";
 
-import { useAppDispatch } from "app";
+import { useAppDispatch } from "app/redux-store-interactions";
 import { explorerActions } from "slices/explorer";
 
 export function useHandleWidgetLayout() {

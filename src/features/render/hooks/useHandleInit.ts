@@ -5,7 +5,7 @@ import { quat, vec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
 import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
-import { useAppDispatch } from "app";
+import { useAppDispatch } from "app/redux-store-interactions";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,

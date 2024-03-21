@@ -10,7 +10,7 @@ import {
     WheelEvent,
 } from "react";
 
-import { isIpad, isIphone, useAppDispatch, useAppSelector } from "app";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectShowTracer } from "features/followPath";
 import { measureActions, selectMeasureHoverSettings } from "features/measure";
@@ -30,6 +30,11 @@ import {
 import { moveSvgCursor } from "../svgUtils";
 import { CameraType, Picker, StampKind, SubtreeStatus } from "../types";
 import { useCanvasContextMenuHandler } from "./useCanvasContextMenuHandler";
+
+export const isIpad =
+    /\biPad/.test(navigator.userAgent) ||
+    (/\bMobile\b/.test(navigator.userAgent) && /\bMacintosh\b/.test(navigator.userAgent));
+export const isIphone = /\biPhone/.test(navigator.userAgent);
 
 export function useCanvasEventHandlers({
     pointerPosRef,

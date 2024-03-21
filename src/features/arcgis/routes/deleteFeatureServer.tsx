@@ -1,6 +1,6 @@
 import { useHistory, useLocation } from "react-router-dom";
 
-import { useAppDispatch } from "app";
+import { useAppDispatch } from "app/redux-store-interactions";
 import { Confirmation } from "components";
 
 import { arcgisActions } from "../arcgisSlice";

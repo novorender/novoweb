@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { dataApi } from "apis/dataV1";
 import { useAppSelector } from "app/redux-store-interactions";
-import { WidgetMenuButtonWrapper } from "components";
+import { WidgetMenuButtonWrapper } from "components/widgetMenuButtonWrapper";
 import { featuresConfig } from "config/features";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
 import { selectViewMode } from "features/render";
