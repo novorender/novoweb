@@ -1,7 +1,6 @@
 import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, Typography, useTheme } from "@mui/material";
 import { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 
 import { useAppSelector } from "app/store";
 import { ScrollBox } from "components";
@@ -19,7 +18,7 @@ export function Login({ sceneId }: { sceneId: string }) {
     const config = useAppSelector(selectConfig);
 
     const handleLoginRedirect = () => {
-        const id = uuidv4();
+        const id = window.crypto.randomUUID();
         const state = createOAuthStateString({
             sceneId,
             service: featuresConfig.jira.key,
