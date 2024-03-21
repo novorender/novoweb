@@ -52,7 +52,6 @@ export const ditioApi = createApi({
                 method: "POST",
                 body: {
                     projectIds: projects,
-                    limit: 150,
                     sortBy: "newest",
                     includeSearchResultTypes: [SearchResultType.Checklist],
                     checklistSearchParameters: {
@@ -63,7 +62,7 @@ export const ditioApi = createApi({
                 },
             }),
             transformResponse: async (res: GetDataResponse) => {
-                return res.Checklists;
+                return res.Checklists.slice(0, 100);
             },
         }),
         getChecklists: builder.query<Checklist[], { ids: string[] }>({
@@ -79,7 +78,6 @@ export const ditioApi = createApi({
                 method: "POST",
                 body: {
                     projectIds: projects,
-                    limit: 150,
                     sortBy: "newest",
                     includeSearchResultTypes: [SearchResultType.FeedPost, SearchResultType.Alert],
                     feedSearchParameters: {
@@ -91,14 +89,14 @@ export const ditioApi = createApi({
             }),
             transformResponse: async (res: GetDataResponse, _meta, { filters }) => {
                 if (filters[FilterType.Alerts] && filters[FilterType.Posts]) {
-                    return res.FeedItems;
+                    return res.FeedItems.slice(0, 100);
                 }
 
                 return res.FeedItems.filter((item) =>
                     filters[FilterType.Alerts]
                         ? item.PostOriginType === PostOriginType.Alert || item.PostOriginType === PostOriginType.AlertV2
                         : item.PostOriginType === PostOriginType.Post
-                );
+                ).slice(0, 100);
             },
         }),
         getFeed: builder.query<FeedItemPreview[], { ids: string[] }>({
