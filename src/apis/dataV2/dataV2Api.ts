@@ -7,7 +7,7 @@ import { selectConfig } from "slices/explorerSlice";
 
 import { DeviationProjectConfig } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
-import { BuildProgressResult, ProjectInfo } from "./projectTypes";
+import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
 
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: "",
@@ -136,6 +136,13 @@ export const dataV2Api = createApi({
                 },
             }),
         }),
+        searchEpsg: builder.query<EpsgSearchResult, { query: string }>({
+            query: ({ query }) => ({
+                url: `/epsg`,
+                method: "POST",
+                body: query,
+            }),
+        }),
     }),
 });
 
@@ -153,4 +160,5 @@ export const {
     useCalcDeviationsMutation,
     useGetProjectProgressQuery,
     useLazyGetFileDownloadLinkQuery,
+    useSearchEpsgQuery,
 } = dataV2Api;

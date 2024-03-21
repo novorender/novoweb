@@ -69,6 +69,7 @@ const initialState = {
     config: {
         dataServerUrl: (import.meta.env.REACT_APP_DATA_SERVER_URL ?? "https://data.novorender.com/api") as string,
         dataV2ServerUrl: (import.meta.env.REACT_APP_DATA_V2_SERVER_URL ?? "https://data-v2.novorender.com") as string,
+        projectsUrl: (import.meta.env.REACT_APP_PROJECTS_URL ?? "https://projects.novorender.com") as string,
         authServerUrl: (import.meta.env.REACT_APP_AUTH_SERVER_URL ?? "https://auth.novorender.com") as string,
         bimCollabClientSecret: (import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET ?? "") as string,
         bimCollabClientId: (import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_ID ?? "") as string,
