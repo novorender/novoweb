@@ -88,8 +88,7 @@
         "react-router-dom": "^5.3.3",
         "react-virtualized-auto-sizer": "^1.0.6",
         "react-window": "^1.8.6",
-        "uuid": "^8.3.2",
-        "vite-plugin-circular-dependency": "^0.4.0"
+        "uuid": "^8.3.2"
     },
     "lint-staged": {
         "src/**/*.{js,jsx,ts,tsx,json,css,scss,md,html}": [
