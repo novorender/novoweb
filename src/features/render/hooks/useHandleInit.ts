@@ -2,6 +2,7 @@ import { computeRotation, DeviceProfile, getDeviceProfile, rotationFromDirection
 import { ObjectDB, SceneData, SceneLoadFail } from "@novorender/data-js-api";
 import { Internal } from "@novorender/webgl-api";
 import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
+import { ProjectInfo } from "apis/dataV2/projectTypes";
 import { getGPUTier } from "detect-gpu";
 import { quat, vec3, vec4 } from "gl-matrix";
 import { useEffect, useRef } from "react";
@@ -78,11 +79,11 @@ export function useHandleInit() {
                     "index.json",
                     new AbortController().signal
                 );
-                const projectIsV2 = Boolean(
-                    await getProject({ projectId: sceneId })
-                        .unwrap()
-                        .catch(() => false)
-                );
+                const projectV2 = await getProject({ projectId: sceneId })
+                    .unwrap()
+                    .catch(() => undefined);
+                const projectIsV2 = Boolean(projectV2);
+                const tmZoneForCalc = await loadTmZoneForCalc(projectV2, sceneData.tmZone);
 
                 const offlineWorkerState =
                     view.offline &&
@@ -109,6 +110,7 @@ export function useHandleInit() {
                 dispatch(
                     renderActions.initScene({
                         projectType: projectIsV2 ? ProjectType.V2 : ProjectType.V1,
+                        tmZoneForCalc,
                         sceneData,
                         sceneConfig: octreeSceneConfig,
                         initialCamera: {
@@ -372,4 +374,19 @@ async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?:
 
     const imports = await View.downloadImports({ baseUrl: url });
     return new View(canvas, deviceProfile, imports);
+}
+
+async function loadTmZoneForCalc(projectV2: ProjectInfo | undefined, tmZoneV1: string | undefined) {
+    if (projectV2) {
+        if (projectV2.epsg) {
+            const resp = await fetch(`https://epsg.io/${projectV2.epsg}.proj4`);
+            if (resp.ok) {
+                return resp.text();
+            } else {
+                console.warn(resp.text());
+            }
+        }
+    } else {
+        return tmZoneV1;
+    }
 }

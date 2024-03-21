@@ -3,8 +3,8 @@ import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectProjectSettings } from "features/render/renderSlice";
 import { latLon2Tm } from "features/render/utils";
+import { selectTmZoneForCalc } from "slices/explorerSlice";
 
 import { LocationStatus, myLocationActions, selectShowLocationMarker } from "./myLocationSlice";
 
@@ -13,7 +13,7 @@ export function useHandleLocationMarker() {
         state: { view, scene },
     } = useExplorerGlobals();
 
-    const { tmZone } = useAppSelector(selectProjectSettings);
+    const tmZone = useAppSelector(selectTmZoneForCalc);
     const showMarker = useAppSelector(selectShowLocationMarker);
     const dispatch = useAppDispatch();
     const watchId = useRef<number>();
@@ -34,7 +34,7 @@ export function useHandleLocationMarker() {
             });
 
             function handlePositionSuccess(pos: GeolocationPosition) {
-                if (!view || !scene) {
+                if (!view || !scene || !tmZone) {
                     return;
                 }
 

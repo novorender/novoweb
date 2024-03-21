@@ -14,11 +14,11 @@ import {
 } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { renderActions, selectCameraType, selectProjectSettings } from "features/render";
+import { renderActions, selectCameraType } from "features/render";
 import { latLon2Tm } from "features/render/utils";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized, selectTmZoneForCalc } from "slices/explorerSlice";
 
 import {
     LocationStatus,
@@ -37,7 +37,7 @@ export default function MyLocation() {
         state: { view, scene },
     } = useExplorerGlobals(true);
 
-    const { tmZone } = useAppSelector(selectProjectSettings);
+    const tmZone = useAppSelector(selectTmZoneForCalc);
     const currentLocation = useAppSelector(selectCurrentLocation);
     const showMarker = useAppSelector(selectShowLocationMarker);
     const geoLocationCoords = useAppSelector(selectGeolocationPositionCoords);
@@ -67,7 +67,7 @@ export default function MyLocation() {
         });
 
         function handlePositionSuccess(geoPos: GeolocationPosition) {
-            const position = latLon2Tm({ coords: geoPos.coords, tmZone });
+            const position = latLon2Tm({ coords: geoPos.coords, tmZone: tmZone! });
             position[2] = geoPos.coords.altitude ?? view.renderState.camera.position[2];
             const outOfBounds =
                 vec3.dist(position, scene.boundingSphere.center) >
