@@ -1,7 +1,6 @@
 import { Box } from "@mui/material";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Switch } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
 import { dataApi } from "apis/dataV1";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -56,7 +55,7 @@ export default function Bookmarks() {
                         [
                             ...publicBmks.map((bm) => ({ ...bm, access: BookmarkAccess.Public })),
                             ...personalBmks.map((bm) => ({ ...bm, access: BookmarkAccess.Personal })),
-                        ].map((bm) => (bm.id ? bm : { ...bm, id: uuidv4() }))
+                        ].map((bm) => (bm.id ? bm : { ...bm, id: window.crypto.randomUUID() }))
                     )
                 );
                 dispatch(bookmarksActions.setStatus(BookmarksStatus.Running));

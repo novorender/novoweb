@@ -3,7 +3,6 @@ import { Autocomplete, Box, Button, useTheme } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { FormEventHandler, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
 import { Divider, ScrollBox, TextField } from "components";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -78,7 +77,7 @@ export function Details({
             includeDescendants,
             ids: new Set(ids),
             grouping: collection,
-            id: uuidv4(),
+            id: window.crypto.randomUUID(),
             status: GroupStatus.Selected,
             search: [...savedInputs],
             color: [1, 0, 0, 1],

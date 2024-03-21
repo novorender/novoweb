@@ -1,7 +1,6 @@
 import { Autocomplete, Box, Button, Checkbox, FormControlLabel, useTheme } from "@mui/material";
 import { FormEventHandler, useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { ScrollBox, TextField } from "components";
@@ -89,7 +88,7 @@ export function Crupdate() {
 
         const newBookmarks = bookmarks.concat({
             ...bm,
-            id: uuidv4(),
+            id: window.crypto.randomUUID(),
             name,
             description,
             grouping: collection,

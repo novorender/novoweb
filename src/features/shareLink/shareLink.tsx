@@ -1,7 +1,6 @@
 import { Close } from "@mui/icons-material";
 import { IconButton, Snackbar, Typography } from "@mui/material";
 import { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 
 import { dataApi } from "apis/dataV1";
 import { useAppSelector } from "app/redux-store-interactions";
@@ -36,7 +35,7 @@ export function ShareLink() {
             return;
         }
 
-        const id = uuidv4();
+        const id = window.crypto.randomUUID();
         const bm = createBookmark();
 
         setStatus(Status.Loading);
