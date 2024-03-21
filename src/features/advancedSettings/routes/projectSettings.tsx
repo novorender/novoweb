@@ -117,7 +117,7 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                             label="TM Zone"
                             helperText={
                                 isV2 ? (
-                                    <div>
+                                    <>
                                         You can edit TM Zone in{" "}
                                         <Link
                                             href={`${projectsUrl}/org/${org}?modalContext=edit&projectId=${projectId}`}
@@ -125,7 +125,7 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                                         >
                                             Projects
                                         </Link>
-                                    </div>
+                                    </>
                                 ) : null
                             }
                             InputProps={{
