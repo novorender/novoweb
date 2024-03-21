@@ -4,46 +4,63 @@ import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation } from "components";
-import { renderActions, selectDeviations } from "features/render";
+import { selectProjectIsV2 } from "slices/explorer";
+
+import { deviationsActions, selectDeviationForm, selectSelectedProfile } from "../deviationsSlice";
+import { updateFormField } from "../validation";
 
 export function CrupdateColorStop() {
+    const isProjectV2 = useAppSelector(selectProjectIsV2);
     const history = useHistory();
     const { idx: _idx } = useParams<{ idx?: string }>();
     const idx = _idx ? Number(_idx) : undefined;
-    const deviations = useAppSelector(selectDeviations);
+    const deviationForm = useAppSelector(selectDeviationForm);
+    const selectedProfile = useAppSelector(selectSelectedProfile);
+    const colorStops = deviationForm?.colorSetup.colorStops.value || selectedProfile!.colors.colorStops;
     const dispatch = useAppDispatch();
 
-    const editing = idx !== undefined ? deviations.colorGradient.knots[idx] : undefined;
+    const editing = idx !== undefined ? colorStops[idx] : undefined;
     const [deviationNumber, setDeviationNumber] = useState(editing ? String(editing.position) : "");
     const [error, setError] = useState("");
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
 
-        if (
-            deviations.colorGradient.knots.some(
-                (deviation) => deviation.position === Number(deviationNumber) && deviation !== editing
-            )
-        ) {
+        if (colorStops.some((deviation) => deviation.position === Number(deviationNumber) && deviation !== editing)) {
             setError("A deviation with this value already exists.");
             return;
         }
 
-        const knots = editing
-            ? deviations.colorGradient.knots.map((deviation) =>
+        const newColorStops = editing
+            ? colorStops.map((deviation) =>
                   deviation === editing ? { ...editing, position: Number(deviationNumber) } : deviation
               )
-            : deviations.colorGradient.knots.concat({ position: Number(deviationNumber), color: [1, 0, 0, 1] });
+            : colorStops.concat({ position: Number(deviationNumber), color: [1, 0, 0, 1] });
 
-        dispatch(
-            renderActions.setPoints({
-                deviation: {
-                    colorGradient: {
-                        knots,
+        newColorStops.sort((s1, s2) => s2.position - s1.position);
+
+        if (deviationForm) {
+            dispatch(
+                deviationsActions.setDeviationForm({
+                    ...deviationForm,
+                    colorSetup: {
+                        ...deviationForm.colorSetup,
+                        colorStops: updateFormField(newColorStops),
                     },
-                },
-            })
-        );
+                })
+            );
+        } else {
+            dispatch(
+                deviationsActions.setProfile({
+                    id: selectedProfile!.id!,
+                    profile: {
+                        ...selectedProfile!,
+                        colors: { absoluteValues: selectedProfile!.colors!.absoluteValues, colorStops: newColorStops },
+                    },
+                    setColorsForAll: !isProjectV2,
+                })
+            );
+        }
 
         history.goBack();
     };

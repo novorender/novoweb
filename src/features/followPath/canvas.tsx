@@ -2,9 +2,10 @@ import { DrawProduct } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
-import { useAppSelector } from "app/redux-store-interactions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Canvas2D } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { deviationsActions } from "features/deviations";
 import {
     drawLineStrip,
     drawPart,
@@ -50,6 +51,7 @@ export function FollowPathCanvas({
     const [selectedEntityCtx, setSelectedEntityCtx] = useState<CanvasRenderingContext2D | null>(null);
     const [profileCtx, setProfileCtx] = useState<CanvasRenderingContext2D | null>(null);
     const [deviationsCtx, setDeviationsCtx] = useState<CanvasRenderingContext2D | null>(null);
+    const dispatch = useAppDispatch();
 
     const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);
@@ -338,6 +340,7 @@ export function FollowPathCanvas({
                 },
                 [[] as Vec2[], [] as string[]]
             );
+            dispatch(deviationsActions.setRightmost2dDeviationCoordinate(Math.max(...pts2d.map((p) => p[0]))));
 
             drawTexts(deviationsCtx, pts2d, labels, 20);
 
@@ -345,7 +348,7 @@ export function FollowPathCanvas({
                 drawLineStrip(deviationsCtx, deviations.line, vecToHex(followDeviations.lineColor));
             }
         },
-        [canvas, currentProfileCenter, deviationsCtx, followDeviations, view]
+        [canvas, currentProfileCenter, deviationsCtx, followDeviations, view, dispatch]
     );
 
     useEffect(() => {

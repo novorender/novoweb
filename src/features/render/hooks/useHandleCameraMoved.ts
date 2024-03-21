@@ -15,9 +15,11 @@ import { useMoveMarkers } from "./useMoveMarkers";
 export function useHandleCameraMoved({
     svg,
     engine2dRenderFnRef,
+    htmlInteractionContainer,
 }: {
     svg: SVGSVGElement | null;
     engine2dRenderFnRef: MutableRefObject<((moved: boolean, idleframe: boolean) => void) | undefined>;
+    htmlInteractionContainer: { update: () => void } | null;
 }) {
     const {
         state: { view },
@@ -57,6 +59,7 @@ export function useHandleCameraMoved({
                 }
 
                 moveSvgMarkers();
+                htmlInteractionContainer?.update();
                 dispatch(renderActions.setStamp(null));
                 dispatch(measureActions.selectHoverObj(undefined));
 
@@ -154,6 +157,7 @@ export function useHandleCameraMoved({
             moveSvgMarkers,
             engine2dRenderFnRef,
             editClipping,
+            htmlInteractionContainer,
         ]
     );
 }

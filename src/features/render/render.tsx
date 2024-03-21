@@ -9,6 +9,7 @@ import { useHandleClipping } from "features/clippingPlanes";
 import { useHandleDeviations } from "features/deviations";
 import { useHandleDitioAuth } from "features/ditio";
 import { Engine2D } from "features/engine2D/engine2D";
+import { Engine2DHtmlInteractions } from "features/engine2D/engine2DHtmlInteractions";
 import { Engine2DInteractions } from "features/engine2D/engine2DInteractions";
 import { useHandleImages } from "features/images";
 import { useHandleJiraKeepAlive } from "features/jira";
@@ -87,6 +88,7 @@ export function Render3D() {
     const debugStats = useAppSelector(selectDebugStats);
 
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
+    const [htmlInteractionContainer, setHtmlInteractionContainer] = useState<null | { update: () => void }>(null);
 
     const engine2dRenderFnRef = useRef<((moved: boolean, idleFrame?: boolean) => void) | undefined>();
     const pointerPosRef = useRef([0, 0] as [x: number, y: number]);
@@ -105,7 +107,7 @@ export function Render3D() {
     useHandleInit();
     useHandleInitialBookmark();
     useHandleUrlSearch();
-    useHandleCameraMoved({ svg, engine2dRenderFnRef });
+    useHandleCameraMoved({ svg, engine2dRenderFnRef, htmlInteractionContainer });
     useHandleCameraState();
     useHandleCameraSpeed();
     useHandleGrid();
@@ -159,6 +161,9 @@ export function Render3D() {
                         <Engine2DInteractions />
                         <g id="cursor" />
                     </Svg>
+                    <div style={{ width: size.width, height: size.height }}>
+                        <Engine2DHtmlInteractions ref={setHtmlInteractionContainer} />
+                    </div>
                     <Images />
                 </>
             )}
