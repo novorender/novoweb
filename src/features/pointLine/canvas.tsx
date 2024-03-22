@@ -1,6 +1,6 @@
 import { MutableRefObject, useCallback, useEffect, useState } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { Canvas2D } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { drawPart, getCameraState, getInteractionPositions, translateInteraction } from "features/engine2D";

@@ -1,7 +1,7 @@
 import { Box, css, styled } from "@mui/material";
 import { SVGProps } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { renderActions, selectStamp, StampKind } from "features/render";
 import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 

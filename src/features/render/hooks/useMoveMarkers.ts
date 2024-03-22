@@ -1,7 +1,7 @@
 import { vec3 } from "gl-matrix";
 import { useCallback, useEffect } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useDitioFeedMarkers, useDitioMachineMarkers } from "features/ditio";
 import { selectImages, selectShowImageMarkers } from "features/images";

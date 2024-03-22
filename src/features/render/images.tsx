@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { ImgModal } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ditioActions, selectActiveImg } from "features/ditio";

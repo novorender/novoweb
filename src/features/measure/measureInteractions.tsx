@@ -2,13 +2,13 @@ import { css, styled } from "@mui/material";
 import { vec2 } from "gl-matrix";
 import { Fragment, SVGProps } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areaActions, selectAreas } from "features/area";
 import { pointLineActions, selectPointLines } from "features/pointLine";
 import { Picker, renderActions } from "features/render";
-import { explorerActions, selectEnabledWidgets } from "slices/explorerSlice";
+import { explorerActions, selectEnabledWidgets } from "slices/explorer";
 
 import { measureActions, selectMeasure } from "./measureSlice";
 

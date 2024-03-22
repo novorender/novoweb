@@ -1,14 +1,12 @@
-import { computeRotation, DeviceProfile, getDeviceProfile, rotationFromDirection, View } from "@novorender/api";
-import { ObjectDB, SceneData, SceneLoadFail } from "@novorender/data-js-api";
-import { Internal } from "@novorender/webgl-api";
-import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
-import { ProjectInfo } from "apis/dataV2/projectTypes";
+import { DeviceProfile, getDeviceProfile, View } from "@novorender/api";
+import { ObjectDB } from "@novorender/data-js-api";
 import { getGPUTier } from "detect-gpu";
-import { quat, vec3, vec4 } from "gl-matrix";
+import { quat, vec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
-import { dataApi } from "app";
-import { useAppDispatch } from "app/store";
+import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
+import { ProjectInfo } from "apis/dataV2/projectTypes";
+import { useAppDispatch } from "app/redux-store-interactions";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,
@@ -18,15 +16,14 @@ import {
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useSceneId } from "hooks/useSceneId";
-import { ProjectType } from "slices/explorerSlice";
+import { ProjectType } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
-import { CustomProperties } from "types/project";
 import { VecRGBA } from "utils/color";
 import { sleep } from "utils/time";
 
-import { renderActions } from "..";
+import { renderActions } from "../renderSlice";
 import { ErrorKind } from "../sceneError";
-import { flip } from "../utils";
+import { loadScene } from "../utils";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
@@ -241,74 +238,6 @@ export function useHandleInit() {
         dispatchHighlightCollections,
         getProject,
     ]);
-}
-
-export type SceneConfig = Omit<SceneData, "settings" | "customProperties"> & {
-    settings: Internal.RenderSettingsExt;
-    customProperties: CustomProperties;
-};
-
-export type CadCamera = { kind: "pinhole" | "orthographic"; position: vec3; rotation: quat; fov: number };
-export async function loadScene(id: string): Promise<[SceneConfig, CadCamera | undefined]> {
-    const res: (SceneData & { version?: string }) | SceneLoadFail = await dataApi.loadScene(id);
-    let camera: CadCamera | undefined = undefined;
-
-    if ("error" in res) {
-        throw res;
-    }
-
-    const { ..._cfg } = res;
-    const cfg = _cfg as SceneConfig;
-
-    // Legacy scene config format
-    // needs to be flipped.
-    if (!cfg.customProperties?.initialCameraState) {
-        if (cfg.camera && (cfg.camera.kind === "ortho" || cfg.camera.kind === "flight")) {
-            camera =
-                cfg.camera.kind === "ortho"
-                    ? {
-                          kind: "orthographic",
-                          position: flip([
-                              cfg.camera.referenceCoordSys[12],
-                              cfg.camera.referenceCoordSys[13],
-                              cfg.camera.referenceCoordSys[14],
-                          ]),
-                          rotation: rotationFromDirection(
-                              flip([
-                                  cfg.camera.referenceCoordSys[8],
-                                  cfg.camera.referenceCoordSys[9],
-                                  cfg.camera.referenceCoordSys[10],
-                              ])
-                          ),
-                          fov: cfg.camera.fieldOfView,
-                      }
-                    : {
-                          kind: "pinhole",
-                          position: flip(cfg.camera.position),
-                          rotation: computeRotation(0, cfg.camera.pitch, cfg.camera.yaw),
-                          fov: cfg.camera.fieldOfView,
-                      };
-        }
-    } else {
-        camera = cfg.customProperties.initialCameraState;
-    }
-
-    if (!cfg.customProperties.explorerProjectState && cfg.settings && cfg.settings.background) {
-        cfg.settings.background.color = getBackgroundColor(cfg.settings.background.color);
-    }
-
-    return [cfg, camera];
-}
-
-function getBackgroundColor(color: vec4 | undefined): vec4 {
-    const grey: vec4 = [0.75, 0.75, 0.75, 1];
-    const legacyBlue: vec4 = [0, 0, 0.25, 1];
-
-    if (!color || vec4.exactEquals(color, legacyBlue)) {
-        return grey;
-    }
-
-    return color;
 }
 
 function getStoredDeviceProfile(): (DeviceProfile & { debugProfile: true; tier: 0 }) | undefined {

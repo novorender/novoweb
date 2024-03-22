@@ -2,13 +2,13 @@ import { Settings } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { matchPath, MemoryRouter, Route, Switch, useHistory, useLocation } from "react-router-dom";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
 
 import { Root } from "./routes/root";
 import { StampSettings } from "./routes/stampSettings";

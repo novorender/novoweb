@@ -1,7 +1,7 @@
 import { Box, Button, Slider, Typography } from "@mui/material";
 import { forwardRef, memo, SyntheticEvent, useEffect, useImperativeHandle, useRef, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectRightmost2dDeviationCoordinate } from "features/deviations";
 import { GroupsAndColorsHud } from "features/deviations/components/groupsAndColorsHud";

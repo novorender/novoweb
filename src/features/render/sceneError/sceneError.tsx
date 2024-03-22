@@ -3,18 +3,18 @@ import { Alert, Box, CircularProgress, Paper, Typography, useTheme } from "@mui/
 import { packageVersion as webglApiVersion } from "@novorender/api";
 import { useCallback, useEffect, useState } from "react";
 
-import { dataApi } from "app";
-import { useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { StorageKey } from "config/storage";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
-import { selectConfig } from "slices/explorerSlice";
+import { selectConfig } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
 import { deleteFromStorage, saveToStorage } from "utils/storage";
 
-import { selectSceneStatus } from "..";
+import { selectSceneStatus } from "../renderSlice";
 import { ErrorKind } from "./types";
 
 export function SceneError() {

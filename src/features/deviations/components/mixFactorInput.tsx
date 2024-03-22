@@ -1,7 +1,7 @@
 import { MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import { ChangeEvent } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { renderActions, selectDeviations } from "features/render";
 import { AsyncStatus } from "types/misc";
 

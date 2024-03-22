@@ -2,11 +2,11 @@ import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, Typography, useTheme } from "@mui/material";
 import { useState } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
-import { selectConfig } from "slices/explorerSlice";
+import { selectConfig } from "slices/explorer";
 import { createOAuthStateString } from "utils/auth";
 
 import { jiraIdentityServer } from "../jiraApi";

@@ -2,14 +2,14 @@ import { Close } from "@mui/icons-material";
 import { IconButton, Snackbar, Typography } from "@mui/material";
 import { useState } from "react";
 
-import { dataApi } from "app";
-import { useAppSelector } from "app/store";
-import { WidgetMenuButtonWrapper } from "components";
+import { dataApi } from "apis/dataV1";
+import { useAppSelector } from "app/redux-store-interactions";
+import { WidgetMenuButtonWrapper } from "components/widgetMenuButtonWrapper";
 import { featuresConfig } from "config/features";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
 import { selectViewMode } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
-import { selectIsOnline } from "slices/explorerSlice";
+import { selectIsOnline } from "slices/explorer";
 import { ViewMode } from "types/misc";
 
 enum Status {

@@ -1,6 +1,6 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-import { RootState } from "app/store";
+import { type RootState } from "app";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { DeviationCalculationStatus, DeviationForm, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";

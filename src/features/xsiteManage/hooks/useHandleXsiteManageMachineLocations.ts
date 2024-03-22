@@ -1,9 +1,9 @@
 import { connect, MqttClient } from "precompiled-mqtt";
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { latLon2Tm } from "features/render/utils";
-import { selectTmZoneForCalc } from "slices/explorerSlice";
+import { selectTmZoneForCalc } from "slices/explorer";
 
 import { selectXsiteManageAccessToken, selectXsiteManageSite, xsiteManageActions } from "../slice";
 import { MachineLocation } from "../types";

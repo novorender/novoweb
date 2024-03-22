@@ -1,9 +1,9 @@
 import { Close, DeleteSweep, OpenInNew } from "@mui/icons-material";
 import { Box, Button, IconButton, List, Snackbar, snackbarContentClasses } from "@mui/material";
-import { useGetPropertyTreeFavoritesQuery } from "apis/dataV2/dataV2Api";
 import { useEffect, useRef, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useGetPropertyTreeFavoritesQuery } from "apis/dataV2/dataV2Api";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
     AccordionDetails,
@@ -19,7 +19,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { explorerActions, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorerSlice";
+import { explorerActions, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { secondsToMs } from "utils/time";
 

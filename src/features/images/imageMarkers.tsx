@@ -2,11 +2,13 @@ import { CameraAlt } from "@mui/icons-material";
 import { css, styled } from "@mui/material";
 import { SVGProps } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
-import { imagesActions, ImageType, selectActiveImage, selectImages, selectShowImageMarkers } from "features/images";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { selectViewMode } from "features/render";
 import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 import { AsyncStatus, ViewMode } from "types/misc";
+
+import { imagesActions, selectActiveImage, selectImages, selectShowImageMarkers } from "./imagesSlice";
+import { ImageType } from "./types";
 
 const Marker = styled((props: SVGProps<SVGGElement>) => (
     <g {...props}>

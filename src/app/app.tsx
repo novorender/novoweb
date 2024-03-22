@@ -8,16 +8,17 @@ import { useEffect, useRef, useState } from "react";
 import { generatePath, Redirect, Route, Switch, useHistory, useLocation, useParams } from "react-router-dom";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
-import { theme } from "app/theme";
+import { dataApi } from "apis/dataV1";
 import { Loading } from "components";
 import { StorageKey } from "config/storage";
 import { Explorer } from "pages/explorer";
 import { authActions } from "slices/authSlice";
-import { explorerActions, selectConfig } from "slices/explorerSlice";
+import { explorerActions, selectConfig } from "slices/explorer";
 import { getOAuthState, getUser } from "utils/auth";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
+
+import { useAppDispatch, useAppSelector } from "./redux-store-interactions";
+import { theme } from "./theme";
 
 enum Status {
     Initial,
@@ -181,6 +182,7 @@ export function App() {
                             })
                         );
                         dispatch(authActions.login({ accessToken: res.access_token, user }));
+                        saveToStorage(StorageKey.AccessToken, res.access_token);
                     }
                 }
             } else {
@@ -231,6 +233,7 @@ export function App() {
                             );
 
                             dispatch(authActions.login({ accessToken: res.access_token, user }));
+                            saveToStorage(StorageKey.AccessToken, res.access_token);
                         }
                     }
                 } catch (e) {
@@ -260,6 +263,7 @@ export function App() {
 
             if (accessToken && user) {
                 dispatch(authActions.login({ accessToken, user }));
+                saveToStorage(StorageKey.AccessToken, accessToken);
             }
             setAuthStatus(Status.Ready);
         }

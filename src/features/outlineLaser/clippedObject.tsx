@@ -2,7 +2,7 @@ import { Visibility } from "@mui/icons-material";
 import { Box, Checkbox, css, ListItemButton, ListItemButtonProps, styled, Typography } from "@mui/material";
 import { useState } from "react";
 
-import { useAppDispatch } from "app/store";
+import { useAppDispatch } from "app/redux-store-interactions";
 import { Tooltip } from "components";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";

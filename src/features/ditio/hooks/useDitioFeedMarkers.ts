@@ -1,11 +1,11 @@
 import { vec3 } from "gl-matrix";
 import { useEffect, useRef, useState } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { selectIsTopDown } from "features/orthoCam";
 import { CameraType, selectCameraType } from "features/render";
 import { latLon2Tm } from "features/render/utils";
-import { selectTmZoneForCalc } from "slices/explorerSlice";
+import { selectTmZoneForCalc } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { baseUrl, useFeedWebRawQuery, useGetPostQuery } from "../api";

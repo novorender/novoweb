@@ -2,7 +2,7 @@ import { Add, DeleteSweep, Undo } from "@mui/icons-material";
 import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
     AccordionDetails,
@@ -17,10 +17,10 @@ import {
 } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
+import { Picker, renderActions, selectPicker } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import {
     pointLineActions,

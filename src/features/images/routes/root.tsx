@@ -7,24 +7,24 @@ import { useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
 
-import { store, useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { store } from "app/store";
 import { IosSwitch, LinearProgress, withCustomScrollbar } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { flip, flipGLtoCadQuat, isGlSpace, latLon2Tm } from "features/render/utils";
-import { selectTmZoneForCalc } from "slices/explorerSlice";
+import { selectTmZoneForCalc } from "slices/explorer";
 import { AsyncStatus, hasFinished } from "types/misc";
 
 import { ImageListItem } from "../imageListItem";
 import {
-    Image,
     ImageFilter,
     imagesActions,
-    ImageType,
     selectActiveImage,
     selectImageFilter,
     selectImages,
     selectShowImageMarkers,
 } from "../imagesSlice";
+import { Image, ImageType } from "../types";
 
 const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 

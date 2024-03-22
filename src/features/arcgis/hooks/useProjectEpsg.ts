@@ -1,6 +1,5 @@
 import { useGetProjectQuery } from "apis/dataV2/dataV2Api";
-
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectProjectSettings } from "features/render";
 import { projectV1ZoneNameToEpsg } from "utils/misc";

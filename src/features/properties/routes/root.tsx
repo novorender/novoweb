@@ -17,7 +17,7 @@ import type { ObjectData, ObjectId } from "@novorender/webgl-api";
 import { useDrag } from "@use-gesture/react";
 import { ChangeEvent, ChangeEventHandler, MouseEvent, MutableRefObject, useEffect, useRef, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
     AccordionDetails,
@@ -30,9 +30,9 @@ import {
 } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { selectMainObject } from "features/render/renderSlice";
+import { selectMainObject } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 import { NodeType } from "types/misc";
 import {
     extractObjectIds,

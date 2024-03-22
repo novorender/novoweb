@@ -2,10 +2,11 @@ import { Close, CropSquare, Minimize, MoreVert } from "@mui/icons-material";
 import { Box, IconButton, MenuProps, SvgIcon, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { MouseEvent, ReactNode, useEffect, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
-import { Divider } from "components";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Widget } from "config/features";
-import { explorerActions, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { explorerActions, selectMaximized, selectMinimized } from "slices/explorer";
+
+import { Divider } from "./divider";
 
 export function WidgetHeader({
     widget: { name, Icon, key },

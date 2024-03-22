@@ -1,18 +1,18 @@
 import { Add, Delete, RestartAlt, Settings } from "@mui/icons-material";
 import { Divider, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
 import { Box } from "@mui/system";
-import { useCalcDeviationsMutation } from "apis/dataV2/dataV2Api";
 import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useCalcDeviationsMutation } from "apis/dataV2/dataV2Api";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, Tooltip, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { isInternalGroup, useObjectGroups } from "contexts/objectGroups";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectIsAdminScene, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorerSlice";
+import { selectIsAdminScene, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import {

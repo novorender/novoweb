@@ -1,7 +1,7 @@
 import { Delete, Sync } from "@mui/icons-material";
 import { Box, Button, Typography } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
     AccordionDetails,
@@ -18,7 +18,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectIsOnline, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectIsOnline, selectMaximized, selectMinimized } from "slices/explorer";
 import { capitalize, formatFileSizeMetric } from "utils/misc";
 
 import { offlineActions, selectOfflineAction, selectOfflineScenes } from "./offlineSlice";

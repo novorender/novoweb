@@ -1,29 +1,29 @@
 import { Bookmark, ExplorerBookmarkState } from "@novorender/data-js-api";
 import { ReadonlyVec3 } from "gl-matrix";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useLazyHidden } from "contexts/hidden";
 import { HighlightCollection, useLazyHighlightCollections } from "contexts/highlightCollections";
 import { useLazyHighlighted } from "contexts/highlighted";
 import { GroupStatus, isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
-import { selectAreas } from "features/area";
-import { selectFollowPath } from "features/followPath";
+import { selectAreas } from "features/area/areaSlice";
+import { selectFollowPath } from "features/followPath/followPathSlice";
 import {
     selectManholeCollisionSettings,
     selectManholeCollisionTarget,
     selectManholeMeasureValues,
-} from "features/manhole";
-import { selectMeasure } from "features/measure";
+} from "features/manhole/manholeSlice";
+import { selectMeasure } from "features/measure/measureSlice";
 import {
     getMeasurePointsFromTracer,
     selectOutlineLaserPlane,
     selectOutlineLasers,
     TraceMeasurement,
-} from "features/outlineLaser";
-import { selectPointLines } from "features/pointLine";
-import { selectPropertyTreeBookmarkState } from "features/propertyTree/slice";
+} from "features/outlineLaser/outlineLaserSlice";
+import { selectPointLines } from "features/pointLine/pointLineSlice";
+import { selectPropertyTreeBookmarkState } from "features/propertyTree";
 import {
     selectBackground,
     selectClippingPlanes,
@@ -35,8 +35,8 @@ import {
     selectSubtrees,
     selectTerrain,
     selectViewMode,
-    SubtreeStatus,
-} from "features/render";
+} from "features/render/renderSlice";
+import { SubtreeStatus } from "features/render/types";
 import { ViewMode } from "types/misc";
 
 export function useCreateBookmark() {

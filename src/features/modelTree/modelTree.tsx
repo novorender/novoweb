@@ -4,7 +4,7 @@ import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { useEffect, useRef, useState } from "react";
 import { FixedSizeList, ListOnScrollProps } from "react-window";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -14,7 +14,7 @@ import { renderActions, selectMainObject } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { NodeType } from "types/misc";
 import { getParentPath } from "utils/objectData";
 import { getObjectData, iterateAsync, searchFirstObjectAtPath } from "utils/search";

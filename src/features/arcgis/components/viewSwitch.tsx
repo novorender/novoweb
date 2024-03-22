@@ -2,7 +2,7 @@ import { Tab, Tabs } from "@mui/material";
 import { useEffect } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { AsyncStatus } from "types/misc";
 
 import { selectArcgisFeatureServers, selectArcgisSelectedFeature } from "../arcgisSlice";

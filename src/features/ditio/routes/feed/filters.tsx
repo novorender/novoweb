@@ -5,7 +5,7 @@ import { isValid, set } from "date-fns";
 import { FormEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox, Switch as SwitchInput, TextField } from "components";
 
 import { ditioActions, FilterType, initialFilters, selectFilters } from "../../slice";

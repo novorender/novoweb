@@ -1,6 +1,7 @@
 export enum StorageKey {
     CodeVerifier = "nw_code_verifier",
     RefreshToken = "nw_refresh_token",
+    AccessToken = "nw_access_token",
     BimCollabRefreshToken = "BIMcollab_refresh_token",
     BimCollabCodeVerifier = "BIMcollab_code_verifier",
     BimCollabSuggestedSpace = "BIMcollab_suggested_space",
@@ -38,6 +39,9 @@ export const storageConfig = {
         storage: localStorage,
     },
     [StorageKey.DitioCodeVerifier]: {
+        storage: sessionStorage,
+    },
+    [StorageKey.AccessToken]: {
         storage: sessionStorage,
     },
     [StorageKey.RefreshToken]: {

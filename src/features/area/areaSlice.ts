@@ -2,7 +2,7 @@ import { View } from "@novorender/api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
-import { RootState } from "app/store";
+import { type RootState } from "app";
 import { resetView, selectBookmark } from "features/render";
 
 export type AreaMeasure = {

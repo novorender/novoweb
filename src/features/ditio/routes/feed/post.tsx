@@ -4,13 +4,13 @@ import { format, formatDistance } from "date-fns";
 import { Fragment } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { FormattedText } from "features/ditio/formattedText";
 import { CameraType, renderActions } from "features/render";
 import { latLon2Tm } from "features/render/utils";
-import { selectTmZoneForCalc } from "slices/explorerSlice";
+import { selectTmZoneForCalc } from "slices/explorer";
 
 import { baseUrl, useGetPostQuery } from "../../api";
 import { ditioActions } from "../../slice";

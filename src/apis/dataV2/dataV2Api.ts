@@ -1,9 +1,9 @@
 import { BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 import { minutesToSeconds } from "date-fns";
 
-import { RootState } from "app/store";
+import { type RootState } from "app";
 import { ArcgisWidgetConfig } from "features/arcgis";
-import { selectConfig } from "slices/explorerSlice";
+import { selectConfig } from "slices/explorer";
 
 import { DeviationProjectConfig } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";

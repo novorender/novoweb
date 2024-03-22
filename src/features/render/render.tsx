@@ -2,15 +2,15 @@ import { Box, css, styled } from "@mui/material";
 import { glMatrix } from "gl-matrix";
 import { RefCallback, useCallback, useRef, useState } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, Loading } from "components";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHandleClipping } from "features/clippingPlanes";
 import { useHandleDeviations } from "features/deviations";
 import { useHandleDitioAuth } from "features/ditio";
-import { Engine2D } from "features/engine2D";
-import { Engine2DInteractions } from "features/engine2D";
+import { Engine2D } from "features/engine2D/engine2D";
 import { Engine2DHtmlInteractions } from "features/engine2D/engine2DHtmlInteractions";
+import { Engine2DInteractions } from "features/engine2D/engine2DInteractions";
 import { useHandleImages } from "features/images";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { useHandleManhole } from "features/manhole";

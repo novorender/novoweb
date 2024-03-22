@@ -3,11 +3,11 @@ import { Box, Button, List, useTheme } from "@mui/material";
 import { MouseEvent, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { GroupStatus } from "contexts/objectGroups";
-import { selectViewMode } from "features/render/renderSlice";
+import { selectViewMode } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
 import { ViewMode } from "types/misc";

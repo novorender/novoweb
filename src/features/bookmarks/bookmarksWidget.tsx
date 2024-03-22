@@ -2,15 +2,15 @@ import { Box } from "@mui/material";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Switch } from "react-router-dom";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import { selectUser } from "slices/authSlice";
-import { selectIsOnline, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectIsOnline, selectMaximized, selectMinimized } from "slices/explorer";
 
 import {
     BookmarkAccess,

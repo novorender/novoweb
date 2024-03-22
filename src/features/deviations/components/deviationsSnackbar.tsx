@@ -1,7 +1,7 @@
 import { Close } from "@mui/icons-material";
 import { IconButton, Snackbar } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { AsyncStatus } from "types/misc";
 
 import { deviationsActions, selectSaveStatus } from "../deviationsSlice";

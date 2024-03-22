@@ -2,9 +2,9 @@ import { ArrowBack, Save } from "@mui/icons-material";
 import { Box, Button, Typography, useTheme } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
-import { renderActions, selectBreakingPointAngleThreshold } from "features/render/renderSlice";
+import { renderActions, selectBreakingPointAngleThreshold } from "features/render";
 
 export function ClippingSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();

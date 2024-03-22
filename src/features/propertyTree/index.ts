@@ -1,2 +1,2 @@
 export { propertyTreeApi } from "./api";
-export { propertyTreeReducer } from "./slice";
+export * from "./slice";

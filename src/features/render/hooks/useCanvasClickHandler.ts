@@ -2,7 +2,7 @@ import { rotationFromDirection } from "@novorender/api";
 import { mat3, quat, ReadonlyVec3, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, MutableRefObject, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,
@@ -22,9 +22,13 @@ import { clippingOutlineLaserActions } from "features/outlineLaser";
 import { getOutlineLaser } from "features/outlineLaser";
 import { pointLineActions } from "features/pointLine";
 import { selectShowPropertiesStamp } from "features/properties/slice";
+import { useAbortController } from "hooks/useAbortController";
+import { ExtendedMeasureEntity, NodeType, ViewMode } from "types/misc";
+import { isRealVec } from "utils/misc";
+import { extractObjectIds } from "utils/objectData";
+import { searchByPatterns, searchDeepByPatterns } from "utils/search";
+
 import {
-    CameraType,
-    Picker,
     renderActions,
     selectCamera,
     selectCameraType,
@@ -35,13 +39,8 @@ import {
     selectSecondaryHighlightProperty,
     selectSelectMultiple,
     selectViewMode,
-    StampKind,
-} from "features/render/renderSlice";
-import { useAbortController } from "hooks/useAbortController";
-import { ExtendedMeasureEntity, NodeType, ViewMode } from "types/misc";
-import { isRealVec } from "utils/misc";
-import { extractObjectIds } from "utils/objectData";
-import { searchByPatterns, searchDeepByPatterns } from "utils/search";
+} from "../renderSlice";
+import { CameraType, Picker, StampKind } from "../types";
 
 export function useCanvasClickHandler({
     pointerDownStateRef,

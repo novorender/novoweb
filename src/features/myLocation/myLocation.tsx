@@ -2,7 +2,7 @@ import { MyLocation as MyLocationIcon } from "@mui/icons-material";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { vec3 } from "gl-matrix";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Divider,
     IosSwitch,
@@ -18,7 +18,7 @@ import { renderActions, selectCameraType } from "features/render";
 import { latLon2Tm } from "features/render/utils";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized, selectTmZoneForCalc } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized, selectTmZoneForCalc } from "slices/explorer";
 
 import {
     LocationStatus,

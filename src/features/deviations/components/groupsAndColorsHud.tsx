@@ -1,9 +1,9 @@
 import { Palette, Visibility, VisibilityOff } from "@mui/icons-material";
 import { Box, Checkbox, Typography } from "@mui/material";
-import { ColorStop } from "apis/dataV2/deviationTypes";
 import { memo } from "react";
 
-import { useAppSelector } from "app/store";
+import { ColorStop } from "apis/dataV2/deviationTypes";
+import { useAppSelector } from "app/redux-store-interactions";
 import {
     GroupStatus,
     isInternalGroup,

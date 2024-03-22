@@ -1,10 +1,10 @@
 import { vec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { latLon2Tm } from "features/render/utils";
-import { selectTmZoneForCalc } from "slices/explorerSlice";
+import { selectTmZoneForCalc } from "slices/explorer";
 
 import { LocationStatus, myLocationActions, selectShowLocationMarker } from "./myLocationSlice";
 
