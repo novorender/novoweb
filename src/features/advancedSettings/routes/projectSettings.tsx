@@ -17,7 +17,6 @@ import { dataApi } from "apis/dataV1";
 import { useGetProjectQuery, useSearchEpsgQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
-// import { renderActions, selectProjectSettings } from "features/render"; todo
 import { renderActions, selectProjectSettings, selectSceneOrganization } from "features/render/renderSlice";
 import { useSceneId } from "hooks/useSceneId";
 import { selectConfig, selectProjectIsV2 } from "slices/explorer";
