@@ -1,4 +1,4 @@
-import { ArrowBack, Clear } from "@mui/icons-material";
+import { ArrowBack, Clear, FlightTakeoff } from "@mui/icons-material";
 import { Box, Button, LinearProgress, Typography, useTheme } from "@mui/material";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
@@ -8,6 +8,7 @@ import { useAppSelector } from "app/store";
 import { Divider, ScrollBox } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { selectCurrentFormsList } from "features/forms/slice";
 import { ObjectVisibility, renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
@@ -27,6 +28,7 @@ export function SearchInstance() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const { idArr: highlighted } = useHighlighted();
+    const flyToForm = useFlyToForm();
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);
@@ -117,6 +119,14 @@ export function SearchInstance() {
         setIsUpdated(true);
     }, []);
 
+    const handleFlyTo = useCallback(() => {
+        if (!objectGuid) {
+            return;
+        }
+
+        flyToForm({ objectGuid });
+    }, [flyToForm, objectGuid]);
+
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -129,12 +139,18 @@ export function SearchInstance() {
                             <ArrowBack sx={{ mr: 1 }} />
                             Back
                         </Button>
-                        {items?.length && (
-                            <Button color="grey" onClick={handleClearClick}>
-                                <Clear sx={{ mr: 1 }} />
-                                Clear
-                            </Button>
-                        )}
+                        {items?.length ? (
+                            <>
+                                <Button color="grey" onClick={handleFlyTo}>
+                                    <FlightTakeoff sx={{ mr: 1 }} />
+                                    Fly to
+                                </Button>
+                                <Button color="grey" onClick={handleClearClick}>
+                                    <Clear sx={{ mr: 1 }} />
+                                    Clear
+                                </Button>
+                            </>
+                        ) : undefined}
                     </Box>
                 </>
             </Box>

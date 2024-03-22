@@ -1,4 +1,4 @@
-import { ArrowBack, Clear } from "@mui/icons-material";
+import { ArrowBack, Clear, FlightTakeoff } from "@mui/icons-material";
 import { Box, Button, LinearProgress, useTheme } from "@mui/material";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
@@ -6,6 +6,7 @@ import { useHistory, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { Divider, ScrollBox, TextField } from "components";
 import { useGetLocationFormQuery, useUpdateLocationFormMutation } from "features/forms/api";
+import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { formsActions, selectCurrentFormsList } from "features/forms/slice";
 import { type FormId, type FormItem as FItype, FormItemType, type TemplateId } from "features/forms/types";
 import { toFormFields, toFormItems } from "features/forms/utils";
@@ -20,6 +21,7 @@ export function LocationInstance() {
     const sceneId = useSceneId();
     const currentFormsList = useAppSelector(selectCurrentFormsList);
     const dispatch = useAppDispatch();
+    const flyToForm = useFlyToForm();
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);
@@ -100,6 +102,14 @@ export function LocationInstance() {
         [setTitle]
     );
 
+    const handleFlyTo = useCallback(() => {
+        if (!form?.location) {
+            return;
+        }
+
+        flyToForm({ location: form.location });
+    }, [flyToForm, form?.location]);
+
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -111,6 +121,10 @@ export function LocationInstance() {
                         <Button color="grey" onClick={handleBackClick}>
                             <ArrowBack sx={{ mr: 1 }} />
                             Back
+                        </Button>
+                        <Button color="grey" onClick={handleFlyTo}>
+                            <FlightTakeoff sx={{ mr: 1 }} />
+                            Fly to
                         </Button>
                         <Button color="grey" onClick={handleClearClick}>
                             <Clear sx={{ mr: 1 }} />

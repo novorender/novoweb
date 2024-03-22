@@ -13,13 +13,14 @@ import { formsActions, selectLocationForms, selectSelectedFormId, selectTemplate
 import { LocationTemplate } from "./types";
 
 type RenderedForm = {
+    templateId: string;
     id: string;
     marker: string;
     location: ReadonlyVec3;
 };
 
 function areRenderedFormsEqual(a: RenderedForm, b: RenderedForm) {
-    return a.id === b.id && a.marker === b.marker && a.location === b.location;
+    return a.templateId === b.templateId && a.id === b.id && a.marker === b.marker && a.location === b.location;
 }
 
 export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
@@ -46,6 +47,7 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
             .map((form) => {
                 const template = templateMap.get(form.templateId)! as LocationTemplate;
                 return {
+                    templateId: template.id,
                     id: form.id,
                     marker: template.marker,
                     location: form.location!,
@@ -116,7 +118,7 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
 
                 return (
                     <Box
-                        key={form.id}
+                        key={`${form.templateId}+${form.id}`}
                         position="absolute"
                         left={x}
                         top={y}
