@@ -30,6 +30,7 @@ const initialState: State = {
     sceneType: SceneType.Viewer,
     userRole: UserRole.Viewer,
     projectType: ProjectType.V1,
+    tmZoneForCalc: undefined as string | undefined, // for project v1 - tmZone, for project v2 - proj4 def from epsg.io
     requireConsent: false,
     organization: "",
     widgets: [],
@@ -57,6 +58,7 @@ const initialState: State = {
     config: {
         dataServerUrl: import.meta.env.REACT_APP_DATA_SERVER_URL ?? "https://data.novorender.com/api",
         dataV2ServerUrl: import.meta.env.REACT_APP_DATA_V2_SERVER_URL ?? "https://data-v2.novorender.com",
+        projectsUrl: import.meta.env.REACT_APP_PROJECTS_URL ?? "https://projects.novorender.com",
         authServerUrl: import.meta.env.REACT_APP_AUTH_SERVER_URL ?? "https://auth.novorender.com",
         bimCollabClientSecret: import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET ?? "",
         bimCollabClientId: import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_ID ?? "",
@@ -244,6 +246,7 @@ export const explorerSlice = createSlice({
             const { customProperties } = action.payload.sceneData;
 
             state.projectType = action.payload.projectType;
+            state.tmZoneForCalc = action.payload.tmZoneForCalc;
             state.sceneType = getSceneType(customProperties);
             state.userRole = getUserRole(customProperties);
             state.requireConsent = getRequireConsent(customProperties);

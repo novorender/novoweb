@@ -11,8 +11,8 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { store } from "app/store";
 import { IosSwitch, LinearProgress, withCustomScrollbar } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectProjectSettings } from "features/render";
 import { flip, flipGLtoCadQuat, isGlSpace, latLon2Tm } from "features/render/utils";
+import { selectTmZoneForCalc } from "slices/explorer";
 import { AsyncStatus, hasFinished } from "types/misc";
 
 import { ImageListItem } from "../imageListItem";
@@ -36,7 +36,7 @@ export function Root() {
 
     const images = useAppSelector(selectImages);
     const filter = useAppSelector(selectImageFilter);
-    const { tmZone } = useAppSelector(selectProjectSettings);
+    const tmZone = useAppSelector(selectTmZoneForCalc);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
@@ -161,7 +161,7 @@ async function loadImages({
     ...options
 }: {
     db: ObjectDB;
-    tmZone: string;
+    tmZone: string | undefined;
     filter: ImageFilter;
     flip: boolean;
 }) {

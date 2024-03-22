@@ -30,6 +30,7 @@ export type State = {
     sceneType: SceneType;
     userRole: UserRole;
     projectType: ProjectType;
+    tmZoneForCalc: string | undefined;
     requireConsent: boolean;
     organization: string;
     widgets: WidgetKey[];
@@ -57,6 +58,7 @@ export type State = {
     config: {
         dataServerUrl: string;
         dataV2ServerUrl: string;
+        projectsUrl: string;
         authServerUrl: string;
         bimCollabClientSecret: string;
         bimCollabClientId: string;

@@ -24,6 +24,7 @@ export const selectCanvasContextMenuFeatures = (state: RootState) => state.explo
 export const selectIsOnline = (state: RootState) => state.explorer.isOnline;
 export const selectConfig = (state: RootState) => state.explorer.config;
 export const selectProjectIsV2 = (state: RootState) => state.explorer.projectType === ProjectType.V2;
+export const selectTmZoneForCalc = (state: RootState) => state.explorer.tmZoneForCalc;
 
 export const selectEnabledWidgets = createSelector(
     (state: RootState) => state.explorer.enabledWidgets,

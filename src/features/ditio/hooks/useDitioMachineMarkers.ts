@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectIsTopDown } from "features/orthoCam";
-import { CameraType, selectCameraType, selectProjectSettings } from "features/render";
+import { CameraType, selectCameraType } from "features/render";
 import { latLon2Tm } from "features/render/utils";
+import { selectTmZoneForCalc } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { secondsToMs } from "utils/time";
 
@@ -19,7 +20,7 @@ export function useDitioMachineMarkers() {
     const {
         state: { scene },
     } = useExplorerGlobals();
-    const { tmZone } = useAppSelector(selectProjectSettings);
+    const tmZone = useAppSelector(selectTmZoneForCalc);
     const cameraType = useAppSelector(selectCameraType);
     const showMarkers = useAppSelector(selectShowDitioMachineMarkers);
     const projects = useAppSelector(selectDitioProjects);
