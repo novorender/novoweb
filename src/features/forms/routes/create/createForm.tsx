@@ -21,7 +21,6 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectAssets } from "features/forms/slice";
 import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
-import { selectUser } from "slices/authSlice";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { useCreateSearchFormMutation } from "../../api";
@@ -56,8 +55,6 @@ export function CreateForm({
 
     const sceneId = useSceneId();
     const [createForm, { isLoading: creatingForm }] = useCreateSearchFormMutation();
-
-    const user = useAppSelector(selectUser);
 
     const [{ status }, setStatus] = useState<AsyncState<null>>({
         status: AsyncStatus.Initial,
@@ -122,12 +119,6 @@ export function CreateForm({
                     fields,
                 };
 
-                if (user) {
-                    template.createdBy = {
-                        userId: user.user,
-                    };
-                }
-
                 if (template.type === TemplateType.Search && formObjects) {
                     const objects = await idsToObjects({
                         ids: formObjects.ids,
@@ -152,7 +143,7 @@ export function CreateForm({
                 return;
             }
         },
-        [abortController, canSave, formObjects, createForm, db, history, items, sceneId, title, type, marker, user]
+        [abortController, canSave, formObjects, createForm, db, history, items, sceneId, title, type, marker]
     );
 
     return (
@@ -172,8 +163,8 @@ export function CreateForm({
                 </Typography>
                 <FormControl>
                     <RadioGroup row value={type} onChange={handleTypeChange}>
-                        <FormControlLabel value={TemplateType.Search} control={<Radio />} label="Search" />
-                        <FormControlLabel value={TemplateType.Location} control={<Radio />} label="Location" />
+                        <FormControlLabel value={TemplateType.Search} control={<Radio />} label="Object" />
+                        <FormControlLabel value={TemplateType.Location} control={<Radio />} label="Geo" />
                     </RadioGroup>
                 </FormControl>
 

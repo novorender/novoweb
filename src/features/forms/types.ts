@@ -109,7 +109,8 @@ export type FormObject = {
 };
 
 type ChangeStamp = {
-    userId: string;
+    userName?: string;
+    userLogin?: string;
     timestamp?: OffsetDateTime;
 };
 
@@ -119,8 +120,8 @@ type BaseTemplateHeader = {
     readonly: boolean;
     state: TemplateState;
     id: TemplateId;
-    createdBy: ChangeStamp;
-    modifiedBy: ChangeStamp[];
+    createdBy?: ChangeStamp;
+    modifiedBy?: ChangeStamp[];
 };
 
 type SearchTemplateHeader = BaseTemplateHeader & { type: TemplateType.Search };
@@ -162,8 +163,8 @@ export type Form = {
     readonly: boolean;
     state: FormState;
     location?: vec3;
-    createdBy: ChangeStamp;
-    modifiedBy: ChangeStamp[];
+    createdBy?: ChangeStamp;
+    modifiedBy?: ChangeStamp[];
 };
 
 export type FormGLtfAsset = {
