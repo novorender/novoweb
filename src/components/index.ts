@@ -12,6 +12,7 @@ export * from "./linearProgress";
 export * from "./scrollBox";
 export * from "./switch";
 export * from "./textField";
+export * from "./textArea";
 export * from "./tooltip";
 export * from "./speedDialAction";
 export * from "./loading";

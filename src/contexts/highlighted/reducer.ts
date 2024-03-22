@@ -21,6 +21,7 @@ enum ActionTypes {
     Remove,
     SetIds,
     SetColor,
+    ResetColor,
     Set,
 }
 
@@ -52,6 +53,12 @@ function setColor(color: State["color"]) {
     };
 }
 
+function resetColor() {
+    return {
+        type: ActionTypes.ResetColor as const,
+    };
+}
+
 function set(payload: { color: State["color"]; ids: ObjectId[] }) {
     return {
         type: ActionTypes.Set as const,
@@ -59,7 +66,7 @@ function set(payload: { color: State["color"]; ids: ObjectId[] }) {
     };
 }
 
-export const actions = { add, remove, setIds, setColor, set };
+export const actions = { add, remove, setIds, setColor, resetColor, set };
 
 type Actions = ReturnType<(typeof actions)[keyof typeof actions]>;
 export type DispatchHighlighted = Dispatch<Actions>;
@@ -104,6 +111,13 @@ export function reducer(state: State, action: Actions): State {
         case ActionTypes.SetColor: {
             return {
                 color: action.color,
+                ids: state.ids,
+                idArr: state.idArr,
+            };
+        }
+        case ActionTypes.ResetColor: {
+            return {
+                color: initialState.color,
                 ids: state.ids,
                 idArr: state.idArr,
             };

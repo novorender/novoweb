@@ -1,6 +1,7 @@
 import {
     AccountTreeRounded,
     Attachment,
+    Ballot,
     BlurOn,
     Cameraswitch,
     Category,
@@ -432,6 +433,14 @@ export const featuresConfig = {
         Icon: Public,
         type: FeatureType.Widget,
         defaultLocked: true,
+        offline: false,
+    },
+    forms: {
+        key: "forms",
+        name: "Forms",
+        Icon: Ballot,
+        type: FeatureType.Widget,
+        defaultLocked: false,
         offline: false,
     },
 } as const;
