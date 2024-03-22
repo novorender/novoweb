@@ -42,6 +42,7 @@ const initialState = {
     sceneType: SceneType.Viewer,
     userRole: UserRole.Viewer,
     projectType: ProjectType.V1,
+    tmZoneForCalc: undefined as string | undefined, // for project v1 - tmZone, for project v2 - proj4 def from epsg.io
     requireConsent: false,
     organization: "",
     widgets: [] as WidgetKey[],
@@ -69,6 +70,7 @@ const initialState = {
     config: {
         dataServerUrl: (import.meta.env.REACT_APP_DATA_SERVER_URL ?? "https://data.novorender.com/api") as string,
         dataV2ServerUrl: (import.meta.env.REACT_APP_DATA_V2_SERVER_URL ?? "https://data-v2.novorender.com") as string,
+        projectsUrl: (import.meta.env.REACT_APP_PROJECTS_URL ?? "https://projects.novorender.com") as string,
         authServerUrl: (import.meta.env.REACT_APP_AUTH_SERVER_URL ?? "https://auth.novorender.com") as string,
         bimCollabClientSecret: (import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_SECRET ?? "") as string,
         bimCollabClientId: (import.meta.env.REACT_APP_BIMCOLLAB_CLIENT_ID ?? "") as string,
@@ -259,6 +261,7 @@ export const explorerSlice = createSlice({
             const { customProperties } = action.payload.sceneData;
 
             state.projectType = action.payload.projectType;
+            state.tmZoneForCalc = action.payload.tmZoneForCalc;
             state.sceneType = getSceneType(customProperties);
             state.userRole = getUserRole(customProperties);
             state.requireConsent = getRequireConsent(customProperties);
@@ -333,6 +336,7 @@ export const selectCanvasContextMenuFeatures = (state: RootState) => state.explo
 export const selectIsOnline = (state: RootState) => state.explorer.isOnline;
 export const selectConfig = (state: RootState) => state.explorer.config;
 export const selectProjectIsV2 = (state: RootState) => state.explorer.projectType === ProjectType.V2;
+export const selectTmZoneForCalc = (state: RootState) => state.explorer.tmZoneForCalc;
 
 export const selectEnabledWidgets = createSelector(
     (state: RootState) => state.explorer.enabledWidgets,

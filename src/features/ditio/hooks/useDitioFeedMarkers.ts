@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAppSelector } from "app/store";
 import { selectIsTopDown } from "features/orthoCam";
-import { CameraType, selectCameraType, selectProjectSettings } from "features/render";
+import { CameraType, selectCameraType } from "features/render";
 import { latLon2Tm } from "features/render/utils";
+import { selectTmZoneForCalc } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 
 import { baseUrl, useFeedWebRawQuery, useGetPostQuery } from "../api";
@@ -32,7 +33,7 @@ const emptyImgs = [] as {
 export function useDitioFeedMarkers() {
     const filters = useAppSelector(selectFilters);
     const projects = useAppSelector(selectDitioProjects);
-    const { tmZone } = useAppSelector(selectProjectSettings);
+    const tmZone = useAppSelector(selectTmZoneForCalc);
     const showMarkers = useAppSelector(selectShowDitioFeedMarkers);
     const cameraType = useAppSelector(selectCameraType);
     const token = useAppSelector(selectDitioAccessToken);

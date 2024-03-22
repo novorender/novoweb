@@ -2,8 +2,8 @@ import { connect, MqttClient } from "precompiled-mqtt";
 import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import { selectProjectSettings } from "features/render";
 import { latLon2Tm } from "features/render/utils";
+import { selectTmZoneForCalc } from "slices/explorerSlice";
 
 import { selectXsiteManageAccessToken, selectXsiteManageSite, xsiteManageActions } from "../slice";
 import { MachineLocation } from "../types";
@@ -12,7 +12,7 @@ export function useHandleXsiteManageMachineLocations() {
     const dispatch = useAppDispatch();
     const accessToken = useAppSelector(selectXsiteManageAccessToken);
     const site = useAppSelector(selectXsiteManageSite);
-    const { tmZone } = useAppSelector(selectProjectSettings);
+    const tmZone = useAppSelector(selectTmZoneForCalc);
     const currentClient = useRef<MqttClient>();
 
     useEffect(() => {
