@@ -80,10 +80,6 @@ export function Crupdate() {
     };
 
     const create = async () => {
-        if (!bookmarks) {
-            return;
-        }
-
         const bm = createBookmark(await createBookmarkImg(canvas));
 
         const newBookmarks = bookmarks.concat({
@@ -103,10 +99,6 @@ export function Crupdate() {
     };
 
     const update = async () => {
-        if (!bookmarks) {
-            return;
-        }
-
         const bm = createBookmark(await createBookmarkImg(canvas));
 
         const newBookmarks = bookmarks.map((bookmark) =>

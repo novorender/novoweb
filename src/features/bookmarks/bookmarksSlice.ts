@@ -2,14 +2,7 @@ import { Bookmark } from "@novorender/data-js-api";
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { type RootState } from "app";
-
-export enum BookmarksStatus {
-    Initial,
-    Loading,
-    Running,
-    Error,
-    Saving,
-}
+import { AsyncState, AsyncStatus, DeepMutable } from "types/misc";
 
 export enum BookmarkAccess {
     Public,
@@ -19,7 +12,8 @@ export enum BookmarkAccess {
 export type ExtendedBookmark = Bookmark & { access: BookmarkAccess };
 
 const initialState = {
-    status: BookmarksStatus.Initial,
+    initStatus: AsyncStatus.Initial,
+    saveStatus: { status: AsyncStatus.Initial } as AsyncState<null>,
     bookmarks: [] as ExtendedBookmark[],
     filters: {
         title: "",
@@ -39,8 +33,11 @@ export const bookmarksSlice = createSlice({
     name: "bookmarks",
     initialState: initialState,
     reducers: {
-        setStatus: (state, action: PayloadAction<State["status"]>) => {
-            state.status = action.payload;
+        setInitStatus: (state, action: PayloadAction<State["initStatus"]>) => {
+            state.initStatus = action.payload;
+        },
+        setSaveStatus: (state, action: PayloadAction<State["saveStatus"]>) => {
+            state.saveStatus = action.payload;
         },
         setFilters: (state, action: PayloadAction<Partial<State["filters"]>>) => {
             state.filters = {
@@ -51,9 +48,8 @@ export const bookmarksSlice = createSlice({
         toggleFilter: (state, action: PayloadAction<Exclude<keyof State["filters"], "title">>) => {
             state.filters[action.payload] = !state.filters[action.payload];
         },
-        setBookmarks: (state, action: PayloadAction<ExtendedBookmark[]>) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            state.bookmarks = action.payload as any;
+        setBookmarks: (state, action: PayloadAction<State["bookmarks"]>) => {
+            state.bookmarks = action.payload as DeepMutable<State["bookmarks"]>;
         },
         resetState: () => {
             return initialState;
@@ -72,10 +68,11 @@ export const bookmarksSlice = createSlice({
     },
 });
 
-export const selectBookmarksStatus = (state: RootState) => state.bookmarks.status;
+export const selectSaveStatus = (state: RootState) => state.bookmarks.saveStatus;
 export const selectBookmarkFilters = (state: RootState) => state.bookmarks.filters;
-export const selectBookmarks = (state: RootState) => state.bookmarks.bookmarks;
 export const selectExpandedCollections = (state: RootState) => state.bookmarks.expandedCollections;
+export const selectBookmarks = (state: RootState) => state.bookmarks.bookmarks;
+export const selectBookmarksStatus = (state: RootState) => state.bookmarks.initStatus;
 
 export const selectIsCollectionExpanded = createSelector(
     [selectExpandedCollections, (_state, collection: string) => collection],

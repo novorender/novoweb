@@ -1,5 +1,5 @@
 import { AddCircle, FilterAlt, Save } from "@mui/icons-material";
-import { Box, Button, List, useTheme } from "@mui/material";
+import { Box, Button, List, Typography, useTheme } from "@mui/material";
 import { MouseEvent, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -10,18 +10,18 @@ import { GroupStatus } from "contexts/objectGroups";
 import { selectViewMode } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
-import { ViewMode } from "types/misc";
+import { AsyncStatus, ViewMode } from "types/misc";
 
 import { Bookmark } from "../bookmark";
 import {
     BookmarkAccess,
     bookmarksActions,
-    BookmarksStatus,
     ExtendedBookmark,
     Filters,
     selectBookmarkFilters,
     selectBookmarks,
     selectBookmarksStatus,
+    selectSaveStatus,
 } from "../bookmarksSlice";
 import { Collection } from "../collection";
 import { FilterMenu } from "../filterMenu";
@@ -34,9 +34,10 @@ export function BookmarkList() {
     const sceneId = useSceneId();
 
     const viewMode = useAppSelector(selectViewMode);
-    const status = useAppSelector(selectBookmarksStatus);
+    const saveStatus = useAppSelector(selectSaveStatus);
     const user = useAppSelector(selectUser);
     const bookmarks = useAppSelector(selectBookmarks);
+    const bookmarksStatus = useAppSelector(selectBookmarksStatus);
     const filters = useAppSelector(selectBookmarkFilters);
     const dispatch = useAppDispatch();
 
@@ -60,7 +61,7 @@ export function BookmarkList() {
     };
 
     const handleSave = async () => {
-        dispatch(bookmarksActions.setStatus(BookmarksStatus.Saving));
+        dispatch(bookmarksActions.setSaveStatus({ status: AsyncStatus.Loading }));
 
         try {
             const publicBmks = dataApi.saveBookmarks(
@@ -75,10 +76,21 @@ export function BookmarkList() {
                 { personal: true }
             );
 
-            await Promise.all([publicBmks, personalBmks]);
-            dispatch(bookmarksActions.setStatus(BookmarksStatus.Running));
-        } catch {
-            dispatch(bookmarksActions.setStatus(BookmarksStatus.Error));
+            const [savedPublic, savedPersonal] = await Promise.all([publicBmks, personalBmks]);
+
+            if (!savedPublic || !savedPersonal) {
+                throw new Error("An error occurred while saving bookmarks.");
+            }
+
+            dispatch(bookmarksActions.setSaveStatus({ status: AsyncStatus.Success, data: null }));
+        } catch (e) {
+            console.warn(e);
+            dispatch(
+                bookmarksActions.setSaveStatus({
+                    status: AsyncStatus.Error,
+                    msg: "An error occurred while saving bookmarks.",
+                })
+            );
         }
     };
 
@@ -96,6 +108,9 @@ export function BookmarkList() {
     const singles = filteredBookmarks
         .filter((bookmark) => !bookmark.grouping)
         .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
+
+    const isLoading = [saveStatus.status, bookmarksStatus].includes(AsyncStatus.Loading);
+    const disableModifications = saveStatus.status !== AsyncStatus.Initial || bookmarksStatus !== AsyncStatus.Success;
 
     return (
         <>
@@ -119,16 +134,12 @@ export function BookmarkList() {
                                     <Button
                                         color="grey"
                                         onClick={() => history.push("/create")}
-                                        disabled={status !== BookmarksStatus.Running || viewMode === ViewMode.Panorama}
+                                        disabled={disableModifications || viewMode === ViewMode.Panorama}
                                     >
                                         <AddCircle sx={{ mr: 1 }} />
                                         Add bookmark
                                     </Button>
-                                    <Button
-                                        color="grey"
-                                        onClick={handleSave}
-                                        disabled={status !== BookmarksStatus.Running}
-                                    >
+                                    <Button color="grey" onClick={handleSave} disabled={disableModifications}>
                                         <Save sx={{ mr: 1 }} />
                                         Save
                                     </Button>
@@ -138,12 +149,24 @@ export function BookmarkList() {
                     </Box>
                 </Box>
             </Box>
-            {[BookmarksStatus.Loading, BookmarksStatus.Saving].includes(status) ? (
+            {isLoading ? (
                 <Box position="relative">
                     <LinearProgress />
                 </Box>
             ) : null}
             <ScrollBox display="flex" flexDirection="column" height={1} pb={2}>
+                {bookmarksStatus === AsyncStatus.Error && (
+                    <>
+                        <Typography p={1} mb={3}>
+                            An error occurred while loading bookmarks.
+                        </Typography>
+                        <Box display={"flex"} justifyContent={"center"}>
+                            <Button onClick={() => dispatch(bookmarksActions.setInitStatus(AsyncStatus.Initial))}>
+                                Try again
+                            </Button>
+                        </Box>
+                    </>
+                )}
                 {singles.length > 0 && (
                     <List>
                         {singles.map((bookmark, idx) => (
