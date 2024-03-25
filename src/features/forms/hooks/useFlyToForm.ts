@@ -1,4 +1,4 @@
-import { quat, ReadonlyVec3, vec3 } from "gl-matrix";
+import { ReadonlyVec3, vec3 } from "gl-matrix";
 import { useCallback } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
