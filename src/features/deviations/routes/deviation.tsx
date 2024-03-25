@@ -588,6 +588,7 @@ async function deviationFormToProfile({
                 sp.centerLine.enabled && brepId
                     ? {
                           brepId,
+                          objectId: sp.centerLine.id.value!,
                           parameterBounds: sp.centerLine.parameterBounds.value,
                       }
                     : undefined;
