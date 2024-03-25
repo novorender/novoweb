@@ -26,9 +26,8 @@ export function useFetchAssetList() {
                 { signal: abortController.current.signal }
             );
             const json = await response.json();
-            const data: FormGLtfAsset[] = (json as { name: string }[]).map(({ name }, i) => ({
-                name,
-                title: camelCaseToSentence(name),
+            const data: FormGLtfAsset[] = (json as FormGLtfAsset[]).map((item, i) => ({
+                ...item,
                 baseObjectId: 0xf000_0000 + 100_000 * i,
             }));
             dispatch(formsActions.setAssets({ status: AsyncStatus.Success, data }));
@@ -36,9 +35,4 @@ export function useFetchAssetList() {
     }, [dispatch, abortController, assets]);
 
     return assets;
-}
-
-function camelCaseToSentence(s: string) {
-    s = s.replaceAll(/([a-z])([A-Z])([A-Z]?)/g, (m) => `${m[0]} ${m[2] ? m[1] : m[1].toLowerCase()}${m[2] ?? ""}`);
-    return s[0].toUpperCase() + s.slice(1);
 }

@@ -1,5 +1,4 @@
-import { Place } from "@mui/icons-material";
-import { Box, IconButton } from "@mui/material";
+import { Box, css, IconButton, IconButtonProps, styled } from "@mui/material";
 import { ReadonlyVec2, ReadonlyVec3 } from "gl-matrix";
 import { forwardRef, MouseEvent, useImperativeHandle, useMemo, useRef } from "react";
 
@@ -9,18 +8,33 @@ import { areArraysEqual } from "features/arcgis/utils";
 import { CameraType, selectCameraType } from "features/render";
 import { AsyncStatus } from "types/misc";
 
-import { formsActions, selectLocationForms, selectSelectedFormId, selectTemplates } from "./slice";
-import { LocationTemplate } from "./types";
+import { useFetchAssetList } from "./hooks/useFetchAssetList";
+import { AssetIcon } from "./routes/create/assetIcon";
+import {
+    formsActions,
+    selectCurrentFormsList,
+    selectLocationForms,
+    selectSelectedFormId,
+    selectTemplates,
+} from "./slice";
+import { FormState, LocationTemplate } from "./types";
 
 type RenderedForm = {
     templateId: string;
     id: string;
     marker: string;
     location: ReadonlyVec3;
+    state: FormState;
 };
 
 function areRenderedFormsEqual(a: RenderedForm, b: RenderedForm) {
-    return a.templateId === b.templateId && a.id === b.id && a.marker === b.marker && a.location === b.location;
+    return (
+        a.templateId === b.templateId &&
+        a.id === b.id &&
+        a.marker === b.marker &&
+        a.location === b.location &&
+        a.state === b.state
+    );
 }
 
 export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
@@ -30,13 +44,23 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
     const locationForms = useAppSelector(selectLocationForms);
     const templates = useAppSelector(selectTemplates);
     const selectedFormId = useAppSelector(selectSelectedFormId);
+    const selectedTemplateId = useAppSelector(selectCurrentFormsList);
     const active = useAppSelector(selectCameraType) === CameraType.Orthographic;
     const dispatch = useAppDispatch();
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const assetList = useFetchAssetList();
+
+    const iconMap = useMemo(() => {
+        if (assetList.status !== AsyncStatus.Success) {
+            return;
+        }
+
+        return new Map(assetList.data.map((a) => [a.name, a.icon]));
+    }, [assetList]);
 
     const prevRenderedForms = useRef<RenderedForm[]>();
     const renderedForms = useMemo(() => {
-        if (!active || templates.status !== AsyncStatus.Success) {
+        if (!active || templates.status !== AsyncStatus.Success || !iconMap) {
             return [];
         }
 
@@ -49,9 +73,10 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
                 return {
                     templateId: template.id,
                     id: form.id,
-                    marker: template.marker,
+                    marker: iconMap.get(template.marker)!,
                     location: form.location!,
-                };
+                    state: form.state,
+                } as RenderedForm;
             });
 
         if (areArraysEqual(result, prevRenderedForms.current, areRenderedFormsEqual)) {
@@ -60,7 +85,7 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
             prevRenderedForms.current = result;
             return result;
         }
-    }, [templates, locationForms, active]);
+    }, [templates, locationForms, active, iconMap]);
 
     useImperativeHandle(
         ref,
@@ -75,21 +100,20 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
                 renderedForms.forEach((form, i) => {
                     const point = points[i];
                     if (point) {
-                        pointMap.set(form.id, point);
+                        pointMap.set(`${form.templateId}+${form.id}`, point);
                     }
                 });
 
                 containerRef.current.querySelectorAll("[data-id]").forEach((node) => {
                     const e = node as HTMLDivElement;
                     const id = e.dataset.id as string;
-                    const point = pointMap.get(id);
+                    const templateId = e.dataset.templateId as string;
+                    const point = pointMap.get(`${templateId}+${id}`);
                     if (point) {
                         e.style.left = `${point[0]}px`;
                         e.style.top = `${point[1]}px`;
                     }
                 });
-
-                // setToggle();
             },
         }),
         [renderedForms, view?.measure]
@@ -101,10 +125,16 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
 
     const points = view.measure.draw.toMarkerPoints(renderedForms.map((f) => f.location));
 
-    const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
+    const handleClick = (e: MouseEvent<HTMLElement>) => {
         const box = (e.target as HTMLElement).closest("[data-id]") as HTMLDivElement;
         const id = box.dataset.id;
-        dispatch(formsActions.setSelectedFormId(id === selectedFormId ? undefined : id));
+        const templateId = box.dataset.templateId!;
+        if (templateId === selectedTemplateId && id === selectedFormId) {
+            dispatch(formsActions.setSelectedFormId(undefined));
+        } else {
+            dispatch(formsActions.setCurrentFormsList(templateId));
+            dispatch(formsActions.setSelectedFormId(id));
+        }
     };
 
     return (
@@ -124,13 +154,53 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
                         top={y}
                         sx={{ translate: "-50% -100%" }}
                         data-id={form.id}
+                        data-template-id={form.templateId}
                     >
-                        <IconButton color={form.id === selectedFormId ? "primary" : "default"} onClick={handleClick}>
-                            <Place />
-                        </IconButton>
+                        <FormButton
+                            active={form.templateId === selectedTemplateId && form.id === selectedFormId}
+                            onClick={handleClick}
+                        >
+                            <AssetIcon icon={form.marker} />
+                            <StateDot state={form.state} />
+                        </FormButton>
                     </Box>
                 );
             })}
         </div>
     );
 });
+
+const stateColors = new Map<FormState, string>();
+stateColors.set("new", "#8BC34A");
+stateColors.set("ongoing", "#FF9800");
+stateColors.set("finished", "#F44336");
+
+const FormButton = styled(IconButton, { shouldForwardProp: (prop) => prop !== "active" })<
+    IconButtonProps & { active?: boolean }
+>(
+    ({ active, theme }) => css`
+        &,
+        svg {
+            color: ${theme.palette.common.white};
+        }
+
+        background-color: ${active ? theme.palette.primary.main : theme.palette.secondary.main};
+
+        &:hover {
+            background-color: ${active ? theme.palette.primary.dark : theme.palette.secondary.dark};
+        }
+    `
+);
+
+const StateDot = styled("div")<{ state: FormState }>(
+    ({ state }) => css`
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 12px;
+        border: 2px solid white;
+        background: ${stateColors.get(state)};
+    `
+);

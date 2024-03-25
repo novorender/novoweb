@@ -169,6 +169,8 @@ export type Form = {
 
 export type FormGLtfAsset = {
     name: string;
-    title: string;
+    label: string;
+    matIconName: string;
+    icon: string;
     baseObjectId: number;
 };

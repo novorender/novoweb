@@ -156,9 +156,12 @@ export function FormsList() {
     useEffect(() => {
         if (currentFormsList !== templateId) {
             dispatch(formsActions.resetFormFilters());
-            dispatch(formsActions.setCurrentFormsList(templateId));
         }
     }, [dispatch, templateId, currentFormsList]);
+
+    useEffect(() => {
+        dispatch(formsActions.setCurrentFormsList(templateId));
+    }, [dispatch, templateId]);
 
     const filterItems = useCallback(
         (item: (FormObject & { formState: FormState }) | (FormRecord & { id: number; formState: FormState })) => {

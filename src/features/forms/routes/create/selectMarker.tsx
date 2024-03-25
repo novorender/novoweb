@@ -1,9 +1,11 @@
-import { List, ListItemButton, ListItemText, Typography } from "@mui/material";
+import { List, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
 import { ScrollBox } from "components";
 import { useFetchAssetList } from "features/forms/hooks/useFetchAssetList";
 import { AsyncStatus } from "types/misc";
+
+import { AssetIcon } from "./assetIcon";
 
 export function SelectMarker({ marker, onChange }: { marker: string | undefined; onChange: (marker: string) => void }) {
     const history = useHistory();
@@ -34,7 +36,10 @@ export function SelectMarker({ marker, onChange }: { marker: string | undefined;
                         sx={{ px: 1, py: 0.5 }}
                         selected={asset.name === marker}
                     >
-                        <ListItemText>{asset.title}</ListItemText>
+                        <ListItemIcon>
+                            <AssetIcon icon={asset.icon} />
+                        </ListItemIcon>
+                        <ListItemText>{asset.label}</ListItemText>
                     </ListItemButton>
                 ))}
             </List>

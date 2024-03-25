@@ -256,5 +256,5 @@ function MarkerLabel({ marker }: { marker: string }) {
         return <>[unknown]</>;
     }
 
-    return <>{asset.title}</>;
+    return <>{asset.label}</>;
 }
