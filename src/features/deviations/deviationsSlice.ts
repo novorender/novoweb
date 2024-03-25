@@ -13,8 +13,6 @@ import {
     UiDeviationProfile,
 } from "./deviationTypes";
 
-const EMPTY_DEVIATION_GROUP_ARRAY = [] as FavoriteGroupState[];
-
 const initialState = {
     calculationStatus: {
         status: DeviationCalculationStatus.Initial,
@@ -29,7 +27,7 @@ const initialState = {
     // Stores pixel position of the rightmost deviation label
     // in follow path 2D view, which is used to position the legend
     rightmost2dDeviationCoordinate: undefined as number | undefined,
-    deviationGroups: EMPTY_DEVIATION_GROUP_ARRAY,
+    deviationGroups: undefined as FavoriteGroupState[] | undefined,
 };
 
 type State = typeof initialState;
@@ -84,21 +82,28 @@ export const deviationsSlice = createSlice({
             state.selectedProfileId = action.payload;
             if (state.config.status !== AsyncStatus.Success) {
                 state.selectedCenterLineId = undefined;
-                state.deviationGroups = EMPTY_DEVIATION_GROUP_ARRAY;
+                state.deviationGroups = undefined;
                 return;
             }
 
-            const profile = state.config.data.profiles.find((p) => p.id === state.selectedProfileId)!;
-            state.selectedCenterLineId = profile.subprofiles.find((sp) => sp.centerLine?.brepId)?.centerLine?.brepId;
-            const groups = uniqueArray(
-                [
-                    ...profile.subprofiles.flatMap((sp) => [...sp.from.groupIds, ...sp.to.groupIds]),
-                    ...profile.favorites,
-                ].filter((id) => id)
-            );
-            state.deviationGroups = groups.length
-                ? groups.map((id) => ({ id, status: GroupStatus.None }))
-                : EMPTY_DEVIATION_GROUP_ARRAY;
+            if (state.selectedProfileId) {
+                const profile = state.config.data.profiles.find((p) => p.id === state.selectedProfileId)!;
+                state.selectedCenterLineId = profile.subprofiles.find(
+                    (sp) => sp.centerLine?.brepId
+                )?.centerLine?.brepId;
+                const groups = uniqueArray(
+                    [
+                        ...profile.subprofiles.flatMap((sp) => [...sp.from.groupIds, ...sp.to.groupIds]),
+                        ...profile.favorites,
+                    ].filter((id) => id)
+                );
+                state.deviationGroups = groups.length
+                    ? groups.map((id) => ({ id, status: GroupStatus.None }))
+                    : undefined;
+            } else {
+                state.selectedCenterLineId = undefined;
+                state.deviationGroups = undefined;
+            }
         },
         setSelectedCenterLineId: (state, action: PayloadAction<string | undefined>) => {
             state.selectedCenterLineId = action.payload;

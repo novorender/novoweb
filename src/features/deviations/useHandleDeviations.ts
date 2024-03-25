@@ -34,12 +34,6 @@ export function useHandleDeviations() {
     const [getDeviationProfiles] = useLazyGetDeviationProfilesQuery();
 
     useEffect(() => {
-        return () => {
-            dispatch(deviationsActions.setSelectedProfileId(undefined));
-        };
-    }, [dispatch]);
-
-    useEffect(() => {
         initDeviationProfiles();
 
         async function initDeviationProfiles() {

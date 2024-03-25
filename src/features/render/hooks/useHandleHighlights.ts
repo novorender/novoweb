@@ -14,9 +14,11 @@ import { useHighlightCollections } from "contexts/highlightCollections";
 import { useHighlighted } from "contexts/highlighted";
 import { GroupStatus, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { useSelectionBasket } from "contexts/selectionBasket";
+import { selectDeviationGroups } from "features/deviations";
 import { selectVisibleOutlineGroups } from "features/outlineLaser";
 import { selectPropertyTreeGroups } from "features/propertyTree/slice";
 import { useSceneId } from "hooks/useSceneId";
+import { selectIsDeviationsWidgetVisible } from "slices/explorerSlice";
 
 import {
     CameraType,
@@ -48,6 +50,10 @@ export function useHandleHighlights() {
     const outlineGroups = useAppSelector(selectVisibleOutlineGroups);
     const { groups: propertyTreeGroups } = useAppSelector(selectPropertyTreeGroups);
     const cameraType = useAppSelector(selectCameraType);
+    const isDeviationsWidgetVisible = useAppSelector(selectIsDeviationsWidgetVisible);
+    const deviationGroups = useAppSelector((state) =>
+        isDeviationsWidgetVisible ? selectDeviationGroups(state) : undefined
+    );
 
     const id = useRef(0);
 
@@ -82,34 +88,41 @@ export function useHandleHighlights() {
 
             const { coloredGroups, hiddenGroups, semiTransparent } = groups.reduce(
                 (prev, group, idx) => {
-                    switch (group.status) {
-                        case GroupStatus.Selected: {
-                            const color = group.color.toString();
+                    if (deviationGroups?.length) {
+                        const devGroup = deviationGroups.find((g) => g.id === group.id);
+                        if (!devGroup || devGroup.status === GroupStatus.Hidden) {
+                            prev.hiddenGroups.push(group);
+                        }
+                    } else {
+                        switch (group.status) {
+                            case GroupStatus.Selected: {
+                                const color = group.color.toString();
 
-                            if (prev.coloredGroups[color]) {
-                                group.ids.forEach((id) => {
-                                    prev.coloredGroups[color].ids.add(id);
-                                    prev.coloredGroups[color].idx = idx;
-                                });
-                            } else {
-                                prev.coloredGroups[color] = {
-                                    idx,
-                                    action: createColorSetHighlight(group.color),
-                                    ids: new Set(group.ids),
-                                };
+                                if (prev.coloredGroups[color]) {
+                                    group.ids.forEach((id) => {
+                                        prev.coloredGroups[color].ids.add(id);
+                                        prev.coloredGroups[color].idx = idx;
+                                    });
+                                } else {
+                                    prev.coloredGroups[color] = {
+                                        idx,
+                                        action: createColorSetHighlight(group.color),
+                                        ids: new Set(group.ids),
+                                    };
+                                }
+                                break;
                             }
-                            break;
-                        }
-                        case GroupStatus.Hidden: {
-                            if (!group.opacity) {
-                                prev.hiddenGroups.push(group);
-                            } else {
-                                prev.semiTransparent.push(group);
+                            case GroupStatus.Hidden: {
+                                if (!group.opacity) {
+                                    prev.hiddenGroups.push(group);
+                                } else {
+                                    prev.semiTransparent.push(group);
+                                }
+                                break;
                             }
-                            break;
+                            default:
+                                break;
                         }
-                        default:
-                            break;
                     }
 
                     return prev;
@@ -245,6 +258,7 @@ export function useHandleHighlights() {
         basketMode,
         outlineGroups,
         cameraType,
+        deviationGroups,
     ]);
 }
 

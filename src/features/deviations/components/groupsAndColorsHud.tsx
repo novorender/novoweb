@@ -4,13 +4,7 @@ import { ColorStop } from "apis/dataV2/deviationTypes";
 import { memo, useMemo } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
-import {
-    GroupStatus,
-    isInternalGroup,
-    ObjectGroup,
-    useDispatchObjectGroups,
-    useObjectGroups,
-} from "contexts/objectGroups";
+import { GroupStatus, isInternalGroup, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { vecToRgb } from "utils/color";
 
 import { deviationsActions, selectDeviationGroups, selectSelectedProfile } from "../deviationsSlice";
@@ -30,6 +24,10 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud() {
     );
 
     const handleClick = (group: ObjectGroup) => {
+        if (!deviationGroups) {
+            return;
+        }
+
         const newGroups = deviationGroups.map((g) => {
             if (g.id === group.id) {
                 return { id: g.id, status: g.status === GroupStatus.Hidden ? GroupStatus.None : GroupStatus.Hidden };
