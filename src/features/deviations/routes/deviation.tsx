@@ -50,6 +50,7 @@ import {
     CenterLineGroup,
     DeviationForm,
     DeviationType,
+    ObjectGroupExt,
     SubprofileGroup,
     TunnelInfoGroup,
     UiDeviationConfig,
@@ -112,36 +113,36 @@ export function Deviation() {
         () => profileList.filter((p) => p.id !== deviationForm.id).map((p) => p.name.toLowerCase()),
         [profileList, deviationForm.id]
     );
-    const errors = validateDeviationForm(deviationForm, otherNames);
+    const errors = validateDeviationForm(deviationForm, otherNames, objectGroups);
     const subprofileErrors = errors.subprofiles[deviationForm.subprofileIndex];
 
     const formDisabled = !isProjectV2;
 
     const groups1 = useMemo(
-        () =>
-            subprofile.groups1.value
-                .map((id) => objectGroups.find((g) => g.id === id))
-                .filter((e) => e) as ObjectGroup[],
+        () => selectGroupsForIds(objectGroups, subprofile.groups1.value),
         [subprofile.groups1.value, objectGroups]
     );
     const groups2 = useMemo(
-        () =>
-            subprofile.groups2.value
-                .map((id) => objectGroups.find((g) => g.id === id))
-                .filter((e) => e) as ObjectGroup[],
+        () => selectGroupsForIds(objectGroups, subprofile.groups2.value),
         [subprofile.groups2.value, objectGroups]
     );
     const deviationFavorites = useMemo(
-        () =>
-            (deviationForm.favorites.value || [])
-                .map((id) => objectGroups.find((g) => g.id === id))
-                .filter((e) => e) as ObjectGroup[],
+        () => selectGroupsForIds(objectGroups, deviationForm.favorites.value),
         [deviationForm.favorites.value, objectGroups]
     );
 
-    const groups1Options = useMemo(() => objectGroups.filter((g) => !groups2.includes(g)), [objectGroups, groups2]);
-    const groups2Options = useMemo(() => objectGroups.filter((g) => !groups1.includes(g)), [objectGroups, groups1]);
-    const favoriteOptions = objectGroups;
+    const groups1Options = useMemo(
+        () => [...objectGroups.filter((g) => !groups2.includes(g)), ...groups1.filter((g) => g.deleted)],
+        [objectGroups, groups1, groups2]
+    );
+    const groups2Options = useMemo(
+        () => [...objectGroups.filter((g) => !groups1.includes(g)), ...groups2.filter((g) => g.deleted)],
+        [objectGroups, groups1, groups2]
+    );
+    const favoriteOptions = useMemo(
+        () => [...objectGroups, ...deviationFavorites.filter((g) => g.deleted)],
+        [objectGroups, deviationFavorites]
+    );
 
     const handleSave = () => {
         save();
@@ -158,6 +159,7 @@ export function Deviation() {
                         ...deviationForm.colorSetup,
                         colorStops: touchFormField(deviationForm.colorSetup.colorStops),
                     },
+                    favorites: touchFormField(deviationForm.favorites),
                     subprofiles: errors.subprofiles.map((_sp, i) => ({
                         ...deviationForm.subprofiles[i],
                         groups1: touchFormField(subprofile.groups1),
@@ -385,6 +387,8 @@ export function Deviation() {
                     onChange={(groups) => update({ favorites: updateFormField(groups.map((g) => g.id)) })}
                     selected={deviationFavorites}
                     sx={{ mt: 2 }}
+                    error={isActiveError(errors.favorites)}
+                    helperText={getActiveErrorText(errors.favorites)}
                     disabled={formDisabled}
                 />
                 <SectionHeader>Deviation parameters</SectionHeader>
@@ -459,10 +463,10 @@ function GroupAutocomplete({
     helperText,
     sx,
 }: {
-    options: ObjectGroup[];
-    selected: ObjectGroup[];
+    options: ObjectGroupExt[];
+    selected: ObjectGroupExt[];
     label: string;
-    onChange: (groups: ObjectGroup[]) => void;
+    onChange: (groups: ObjectGroupExt[]) => void;
     disabled?: boolean;
     error?: boolean;
     helperText?: string;
@@ -472,7 +476,7 @@ function GroupAutocomplete({
         <Autocomplete
             multiple
             options={options}
-            getOptionLabel={(g) => g.name}
+            getOptionLabel={(g) => g.name!}
             fullWidth
             value={selected}
             onChange={(e, value) => onChange(value)}
@@ -638,4 +642,10 @@ function checkIfRebuildIsRequired(prev: UiDeviationProfile, next: UiDeviationPro
 
 function areGroupsIdsEqual(a: string[], b: string[]) {
     return a.every((e) => b.includes(e));
+}
+
+function selectGroupsForIds(objectGroups: ObjectGroup[], ids: string[]): ObjectGroupExt[] {
+    return ids.map((id) => {
+        return objectGroups.find((g) => g.id === id) ?? { id, name: "[deleted]", deleted: true };
+    });
 }

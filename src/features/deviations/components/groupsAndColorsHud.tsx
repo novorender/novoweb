@@ -18,8 +18,11 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud() {
     const groups = useMemo(
         () =>
             (deviationGroups ?? [])
-                .map((g1) => ({ ...objectGroups.find((g2) => g2.id === g1.id), status: g1.status } as ObjectGroup))
-                .filter((g) => g),
+                .map((g1) => {
+                    const group = objectGroups.find((g2) => g2.id === g1.id);
+                    return group ? ({ ...group, status: g1.status } as ObjectGroup) : undefined;
+                })
+                .filter((g) => g) as ObjectGroup[],
         [deviationGroups, objectGroups]
     );
 

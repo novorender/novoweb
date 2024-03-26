@@ -1,4 +1,4 @@
-import { ColorConfig, ColorStop, DeviationRunData, DeviationSubprofile } from "apis/dataV2/deviationTypes";
+import { ColorConfig, ColorStop, DeviationRunData } from "apis/dataV2/deviationTypes";
 
 import { GroupStatus } from "contexts/objectGroups";
 
@@ -104,3 +104,5 @@ export type FavoriteGroupState = {
     id: string;
     status: GroupStatus;
 };
+
+export type ObjectGroupExt = { id: string; name: string; deleted?: boolean };
