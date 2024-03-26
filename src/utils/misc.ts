@@ -215,3 +215,20 @@ export function formatFileSizeMetric(fileSize: number | undefined) {
 
     return `${+size.toFixed(2)} ${units[quotient]}`;
 }
+
+export function projectV1ZoneNameToEpsg(tmZone: string) {
+    let m = tmZone.match(/WGS 84 \/ UTM zone (\d+)N/);
+    if (m) {
+        return "326" + m[1].padStart(2, "0");
+    }
+
+    m = tmZone.match(/WGS 84 \/ UTM zone (\d+)S/);
+    if (m) {
+        return "327" + m[1].padStart(2, "0");
+    }
+
+    m = tmZone.match(/ETRS89 \/ NTM zone (\d+)/);
+    if (m) {
+        return "51" + m[1].padStart(2, "0");
+    }
+}

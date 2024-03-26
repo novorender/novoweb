@@ -4,7 +4,7 @@ import { DuoMeasurementValues } from "@novorender/api";
 import { ReadonlyVec2 } from "gl-matrix";
 import { forwardRef, memo, SyntheticEvent, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectRightmost2dDeviationCoordinate } from "features/deviations";
 import { GroupsAndColorsHud } from "features/deviations/components/groupsAndColorsHud";

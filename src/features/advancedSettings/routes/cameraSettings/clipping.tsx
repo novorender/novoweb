@@ -1,16 +1,10 @@
 import { Box, Slider, Typography } from "@mui/material";
 import { SyntheticEvent, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import {
-    CameraType,
-    renderActions,
-    selectCameraDefaults,
-    selectCameraType,
-    selectViewMode,
-} from "features/render/renderSlice";
+import { CameraType, renderActions, selectCameraDefaults, selectCameraType, selectViewMode } from "features/render";
 import { ViewMode } from "types/misc";
 
 enum SliderKind {

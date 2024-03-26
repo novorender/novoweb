@@ -1,10 +1,10 @@
 import { Download, OpenInNew } from "@mui/icons-material";
 import { Box, Button, useTheme } from "@mui/material";
-import { useGetOmega365DocumentLinksQuery, useIsOmega365ConfiguredForProjectQuery } from "apis/dataV2/dataV2Api";
-import { Omega365Document } from "apis/dataV2/omega365Types";
 import { Fragment, useMemo } from "react";
 
-import { useAppSelector } from "app/store";
+import { useGetOmega365DocumentLinksQuery, useIsOmega365ConfiguredForProjectQuery } from "apis/dataV2/dataV2Api";
+import { Omega365Document } from "apis/dataV2/omega365Types";
+import { useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
     AccordionDetails,
@@ -21,7 +21,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectMainObject } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 
 export default function Omega365() {
     const [menuOpen, toggleMenu] = useToggle();

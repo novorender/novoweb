@@ -5,7 +5,7 @@ import { CSSProperties } from "react";
 import { Link, useHistory, useParams } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { Divider, FixedSizeVirualizedList, ImgTooltip, LinearProgress, Tooltip } from "components";
 import { Topic } from "types/bcf";
 

@@ -2,9 +2,9 @@ import { TextField } from "@mui/material";
 import { FormEvent, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation } from "components";
-import { selectProjectIsV2 } from "slices/explorerSlice";
+import { selectProjectIsV2 } from "slices/explorer";
 
 import { deviationsActions, selectDeviationForm, selectSelectedProfile } from "../deviationsSlice";
 import { updateFormField } from "../validation";

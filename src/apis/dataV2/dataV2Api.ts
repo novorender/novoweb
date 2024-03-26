@@ -1,13 +1,13 @@
 import { BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 import { minutesToSeconds } from "date-fns";
 
-import { RootState } from "app/store";
+import { type RootState } from "app";
 import { ArcgisWidgetConfig } from "features/arcgis";
-import { selectConfig } from "slices/explorerSlice";
+import { selectConfig } from "slices/explorer";
 
 import { DeviationProjectConfig } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
-import { BuildProgressResult, ProjectInfo } from "./projectTypes";
+import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
 
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: "",
@@ -136,6 +136,13 @@ export const dataV2Api = createApi({
                 },
             }),
         }),
+        searchEpsg: builder.query<EpsgSearchResult, { query: string }>({
+            query: ({ query }) => ({
+                url: `/epsg`,
+                method: "POST",
+                body: query,
+            }),
+        }),
     }),
 });
 
@@ -153,4 +160,5 @@ export const {
     useCalcDeviationsMutation,
     useGetProjectProgressQuery,
     useLazyGetFileDownloadLinkQuery,
+    useSearchEpsgQuery,
 } = dataV2Api;

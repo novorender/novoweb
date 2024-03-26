@@ -11,7 +11,7 @@ import {
     useTheme,
 } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { ButtonKey, featuresConfig } from "config/features";
 import { CameraSpeed } from "features/cameraSpeed";
 import { FlyToSelected } from "features/flyToSelected";
@@ -21,7 +21,7 @@ import { renderActions } from "features/render";
 import { StepBack } from "features/stepBack";
 import { StepForwards } from "features/stepForwards";
 import { useToggle } from "hooks/useToggle";
-import { selectPrimaryMenu } from "slices/explorerSlice";
+import { selectPrimaryMenu } from "slices/explorer";
 
 const positions = {
     small: [

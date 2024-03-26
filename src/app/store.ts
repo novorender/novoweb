@@ -1,8 +1,7 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
-import { dataV2Api } from "apis/dataV2/dataV2Api";
-import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
+import { dataV2Api } from "apis/dataV2/dataV2Api";
 import { arcgisSlice } from "features/arcgis";
 import { arcgisApi } from "features/arcgis/arcgisApi";
 import { areaReducer } from "features/area";
@@ -27,11 +26,11 @@ import { pimsReducer } from "features/pims";
 import { pointLineReducer } from "features/pointLine";
 import { propertiesReducer } from "features/properties/slice";
 import { propertyTreeApi, propertyTreeReducer } from "features/propertyTree";
-import { renderReducer } from "features/render/renderSlice";
+import { renderReducer } from "features/render";
 import { selectionBasketReducer } from "features/selectionBasket";
 import { xsiteManageApi, xsiteManageReducer } from "features/xsiteManage";
 import { authReducer } from "slices/authSlice";
-import { explorerReducer } from "slices/explorerSlice";
+import { explorerReducer } from "slices/explorer";
 
 const rootReducer = combineReducers({
     explorer: explorerReducer,
@@ -94,5 +93,3 @@ setupListeners(store.dispatch);
 
 export type RootState = ReturnType<typeof rootReducer>;
 export type AppDispatch = typeof store.dispatch;
-export const useAppDispatch = () => useDispatch<AppDispatch>();
-export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

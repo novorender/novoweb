@@ -1,10 +1,10 @@
 import { Save } from "@mui/icons-material";
 import { Alert, Box, Button, FormControl, InputLabel, MenuItem, Select, Typography, useTheme } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { selectDeviations } from "features/render";
-import { selectHasAdminCapabilities, selectProjectIsV2 } from "slices/explorerSlice";
+import { selectHasAdminCapabilities, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus, hasFinished } from "types/misc";
 
 import { CenterLineSelect } from "../components/centerLineSelect";

@@ -1,6 +1,6 @@
 import { css, Paper, PaperProps, styled } from "@mui/material";
 
-import { useAppDispatch } from "app/store";
+import { useAppDispatch } from "app/redux-store-interactions";
 import { renderActions } from "features/render";
 
 type StyleProps = {

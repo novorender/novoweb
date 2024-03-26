@@ -1,11 +1,11 @@
 import { skipToken } from "@reduxjs/toolkit/query";
-import { useGetProjectProgressQuery } from "apis/dataV2/dataV2Api";
 import { useEffect } from "react";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useGetProjectProgressQuery } from "apis/dataV2/dataV2Api";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectIsAdminScene, selectProjectIsV2 } from "slices/explorerSlice";
+import { selectIsAdminScene, selectProjectIsV2 } from "slices/explorer";
 
 import { deviationsActions, selectDeviationCalculationStatus } from "../deviationsSlice";
 import { DeviationCalculationStatus } from "../deviationTypes";

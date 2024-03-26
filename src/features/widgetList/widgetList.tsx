@@ -1,8 +1,8 @@
 import { MemoryRouter, Route, Switch } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
-import { featuresConfig, WidgetKey } from "config/features";
-import { explorerActions, selectWidgets } from "slices/explorerSlice";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { featuresConfig, type WidgetKey } from "config/features";
+import { explorerActions, selectWidgets } from "slices/explorer";
 
 import { Root } from "./routes/root";
 import { Tag } from "./routes/tag";

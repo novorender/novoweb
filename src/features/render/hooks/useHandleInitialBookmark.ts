@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
 import { useSceneId } from "hooks/useSceneId";
-import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorerSlice";
+import { explorerActions, selectLocalBookmarkId, selectUrlBookmarkId } from "slices/explorer";
 
 export function useHandleInitialBookmark() {
     const sceneId = useSceneId();

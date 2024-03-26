@@ -1,11 +1,11 @@
 import { Add, Delete, RestartAlt, Settings } from "@mui/icons-material";
 import { Divider, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
 import { Box } from "@mui/system";
-import { useCalcDeviationsMutation } from "apis/dataV2/dataV2Api";
 import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useCalcDeviationsMutation } from "apis/dataV2/dataV2Api";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, Tooltip, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -13,7 +13,7 @@ import { isInternalGroup, useObjectGroups } from "contexts/objectGroups";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectIsAdminScene, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorerSlice";
+import { selectIsAdminScene, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import {
@@ -32,7 +32,7 @@ import { CrupdateColorStop } from "./routes/crupdateColorStop";
 import { DeleteDeviation } from "./routes/deleteDeviation";
 import { Deviation } from "./routes/deviation";
 import { Root } from "./routes/root";
-import { MAX_DEVIATION_PROFILE_COUNT, profileToDeviationForm, uiConfigToServerConfig } from "./utils";
+import { MAX_DEVIATION_PROFILE_COUNT, newDeviationForm, profileToDeviationForm, uiConfigToServerConfig } from "./utils";
 
 export default function Deviations() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -178,7 +178,7 @@ function WidgetMenu(props: MenuProps) {
                             dispatch(deviationsActions.setDeviationForm(deviationForm));
                             history.push("/deviation/edit");
                         }}
-                        disabled={!selectedProfile}
+                        disabled={!selectedProfile || isDeviationFormSet}
                     >
                         <ListItemIcon>
                             <Settings fontSize="small" />
@@ -190,7 +190,7 @@ function WidgetMenu(props: MenuProps) {
                             closeMenu();
                             history.push("/deviation/delete", { id: selectedProfile!.id! });
                         }}
-                        disabled={!selectedProfile}
+                        disabled={!selectedProfile || isDeviationFormSet}
                     >
                         <ListItemIcon>
                             <Delete fontSize="small" />
@@ -209,12 +209,14 @@ function WidgetMenu(props: MenuProps) {
                             <MenuItem
                                 onClick={() => {
                                     closeMenu();
-                                    history.push("/deviation/delete", { id: selectedProfile!.id! });
+                                    dispatch(deviationsActions.setDeviationForm(newDeviationForm()));
+                                    history.push("/deviation/add");
                                 }}
                                 disabled={
                                     config.status !== AsyncStatus.Success ||
                                     config.data.profiles.length === MAX_DEVIATION_PROFILE_COUNT ||
-                                    !isProjectV2
+                                    !isProjectV2 ||
+                                    isDeviationFormSet
                                 }
                             >
                                 <ListItemIcon>

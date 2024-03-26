@@ -1,13 +1,13 @@
 import { ObjectDB } from "@novorender/data-js-api";
-import { useLazyGetDeviationProfilesQuery } from "apis/dataV2/dataV2Api";
-import { ColorStop, DeviationProjectConfig } from "apis/dataV2/deviationTypes";
 import { useEffect } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useLazyGetDeviationProfilesQuery } from "apis/dataV2/dataV2Api";
+import { ColorStop, DeviationProjectConfig } from "apis/dataV2/deviationTypes";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { renderActions, selectDeviations, selectPoints } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
-import { selectProjectIsV2 } from "slices/explorerSlice";
+import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { getAssetUrl } from "utils/misc";
 import { searchByPatterns } from "utils/search";

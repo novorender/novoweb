@@ -4,8 +4,8 @@ import { quat, vec3 } from "gl-matrix";
 import { useState } from "react";
 import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 
-import { dataApi } from "app";
-import { useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { canvasContextMenuConfig } from "config/canvasContextMenu";
 import { featuresConfig, FeatureType } from "config/features";
@@ -27,7 +27,7 @@ import {
     Subtree,
     SubtreeStatus,
 } from "features/render";
-import { loadScene } from "features/render/hooks/useHandleInit";
+import { loadScene } from "features/render/utils";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
@@ -38,7 +38,7 @@ import {
     selectMaximized,
     selectMinimized,
     selectPrimaryMenu,
-} from "slices/explorerSlice";
+} from "slices/explorer";
 import { CustomProperties } from "types/project";
 import { mergeRecursive } from "utils/misc";
 

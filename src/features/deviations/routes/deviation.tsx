@@ -24,13 +24,13 @@ import { ObjectDB } from "@novorender/data-js-api";
 import { useCallback, useMemo } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { isInternalGroup, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { areArraysEqual } from "features/arcgis/utils";
 import { selectDeviations } from "features/render";
-import { selectProjectIsV2 } from "slices/explorerSlice";
+import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { getObjectData } from "utils/search";
 

@@ -7,38 +7,36 @@ import { useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
 
-import { store, useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { store } from "app/store";
 import { IosSwitch, LinearProgress, withCustomScrollbar } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectProjectSettings } from "features/render/renderSlice";
 import { flip, flipGLtoCadQuat, isGlSpace, latLon2Tm } from "features/render/utils";
+import { selectTmZoneForCalc } from "slices/explorer";
 import { AsyncStatus, hasFinished } from "types/misc";
 
 import { ImageListItem } from "../imageListItem";
 import {
-    Image,
     ImageFilter,
     imagesActions,
-    ImageType,
     selectActiveImage,
     selectImageFilter,
     selectImages,
     selectShowImageMarkers,
 } from "../imagesSlice";
+import { Image, ImageType } from "../types";
 
 const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 
 export function Root() {
     const theme = useTheme();
-    const history = useHistory();
     const {
         state: { db, scene },
     } = useExplorerGlobals(true);
 
     const images = useAppSelector(selectImages);
     const filter = useAppSelector(selectImageFilter);
-    const showMarkers = useAppSelector(selectShowImageMarkers);
-    const { tmZone } = useAppSelector(selectProjectSettings);
+    const tmZone = useAppSelector(selectTmZoneForCalc);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
@@ -47,26 +45,9 @@ export function Root() {
         }
     }, [images, db, tmZone, filter, scene]);
 
-    const toggleShowMarkers = () => {
-        dispatch(imagesActions.setShowMarkers(!showMarkers));
-    };
-
     return (
         <>
-            <Box boxShadow={theme.customShadows.widgetHeader} display="flex" justifyContent={"space-between"}>
-                <Button onClick={() => history.push("/filter")} color="grey">
-                    <FilterAlt sx={{ mr: 1 }} />
-                    Filter
-                </Button>
-                <FormControlLabel
-                    control={
-                        <IosSwitch size="medium" color="primary" checked={showMarkers} onChange={toggleShowMarkers} />
-                    }
-                    label={<Box fontSize={14}>Show markers</Box>}
-                />
-                <Cancel />
-            </Box>
-
+            <Header />
             <Progress />
 
             {hasFinished(images) ? (
@@ -149,6 +130,30 @@ function Progress() {
     );
 }
 
+function Header() {
+    const history = useHistory();
+    const showMarkers = useAppSelector(selectShowImageMarkers);
+    const dispatch = useAppDispatch();
+
+    const toggleShowMarkers = () => {
+        dispatch(imagesActions.setShowMarkers(!showMarkers));
+    };
+
+    return (
+        <Box boxShadow={(theme) => theme.customShadows.widgetHeader} display="flex" justifyContent={"space-between"}>
+            <Button onClick={() => history.push("/filter")} color="grey">
+                <FilterAlt sx={{ mr: 1 }} />
+                Filter
+            </Button>
+            <FormControlLabel
+                control={<IosSwitch size="medium" color="primary" checked={showMarkers} onChange={toggleShowMarkers} />}
+                label={<Box fontSize={14}>Show markers</Box>}
+            />
+            <Cancel />
+        </Box>
+    );
+}
+
 async function loadImages({
     db,
     tmZone,
@@ -156,7 +161,7 @@ async function loadImages({
     ...options
 }: {
     db: ObjectDB;
-    tmZone: string;
+    tmZone: string | undefined;
     filter: ImageFilter;
     flip: boolean;
 }) {
@@ -165,7 +170,7 @@ async function loadImages({
         const searchPattern: SearchPattern[] = [{ property: "Image/Preview", value: "", exact: true }];
 
         if (filter.type === ImageType.Flat) {
-            searchPattern.push({ property: "Image/Image", value: "", exact: true });
+            searchPattern.push({ property: "Image/Gltf", value: "", exact: true, exclude: true });
         } else if (filter.type === ImageType.Panorama) {
             searchPattern.push({ property: "Image/Gltf", value: "", exact: true });
         }
@@ -214,6 +219,7 @@ async function loadImages({
                     images.push({
                         ...base,
                         gltf: gltf[1],
+                        src: src ? src[1] : "",
                         rotation: options.flip ? flipGLtoCadQuat(JSON.parse(rot[1])) : JSON.parse(rot[1]),
                     });
                 } else if (src) {
@@ -240,6 +246,7 @@ async function loadImages({
                     images.push({
                         ...base,
                         gltf: gltf[1],
+                        src: src ? src[1] : "",
                     });
                 } else if (src) {
                     images.push({

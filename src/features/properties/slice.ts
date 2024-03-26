@@ -1,8 +1,14 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-import { RootState } from "app/store";
+import { type RootState } from "app";
 import { initScene } from "features/render";
 import { capitalize } from "utils/misc";
+
+export enum Sort {
+    Ascending,
+    Descending,
+    None,
+}
 
 const initialState = {
     stampSettings: {
@@ -10,6 +16,7 @@ const initialState = {
     },
     starred: {} as Record<string, true | undefined>,
     showStamp: false,
+    sort: Sort.None,
 };
 
 type State = typeof initialState;
@@ -38,6 +45,14 @@ export const propertiesSlice = createSlice({
         unStar: (state, action: PayloadAction<string>) => {
             delete state.starred[action.payload];
         },
+        toggleSort: (state) => {
+            state.sort =
+                state.sort === Sort.None
+                    ? Sort.Descending
+                    : state.sort === Sort.Descending
+                    ? Sort.Ascending
+                    : Sort.None;
+        },
     },
     extraReducers(builder) {
         builder.addCase(initScene, (state, action) => {
@@ -63,6 +78,7 @@ export const propertiesSlice = createSlice({
     },
 });
 
+export const selectPropertiesSort = (state: RootState) => state.properties.sort;
 export const selectPropertiesStampSettings = (state: RootState) => state.properties.stampSettings;
 export const selectShowPropertiesStamp = (state: RootState) => state.properties.showStamp;
 export const selectStarredProperties = (state: RootState) => state.properties.starred;

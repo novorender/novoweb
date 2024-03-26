@@ -1,6 +1,5 @@
 import { SearchPattern } from "@novorender/webgl-api";
 import { createContext, Dispatch, MutableRefObject } from "react";
-import { v4 as uuidv4 } from "uuid";
 
 import { VecRGB, VecRGBA } from "utils/color";
 
@@ -144,7 +143,7 @@ export function reducer(state: State, action: Actions): ObjectGroup[] {
 
             const copy = {
                 name,
-                id: uuidv4(),
+                id: window.crypto.randomUUID(),
                 grouping: toCopy.grouping,
                 search: toCopy.search ? [...toCopy.search] : [],
                 ids: new Set<number>(),

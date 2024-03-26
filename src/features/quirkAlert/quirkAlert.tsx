@@ -1,7 +1,7 @@
 import { Warning } from "@mui/icons-material";
 import { Box, Button, Checkbox, FormControlLabel, Modal, Typography, useTheme } from "@mui/material";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { selectDeviceProfile } from "features/render";
 import { useToggle } from "hooks/useToggle";
 

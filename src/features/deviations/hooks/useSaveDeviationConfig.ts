@@ -1,15 +1,15 @@
 import { mergeRecursive, SceneConfig } from "@novorender/api";
-import { useSetDeviationProfilesMutation } from "apis/dataV2/dataV2Api";
 import { useCallback } from "react";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useSetDeviationProfilesMutation } from "apis/dataV2/dataV2Api";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { isInternalGroup, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { selectDeviations } from "features/render";
-import { loadScene } from "features/render/hooks/useHandleInit";
+import { loadScene } from "features/render/utils";
 import { useSceneId } from "hooks/useSceneId";
-import { selectIsAdminScene, selectProjectIsV2 } from "slices/explorerSlice";
+import { selectIsAdminScene, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { deviationsActions } from "../deviationsSlice";

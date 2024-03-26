@@ -2,11 +2,11 @@ import { ArrowBack, LocationOnOutlined } from "@mui/icons-material";
 import { Box, Button, Typography, useTheme } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { CameraType, renderActions } from "features/render/renderSlice";
+import { CameraType, renderActions } from "features/render";
 
 import { useGetAllLogPointsQuery } from "../api";
 import { selectXsiteManageSite } from "../slice";

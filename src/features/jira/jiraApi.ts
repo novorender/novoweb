@@ -1,6 +1,6 @@
 import { BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 
-import { RootState } from "app/store";
+import { type RootState } from "app";
 import { AsyncStatus } from "types/misc";
 import { handleImageResponse } from "utils/bcf";
 
