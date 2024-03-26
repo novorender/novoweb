@@ -1,5 +1,4 @@
 import { ColorConfig, ColorStop, DeviationRunData } from "apis/dataV2/deviationTypes";
-
 import { GroupStatus } from "contexts/objectGroups";
 
 export enum DeviationCalculationStatus {

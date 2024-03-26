@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     HighlightCollection,
     highlightCollectionsActions,

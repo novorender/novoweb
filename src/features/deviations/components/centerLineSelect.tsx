@@ -1,6 +1,6 @@
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { selectLandXmlPaths } from "features/followPath";
 import { useLoadLandXmlPath } from "features/followPath/hooks/useLoadLandXmlPath";
 import { AsyncStatus } from "types/misc";

@@ -1,7 +1,7 @@
 import { DuoMeasurementValues } from "@novorender/api";
 import { useCallback, useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { followPathActions } from "features/followPath";

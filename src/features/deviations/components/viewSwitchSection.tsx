@@ -2,7 +2,7 @@ import { Box, FormControlLabel } from "@mui/material";
 import { FollowParametricObject } from "@novorender/api";
 import { useEffect, useMemo, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { IosSwitch } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { followPathActions, selectProfile, selectView2d } from "features/followPath";

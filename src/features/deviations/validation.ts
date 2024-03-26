@@ -1,5 +1,4 @@
 import { ColorStop } from "apis/dataV2/deviationTypes";
-
 import { ObjectGroup } from "contexts/objectGroups";
 
 import { DeviationForm, FormField } from "./deviationTypes";
