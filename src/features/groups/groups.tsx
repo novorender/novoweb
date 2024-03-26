@@ -47,7 +47,9 @@ export default function Groups() {
                         open={showSnackbar}
                         onClose={() => dispatch(groupsActions.setSaveStatus(AsyncStatus.Initial))}
                         message={
-                            saveStatus === AsyncStatus.Error ? "Failed to save groups" : "Groups successfully saved"
+                            saveStatus === AsyncStatus.Error
+                                ? "An error occurred while saving groups."
+                                : "Groups successfully saved"
                         }
                         action={
                             <IconButton
