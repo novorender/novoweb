@@ -7,7 +7,7 @@ import { HeightProfileCanvas } from "features/heightProfile";
 import { ManholeCanvas } from "features/manhole";
 import { HoverCanvas, MeasureCanvas } from "features/measure";
 import { CrossSectionCanvas } from "features/orthoCam";
-import { OutlineLaserCanvas } from "features/outlineLaser/canvas";
+import { OutlineLaserCanvas } from "features/outlineLaser";
 import { PointLineCanvas } from "features/pointLine";
 
 type RenderFn = (moved: boolean, idleFrame?: boolean) => void;

@@ -6,7 +6,7 @@ import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { useState } from "react";
 import { Link, useHistory, useParams } from "react-router-dom";
 
-import { useAppDispatch } from "app/store";
+import { useAppDispatch } from "app/redux-store-interactions";
 import {
     Accordion,
     AccordionDetails,
@@ -28,7 +28,7 @@ import {
     useDispatchObjectGroups,
 } from "contexts/objectGroups";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
-import { CameraType, ObjectVisibility, renderActions } from "features/render/renderSlice";
+import { CameraType, ObjectVisibility, renderActions } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { useToggle } from "hooks/useToggle";
 import type { Comment } from "types/bcf";

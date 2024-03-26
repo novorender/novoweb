@@ -9,3 +9,17 @@ export type ProjectInfo = {
     created: string;
     modified: string;
 };
+
+export type BuildProgressResult = {
+    complete: boolean;
+    position: number;
+    text?: number;
+    filesToProcess?: number;
+};
+
+export type EpsgSearchResult = {
+    results: EpsgEntry[];
+    total: number;
+};
+
+export type EpsgEntry = { id: string; name: string };

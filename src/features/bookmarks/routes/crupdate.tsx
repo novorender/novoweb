@@ -1,13 +1,12 @@
 import { Autocomplete, Box, Button, Checkbox, FormControlLabel, useTheme } from "@mui/material";
 import { FormEventHandler, useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { BookmarkAccess, bookmarksActions, selectBookmarks } from "../bookmarksSlice";
 import { useCreateBookmark } from "../useCreateBookmark";
@@ -81,15 +80,11 @@ export function Crupdate() {
     };
 
     const create = async () => {
-        if (!bookmarks) {
-            return;
-        }
-
         const bm = createBookmark(await createBookmarkImg(canvas));
 
         const newBookmarks = bookmarks.concat({
             ...bm,
-            id: uuidv4(),
+            id: window.crypto.randomUUID(),
             name,
             description,
             grouping: collection,
@@ -104,10 +99,6 @@ export function Crupdate() {
     };
 
     const update = async () => {
-        if (!bookmarks) {
-            return;
-        }
-
         const bm = createBookmark(await createBookmarkImg(canvas));
 
         const newBookmarks = bookmarks.map((bookmark) =>

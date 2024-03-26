@@ -1,22 +1,7 @@
-import { AuthenticationHeader } from "@novorender/data-js-api";
-
-import { dataApi } from "app";
-import { store } from "app/store";
+import { dataApi } from "apis/dataV1";
 import { WidgetKey } from "config/features";
 import { User } from "slices/authSlice";
 import { base64UrlEncode, generateRandomString, sha256 } from "utils/misc";
-
-export async function getAuthHeader(): Promise<AuthenticationHeader> {
-    const {
-        auth: { accessToken },
-    } = store.getState();
-
-    if (!accessToken) {
-        return { header: "", value: "" };
-    }
-
-    return { header: "Authorization", value: `Bearer ${accessToken}` };
-}
 
 type SuccessfulLoginResponse = { token: string };
 type FailedLoginResponse = { password: string } | { user: string };

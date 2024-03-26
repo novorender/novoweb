@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import { CanvasContextMenuFeatureKey, canvasContextMenuFeatures } from "config/canvasContextMenu";
 import { ButtonKey, defaultEnabledWidgets, featuresConfig, viewerWidgets, WidgetKey } from "config/features";
@@ -25,7 +25,7 @@ import {
     selectEnabledWidgets,
     selectLockedWidgets,
     selectPrimaryMenu,
-} from "slices/explorerSlice";
+} from "slices/explorer";
 
 export function FeatureSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();

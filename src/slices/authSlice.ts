@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-import { RootState } from "app/store";
+import { type RootState } from "app";
 
 export enum SceneAuthRequirement {
     Unknown,
@@ -44,9 +44,6 @@ export const authSlice = createSlice({
         },
         logout: (state) => {
             return { ...state, msalAccount: null, accessToken: "", user: undefined };
-        },
-        setAccessToken: (state, action: PayloadAction<State["accessToken"]>) => {
-            state.accessToken = action.payload;
         },
         setUser: (state, action: PayloadAction<State["user"]>) => {
             state.user = action.payload;

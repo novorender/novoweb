@@ -1,7 +1,7 @@
 import { Box, Table, TableBody, TableHead, TableRow } from "@mui/material";
 import { ReadonlyVec3 } from "gl-matrix";
 
-import { TableCell } from "components";
+import { TableCell } from "./tableCell";
 
 export function VertexTable({ vertices, text }: { vertices: ReadonlyVec3[]; text?: string[] }) {
     return (

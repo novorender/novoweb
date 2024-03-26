@@ -1,7 +1,7 @@
 import type { SpeedDialActionProps } from "@mui/material";
 import { vec3 } from "gl-matrix";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";

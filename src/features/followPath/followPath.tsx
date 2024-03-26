@@ -2,12 +2,12 @@ import { Box } from "@mui/material";
 import { PropsWithChildren, useEffect, useRef } from "react";
 import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import { followPathActions, selectGoToRouterPath, selectLastViewedRouterPath } from "./followPathSlice";
 import { FollowParametricFromIds } from "./routes/followParametrcFromId";

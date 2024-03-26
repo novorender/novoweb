@@ -1,13 +1,14 @@
 import { Box, css, ListItemButton, styled, Typography, useTheme } from "@mui/material";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncStatus } from "types/misc";
 import { handleImageResponse } from "utils/bcf";
 import { getAssetUrl } from "utils/misc";
 
-import { Image, imagesActions, selectActiveImage } from "./imagesSlice";
+import { imagesActions, selectActiveImage } from "./imagesSlice";
+import { Image, ImageType } from "./types";
 import { isPanorama } from "./utils";
 
 const Img = styled("img")(
@@ -37,11 +38,7 @@ export function ImageListItem({ image, style }: { image: Image; style: CSSProper
     }, [url]);
 
     const viewImage = () => {
-        if (isCurrent) {
-            return;
-        }
-
-        dispatch(imagesActions.setActiveImage({ image, status: AsyncStatus.Loading }));
+        dispatch(imagesActions.setActiveImage({ image, mode: ImageType.Flat, status: AsyncStatus.Loading }));
     };
 
     return (

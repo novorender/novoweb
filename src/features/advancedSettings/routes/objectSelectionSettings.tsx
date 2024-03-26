@@ -3,7 +3,7 @@ import { Box, Button, Typography, useTheme } from "@mui/material";
 import { MouseEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import {
     HighlightCollection,
@@ -13,7 +13,7 @@ import {
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { ColorPicker } from "features/colorPicker";
-import { renderActions, selectSecondaryHighlightProperty } from "features/render/renderSlice";
+import { renderActions, selectSecondaryHighlightProperty } from "features/render";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {

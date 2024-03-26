@@ -3,7 +3,7 @@ import { Box, Button, FormControlLabel, Slider, Typography, useTheme } from "@mu
 import { useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import {
     renderActions,

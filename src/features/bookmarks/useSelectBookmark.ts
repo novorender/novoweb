@@ -3,8 +3,8 @@ import { Bookmark } from "@novorender/data-js-api";
 import { mat3, quat, vec4 } from "gl-matrix";
 import { useCallback } from "react";
 
-import { dataApi } from "app";
-import { useAppDispatch } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useAppDispatch } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import {

@@ -2,7 +2,7 @@ import { Close, Download, OpenInNew } from "@mui/icons-material";
 import { Box, Button, IconButton, ImageList, ImageListItem, Typography } from "@mui/material";
 import { Fragment, useMemo } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider } from "components";
 import { renderActions, selectStamp, StampKind } from "features/render";
 

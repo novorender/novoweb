@@ -13,12 +13,12 @@ import {
 import { FormEventHandler, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, IosSwitch, ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { loadScene } from "features/render/hooks/useHandleInit";
-import { selectIsAdminScene } from "slices/explorerSlice";
+import { loadScene } from "features/render/utils";
+import { selectIsAdminScene } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { mergeRecursive } from "utils/misc";
 

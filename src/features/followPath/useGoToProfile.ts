@@ -2,7 +2,7 @@ import { FollowParametricObject, rotationFromDirection } from "@novorender/api";
 import { glMatrix, mat3, quat, vec3 } from "gl-matrix";
 import { useCallback } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraType, renderActions } from "features/render";
 

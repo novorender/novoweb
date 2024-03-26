@@ -1,7 +1,7 @@
 import { css, styled, Theme } from "@mui/material";
 import { MouseEvent, SVGProps } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { renderActions, selectStamp, StampKind } from "features/render";
 import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 

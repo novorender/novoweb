@@ -2,13 +2,13 @@ import { Box, Checkbox, FormControlLabel, useTheme } from "@mui/material";
 import { FormEvent } from "react";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { GroupStatus, isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { groupsActions, selectSaveStatus } from "features/groups/groupsSlice";
-import { loadScene } from "features/render/hooks/useHandleInit";
+import { loadScene } from "features/render/utils";
 import { useToggle } from "hooks/useToggle";
 import { AsyncStatus } from "types/misc";
 

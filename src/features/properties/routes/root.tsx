@@ -1,6 +1,7 @@
-import { ContentCopy, MoreVert, StarOutline } from "@mui/icons-material";
+import { ArrowDownward, ArrowUpward, ContentCopy, MoreVert, StarOutline, SwapVert } from "@mui/icons-material";
 import {
     Box,
+    Button,
     Checkbox,
     FormControlLabel,
     IconButton,
@@ -15,9 +16,18 @@ import {
 } from "@mui/material";
 import type { ObjectData, ObjectId } from "@novorender/webgl-api";
 import { useDrag } from "@use-gesture/react";
-import { ChangeEvent, ChangeEventHandler, MouseEvent, MutableRefObject, useEffect, useRef, useState } from "react";
+import {
+    ChangeEvent,
+    ChangeEventHandler,
+    MouseEvent,
+    MutableRefObject,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
     AccordionDetails,
@@ -30,9 +40,9 @@ import {
 } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { selectMainObject } from "features/render/renderSlice";
+import { selectMainObject } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 import { NodeType } from "types/misc";
 import {
     extractObjectIds,
@@ -51,9 +61,11 @@ import {
 import { ResizeHandle } from "../resizeHandle";
 import {
     propertiesActions,
+    selectPropertiesSort,
     selectPropertiesStampSettings,
     selectShowPropertiesStamp,
     selectStarredProperties,
+    Sort,
 } from "../slice";
 
 enum Status {
@@ -77,14 +89,16 @@ type SearchPattern = {
 };
 
 export function Root() {
-    const mainObject = useAppSelector(selectMainObject);
-    const showStamp = useAppSelector(selectShowPropertiesStamp);
-    const stampSettings = useAppSelector(selectPropertiesStampSettings);
-    const dispatchHighlighted = useDispatchHighlighted();
     const {
         state: { db, view },
     } = useExplorerGlobals(true);
     const theme = useTheme();
+
+    const sort = useAppSelector(selectPropertiesSort);
+    const mainObject = useAppSelector(selectMainObject);
+    const showStamp = useAppSelector(selectShowPropertiesStamp);
+    const stampSettings = useAppSelector(selectPropertiesStampSettings);
+    const dispatchHighlighted = useDispatchHighlighted();
     const dispatch = useAppDispatch();
 
     const [searches, setSearches] = useState<Record<string, SearchPattern>>({});
@@ -140,7 +154,10 @@ export function Root() {
                 return;
             }
 
-            const cleanedObjectData = { ..._objectData, properties: _objectData.properties.slice(0, 100) };
+            const cleanedObjectData = {
+                ..._objectData,
+                properties: _objectData.properties.filter(([_prop, value]) => Boolean(value)).slice(0, 100),
+            };
             const parent = navigator.onLine
                 ? await searchFirstObjectAtPath({ db, path: getParentPath(_objectData.path) })
                 : undefined;
@@ -148,7 +165,7 @@ export function Root() {
             if (parent) {
                 const parentPropertiesObject = createPropertiesObject({
                     ...parent,
-                    properties: parent.properties.slice(0, 50),
+                    properties: parent.properties.filter(([_prop, value]) => Boolean(value)).slice(0, 50),
                 });
                 setObject({ ...createPropertiesObject(cleanedObjectData), parent: parentPropertiesObject });
             } else {
@@ -232,7 +249,7 @@ export function Root() {
         setSearches(newSearches);
     };
 
-    const handleChange =
+    const handleCheckboxChange =
         ({ property, value, deep }: Omit<SearchPattern, "exact">) =>
         (event: ChangeEvent<HTMLInputElement>): void => {
             abort();
@@ -243,35 +260,41 @@ export function Root() {
 
     return (
         <>
-            {stampSettings.enabled ? (
-                <Box boxShadow={theme.customShadows.widgetHeader}>
-                    <Box px={1}>
-                        <Divider />
-                    </Box>
-                    <FormControlLabel
-                        sx={{ ml: 1 }}
-                        control={
-                            <IosSwitch
-                                size="medium"
-                                color="primary"
-                                checked={showStamp}
-                                onChange={() => dispatch(propertiesActions.toggleShowStamp())}
-                            />
-                        }
-                        label={
-                            <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                Popup
-                            </Box>
-                        }
-                    />
+            <Box boxShadow={theme.customShadows.widgetHeader}>
+                <Box px={1}>
+                    <Divider />
                 </Box>
-            ) : (
-                <Box
-                    boxShadow={theme.customShadows.widgetHeader}
-                    sx={{ height: 5, width: 1, mt: "-5px" }}
-                    position="absolute"
-                />
-            )}
+                <Box display={"flex"} justifyContent={stampSettings.enabled ? "space-between" : "flex-end"}>
+                    {stampSettings.enabled && (
+                        <FormControlLabel
+                            sx={{ ml: 1 }}
+                            control={
+                                <IosSwitch
+                                    size="medium"
+                                    color="primary"
+                                    checked={showStamp}
+                                    onChange={() => dispatch(propertiesActions.toggleShowStamp())}
+                                />
+                            }
+                            label={
+                                <Box fontSize={14} sx={{ userSelect: "none" }}>
+                                    Popup
+                                </Box>
+                            }
+                        />
+                    )}
+                    <Button onClick={() => dispatch(propertiesActions.toggleSort())} color="grey">
+                        {sort === Sort.Ascending ? (
+                            <ArrowUpward fontSize="small" sx={{ mr: 1 }} />
+                        ) : sort === Sort.Descending ? (
+                            <ArrowDownward fontSize="small" sx={{ mr: 1 }} />
+                        ) : (
+                            <SwapVert fontSize="small" sx={{ mr: 1 }} />
+                        )}
+                        Sort
+                    </Button>
+                </Box>
+            </Box>
             {status === Status.Loading ? (
                 <Box position="relative">
                     <LinearProgress />
@@ -283,10 +306,11 @@ export function Root() {
                     <>
                         <PropertyList
                             object={object}
-                            handleChange={handleChange}
+                            handleChange={handleCheckboxChange}
                             searches={searches}
                             nameWidth={propertyNameWidth}
                             resizing={resizing}
+                            sort={sort}
                         />
                         {parentObject ? (
                             <Accordion>
@@ -298,10 +322,11 @@ export function Root() {
                                 <AccordionDetails>
                                     <PropertyList
                                         object={parentObject}
-                                        handleChange={handleChange}
+                                        handleChange={handleCheckboxChange}
                                         searches={searches}
                                         nameWidth={propertyNameWidth}
                                         resizing={resizing}
+                                        sort={sort}
                                     />
                                 </AccordionDetails>
                             </Accordion>
@@ -313,68 +338,106 @@ export function Root() {
     );
 }
 
-type PropertyListProps = {
+function PropertyList({
+    object,
+    handleChange,
+    searches,
+    nameWidth,
+    resizing,
+    sort,
+}: {
     object: PropertiesObject;
     handleChange: (params: SearchPattern) => (event: ChangeEvent<HTMLInputElement>) => void;
     searches: Record<string, SearchPattern>;
     nameWidth: number;
     resizing: MutableRefObject<boolean>;
-};
-
-function PropertyList({ object, handleChange, searches, nameWidth, resizing }: PropertyListProps) {
+    sort: Sort;
+}) {
     const theme = useTheme();
+
+    const rootProperties = useMemo(() => {
+        const arr = object.base.filter((property) => property[1]);
+
+        if (sort !== Sort.None) {
+            arr.sort(([a], [b]) => a.localeCompare(b, "en", { sensitivity: "accent" }));
+
+            if (sort === Sort.Ascending) {
+                arr.reverse();
+            }
+        }
+
+        return arr;
+    }, [sort, object.base]);
+
+    const accordions = useMemo(() => {
+        const arr = structuredClone(Object.values(object.grouped));
+
+        if (sort !== Sort.None) {
+            arr.sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
+
+            if (sort === Sort.Ascending) {
+                arr.reverse();
+            }
+
+            arr.forEach((accordion) => {
+                accordion.properties.sort(([a], [b]) => a.localeCompare(b, "en", { sensitivity: "accent" }));
+
+                if (sort === Sort.Ascending) {
+                    accordion.properties.reverse();
+                }
+            });
+        }
+
+        return arr;
+    }, [sort, object.grouped]);
 
     return (
         <>
             <Box pt={1} borderBottom={`1px solid ${theme.palette.grey[200]}`}>
                 <List sx={{ padding: `0 0 ${theme.spacing(1)}`, "& .propertyName": { width: nameWidth } }}>
-                    {object.base
-                        .filter((property) => property[1])
-                        .map(([property, value], idx) => (
-                            <PropertyItem
-                                key={property + value + idx}
-                                property={property}
-                                value={value}
-                                checked={searches[property] !== undefined && searches[property].value === value}
-                                onChange={handleChange({
-                                    property,
-                                    value,
-                                    deep: object.type === NodeType.Internal,
-                                })}
-                                resizing={resizing}
-                            />
-                        ))}
+                    {rootProperties.map(([property, value]) => (
+                        <PropertyItem
+                            key={property + value}
+                            property={property}
+                            value={value}
+                            checked={searches[property] !== undefined && searches[property].value === value}
+                            onChange={handleChange({
+                                property,
+                                value,
+                                deep: object.type === NodeType.Internal,
+                            })}
+                            resizing={resizing}
+                        />
+                    ))}
                 </List>
             </Box>
-            {Object.values(object.grouped).map((group) => (
-                <Accordion key={group.name}>
+            {accordions.map((accordion) => (
+                <Accordion key={accordion.name}>
                     <AccordionSummary>
                         <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-                            {decodeURIComponent(group.name)}
+                            {decodeURIComponent(accordion.name)}
                         </Box>
                     </AccordionSummary>
                     <AccordionDetails>
                         <List sx={{ padding: 0, "& .propertyName": { width: nameWidth } }}>
-                            {group.properties
-                                .filter((property) => property[1])
-                                .map(([property, value], idx) => (
-                                    <PropertyItem
-                                        key={group.name + property + value + idx}
-                                        groupName={group.name}
-                                        property={property}
-                                        value={value}
-                                        checked={
-                                            searches[`${group.name}/${property}`] !== undefined &&
-                                            searches[`${group.name}/${property}`].value === value
-                                        }
-                                        onChange={handleChange({
-                                            value,
-                                            property: `${group.name}/${property}`,
-                                            deep: object.type === NodeType.Internal,
-                                        })}
-                                        resizing={resizing}
-                                    />
-                                ))}
+                            {accordion.properties.map(([property, value]) => (
+                                <PropertyItem
+                                    key={accordion.name + property + value}
+                                    groupName={accordion.name}
+                                    property={property}
+                                    value={value}
+                                    checked={
+                                        searches[`${accordion.name}/${property}`] !== undefined &&
+                                        searches[`${accordion.name}/${property}`].value === value
+                                    }
+                                    onChange={handleChange({
+                                        value,
+                                        property: `${accordion.name}/${property}`,
+                                        deep: object.type === NodeType.Internal,
+                                    })}
+                                    resizing={resizing}
+                                />
+                            ))}
                         </List>
                     </AccordionDetails>
                 </Accordion>
@@ -383,16 +446,21 @@ function PropertyList({ object, handleChange, searches, nameWidth, resizing }: P
     );
 }
 
-type PropertyItemProps = {
+function PropertyItem({
+    checked,
+    onChange,
+    property,
+    value,
+    resizing,
+    groupName,
+}: {
     checked: boolean;
     onChange: ChangeEventHandler<HTMLInputElement>;
     property: string;
     value: string;
     groupName?: string;
     resizing: MutableRefObject<boolean>;
-};
-
-function PropertyItem({ checked, onChange, property, value, resizing, groupName }: PropertyItemProps) {
+}) {
     const isUrl = value.startsWith("http");
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const starred = useAppSelector(selectStarredProperties);

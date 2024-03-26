@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { clippingOutlineLaserActions, OutlineGroup, selectOutlineGroups } from "features/outlineLaser";
-import { selectIsOnline } from "slices/explorerSlice";
+import { selectIsOnline } from "slices/explorer";
 import { VecRGB } from "utils/color";
 import { getFilePathFromObjectPath } from "utils/objectData";
 import { getObjectData, searchByPatterns } from "utils/search";
