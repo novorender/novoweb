@@ -1,13 +1,14 @@
-import { Box, Button, Slider, Typography } from "@mui/material";
+import { css } from "@emotion/react";
+import { Box, Button, Slider, styled, Typography } from "@mui/material";
+import { DuoMeasurementValues } from "@novorender/api";
 import { ReadonlyVec2 } from "gl-matrix";
-import { forwardRef, memo, SyntheticEvent, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { forwardRef, memo, SyntheticEvent, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectRightmost2dDeviationCoordinate } from "features/deviations";
 import { GroupsAndColorsHud } from "features/deviations/components/groupsAndColorsHud";
-import { getCameraDir } from "features/engine2D/utils";
-import { CameraType, selectCamera, selectCameraType, selectViewMode } from "features/render";
+import { selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import {
@@ -17,6 +18,8 @@ import {
     selectCurrentCenter,
     selectFollowObject,
     selectProfile,
+    selectSelectedPath,
+    selectView2d,
 } from "./followPathSlice";
 import { useFollowPathFromIds } from "./useFollowPathFromIds";
 import { useGoToProfile } from "./useGoToProfile";
@@ -28,71 +31,124 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
     const currentProfileCenter = useAppSelector(selectCurrentCenter);
     const viewMode = useAppSelector(selectViewMode);
     const rightmost2dDeviationCoordinate = useAppSelector(selectRightmost2dDeviationCoordinate);
-    const cameraType = useAppSelector(selectCameraType);
-    const camera = useAppSelector(selectCamera);
+    const followPathId = useAppSelector(selectSelectedPath);
+    const isView2d = useAppSelector(selectView2d);
     const lastPt = useRef<ReadonlyVec2>();
+    const [centerLinePt, setCenterLinePt] = useState<ReadonlyVec2>();
 
     const containerRef = useRef<HTMLDivElement | null>(null);
+
+    const isFindingPoint = useRef(false);
+    const findPoint = useCallback(
+        async function findPoint() {
+            if (!view?.measure || !followPathId || isFindingPoint.current) {
+                setCenterLinePt(undefined);
+                return;
+            }
+
+            isFindingPoint.current = true;
+            const segment = await view.measure.core.pickCurveSegment(followPathId);
+            if (segment) {
+                const measure = await view.measure.core.measure(segment, {
+                    drawKind: "vertex",
+                    ObjectId: -1,
+                    parameter: view.renderState.camera.position,
+                });
+                if (measure) {
+                    const duoMeasure = measure as DuoMeasurementValues;
+                    if (duoMeasure.measureInfoB && typeof duoMeasure.measureInfoB.parameter === "number") {
+                        const pt3d = duoMeasure.measureInfoB.point;
+                        if (pt3d) {
+                            const pt = view.measure.draw.toMarkerPoints([pt3d])[0];
+                            setCenterLinePt(pt);
+                        }
+                    }
+                }
+            }
+            isFindingPoint.current = false;
+        },
+        [view?.measure, view?.renderState.camera, followPathId]
+    );
 
     useImperativeHandle(
         ref,
         () => ({
             update: () => {
-                if (!view?.measure || !currentProfileCenter || !containerRef.current) {
+                if (!view?.measure) {
                     return;
                 }
 
-                const pt = view.measure.draw.toMarkerPoints([currentProfileCenter])[0]!;
-                if (pt) {
-                    containerRef.current.style.left = `${pt[0]}px`;
-                    containerRef.current.style.top = `${pt[1]}px`;
+                if (currentProfileCenter && containerRef.current) {
+                    const pt = view.measure.draw.toMarkerPoints([currentProfileCenter])[0];
+                    if (pt) {
+                        containerRef.current.style.left = `${pt[0]}px`;
+                        containerRef.current.style.top = `${pt[1]}px`;
+                    }
                 }
+
+                findPoint();
             },
         }),
-        [view?.measure, currentProfileCenter]
+        [view?.measure, currentProfileCenter, findPoint]
     );
 
-    const isLookingDown = useMemo(() => {
-        if (!camera.goTo || cameraType !== CameraType.Orthographic) {
-            return false;
+    useEffect(() => {
+        findPoint();
+
+        async function findPoint() {
+            if (!view?.measure || !followPathId) {
+                setCenterLinePt(undefined);
+                return;
+            }
+
+            const segment = await view.measure.core.pickCurveSegment(followPathId);
+            if (segment) {
+                const measure = await view.measure.core.measure(segment, {
+                    drawKind: "vertex",
+                    ObjectId: -1,
+                    parameter: view.renderState.camera.position,
+                });
+                if (measure) {
+                    const duoMeasure = measure as DuoMeasurementValues;
+                    if (duoMeasure.measureInfoB && typeof duoMeasure.measureInfoB.parameter === "number") {
+                        const pt3d = duoMeasure.measureInfoB.point;
+                        if (pt3d) {
+                            const pt = view.measure.draw.toMarkerPoints([pt3d])[0];
+                            setCenterLinePt(pt);
+                        }
+                    }
+                }
+            }
         }
-        const dir = getCameraDir(camera.goTo.rotation);
-        const z = dir[2];
-        return Math.abs(z) >= 0.999;
-    }, [camera, cameraType]);
+    }, [view?.measure, view?.renderState.camera, followPathId]);
 
-    if (
-        !view?.measure ||
-        !currentProfileCenter ||
-        viewMode !== ViewMode.FollowPath ||
-        cameraType !== CameraType.Orthographic
-    ) {
-        return null;
-    }
+    if (isView2d) {
+        if (!view?.measure || !currentProfileCenter || viewMode !== ViewMode.FollowPath) {
+            return null;
+        }
 
-    const pt = view.measure.draw.toMarkerPoints([currentProfileCenter])[0]! || lastPt.current;
+        const pt = view.measure.draw.toMarkerPoints([currentProfileCenter])[0]! || lastPt.current;
 
-    if (!pt) {
-        return null;
-    }
+        if (!pt) {
+            return null;
+        }
 
-    lastPt.current = pt;
+        lastPt.current = pt;
 
-    let legendOffset = 160;
-    if (rightmost2dDeviationCoordinate) {
-        legendOffset = Math.max(legendOffset, rightmost2dDeviationCoordinate - pt[0] + 50);
-    }
+        let legendOffset = 160;
+        if (rightmost2dDeviationCoordinate) {
+            legendOffset = Math.max(legendOffset, rightmost2dDeviationCoordinate - pt[0] + 50);
+        }
 
-    return (
-        <div
-            style={{
-                left: `${pt[0]}px`,
-                top: `${pt[1]}px`,
-                position: "absolute",
-            }}
-            ref={containerRef}
-        >
-            {!isLookingDown && (
+        return (
+            <div
+                style={{
+                    left: `${pt[0]}px`,
+                    top: `${pt[1]}px`,
+                    position: "absolute",
+                }}
+                ref={containerRef}
+            >
                 <div
                     style={{
                         position: "absolute",
@@ -105,21 +161,42 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                 >
                     <FollowPathControls />
                 </div>
-            )}
 
-            <div
+                <div
+                    style={{
+                        position: "absolute",
+                        transform: `translate(${legendOffset}px, 0px)`,
+                        width: "200px",
+                        bottom: 0,
+                    }}
+                >
+                    <GroupsAndColorsHud />
+                </div>
+            </div>
+        );
+    } else if (centerLinePt) {
+        return (
+            <LegendAlongCenterLine
                 style={{
-                    position: "absolute",
-                    transform: `translate(${legendOffset}px, 0px)`,
-                    width: "200px",
-                    bottom: 0,
+                    transform: `translate(${centerLinePt[0]}px, ${centerLinePt[1]}px)`,
                 }}
             >
                 <GroupsAndColorsHud />
-            </div>
-        </div>
-    );
+            </LegendAlongCenterLine>
+        );
+    }
 });
+
+const LegendAlongCenterLine = styled("div")(
+    ({ theme }) => css`
+        position: absolute;
+        max-width: 300px;
+        padding: 1rem;
+        margin: 1rem;
+        border-radius: ${theme.shape.borderRadius}px;
+        background: ${theme.palette.background.paper};
+    `
+);
 
 const FollowPathControls = memo(function FollowPathControls() {
     const {

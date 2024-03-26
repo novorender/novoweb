@@ -5,11 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { getCameraDir } from "features/engine2D/utils";
 import { followPathActions, selectView2d } from "features/followPath";
 import { useGoToProfile } from "features/followPath/useGoToProfile";
 import { getTopDownParams, selectDefaultTopDownElevation, selectTopDownSnapToAxis } from "features/orthoCam";
-import { CameraType, renderActions, selectCamera, selectCameraType } from "features/render";
+import { CameraType, renderActions, selectCameraType } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { selectSelectedCenterLineId, selectSelectedProfile } from "../deviationsSlice";
@@ -31,7 +30,6 @@ export function ViewSwitchSection() {
     const [fpObj, setFpObj] = useState<AsyncState<FollowParametricObject | undefined>>({ status: AsyncStatus.Initial });
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
     const snapToNearestAxis = useAppSelector(selectTopDownSnapToAxis) === undefined;
-    const camera = useAppSelector(selectCamera);
     const cameraType = useAppSelector(selectCameraType);
 
     useEffect(() => {
@@ -56,13 +54,8 @@ export function ViewSwitchSection() {
     }, [view, followPathId]);
 
     const isLookingDown = useMemo(() => {
-        if (!camera.goTo || cameraType !== CameraType.Orthographic) {
-            return false;
-        }
-        const dir = getCameraDir(camera.goTo.rotation);
-        const z = dir[2];
-        return Math.abs(z) >= 0.999;
-    }, [camera, cameraType]);
+        return cameraType === CameraType.Orthographic && view?.isTopDown();
+    }, [view, cameraType]);
 
     const handleCrossSectionChange = () => {
         if (fpObj.status !== AsyncStatus.Success || !fpObj.data || !selectedCenterLine) {
@@ -81,8 +74,8 @@ export function ViewSwitchSection() {
     };
 
     const handleTopDownChange = () => {
-        if (!view2d || !isLookingDown) {
-            dispatch(followPathActions.setView2d(true));
+        dispatch(followPathActions.setView2d(false));
+        if (!isLookingDown) {
             dispatch(
                 renderActions.setCamera({
                     type: CameraType.Orthographic,
@@ -90,7 +83,6 @@ export function ViewSwitchSection() {
                 })
             );
         } else {
-            dispatch(followPathActions.setView2d(false));
             dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
         }
 

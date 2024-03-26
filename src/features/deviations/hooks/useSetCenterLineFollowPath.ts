@@ -1,5 +1,4 @@
-import { DuoMeasurementValues } from "@novorender/api";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -24,14 +23,35 @@ export function useSetCenterLineFollowPath() {
             : undefined;
     const followPathId = centerLine?.objectId;
     const dispatchHighlighted = useDispatchHighlighted();
+    const installedFollowPathId = useRef<number>();
+
+    const restore = useCallback(() => {
+        if (installedFollowPathId.current !== undefined) {
+            dispatch(renderActions.setViewMode(ViewMode.Default));
+            dispatch(followPathActions.setSelectedPath(undefined));
+            dispatch(followPathActions.setSelectedIds([]));
+            dispatch(followPathActions.setProfileRange(undefined));
+            dispatch(measureActions.setSelectedEntities([]));
+            dispatchHighlighted(highlightActions.remove([installedFollowPathId.current]));
+
+            installedFollowPathId.current = undefined;
+        }
+    }, [dispatch, dispatchHighlighted]);
+
+    useEffect(() => {
+        return restore;
+    }, [restore]);
 
     useEffect(() => {
         setFollowPath();
 
         async function setFollowPath() {
             if (!followPathId || !centerLine) {
+                restore();
                 return;
             }
+
+            installedFollowPathId.current = undefined;
 
             dispatch(renderActions.setViewMode(ViewMode.FollowPath));
             dispatch(followPathActions.setSelectedPath(followPathId));
@@ -46,28 +66,10 @@ export function useSetCenterLineFollowPath() {
             );
             dispatch(renderActions.setMainObject(followPathId));
             dispatchHighlighted(highlightActions.setIds([followPathId]));
-            let initPos = true;
-            if (view.measure) {
-                const segment = await view.measure.core.pickCurveSegment(followPathId);
-                if (segment) {
-                    const measure = await view.measure.core.measure(segment, {
-                        drawKind: "vertex",
-                        ObjectId: -1,
-                        parameter: view.renderState.camera.position,
-                    });
-                    if (measure) {
-                        const duoMeasure = measure as DuoMeasurementValues;
-                        if (duoMeasure.measureInfoB && typeof duoMeasure.measureInfoB.parameter === "number") {
-                            // dispatch(followPathActions.setProfile(duoMeasure.measureInfoB.parameter.toFixed(3)));
-                            dispatch(followPathActions.setProfile(centerLine.parameterBounds[0].toFixed(3)));
-                            initPos = false;
-                        }
-                    }
-                    dispatch(measureActions.setSelectedEntities([segment]));
-                    dispatch(measureActions.pin(0));
-                }
-            }
-            dispatch(followPathActions.setReset(initPos ? "initPosition" : "default"));
+            dispatch(followPathActions.setProfile(centerLine.parameterBounds[0].toFixed(3)));
+            dispatch(followPathActions.setReset("initPosition"));
+
+            installedFollowPathId.current = followPathId;
         }
-    }, [view, followPathId, dispatch, dispatchHighlighted, centerLine]);
+    }, [view, followPathId, dispatch, dispatchHighlighted, centerLine, restore]);
 }
