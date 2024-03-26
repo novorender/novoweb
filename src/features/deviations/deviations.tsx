@@ -11,6 +11,7 @@ import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { isInternalGroup, useObjectGroups } from "contexts/objectGroups";
 import WidgetList from "features/widgetList/widgetList";
+import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import { selectIsAdminScene, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
@@ -93,6 +94,7 @@ function WidgetMenu(props: MenuProps) {
     const isDeviationFormSet = useAppSelector((state) => selectDeviationForm(state) !== undefined);
     const dispatch = useAppDispatch();
     const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
+    const sceneId = useSceneId();
 
     useListenCalculationState();
 
@@ -114,7 +116,7 @@ function WidgetMenu(props: MenuProps) {
         try {
             let success = false;
             if (isProjectV2) {
-                const serverConfig = uiConfigToServerConfig(updateObjectIds(config.data, objectGroups));
+                const serverConfig = uiConfigToServerConfig(await updateObjectIds(sceneId, config.data, objectGroups));
                 await calcDeviations({ projectId: scene.id, config: serverConfig }).unwrap();
 
                 success = true;

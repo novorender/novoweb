@@ -48,7 +48,7 @@ export function useSaveDeviationConfig() {
                 });
 
                 if (isProjectV2) {
-                    const uiConfigWithObjectIds = updateObjectIds(uiConfig, objectGroups);
+                    const uiConfigWithObjectIds = await updateObjectIds(sceneId, uiConfig, objectGroups);
                     await setDeviationProfiles({
                         projectId,
                         config: uiConfigToServerConfig(uiConfigWithObjectIds),
@@ -116,9 +116,43 @@ async function saveExplorerSettings({
     }
 }
 
-export function updateObjectIds(uiConfig: UiDeviationConfig, objectGroups: ObjectGroup[]): UiDeviationConfig {
+async function fillGroupIds(sceneId: string, groups: ObjectGroup[]): Promise<void> {
+    await Promise.all(
+        groups.map(async (group) => {
+            if (!group.ids) {
+                group.ids = new Set(
+                    await dataApi.getGroupIds(sceneId, group.id).catch(() => {
+                        console.warn("failed to load ids for group - ", group.id);
+                        return [] as number[];
+                    })
+                );
+            }
+        })
+    );
+}
+
+export async function updateObjectIds(
+    sceneId: string,
+    uiConfig: UiDeviationConfig,
+    objectGroups: ObjectGroup[]
+): Promise<UiDeviationConfig> {
+    const uniqueGroupIds = new Set<string>();
+    for (const profile of uiConfig.profiles) {
+        for (const sp of profile.subprofiles) {
+            for (const id of sp.from.groupIds) {
+                uniqueGroupIds.add(id);
+            }
+            for (const id of sp.to.groupIds) {
+                uniqueGroupIds.add(id);
+            }
+        }
+    }
+
+    const activeGroups = objectGroups.filter((g) => uniqueGroupIds.has(g.id));
+    await fillGroupIds(sceneId, activeGroups);
+
     const getGroups = (groupIds: string[]) => {
-        const groups = objectGroups.filter((g) => groupIds.includes(g.id));
+        const groups = activeGroups.filter((g) => groupIds.includes(g.id));
         const objectIds = new Set<number>();
         for (const group of groups) {
             group.ids.forEach((id) => objectIds.add(id));
