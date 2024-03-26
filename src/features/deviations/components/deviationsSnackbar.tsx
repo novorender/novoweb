@@ -28,7 +28,7 @@ export function DeviationsSnackbar() {
                 bottom: { xs: "auto", sm: 24 },
                 top: { xs: 24, sm: "auto" },
             }}
-            autoHideDuration={message?.length > 100 ? 5000 : 2500}
+            autoHideDuration={message?.length > 100 ? 15000 : 7500}
             open={Boolean(message)}
             onClose={() => dispatch(deviationsActions.setSaveStatus({ status: AsyncStatus.Initial }))}
             message={message}
