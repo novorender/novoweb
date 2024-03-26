@@ -1,4 +1,4 @@
-import { DeviationProjectConfig, PointToPointGroup, PointToTriangleGroup } from "apis/dataV2/deviationTypes";
+import { ColorStop, DeviationProjectConfig, PointToPointGroup, PointToTriangleGroup } from "apis/dataV2/deviationTypes";
 
 import { DeviationForm, DeviationType, SubprofileGroup, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
 
@@ -120,4 +120,8 @@ export function uiConfigToServerConfig(config: UiDeviationConfig): DeviationProj
         },
         runData: config.runData,
     };
+}
+
+export function colorStopSortFn(a: ColorStop, b: ColorStop) {
+    return b.position - a.position;
 }

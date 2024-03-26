@@ -14,6 +14,7 @@ import { searchByPatterns } from "utils/search";
 
 import { deviationsActions, selectDeviationProfiles, selectSelectedProfile } from "./deviationsSlice";
 import { DeviationType, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
+import { colorStopSortFn } from "./utils";
 
 const EMPTY_ARRAY: ColorStop[] = [];
 
@@ -111,23 +112,25 @@ export function useHandleDeviations() {
         abortController,
     ]);
 
-    const colorStops = profile?.colors!.colorStops;
-
     // Set current deviation and colors
     useEffect(() => {
-        if (profile && colorStops) {
+        if (profile) {
+            let colorStops = profile.colors.colorStops.slice();
+            if (profile.colors.absoluteValues) {
+                colorStops = accountForAbsValues(colorStops);
+            }
             dispatch(
                 renderActions.setPoints({
                     deviation: {
                         index: profile.index,
                         colorGradient: {
-                            knots: colorStops.slice(),
+                            knots: colorStops,
                         },
                     },
                 })
             );
         }
-    }, [dispatch, profile, colorStops]);
+    }, [dispatch, profile]);
 
     // Promote current deviation to render state
     useEffect(
@@ -136,7 +139,7 @@ export function useHandleDeviations() {
                 return;
             }
 
-            let patchedDeviation = deviation;
+            let patchedDeviation = { ...deviation };
             if (deviation.index === -1) {
                 patchedDeviation = {
                     ...deviation,
@@ -148,6 +151,12 @@ export function useHandleDeviations() {
         },
         [view, deviation]
     );
+}
+
+function accountForAbsValues(colorStops: ColorStop[]) {
+    const absolute = colorStops.map((cs) => ({ ...cs, position: Math.abs(cs.position) }));
+    const negatives = absolute.filter((cs) => cs.position > 0).map((cs) => ({ ...cs, position: -cs.position }));
+    return [...absolute, ...negatives].sort(colorStopSortFn);
 }
 
 function getEmptyDeviationConfig(): UiDeviationConfig {

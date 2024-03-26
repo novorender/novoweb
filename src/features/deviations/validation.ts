@@ -1,3 +1,5 @@
+import { ColorStop } from "apis/dataV2/deviationTypes";
+
 import { ObjectGroup } from "contexts/objectGroups";
 
 import { DeviationForm, FormField } from "./deviationTypes";
@@ -17,7 +19,12 @@ export function validateDeviationForm(deviationForm: DeviationForm, otherNames: 
         }),
         colorStops: makeError({
             error:
-                deviationForm.colorSetup.colorStops.value.length === 0 ? "Define at least one color stop" : undefined,
+                deviationForm.colorSetup.colorStops.value.length === 0
+                    ? "Define at least one color stop"
+                    : deviationForm.colorSetup.absoluteValues &&
+                      !hasUniqueAbsColorStops(deviationForm.colorSetup.colorStops.value)
+                    ? "Color stop absolute values have to be unique when Absolute Values is checked"
+                    : undefined,
             active: deviationForm.colorSetup.colorStops.edited,
         }),
         favorites: makeError({
@@ -56,6 +63,10 @@ export function validateDeviationForm(deviationForm: DeviationForm, otherNames: 
             }),
         })),
     };
+}
+
+function hasUniqueAbsColorStops(colorStops: ColorStop[]) {
+    return new Set(colorStops.map((cs) => Math.abs(cs.position).toFixed(3))).size === colorStops.length;
 }
 
 function makeError({ active, error }: { active: boolean | undefined; error: string | undefined }): FieldError {

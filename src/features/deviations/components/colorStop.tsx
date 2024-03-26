@@ -2,6 +2,7 @@ import { Add, Delete, Edit, MoreVert, Palette } from "@mui/icons-material";
 import {
     Box,
     Button,
+    FormHelperText,
     IconButton,
     List,
     ListItemButton,
@@ -60,8 +61,8 @@ export function ColorStopList({
             </List>
 
             {errors?.colorStops.active && (
-                <Box color={theme.palette.error.main} textAlign="center">
-                    {errors.colorStops.error}
+                <Box color={theme.palette.error.main} mx={2}>
+                    <FormHelperText error>{errors.colorStops.error}</FormHelperText>
                 </Box>
             )}
 
