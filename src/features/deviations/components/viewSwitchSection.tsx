@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "app/store";
 import { IosSwitch } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { followPathActions, selectView2d } from "features/followPath";
+import { followPathActions, selectProfile, selectView2d } from "features/followPath";
 import { useGoToProfile } from "features/followPath/useGoToProfile";
 import { getTopDownParams, selectDefaultTopDownElevation, selectTopDownSnapToAxis } from "features/orthoCam";
 import { CameraType, renderActions, selectCameraType } from "features/render";
@@ -21,6 +21,7 @@ export function ViewSwitchSection() {
     const view2d = useAppSelector(selectView2d);
     const goToProfile = useGoToProfile();
     const selectedProfile = useAppSelector(selectSelectedProfile);
+    const profilePos = useAppSelector(selectProfile);
     const selectedCenterLineId = useAppSelector(selectSelectedCenterLineId);
     const selectedCenterLine =
         selectedProfile && selectedCenterLineId
@@ -64,10 +65,15 @@ export function ViewSwitchSection() {
 
         const newState = !view2d || isLookingDown;
 
+        const pos = Math.max(
+            selectedCenterLine.parameterBounds[0],
+            Math.min(selectedCenterLine.parameterBounds[1], Number(profilePos))
+        );
+
         dispatch(followPathActions.setView2d(newState));
         goToProfile({
             fpObj: fpObj.data,
-            p: Number(selectedCenterLine.parameterBounds[0]),
+            p: pos,
             newView2d: newState,
             keepOffset: false,
         });
@@ -104,7 +110,7 @@ export function ViewSwitchSection() {
     };
 
     const isCrossSection = view2d && !isLookingDown;
-    const isTopDown = view2d && isLookingDown;
+    const isTopDown = isLookingDown;
 
     return (
         <>

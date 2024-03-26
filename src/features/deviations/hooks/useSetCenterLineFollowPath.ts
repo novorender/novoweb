@@ -1,3 +1,4 @@
+import { DuoMeasurementValues } from "@novorender/api";
 import { useCallback, useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/store";
@@ -66,8 +67,36 @@ export function useSetCenterLineFollowPath() {
             );
             dispatch(renderActions.setMainObject(followPathId));
             dispatchHighlighted(highlightActions.setIds([followPathId]));
-            dispatch(followPathActions.setProfile(centerLine.parameterBounds[0].toFixed(3)));
-            dispatch(followPathActions.setReset("initPosition"));
+            dispatch(renderActions.setMainObject(followPathId));
+            dispatchHighlighted(highlightActions.setIds([followPathId]));
+            let initPos = true;
+            if (view.measure) {
+                const segment = await view.measure.core.pickCurveSegment(followPathId);
+                if (segment) {
+                    const measure = await view.measure.core.measure(segment, {
+                        drawKind: "vertex",
+                        ObjectId: -1,
+                        parameter: view.renderState.camera.position,
+                    });
+                    if (measure) {
+                        const duoMeasure = measure as DuoMeasurementValues;
+                        if (duoMeasure.measureInfoB && typeof duoMeasure.measureInfoB.parameter === "number") {
+                            // dispatch(followPathActions.setProfile(duoMeasure.measureInfoB.parameter.toFixed(3)));
+                            const pos = Math.max(
+                                centerLine.parameterBounds[0],
+                                Math.min(centerLine.parameterBounds[1], duoMeasure.measureInfoB.parameter)
+                            );
+                            dispatch(followPathActions.setProfile(pos.toFixed(3)));
+                            initPos = false;
+                        }
+                    } else {
+                        dispatch(followPathActions.setProfile(centerLine.parameterBounds[0].toFixed(3)));
+                    }
+                    dispatch(measureActions.setSelectedEntities([segment]));
+                    dispatch(measureActions.pin(0));
+                }
+            }
+            dispatch(followPathActions.setReset(initPos ? "initPosition" : "default"));
 
             installedFollowPathId.current = followPathId;
         }

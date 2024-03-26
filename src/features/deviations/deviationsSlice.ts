@@ -137,6 +137,13 @@ export const selectSelectedProfile = createSelector(
     }
 );
 export const selectSelectedCenterLineId = (state: RootState) => state.deviations.selectedCenterLineId;
+export const selectSelectedCenterLineFollowPathId = createSelector(
+    [selectSelectedProfile, selectSelectedCenterLineId],
+    (profile, centerLineId) =>
+        profile && centerLineId
+            ? profile.subprofiles.find((sp) => sp.centerLine?.brepId === centerLineId)?.centerLine!.objectId
+            : undefined
+);
 export const selectSaveStatus = (state: RootState) => state.deviations.saveStatus;
 export const selectRightmost2dDeviationCoordinate = (state: RootState) =>
     state.deviations.rightmost2dDeviationCoordinate;

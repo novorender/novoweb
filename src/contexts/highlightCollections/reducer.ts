@@ -7,6 +7,7 @@ import { toIdArr, toIdObj } from "../utils";
 
 export enum HighlightCollection {
     SecondaryHighlight = "secondaryHighlight",
+    SelectedDeviation = "selectedDeviation",
 }
 
 export const initialState = {
@@ -14,6 +15,11 @@ export const initialState = {
         ids: {} as Record<ObjectId, true | undefined>,
         idArr: [] as ObjectId[],
         color: [1, 1, 0, 1] as VecRGBA,
+    },
+    [HighlightCollection.SelectedDeviation]: {
+        ids: {} as Record<ObjectId, true | undefined>,
+        idArr: [] as ObjectId[],
+        color: [1, 1, 1, 1] as VecRGBA,
     },
 };
 
@@ -155,6 +161,11 @@ export function reducer(state: State, action: Actions): State {
                 ...state,
                 [HighlightCollection.SecondaryHighlight]: {
                     color: state.secondaryHighlight.color,
+                    idArr: [],
+                    ids: {},
+                },
+                [HighlightCollection.SelectedDeviation]: {
+                    color: state.selectedDeviation.color,
                     idArr: [],
                     ids: {},
                 },

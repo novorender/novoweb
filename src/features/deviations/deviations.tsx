@@ -23,6 +23,7 @@ import {
     selectSelectedProfile,
 } from "./deviationsSlice";
 import { DeviationCalculationStatus } from "./deviationTypes";
+import { useHighlightDeviation } from "./hooks/useHighlightDeviation";
 import { useListenCalculationState } from "./hooks/useListenCalculationState";
 import { updateObjectIds } from "./hooks/useSaveDeviationConfig";
 import { useSetCenterLineFollowPath } from "./hooks/useSetCenterLineFollowPath";
@@ -38,6 +39,7 @@ export default function Deviations() {
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.deviations.key);
 
     useSetCenterLineFollowPath();
+    useHighlightDeviation();
 
     return (
         <MemoryRouter>

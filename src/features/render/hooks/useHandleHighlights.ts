@@ -14,11 +14,9 @@ import { useHighlightCollections } from "contexts/highlightCollections";
 import { useHighlighted } from "contexts/highlighted";
 import { GroupStatus, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { useSelectionBasket } from "contexts/selectionBasket";
-import { selectDeviationGroups } from "features/deviations";
 import { selectVisibleOutlineGroups } from "features/outlineLaser";
 import { selectPropertyTreeGroups } from "features/propertyTree/slice";
 import { useSceneId } from "hooks/useSceneId";
-import { selectIsDeviationsWidgetVisible } from "slices/explorerSlice";
 
 import {
     CameraType,
@@ -39,7 +37,7 @@ export function useHandleHighlights() {
     const sceneId = useSceneId();
     const mainObject = useAppSelector(selectMainObject);
     const highlighted = useHighlighted();
-    const secondaryHighlight = useHighlightCollections()["secondaryHighlight"];
+    const { secondaryHighlight, selectedDeviation } = useHighlightCollections();
     const hidden = useHidden().idArr;
     const groups = useObjectGroups();
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
@@ -50,10 +48,6 @@ export function useHandleHighlights() {
     const outlineGroups = useAppSelector(selectVisibleOutlineGroups);
     const { groups: propertyTreeGroups } = useAppSelector(selectPropertyTreeGroups);
     const cameraType = useAppSelector(selectCameraType);
-    const isDeviationsWidgetVisible = useAppSelector(selectIsDeviationsWidgetVisible);
-    const deviationGroups = useAppSelector((state) =>
-        isDeviationsWidgetVisible ? selectDeviationGroups(state) : undefined
-    );
 
     const id = useRef(0);
 
@@ -88,41 +82,34 @@ export function useHandleHighlights() {
 
             const { coloredGroups, hiddenGroups, semiTransparent } = groups.reduce(
                 (prev, group, idx) => {
-                    if (deviationGroups?.length) {
-                        const devGroup = deviationGroups.find((g) => g.id === group.id);
-                        if (!devGroup || devGroup.status === GroupStatus.Hidden) {
-                            prev.hiddenGroups.push(group);
-                        }
-                    } else {
-                        switch (group.status) {
-                            case GroupStatus.Selected: {
-                                const color = group.color.toString();
+                    switch (group.status) {
+                        case GroupStatus.Selected: {
+                            const color = group.color.toString();
 
-                                if (prev.coloredGroups[color]) {
-                                    group.ids.forEach((id) => {
-                                        prev.coloredGroups[color].ids.add(id);
-                                        prev.coloredGroups[color].idx = idx;
-                                    });
-                                } else {
-                                    prev.coloredGroups[color] = {
-                                        idx,
-                                        action: createColorSetHighlight(group.color),
-                                        ids: new Set(group.ids),
-                                    };
-                                }
-                                break;
+                            if (prev.coloredGroups[color]) {
+                                group.ids.forEach((id) => {
+                                    prev.coloredGroups[color].ids.add(id);
+                                    prev.coloredGroups[color].idx = idx;
+                                });
+                            } else {
+                                prev.coloredGroups[color] = {
+                                    idx,
+                                    action: createColorSetHighlight(group.color),
+                                    ids: new Set(group.ids),
+                                };
                             }
-                            case GroupStatus.Hidden: {
-                                if (!group.opacity) {
-                                    prev.hiddenGroups.push(group);
-                                } else {
-                                    prev.semiTransparent.push(group);
-                                }
-                                break;
-                            }
-                            default:
-                                break;
+                            break;
                         }
+                        case GroupStatus.Hidden: {
+                            if (!group.opacity) {
+                                prev.hiddenGroups.push(group);
+                            } else {
+                                prev.semiTransparent.push(group);
+                            }
+                            break;
+                        }
+                        default:
+                            break;
                     }
 
                     return prev;
@@ -228,6 +215,10 @@ export function useHandleHighlights() {
                             action: createColorSetHighlight(secondaryHighlight.color),
                         },
                         {
+                            objectIds: new Uint32Array(selectedDeviation.idArr).sort(),
+                            action: createNeutralHighlight(),
+                        },
+                        {
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose
                                     ? mainObject !== undefined
@@ -258,7 +249,7 @@ export function useHandleHighlights() {
         basketMode,
         outlineGroups,
         cameraType,
-        deviationGroups,
+        selectedDeviation,
     ]);
 }
 
