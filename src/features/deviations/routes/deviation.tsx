@@ -315,7 +315,20 @@ export function Deviation() {
                 <Typography>
                     Create deviations between items in Groups. For example a point cloud and (many) 3D asset(s).
                 </Typography>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
+                <GroupAutocomplete
+                    options={groups1Options}
+                    label="Groups to analyse"
+                    onChange={(groups) => updateSubprofile({ groups1: updateFormField(groups.map((g) => g.id)) })}
+                    selected={groups1}
+                    sx={{ mt: 2 }}
+                    error={isActiveError(subprofileErrors.groups1)}
+                    helperText={getActiveErrorText(subprofileErrors.groups1)}
+                    disabled={formDisabled}
+                />
+                <Box display="flex" justifyContent="center" mt={1}>
+                    <Typography fontWeight={600}>vs</Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
                     <FormControl>
                         <RadioGroup
                             row
@@ -356,19 +369,6 @@ export function Deviation() {
                             </IconButton>
                         </Tooltip>
                     )}
-                </Box>
-                <GroupAutocomplete
-                    options={groups1Options}
-                    label="Groups to analyse"
-                    onChange={(groups) => updateSubprofile({ groups1: updateFormField(groups.map((g) => g.id)) })}
-                    selected={groups1}
-                    sx={{ mt: 2 }}
-                    error={isActiveError(subprofileErrors.groups1)}
-                    helperText={getActiveErrorText(subprofileErrors.groups1)}
-                    disabled={formDisabled}
-                />
-                <Box display="flex" justifyContent="center" mt={1}>
-                    <Typography fontWeight={600}>vs</Typography>
                 </Box>
                 <GroupAutocomplete
                     options={groups2Options}
