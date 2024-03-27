@@ -64,6 +64,7 @@ function LoggedIn({
 
     const logOut = () => {
         setLoading(true);
+        deleteFromStorage(StorageKey.AccessToken);
         deleteFromStorage(StorageKey.RefreshToken);
         window.location.href = `${config.authServerUrl}/signout?return_url=${window.location.href}`;
     };
