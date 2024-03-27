@@ -21,7 +21,7 @@ import {
 } from "@mui/material";
 import { View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -83,6 +83,7 @@ export function Deviation() {
     const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
     const saveConfig = useSaveDeviationConfig();
     const deviations = useAppSelector(selectDeviations);
+    const containerRef = useRef<HTMLElement>();
 
     const deviationForm = useAppSelector(selectDeviationForm) ?? newDeviationForm();
     const subprofile = deviationForm.subprofiles[deviationForm.subprofileIndex];
@@ -167,6 +168,14 @@ export function Deviation() {
                         groups2: touchFormField(subprofile.groups2),
                     })),
                 });
+
+                setTimeout(() => {
+                    const errorNode = containerRef.current?.querySelector(".Mui-error");
+                    if (errorNode) {
+                        errorNode.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }
+                }, 200);
+
                 return;
             }
 
@@ -244,7 +253,7 @@ export function Deviation() {
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} p={2}>
+            <ScrollBox height={1} p={2} ref={containerRef}>
                 <Typography fontWeight={600} fontSize="1.5rem" mb={2}>
                     Create deviation profile
                 </Typography>

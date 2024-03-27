@@ -7,10 +7,10 @@ import { selectDeviations } from "features/render";
 import { selectHasAdminCapabilities, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus, hasFinished } from "types/misc";
 
-import { CenterLineSelect } from "../components/centerLineSelect";
 import { ColorStopList } from "../components/colorStop";
 import { DeviationsSnackbar } from "../components/deviationsSnackbar";
 import { MixFactorInput } from "../components/mixFactorInput";
+import { SubprofileSelect } from "../components/subprofileSelect";
 import { ViewSwitchSection } from "../components/viewSwitchSection";
 import {
     deviationsActions,
@@ -150,7 +150,7 @@ export function Root() {
                                     }}
                                 />
 
-                                <CenterLineSelect />
+                                <SubprofileSelect />
 
                                 <ViewSwitchSection />
                             </Box>
