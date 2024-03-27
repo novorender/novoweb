@@ -42,9 +42,6 @@ export const authSlice = createSlice({
             state.accessToken = action.payload.accessToken;
             state.user = action.payload.user;
         },
-        logout: (state) => {
-            return { ...state, msalAccount: null, accessToken: "", user: undefined };
-        },
         setUser: (state, action: PayloadAction<State["user"]>) => {
             state.user = action.payload;
         },
