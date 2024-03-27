@@ -6,6 +6,7 @@ import {
     Checkbox,
     FormControl,
     FormControlLabel,
+    FormHelperText,
     IconButton,
     InputLabel,
     MenuItem,
@@ -224,9 +225,11 @@ export function Deviation() {
 
     const canSave = !formDisabled && saveStatus.status !== AsyncStatus.Loading && !hasActiveErrors(errors);
 
+    const showSubprofileSubheader = deviationForm.subprofiles.length > 1;
+
     return (
         <>
-            <Box boxShadow={theme.customShadows.widgetHeader}>
+            <Box boxShadow={showSubprofileSubheader ? undefined : theme.customShadows.widgetHeader}>
                 <Box px={1}>
                     <Divider />
                 </Box>
@@ -247,6 +250,23 @@ export function Deviation() {
                     </Button>
                 </Box>
             </Box>
+
+            {showSubprofileSubheader && (
+                <Box boxShadow={theme.customShadows.widgetHeader}>
+                    <Box px={1}>
+                        <Divider />
+                    </Box>
+                    <Box px={1}>
+                        <FormHelperText>
+                            Editing {groups1.map((g) => g.name).join(", ") || "[not set]"}
+                            <Box component="span" fontWeight={600}>
+                                {" vs "}
+                            </Box>
+                            {groups2.map((g) => g.name).join(", ") || "[not set]"}...
+                        </FormHelperText>
+                    </Box>
+                </Box>
+            )}
 
             {loading ? (
                 <Box position="relative">
