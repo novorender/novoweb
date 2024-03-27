@@ -1,17 +1,18 @@
 {
     "name": "novoweb",
-    "version": "1.11.0",
+    "version": "1.13.0",
     "type": "module",
     "description": "Novorender frontend",
     "main": "index.js",
     "scripts": {
-        "build": "npm run eslint && npm run typescript && vite build",
+        "build": "npm run eslint && npm run typescript && npm run skott && vite build",
         "dev": "vite",
         "preview": "vite preview",
         "typescript": "tsc --noEmit",
         "eslint": "eslint src/ --max-warnings=0",
         "start": "node server.mjs",
-        "dependencies": "node scripts/dependencies.cjs"
+        "dependencies": "node scripts/dependencies.cjs",
+        "skott": "skott src/index.tsx -s -m file-tree -nit"
     },
     "repository": {
         "type": "git",
@@ -33,7 +34,6 @@
         "@types/react-virtualized-auto-sizer": "^1.0.1",
         "@types/react-window": "^1.8.3",
         "@types/serviceworker": "^0.0.74",
-        "@types/uuid": "^8.3.3",
         "@typescript-eslint/eslint-plugin": "^6.13.2",
         "@typescript-eslint/parser": "^6.13.2",
         "@vitejs/plugin-basic-ssl": "^1.0.2",
@@ -46,6 +46,7 @@
         "husky": "^7.0.2",
         "lint-staged": "^11.1.2",
         "prettier": "^2.3.2",
+        "skott": "^0.33.2",
         "typescript": "^5.1.6",
         "vite": "^5.0.12",
         "vite-plugin-env-compatible": "^2.0.1",
@@ -61,7 +62,7 @@
         "@mui/lab": "^5.0.0-alpha.58",
         "@mui/material": "^5.15.10",
         "@mui/x-date-pickers": "^5.0.10",
-        "@novorender/api": "0.1.20",
+        "@novorender/api": "0.1.21",
         "@novorender/data-js-api": "0.2.26",
         "@novorender/webgl-api": "0.4.59",
         "@reduxjs/toolkit": "^2.0.1",
@@ -85,8 +86,7 @@
         "react-redux": "^8.0.1",
         "react-router-dom": "^5.3.3",
         "react-virtualized-auto-sizer": "^1.0.6",
-        "react-window": "^1.8.6",
-        "uuid": "^8.3.2"
+        "react-window": "^1.8.6"
     },
     "lint-staged": {
         "src/**/*.{js,jsx,ts,tsx,json,css,scss,md,html}": [
@@ -108,5 +108,14 @@
     },
     "eslintConfig": {
         "extends": "./eslintrc.json"
+    },
+    "madge": {
+        "tsConfig": "./tsconfig.json",
+        "detectiveOptions": {
+            "ts": {
+                "skipTypeImports": true,
+                "mixedImports": true
+            }
+        }
     }
 }

@@ -19,17 +19,17 @@ import {
     MenuItem,
     Typography,
 } from "@mui/material";
-import { useGetPropertyTreeFavoritesQuery, useSetPropertyTreeFavoritesMutation } from "apis/dataV2/dataV2Api";
 import pMap from "p-map";
 import { FocusEvent, MouseEvent, MutableRefObject, useEffect, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useGetPropertyTreeFavoritesQuery, useSetPropertyTreeFavoritesMutation } from "apis/dataV2/dataV2Api";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectProjectIsV2 } from "slices/explorerSlice";
+import { selectHasAdminCapabilities, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { hslToVec, VecRGBA } from "utils/color";
 import { getAssetUrl } from "utils/misc";

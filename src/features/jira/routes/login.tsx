@@ -1,13 +1,12 @@
 import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, Typography, useTheme } from "@mui/material";
 import { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
-import { selectConfig } from "slices/explorerSlice";
+import { selectConfig } from "slices/explorer";
 import { createOAuthStateString } from "utils/auth";
 
 import { jiraIdentityServer } from "../jiraApi";
@@ -19,7 +18,7 @@ export function Login({ sceneId }: { sceneId: string }) {
     const config = useAppSelector(selectConfig);
 
     const handleLoginRedirect = () => {
-        const id = uuidv4();
+        const id = window.crypto.randomUUID();
         const state = createOAuthStateString({
             sceneId,
             service: featuresConfig.jira.key,

@@ -2,7 +2,7 @@ import { OpenInNew } from "@mui/icons-material";
 import { LinearProgress, useTheme } from "@mui/material";
 import { Box, Link, Table, TableBody, TableCell, TableRow } from "@mui/material";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { ScrollBox } from "components";
 import { selectArcgisSelectedFeatureInfo } from "features/arcgis/arcgisSlice";
 

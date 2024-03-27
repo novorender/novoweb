@@ -1,7 +1,7 @@
 import { useHistory, useParams } from "react-router-dom";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation } from "components";
 import { useSceneId } from "hooks/useSceneId";
 

@@ -3,8 +3,8 @@ import { BoundingSphere, RenderState } from "@novorender/api";
 import { AABB2 } from "@novorender/api/types/measure/worker/brep";
 import { vec2, vec3 } from "gl-matrix";
 
-import { FeatureGeometry, FeatureServer, Layer, LayerFeature, SelectedFeatureId } from "./arcgisSlice";
 import { FeatureSymbol, LayerDrawingInfo } from "./arcgisTypes";
+import { FeatureGeometry, FeatureServer, Layer, LayerFeature, SelectedFeatureId } from "./types";
 
 export function trimRightSlash(s: string) {
     return s && s.replace(/\/$/, "");

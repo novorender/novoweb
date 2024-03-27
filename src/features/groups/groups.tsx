@@ -2,13 +2,13 @@ import { Close, Code } from "@mui/icons-material";
 import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Snackbar } from "@mui/material";
 import { matchPath, MemoryRouter, Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { groupsActions, selectSaveStatus } from "./groupsSlice";
@@ -47,7 +47,9 @@ export default function Groups() {
                         open={showSnackbar}
                         onClose={() => dispatch(groupsActions.setSaveStatus(AsyncStatus.Initial))}
                         message={
-                            saveStatus === AsyncStatus.Error ? "Failed to save groups" : "Groups successfully saved"
+                            saveStatus === AsyncStatus.Error
+                                ? "An error occurred while saving groups."
+                                : "Groups successfully saved"
                         }
                         action={
                             <IconButton

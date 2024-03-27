@@ -4,12 +4,13 @@ import { format, formatDistance } from "date-fns";
 import { Fragment } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { FormattedText } from "features/ditio/formattedText";
-import { CameraType, renderActions, selectProjectSettings } from "features/render";
+import { CameraType, renderActions } from "features/render";
 import { latLon2Tm } from "features/render/utils";
+import { selectTmZoneForCalc } from "slices/explorer";
 
 import { baseUrl, useGetPostQuery } from "../../api";
 import { ditioActions } from "../../slice";
@@ -22,13 +23,13 @@ export function Post() {
         state: { view },
     } = useExplorerGlobals(true);
 
-    const { tmZone } = useAppSelector(selectProjectSettings);
+    const tmZone = useAppSelector(selectTmZoneForCalc);
     const dispatch = useAppDispatch();
 
     const { data: post, isFetching } = useGetPostQuery({ postId });
 
     const handleGoTo = () => {
-        if (!post?.GeoCoordinate) {
+        if (!post?.GeoCoordinate || !tmZone) {
             return;
         }
 

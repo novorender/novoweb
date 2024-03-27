@@ -2,14 +2,14 @@ import { Add, DeleteSweep } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, ListSubheader, MenuItem, OutlinedInput, Select } from "@mui/material";
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
+import { Picker, renderActions, selectPicker } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { ExtendedMeasureEntity } from "types/misc";
 
 import { snapKinds } from "./config";

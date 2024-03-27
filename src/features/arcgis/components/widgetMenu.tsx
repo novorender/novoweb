@@ -2,8 +2,8 @@ import { AddCircle, Save } from "@mui/icons-material";
 import { ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
-import { useAppSelector } from "app/store";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { useAppSelector } from "app/redux-store-interactions";
+import { selectHasAdminCapabilities } from "slices/explorer";
 
 export function WidgetMenu(props: MenuProps) {
     const history = useHistory();

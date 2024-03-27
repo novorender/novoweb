@@ -2,14 +2,14 @@ import { Logout, SettingsRounded } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { MemoryRouter, Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage } from "utils/storage";
 

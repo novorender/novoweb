@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-import { selectTerrain } from "..";
+import { selectTerrain } from "../renderSlice";
 
 export function useHandleTerrain() {
     const {

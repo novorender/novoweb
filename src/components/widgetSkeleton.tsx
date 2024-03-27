@@ -1,9 +1,13 @@
 import { Box } from "@mui/material";
 
-import { useAppSelector } from "app/store";
-import { LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
+import { useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig, WidgetKey } from "config/features";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
+
+import { LinearProgress } from "./linearProgress";
+import { LogoSpeedDial } from "./logoSpeedDial";
+import { WidgetContainer } from "./widgetContainer";
+import { WidgetHeader } from "./widgetHeader";
 
 export function WidgetSkeleton({ widgetKey }: { widgetKey: WidgetKey }) {
     const config = featuresConfig[widgetKey];

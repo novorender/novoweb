@@ -1,30 +1,25 @@
-import { View } from "@novorender/api";
+import { RenderState, View } from "@novorender/api";
 import { mat3, quat, vec3 } from "gl-matrix";
 import { MutableRefObject, useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { measureActions } from "features/measure";
 import { orthoCamActions, selectCurrentTopDownElevation } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
-import {
-    CameraType,
-    DeepMutable,
-    renderActions,
-    RenderState,
-    selectCameraType,
-    selectClippingInEdit,
-    selectViewMode,
-} from "..";
+import { renderActions, selectCameraType, selectClippingInEdit, selectViewMode } from "../renderSlice";
+import { CameraType, DeepMutable } from "../types";
 import { useMoveMarkers } from "./useMoveMarkers";
 
 export function useHandleCameraMoved({
     svg,
     engine2dRenderFnRef,
+    htmlInteractionContainer,
 }: {
     svg: SVGSVGElement | null;
     engine2dRenderFnRef: MutableRefObject<((moved: boolean, idleframe: boolean) => void) | undefined>;
+    htmlInteractionContainer: { update: () => void } | null;
 }) {
     const {
         state: { view },
@@ -64,6 +59,7 @@ export function useHandleCameraMoved({
                 }
 
                 moveSvgMarkers();
+                htmlInteractionContainer?.update();
                 dispatch(renderActions.setStamp(null));
                 dispatch(measureActions.selectHoverObj(undefined));
 
@@ -161,6 +157,7 @@ export function useHandleCameraMoved({
             moveSvgMarkers,
             engine2dRenderFnRef,
             editClipping,
+            htmlInteractionContainer,
         ]
     );
 }

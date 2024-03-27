@@ -2,14 +2,14 @@ import { ObjectId } from "@novorender/api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { useEffect } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted, useLazyHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { CameraType, ObjectVisibility, renderActions, selectSceneStatus } from "features/render";
 import { isGlSpace } from "features/render/utils";
 import { useAbortController } from "hooks/useAbortController";
-import { explorerActions, selectUrlSearchQuery } from "slices/explorerSlice";
+import { explorerActions, selectUrlSearchQuery } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { getTotalBoundingSphere } from "utils/objectData";
 import { batchedPropertySearch, searchDeepByPatterns } from "utils/search";

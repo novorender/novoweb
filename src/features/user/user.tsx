@@ -2,8 +2,8 @@ import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, Grid } from "@mui/material";
 import { useState } from "react";
 
-import { dataApi } from "app";
-import { useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
@@ -13,7 +13,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import { selectUser, User as UserType } from "slices/authSlice";
-import { selectConfig, selectMaximized, selectMinimized, selectUserRole, UserRole } from "slices/explorerSlice";
+import { selectConfig, selectMaximized, selectMinimized, selectUserRole, UserRole } from "slices/explorer";
 import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
 import { deleteFromStorage, saveToStorage } from "utils/storage";
 
@@ -64,6 +64,7 @@ function LoggedIn({
 
     const logOut = () => {
         setLoading(true);
+        deleteFromStorage(StorageKey.AccessToken);
         deleteFromStorage(StorageKey.RefreshToken);
         window.location.href = `${config.authServerUrl}/signout?return_url=${window.location.href}`;
     };

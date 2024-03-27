@@ -42,3 +42,7 @@ export const NodeType = {
     Internal: 0,
     Leaf: 1,
 };
+
+// Redux toolkit with immer removes readonly modifier of state in the reducer so we get ts errors
+// unless we cast the types to writable ones.
+export type DeepMutable<T> = { -readonly [P in keyof T]: DeepMutable<T[P]> };

@@ -2,7 +2,7 @@ import { Add, DeleteSweep, Undo } from "@mui/icons-material";
 import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
     AccordionDetails,
@@ -17,12 +17,17 @@ import {
 } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
+import { Picker, renderActions, selectPicker } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 
-import { pointLineActions, selectCurrentPointLine, selectLockPointLineElevation } from "./pointLineSlice";
+import {
+    pointLineActions,
+    selectCurrentPointLine,
+    selectLockPointLineElevation,
+    selectLockPointLineVertical,
+} from "./pointLineSlice";
 
 export default function PointLine() {
     const [menuOpen, toggleMenu] = useToggle();
@@ -36,6 +41,7 @@ export default function PointLine() {
     const selecting = useAppSelector(selectPicker) === Picker.PointLine;
     const { points, result } = useAppSelector(selectCurrentPointLine);
     const lockElevation = useAppSelector(selectLockPointLineElevation);
+    const lockVertical = useAppSelector(selectLockPointLineVertical);
     const dispatch = useAppDispatch();
 
     const isInitial = useRef(true);
@@ -106,7 +112,7 @@ export default function PointLine() {
                     ) : null}
                 </WidgetHeader>
                 <ScrollBox flexDirection="column" display={menuOpen || minimized ? "none" : "flex"}>
-                    <Box px={1} pt={1}>
+                    <Box px={1} pt={1} display="flex">
                         <FormControlLabel
                             control={
                                 <Checkbox
@@ -118,6 +124,18 @@ export default function PointLine() {
                                 />
                             }
                             label={<Box fontSize={14}>Lock elevation</Box>}
+                        />
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    name="toggle lock vertical"
+                                    size="medium"
+                                    color="primary"
+                                    checked={lockVertical}
+                                    onChange={() => dispatch(pointLineActions.toggleLockVertical())}
+                                />
+                            }
+                            label={<Box fontSize={14}>Lock vertical</Box>}
                         />
                     </Box>
                     {result && result.totalLength > 0 ? (

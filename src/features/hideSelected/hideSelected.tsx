@@ -1,6 +1,6 @@
 import type { SpeedDialActionProps } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
 import { hiddenActions, useDispatchHidden, useHidden } from "contexts/hidden";
@@ -11,7 +11,7 @@ import {
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
-import { renderActions, selectMainObject } from "features/render/renderSlice";
+import { renderActions, selectMainObject } from "features/render";
 
 type Props = SpeedDialActionProps;
 

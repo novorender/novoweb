@@ -18,7 +18,7 @@ import { CylinerMeasureType, DuoMeasurementValues, MeasurementValues, MeasureSet
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary, MeasurementTable, Tooltip, VertexTable } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ExtendedMeasureEntity } from "types/misc";

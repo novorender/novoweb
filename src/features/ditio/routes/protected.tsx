@@ -2,12 +2,12 @@ import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, FormHelperText, Typography } from "@mui/material";
 import { FormEventHandler, PropsWithChildren, useState } from "react";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
 import { selectAccessToken, selectUser } from "slices/authSlice";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { ditioActions, selectDitioAccessToken } from "../slice";
