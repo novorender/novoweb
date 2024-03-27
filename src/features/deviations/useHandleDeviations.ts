@@ -5,15 +5,16 @@ import { useLazyGetDeviationProfilesQuery } from "apis/dataV2/dataV2Api";
 import { ColorStop, DeviationProjectConfig } from "apis/dataV2/deviationTypes";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { GroupStatus } from "contexts/objectGroups";
 import { renderActions, selectDeviations, selectPoints } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
-import { getAssetUrl } from "utils/misc";
+import { getAssetUrl, uniqueArray } from "utils/misc";
 import { searchByPatterns } from "utils/search";
 
 import { deviationsActions, selectDeviationProfiles, selectSelectedProfile } from "./deviationsSlice";
-import { DeviationType, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
+import { DeviationType, FavoriteGroupState, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
 import { colorStopSortFn } from "./utils";
 
 const EMPTY_ARRAY: ColorStop[] = [];
@@ -239,52 +240,69 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
         rebuildRequired: config.rebuildRequired,
         runData: config.runData,
         profiles: [
-            ...config.pointToTriangle.groups.map(
-                (g) =>
-                    ({
-                        id: g.id ?? window.crypto.randomUUID(),
-                        name: g.name ?? `Deviation ${profileIndex++}`,
-                        copyFromProfileId: g.copyFromProfileId,
-                        deviationType: DeviationType.PointToTriangle,
-                        index: -1,
-                        favorites: g.favorites ?? [],
-                        subprofiles: g.subprofiles ?? [
-                            {
-                                from: {
-                                    objectIds: g.objectIds,
-                                    groupIds: g.groupIds,
-                                },
-                                to: {
-                                    objectIds: [],
-                                    groupIds: [],
-                                },
+            ...config.pointToTriangle.groups.map((g) =>
+                populateMissingData({
+                    id: g.id ?? window.crypto.randomUUID(),
+                    name: g.name ?? `Deviation ${profileIndex++}`,
+                    copyFromProfileId: g.copyFromProfileId,
+                    deviationType: DeviationType.PointToTriangle,
+                    index: -1,
+                    subprofiles: g.subprofiles ?? [
+                        {
+                            from: {
+                                objectIds: g.objectIds,
+                                groupIds: g.groupIds,
                             },
-                        ],
-                        colors: g.colors ?? defaultColors,
-                        hasFromAndTo: g.subprofiles !== undefined,
-                    } as UiDeviationProfile)
+                            to: {
+                                objectIds: [],
+                                groupIds: [],
+                            },
+                            favorites: g.favorites ?? [],
+                            legendGroups: [],
+                        },
+                    ],
+                    colors: g.colors ?? defaultColors,
+                    hasFromAndTo: g.subprofiles !== undefined,
+                } as UiDeviationProfile)
             ),
-            ...config.pointToPoint.groups.map(
-                (g) =>
-                    ({
-                        id: g.id ?? window.crypto.randomUUID(),
-                        name: g.name ?? `Deviation ${profileIndex++}`,
-                        copyFromProfileId: g.copyFromProfileId,
-                        deviationType: DeviationType.PointToPoint,
-                        index: -1,
-                        favorites: g.favorites ?? [],
-                        subprofiles: g.subprofiles ?? [
-                            {
-                                from: g.from,
-                                to: g.to,
-                            },
-                        ],
-                        colors: g.colors ?? defaultColors,
-                        hasFromAndTo: true,
-                    } as UiDeviationProfile)
+            ...config.pointToPoint.groups.map((g) =>
+                populateMissingData({
+                    id: g.id ?? window.crypto.randomUUID(),
+                    name: g.name ?? `Deviation ${profileIndex++}`,
+                    copyFromProfileId: g.copyFromProfileId,
+                    deviationType: DeviationType.PointToPoint,
+                    index: -1,
+                    subprofiles: g.subprofiles ?? [
+                        {
+                            from: g.from,
+                            to: g.to,
+                            favorites: g.favorites ?? [],
+                        },
+                    ],
+                    colors: g.colors ?? defaultColors,
+                    hasFromAndTo: true,
+                } as UiDeviationProfile)
             ),
         ],
     };
+}
+
+function populateMissingData(profile: UiDeviationProfile): UiDeviationProfile {
+    return {
+        ...profile,
+        subprofiles: profile.subprofiles.map((sp) => {
+            const allIds = [...(sp.from.groupIds ?? []), ...(sp.to.groupIds ?? []), ...(sp.favorites ?? [])];
+            return {
+                ...sp,
+                favorites: sp.favorites ?? [],
+                legendGroups: makeLegendGroups(allIds),
+            };
+        }),
+    };
+}
+
+export function makeLegendGroups(ids: string[]): FavoriteGroupState[] {
+    return uniqueArray(ids).map((id) => ({ id, status: GroupStatus.None }));
 }
 
 function matchProfileIndexes(current: UiDeviationConfig, calculated: DeviationProjectConfig) {

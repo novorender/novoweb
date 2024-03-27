@@ -57,6 +57,7 @@ import {
     UiDeviationProfile,
 } from "../deviationTypes";
 import { useSaveDeviationConfig } from "../hooks/useSaveDeviationConfig";
+import { makeLegendGroups } from "../useHandleDeviations";
 import { NEW_DEVIATION_ID, newDeviationForm, newDeviationSubprofile, profileToDeviationForm } from "../utils";
 import {
     getActiveErrorText,
@@ -127,8 +128,8 @@ export function Deviation() {
         [subprofile.groups2.value, objectGroups]
     );
     const deviationFavorites = useMemo(
-        () => selectGroupsForIds(objectGroups, deviationForm.favorites.value),
-        [deviationForm.favorites.value, objectGroups]
+        () => selectGroupsForIds(objectGroups, subprofile.favorites.value),
+        [subprofile.favorites.value, objectGroups]
     );
 
     const groups1Options = useMemo(
@@ -159,9 +160,9 @@ export function Deviation() {
                         ...deviationForm.colorSetup,
                         colorStops: touchFormField(deviationForm.colorSetup.colorStops),
                     },
-                    favorites: touchFormField(deviationForm.favorites),
                     subprofiles: errors.subprofiles.map((_sp, i) => ({
                         ...deviationForm.subprofiles[i],
+                        favorites: touchFormField(subprofile.favorites),
                         groups1: touchFormField(subprofile.groups1),
                         groups2: touchFormField(subprofile.groups2),
                     })),
@@ -384,11 +385,11 @@ export function Deviation() {
                 <GroupAutocomplete
                     options={favoriteOptions}
                     label="Groups"
-                    onChange={(groups) => update({ favorites: updateFormField(groups.map((g) => g.id)) })}
+                    onChange={(groups) => updateSubprofile({ favorites: updateFormField(groups.map((g) => g.id)) })}
                     selected={deviationFavorites}
                     sx={{ mt: 2 }}
-                    error={isActiveError(errors.favorites)}
-                    helperText={getActiveErrorText(errors.favorites)}
+                    error={isActiveError(subprofileErrors.favorites)}
+                    helperText={getActiveErrorText(subprofileErrors.favorites)}
                     disabled={formDisabled}
                 />
                 <SectionHeader>Deviation parameters</SectionHeader>
@@ -585,7 +586,6 @@ async function deviationFormToProfile({
             absoluteValues: deviationForm.colorSetup.absoluteValues,
             colorStops: deviationForm.colorSetup.colorStops.value,
         },
-        favorites: deviationForm.favorites.value,
         subprofiles: deviationForm.subprofiles.map((sp) => {
             const brepId = sp.centerLine.id.value ? brepIds.get(sp.centerLine.id.value) : undefined;
             const centerLine =
@@ -603,6 +603,7 @@ async function deviationFormToProfile({
                     centerLine && sp.tunnelInfo.enabled && Number(sp.tunnelInfo.heightToCeiling.value)
                         ? Number(sp.tunnelInfo.heightToCeiling.value)
                         : undefined,
+                favorites: sp.favorites.value,
                 from: {
                     groupIds: sp.groups1.value,
                     // Object IDs are populated on save
@@ -612,6 +613,7 @@ async function deviationFormToProfile({
                     groupIds: sp.groups2.value,
                     objectIds: [] as number[],
                 },
+                legendGroups: makeLegendGroups([...sp.groups1.value, ...sp.groups2.value, ...sp.favorites.value]),
             };
         }),
         hasFromAndTo: deviationForm.hasFromAndTo,

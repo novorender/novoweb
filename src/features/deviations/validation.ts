@@ -26,12 +26,6 @@ export function validateDeviationForm(deviationForm: DeviationForm, otherNames: 
                     : undefined,
             active: deviationForm.colorSetup.colorStops.edited,
         }),
-        favorites: makeError({
-            error: deviationForm.favorites.value.some((id) => !objectGroups.some((g) => g.id === id))
-                ? deletedGroupsMessage
-                : undefined,
-            active: deviationForm.favorites.edited,
-        }),
         subprofiles: deviationForm.subprofiles.map((sp) => ({
             groups1: makeError({
                 error:
@@ -50,6 +44,12 @@ export function validateDeviationForm(deviationForm: DeviationForm, otherNames: 
                         ? deletedGroupsMessage
                         : undefined,
                 active: sp.groups2.edited,
+            }),
+            favorites: makeError({
+                error: sp.favorites.value.some((id) => !objectGroups.some((g) => g.id === id))
+                    ? deletedGroupsMessage
+                    : undefined,
+                active: sp.favorites.edited,
             }),
             heightToCeiling: makeError({
                 error:

@@ -7,37 +7,37 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { GroupStatus, isInternalGroup, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { vecToRgb } from "utils/color";
 
-import { deviationsActions, selectDeviationGroups, selectSelectedProfile } from "../deviationsSlice";
+import { deviationsActions, selectDeviationLegendGroups, selectSelectedProfile } from "../deviationsSlice";
 
 export const GroupsAndColorsHud = memo(function GroupsAndColorsHud() {
     const profile = useAppSelector(selectSelectedProfile);
-    const deviationGroups = useAppSelector(selectDeviationGroups);
+    const legendGroups = useAppSelector(selectDeviationLegendGroups);
     const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
     const dispatch = useAppDispatch();
 
     const groups = useMemo(
         () =>
-            (deviationGroups ?? [])
+            (legendGroups ?? [])
                 .map((g1) => {
                     const group = objectGroups.find((g2) => g2.id === g1.id);
                     return group ? ({ ...group, status: g1.status } as ObjectGroup) : undefined;
                 })
                 .filter((g) => g) as ObjectGroup[],
-        [deviationGroups, objectGroups]
+        [legendGroups, objectGroups]
     );
 
     const handleClick = (group: ObjectGroup) => {
-        if (!deviationGroups) {
+        if (!legendGroups) {
             return;
         }
 
-        const newGroups = deviationGroups.map((g) => {
+        const newGroups = legendGroups.map((g) => {
             if (g.id === group.id) {
                 return { id: g.id, status: g.status === GroupStatus.Hidden ? GroupStatus.None : GroupStatus.Hidden };
             }
             return g;
         });
-        dispatch(deviationsActions.setDeviationGroups(newGroups));
+        dispatch(deviationsActions.setSelectedSubprofileLegendGroups(newGroups));
     };
 
     if (!profile) {

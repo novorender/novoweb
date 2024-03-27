@@ -10,10 +10,10 @@ import { useDispatchHighlighted } from "contexts/highlighted";
 import { GroupStatus, useObjectGroups } from "contexts/objectGroups";
 import { ObjectVisibility, renderActions, selectDefaultVisibility } from "features/render";
 
-import { selectDeviationGroups, selectSelectedCenterLineFollowPathId } from "../deviationsSlice";
+import { selectDeviationLegendGroups, selectSelectedCenterLineFollowPathId } from "../deviationsSlice";
 
 export function useHighlightDeviation() {
-    const favGroups = useAppSelector(selectDeviationGroups);
+    const legendGroups = useAppSelector(selectDeviationLegendGroups);
     const followPathId = useAppSelector(selectSelectedCenterLineFollowPathId);
     const objectGroups = useObjectGroups();
     const dispatch = useAppDispatch();
@@ -37,13 +37,13 @@ export function useHighlightDeviation() {
     }, [restore]);
 
     useEffect(() => {
-        if (!favGroups?.length) {
+        if (!legendGroups?.length) {
             restore();
             return;
         }
 
         const ids = new Set<number>();
-        for (const fav of favGroups) {
+        for (const fav of legendGroups) {
             if (fav.status !== GroupStatus.Hidden) {
                 const group = objectGroups.find((g) => g.id === fav.id);
                 if (group) {
@@ -63,5 +63,13 @@ export function useHighlightDeviation() {
         dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
 
         installed.current = true;
-    }, [dispatch, dispatchHighlightCollections, dispatchHighlighted, objectGroups, favGroups, restore, followPathId]);
+    }, [
+        dispatch,
+        dispatchHighlightCollections,
+        dispatchHighlighted,
+        objectGroups,
+        legendGroups,
+        restore,
+        followPathId,
+    ]);
 }

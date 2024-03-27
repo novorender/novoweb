@@ -34,6 +34,7 @@ export type DeviationSubprofile = {
         groupIds: string[];
         objectIds: number[];
     };
+    favorites?: string[];
     centerLine?: CenterLine;
     heightToCeiling?: number;
 };

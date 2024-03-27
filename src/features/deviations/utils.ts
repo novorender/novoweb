@@ -14,8 +14,6 @@ export function newDeviationForm(): DeviationForm {
         name: { value: "" },
         deviationType: { value: DeviationType.PointToTriangle },
         subprofiles: [newDeviationSubprofile()],
-        favorites: { value: [] },
-
         colorSetup: {
             absoluteValues: false,
             colorStops: { value: [] },
@@ -30,6 +28,7 @@ export function newDeviationSubprofile(): SubprofileGroup {
     return {
         groups1: { value: [] },
         groups2: { value: [] },
+        favorites: { value: [] },
         centerLine: {
             enabled: false,
             id: { value: undefined },
@@ -47,10 +46,10 @@ export function profileToDeviationForm(profile: UiDeviationProfile): DeviationFo
         id: profile.id,
         copyFromProfileId: { value: profile.copyFromProfileId },
         name: { value: profile.name },
-        favorites: { value: profile.favorites },
         subprofiles: profile.subprofiles.map((sp) => ({
             groups1: { value: sp.from.groupIds },
             groups2: { value: sp.to.groupIds },
+            favorites: { value: sp.favorites },
             centerLine: sp.centerLine
                 ? {
                       enabled: true,
@@ -96,12 +95,12 @@ export function uiConfigToServerConfig(config: UiDeviationConfig): DeviationProj
             name: p.name,
             copyFromProfileId: p.copyFromProfileId,
             colors: p.colors,
-            favorites: p.favorites,
             subprofiles: p.subprofiles.map((sp) => ({
                 from: sp.from,
                 to: sp.to,
                 centerLine: sp.centerLine,
                 heightToCeiling: sp.heightToCeiling,
+                favorites: sp.favorites,
             })),
         } as PointToPointGroup | PointToTriangleGroup;
     };

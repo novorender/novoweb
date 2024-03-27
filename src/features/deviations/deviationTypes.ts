@@ -31,7 +31,6 @@ export type UiDeviationProfile = {
     index: number; // index of deviation for coloring. -1 for none
     copyFromProfileId?: string;
     colors: ColorConfig;
-    favorites: string[];
     subprofiles: UiDeviationSubprofile[];
 };
 
@@ -44,8 +43,10 @@ export type UiDeviationSubprofile = {
         groupIds: string[];
         objectIds: number[];
     };
+    favorites: string[];
     centerLine?: UiCenterLine;
     heightToCeiling?: number;
+    legendGroups: FavoriteGroupState[]; // not saved anywhere
 };
 
 export type UiCenterLine = {
@@ -65,7 +66,6 @@ export type DeviationForm = {
     name: FormField<string>;
     copyFromProfileId: FormField<string | undefined>;
     deviationType: FormField<DeviationType>;
-    favorites: FormField<string[]>;
     colorSetup: ColorSetupGroup;
     hasFromAndTo: boolean;
     index: number;
@@ -76,6 +76,7 @@ export type DeviationForm = {
 export type SubprofileGroup = {
     groups1: FormField<string[]>;
     groups2: FormField<string[]>;
+    favorites: FormField<string[]>;
     centerLine: CenterLineGroup;
     tunnelInfo: TunnelInfoGroup;
 };
