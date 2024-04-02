@@ -1,17 +1,19 @@
 import { Box, FormControlLabel } from "@mui/material";
-import { FollowParametricObject } from "@novorender/api";
-import { useEffect, useMemo, useState } from "react";
+import { FollowParametricObject, rotationFromDirection } from "@novorender/api";
+import { vec3 } from "gl-matrix";
+import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { IosSwitch } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { followPathActions, selectProfile, selectView2d } from "features/followPath";
+import { followPathActions, selectCurrentCenter, selectProfile, selectView2d } from "features/followPath";
 import { useGoToProfile } from "features/followPath/useGoToProfile";
 import { getTopDownParams, selectDefaultTopDownElevation, selectTopDownSnapToAxis } from "features/orthoCam";
-import { CameraType, renderActions, selectCameraType } from "features/render";
+import { CameraType, renderActions } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { selectSelectedCenterLineId, selectSelectedProfile } from "../deviationsSlice";
+import { useIsTopDownOrthoCamera } from "../hooks/useIsTopDownOrthoCamera";
 
 export function ViewSwitchSection() {
     const {
@@ -22,6 +24,7 @@ export function ViewSwitchSection() {
     const goToProfile = useGoToProfile();
     const selectedProfile = useAppSelector(selectSelectedProfile);
     const profilePos = useAppSelector(selectProfile);
+    const currentCenter = useAppSelector(selectCurrentCenter);
     const selectedCenterLineId = useAppSelector(selectSelectedCenterLineId);
     const selectedCenterLine =
         selectedProfile && selectedCenterLineId
@@ -31,7 +34,6 @@ export function ViewSwitchSection() {
     const [fpObj, setFpObj] = useState<AsyncState<FollowParametricObject | undefined>>({ status: AsyncStatus.Initial });
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
     const snapToNearestAxis = useAppSelector(selectTopDownSnapToAxis) === undefined;
-    const cameraType = useAppSelector(selectCameraType);
 
     useEffect(() => {
         findFpObj();
@@ -54,16 +56,14 @@ export function ViewSwitchSection() {
         }
     }, [view, followPathId]);
 
-    const isLookingDown = useMemo(() => {
-        return cameraType === CameraType.Orthographic && view?.isTopDown();
-    }, [view, cameraType]);
+    const isTopDownOrthoCamera = useIsTopDownOrthoCamera();
 
     const handleCrossSectionChange = () => {
         if (fpObj.status !== AsyncStatus.Success || !fpObj.data || !selectedCenterLine) {
             return;
         }
 
-        const newState = !view2d || isLookingDown;
+        const newState = !view2d || isTopDownOrthoCamera;
 
         const pos = Math.max(
             selectedCenterLine.parameterBounds[0],
@@ -81,36 +81,40 @@ export function ViewSwitchSection() {
 
     const handleTopDownChange = () => {
         dispatch(followPathActions.setView2d(false));
-        if (!isLookingDown) {
-            dispatch(
-                renderActions.setCamera({
-                    type: CameraType.Orthographic,
-                    goTo: getTopDownParams({ view, elevation: defaultTopDownElevation, snapToNearestAxis }),
-                })
-            );
+        dispatch(renderActions.setGrid({ enabled: false }));
+
+        if (!isTopDownOrthoCamera) {
+            if (currentCenter) {
+                const position = vec3.clone(currentCenter);
+                position[2] += 40;
+                dispatch(
+                    renderActions.setCamera({
+                        type: CameraType.Orthographic,
+                        goTo: {
+                            position,
+                            rotation: rotationFromDirection(
+                                [0, 0, 1],
+                                snapToNearestAxis ? view.renderState.camera.rotation : undefined
+                            ),
+                            fov: 100,
+                        },
+                    })
+                );
+            } else {
+                dispatch(
+                    renderActions.setCamera({
+                        type: CameraType.Orthographic,
+                        goTo: getTopDownParams({ view, elevation: defaultTopDownElevation, snapToNearestAxis }),
+                    })
+                );
+            }
         } else {
             dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
         }
-
-        // if (fpObj.status !== AsyncStatus.Success || !fpObj.data || !selectedCenterLine) {
-        //     return;
-        // }
-
-        // const newState = !view2d || !isLookingDown;
-
-        // dispatch(followPathActions.setView2d(newState));
-        // goToProfile({
-        //     fpObj: fpObj.data,
-        //     p: Number(selectedCenterLine.parameterBounds[0]),
-        //     newView2d: newState,
-        //     keepOffset: false,
-        //     dir: [0, 0, 1],
-        //     snapToAxis: snapToNearestAxis ? view.renderState.camera.rotation : undefined,
-        // });
     };
 
-    const isCrossSection = view2d && !isLookingDown;
-    const isTopDown = isLookingDown;
+    const isCrossSection = view2d && !isTopDownOrthoCamera;
+    const isTopDown = isTopDownOrthoCamera;
 
     return (
         <>
