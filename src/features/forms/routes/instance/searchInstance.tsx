@@ -159,7 +159,7 @@ export function SearchInstance() {
                     <LinearProgress />
                 </Box>
             )}
-            <ScrollBox p={1} pt={2} pb={3} component={"form"}>
+            <ScrollBox p={1} pt={2} pb={3}>
                 <Typography fontWeight={600} mb={2}>
                     {form?.title}
                 </Typography>

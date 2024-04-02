@@ -138,7 +138,7 @@ export function LocationInstance() {
                     <LinearProgress />
                 </Box>
             )}
-            <ScrollBox p={1} pt={2} pb={3} component={"form"}>
+            <ScrollBox p={1} pt={2} pb={3}>
                 <Box my={2}>
                     <TextField label="Form name" value={title} onChange={handleTitleChange} fullWidth />
                 </Box>
