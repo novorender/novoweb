@@ -82,6 +82,9 @@ export function ViewSwitchSection() {
     const handleTopDownChange = () => {
         dispatch(followPathActions.setView2d(false));
         dispatch(renderActions.setGrid({ enabled: false }));
+        dispatch(renderActions.setClippingPlanes({ enabled: false, planes: [] }));
+        dispatch(followPathActions.setCurrentCenter(undefined));
+        dispatch(followPathActions.setPtHeight(undefined));
 
         if (!isTopDownOrthoCamera) {
             if (currentCenter) {
