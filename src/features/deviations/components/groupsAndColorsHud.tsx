@@ -76,7 +76,9 @@ function GroupNode({ group, onClick }: { group: ObjectGroup; onClick: (group: Ob
                 onClick={(event) => event.stopPropagation()}
                 onChange={() => onClick(group)}
             />
-            <Typography>{group.name}</Typography>
+            <Typography textOverflow="ellipsis" overflow="hidden" title={group.name}>
+                {group.name}
+            </Typography>
         </Box>
     );
 }
