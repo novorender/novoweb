@@ -168,12 +168,14 @@ export function Deviation() {
                         ...deviationForm.colorSetup,
                         colorStops: touchFormField(deviationForm.colorSetup.colorStops),
                     },
-                    subprofiles: errors.subprofiles.map((_sp, i) => ({
-                        ...deviationForm.subprofiles[i],
-                        favorites: touchFormField(subprofile.favorites),
-                        groups1: touchFormField(subprofile.groups1),
-                        groups2: touchFormField(subprofile.groups2),
-                    })),
+                    subprofiles: deviationForm.subprofiles.map((sp) => {
+                        return {
+                            ...sp,
+                            favorites: touchFormField(sp.favorites),
+                            groups1: touchFormField(sp.groups1),
+                            groups2: touchFormField(sp.groups2),
+                        };
+                    }),
                 });
 
                 setTimeout(() => {
