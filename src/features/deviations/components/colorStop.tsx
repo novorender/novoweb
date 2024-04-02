@@ -5,6 +5,7 @@ import {
     FormHelperText,
     IconButton,
     List,
+    ListItem,
     ListItemButton,
     ListItemIcon,
     ListItemText,
@@ -28,17 +29,26 @@ export function ColorStopList({
     onChange,
     errors,
     disabled,
+    absoluteValues,
 }: {
     colorStops: ColorStopGroup[];
     onChange: (value: ColorStopGroup[]) => void;
+    absoluteValues: boolean;
     errors?: DeviationFormErrors;
     disabled?: boolean;
 }) {
     const theme = useTheme();
     const history = useHistory();
     const colorStops = useMemo(
-        () => colorStopsUnsorted.slice().sort((a, b) => b.position - a.position),
-        [colorStopsUnsorted]
+        () =>
+            colorStopsUnsorted
+                .slice()
+                .sort(
+                    absoluteValues
+                        ? (a, b) => Math.abs(b.position) - Math.abs(a.position)
+                        : (a, b) => b.position - a.position
+                ),
+        [colorStopsUnsorted, absoluteValues]
     );
 
     return (
@@ -56,6 +66,7 @@ export function ColorStopList({
                             onChange(colorStops.filter((_, i) => i !== index));
                         }}
                         disabled={disabled}
+                        absoluteValues={absoluteValues}
                     />
                 ))}
             </List>
@@ -83,12 +94,14 @@ export function ColorStop({
     disabled,
     onChange,
     onDelete,
+    absoluteValues,
 }: {
     colorStops: ColorStopGroup[];
     index: number;
     disabled?: boolean;
     onChange: (value: ColorStopGroup) => void;
     onDelete: () => void;
+    absoluteValues: boolean;
 }) {
     const colorStop = colorStops[index];
     const history = useHistory();
@@ -114,79 +127,101 @@ export function ColorStop({
     };
 
     const color = vecToRgb(colorStop.color);
-    return (
+
+    const text =
+        colorStop.position === 0
+            ? "0"
+            : absoluteValues
+            ? `±${Math.abs(colorStop.position)}`
+            : colorStop.position > 0
+            ? `+${colorStop.position}`
+            : colorStop.position;
+
+    const content = (
         <>
-            <ListItemButton
-                disableGutters
-                dense
-                key={colorStop.position}
-                sx={{ px: 1, display: "flex" }}
+            <Typography flex="1 1 auto">{text}</Typography>
+            <IconButton
+                size="small"
                 onClick={(evt) => {
                     evt.stopPropagation();
-                    toggleColorPicker();
+                    toggleColorPicker(evt);
                 }}
+                disabled={disabled}
             >
-                <Typography flex="1 1 auto">
-                    {Math.sign(colorStop.position) === 1 ? `+${colorStop.position}` : colorStop.position}
-                </Typography>
-                <IconButton
-                    size="small"
-                    onClick={(evt) => {
-                        evt.stopPropagation();
-                        toggleColorPicker(evt);
+                <Palette
+                    fontSize="small"
+                    sx={{
+                        color: `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a ?? 1})`,
                     }}
-                    disabled={disabled}
-                >
-                    <Palette
-                        fontSize="small"
-                        sx={{
-                            color: `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a ?? 1})`,
+                />
+            </IconButton>
+        </>
+    );
+
+    return (
+        <>
+            {disabled ? (
+                <ListItem disableGutters dense key={colorStop.position} sx={{ px: 1, display: "flex" }}>
+                    {content}
+                </ListItem>
+            ) : (
+                <>
+                    <ListItemButton
+                        disableGutters
+                        dense
+                        key={colorStop.position}
+                        sx={{ px: 1, display: "flex" }}
+                        onClick={(evt) => {
+                            evt.stopPropagation();
+                            toggleColorPicker();
                         }}
+                    >
+                        {content}
+                        <IconButton
+                            size="small"
+                            disabled={disabled}
+                            onClick={(evt) => {
+                                evt.stopPropagation();
+                                history.push(`/deviation/editColorStop/${index}`);
+                            }}
+                        >
+                            <Edit fontSize="small" />
+                        </IconButton>
+                        <IconButton size="small" color={menuAnchor ? "primary" : "default"} onClick={openMenu}>
+                            <MoreVert fontSize="small" />
+                        </IconButton>
+                    </ListItemButton>
+                    <ColorPicker
+                        open={Boolean(colorPickerAnchor)}
+                        anchorEl={colorPickerAnchor}
+                        onClose={() => toggleColorPicker()}
+                        color={colorStop.color}
+                        onChangeComplete={handleColorChange}
                     />
-                </IconButton>
-                <IconButton
-                    size="small"
-                    disabled={disabled}
-                    onClick={(evt) => {
-                        evt.stopPropagation();
-                        history.push(`/deviation/editColorStop/${index}`);
-                    }}
-                >
-                    <Edit fontSize="small" />
-                </IconButton>
-                <IconButton size="small" color={menuAnchor ? "primary" : "default"} onClick={openMenu}>
-                    <MoreVert fontSize="small" />
-                </IconButton>
-            </ListItemButton>
-            <ColorPicker
-                open={Boolean(colorPickerAnchor)}
-                anchorEl={colorPickerAnchor}
-                onClose={() => toggleColorPicker()}
-                color={colorStop.color}
-                onChangeComplete={handleColorChange}
-            />
-            <Menu
-                onClick={(e) => e.stopPropagation()}
-                anchorEl={menuAnchor}
-                open={Boolean(menuAnchor)}
-                onClose={closeMenu}
-                id={`${colorStop.position}-menu`}
-                MenuListProps={{ sx: { maxWidth: "100%" } }}
-            >
-                <MenuItem
-                    key="delete"
-                    onClick={() => {
-                        closeMenu();
-                        onDelete();
-                    }}
-                    disabled={disabled}
-                >
-                    <ListItemIcon>
-                        <Delete fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Delete</ListItemText>
-                </MenuItem>
-            </Menu>
+                    <Menu
+                        onClick={(e) => e.stopPropagation()}
+                        anchorEl={menuAnchor}
+                        open={Boolean(menuAnchor)}
+                        onClose={closeMenu}
+                        id={`${colorStop.position}-menu`}
+                        MenuListProps={{ sx: { maxWidth: "100%" } }}
+                    >
+                        <MenuItem
+                            key="delete"
+                            onClick={() => {
+                                closeMenu();
+                                onDelete();
+                            }}
+                            disabled={disabled}
+                        >
+                            <ListItemIcon>
+                                <Delete fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>Delete</ListItemText>
+                        </MenuItem>
+                    </Menu>
+                </>
+            )}
         </>
     );
 }

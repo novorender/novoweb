@@ -4,17 +4,25 @@ import { IconButton, Snackbar } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { AsyncStatus } from "types/misc";
 
-import { deviationsActions, selectSaveStatus } from "../deviationsSlice";
+import { deviationsActions, selectDeviationCalculationStatus, selectSaveStatus } from "../deviationsSlice";
+import { DeviationCalculationStatus } from "../deviationTypes";
 
 export function DeviationsSnackbar() {
     const dispatch = useAppDispatch();
     const saveStatus = useAppSelector(selectSaveStatus);
-    const message =
+    const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
+    const [message, close] =
         saveStatus.status === AsyncStatus.Error
-            ? saveStatus.msg
+            ? [saveStatus.msg, () => dispatch(deviationsActions.setSaveStatus({ status: AsyncStatus.Initial }))]
             : saveStatus.status === AsyncStatus.Success
-            ? saveStatus.data
-            : "";
+            ? [saveStatus.data, () => dispatch(deviationsActions.setSaveStatus({ status: AsyncStatus.Initial }))]
+            : calculationStatus.status === DeviationCalculationStatus.Error
+            ? [
+                  calculationStatus.error,
+                  () =>
+                      dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Initial })),
+              ]
+            : ["", undefined];
 
     if (!message) {
         return null;
@@ -30,15 +38,10 @@ export function DeviationsSnackbar() {
             }}
             autoHideDuration={message?.length > 100 ? 15000 : 7500}
             open={Boolean(message)}
-            onClose={() => dispatch(deviationsActions.setSaveStatus({ status: AsyncStatus.Initial }))}
+            onClose={close}
             message={message}
             action={
-                <IconButton
-                    size="small"
-                    aria-label="close"
-                    color="inherit"
-                    onClick={() => dispatch(deviationsActions.setSaveStatus({ status: AsyncStatus.Initial }))}
-                >
+                <IconButton size="small" aria-label="close" color="inherit" onClick={close}>
                     <Close fontSize="small" />
                 </IconButton>
             }

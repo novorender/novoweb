@@ -1,10 +1,8 @@
-import { Save } from "@mui/icons-material";
-import { Alert, Box, Button, FormControl, InputLabel, MenuItem, Select, Typography, useTheme } from "@mui/material";
+import { Alert, Box, FormControl, InputLabel, MenuItem, Select, Typography, useTheme } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
-import { selectDeviations } from "features/render";
-import { selectHasAdminCapabilities, selectProjectIsV2 } from "slices/explorer";
+import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus, hasFinished } from "types/misc";
 
 import { ColorStopList } from "../components/colorStop";
@@ -21,30 +19,17 @@ import {
     selectSelectedProfile,
 } from "../deviationsSlice";
 import { DeviationCalculationStatus } from "../deviationTypes";
-import { useSaveDeviationConfig } from "../hooks/useSaveDeviationConfig";
 
 export function Root() {
     const theme = useTheme();
     const isProjectV2 = useAppSelector(selectProjectIsV2);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const profiles = useAppSelector(selectDeviationProfiles);
     const profileList = useAppSelector(selectDeviationProfileList);
     const selectedProfile = useAppSelector(selectSelectedProfile);
     const dispatch = useAppDispatch();
-    const deviations = useAppSelector(selectDeviations);
     const saveStatus = useAppSelector(selectSaveStatus);
     const isSaving = saveStatus.status === AsyncStatus.Loading;
     const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
-
-    const saveConfig = useSaveDeviationConfig();
-
-    const handleSave = async () => {
-        if (profiles.status !== AsyncStatus.Success) {
-            return;
-        }
-
-        await saveConfig({ uiConfig: profiles.data, deviations });
-    };
 
     return (
         <>
@@ -69,17 +54,6 @@ export function Root() {
                         </Box>
                         <Box display="flex" justifyContent="space-between">
                             <MixFactorInput />
-
-                            {isAdmin && (
-                                <Button
-                                    color="grey"
-                                    onClick={handleSave}
-                                    disabled={isSaving || profileList.length === 0}
-                                >
-                                    <Save fontSize="small" sx={{ mr: 1 }} />
-                                    Save
-                                </Button>
-                            )}
                         </Box>
                     </Box>
 
@@ -136,6 +110,7 @@ export function Root() {
                             <Box px={2} pb={2}>
                                 <ColorStopList
                                     colorStops={selectedProfile.colors!.colorStops}
+                                    absoluteValues={selectedProfile.colors!.absoluteValues}
                                     onChange={(colorStops) => {
                                         dispatch(
                                             deviationsActions.setProfile({
@@ -148,6 +123,7 @@ export function Root() {
                                             })
                                         );
                                     }}
+                                    disabled
                                 />
 
                                 <SubprofileSelect />
