@@ -1,4 +1,5 @@
-import { ListItemButton, Skeleton, Typography } from "@mui/material";
+import { Place, Search } from "@mui/icons-material";
+import { Box, ListItemButton, Skeleton, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -25,6 +26,16 @@ export function Template({ templateId }: { templateId: TemplateId }) {
                 (!templatesFilters.location && template!.type === TemplateType.Location) ||
                 (!templatesFilters.search && template!.type === TemplateType.Search)),
         [isLoading, template, templatesFilters]
+    );
+
+    const templateIcon = useMemo(
+        () =>
+            template?.type === TemplateType.Search ? (
+                <Search />
+            ) : template?.type === TemplateType.Location ? (
+                <Place />
+            ) : null,
+        [template]
     );
 
     useEffect(() => {
@@ -72,7 +83,10 @@ export function Template({ templateId }: { templateId: TemplateId }) {
         <Skeleton variant="rectangular" height="2rem" />
     ) : (
         <ListItemButton key={template!.id} sx={{ justifyContent: "space-between" }} onClick={handleClick}>
-            <Typography mr={2}>{template!.title}</Typography>
+            {templateIcon}
+            <Box flex={1}>
+                <Typography>{template!.title}</Typography>
+            </Box>
             <Typography>{count}</Typography>
         </ListItemButton>
     );
