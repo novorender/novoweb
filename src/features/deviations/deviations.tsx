@@ -1,6 +1,7 @@
 import { Add, Delete, RestartAlt, Settings } from "@mui/icons-material";
 import { Divider, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
 import { Box } from "@mui/system";
+import { useEffect } from "react";
 import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
@@ -99,6 +100,10 @@ function WidgetMenu(props: MenuProps) {
     useListenCalculationState();
 
     const [calcDeviations] = useCalcDeviationsMutation();
+
+    useEffect(() => {
+        dispatch(deviationsActions.setDeviationForm(undefined));
+    }, [dispatch]);
 
     const closeMenu = () => {
         if (props.onClose) {

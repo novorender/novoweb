@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { ObjectGroup } from "contexts/objectGroups";
 
 import { SubprofileGroup } from "../deviationTypes";
+import { DELETED_DEVIATION_LABEL } from "../utils";
 import { SubprofileGroupErrors } from "../validation";
 
 export function SubprofileList({
@@ -61,16 +62,14 @@ function Item({
     const groups1 = useMemo(
         () =>
             subprofile.groups1.value
-                .map((id) => objectGroups.find((g) => g.id === id)?.name)
-                .filter((e) => e)
+                .map((id) => objectGroups.find((g) => g.id === id)?.name ?? DELETED_DEVIATION_LABEL)
                 .join(", "),
         [objectGroups, subprofile.groups1.value]
     );
     const groups2 = useMemo(
         () =>
             subprofile.groups2.value
-                .map((id) => objectGroups.find((g) => g.id === id)?.name)
-                .filter((e) => e)
+                .map((id) => objectGroups.find((g) => g.id === id)?.name ?? DELETED_DEVIATION_LABEL)
                 .join(", "),
         [objectGroups, subprofile.groups2.value]
     );

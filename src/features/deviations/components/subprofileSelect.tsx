@@ -8,6 +8,7 @@ import { useLoadLandXmlPath } from "features/followPath/hooks/useLoadLandXmlPath
 import { AsyncStatus } from "types/misc";
 
 import { deviationsActions, selectSelectedProfile, selectSelectedSubprofileIndex } from "../deviationsSlice";
+import { DELETED_DEVIATION_LABEL } from "../utils";
 
 export function SubprofileSelect() {
     const dispatch = useAppDispatch();
@@ -23,12 +24,10 @@ export function SubprofileSelect() {
             selectedProfile &&
             selectedProfile.subprofiles.map((sp, index) => {
                 const from = sp.from.groupIds
-                    .map((id) => objectGroups.find((g) => g.id === id)?.name)
-                    .filter((s) => s)
+                    .map((id) => objectGroups.find((g) => g.id === id)?.name ?? DELETED_DEVIATION_LABEL)
                     .join(", ");
                 const to = sp.to.groupIds
-                    .map((id) => objectGroups.find((g) => g.id === id)?.name)
-                    .filter((s) => s)
+                    .map((id) => objectGroups.find((g) => g.id === id)?.name ?? DELETED_DEVIATION_LABEL)
                     .join(", ");
 
                 const centerLineName =

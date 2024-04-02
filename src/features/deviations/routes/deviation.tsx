@@ -59,7 +59,13 @@ import {
 } from "../deviationTypes";
 import { useSaveDeviationConfig } from "../hooks/useSaveDeviationConfig";
 import { makeLegendGroups } from "../useHandleDeviations";
-import { NEW_DEVIATION_ID, newDeviationForm, newDeviationSubprofile, profileToDeviationForm } from "../utils";
+import {
+    DELETED_DEVIATION_LABEL,
+    NEW_DEVIATION_ID,
+    newDeviationForm,
+    newDeviationSubprofile,
+    profileToDeviationForm,
+} from "../utils";
 import {
     getActiveErrorText,
     hasActiveErrors,
@@ -677,6 +683,6 @@ function areGroupsIdsEqual(a: string[], b: string[]) {
 
 function selectGroupsForIds(objectGroups: ObjectGroup[], ids: string[]): ObjectGroupExt[] {
     return ids.map((id) => {
-        return objectGroups.find((g) => g.id === id) ?? { id, name: "[deleted]", deleted: true };
+        return objectGroups.find((g) => g.id === id) ?? { id, name: DELETED_DEVIATION_LABEL, deleted: true };
     });
 }

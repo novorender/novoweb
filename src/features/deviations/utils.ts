@@ -124,3 +124,5 @@ export function uiConfigToServerConfig(config: UiDeviationConfig): DeviationProj
 export function colorStopSortFn(a: ColorStop, b: ColorStop) {
     return b.position - a.position;
 }
+
+export const DELETED_DEVIATION_LABEL = "[deleted]";
