@@ -44,6 +44,8 @@ export function useCreateLocationForm() {
                         },
                     ])
                 );
+
+                dispatch(formsActions.setSelectedFormId(id));
             }
         },
         [dispatch, templateId, sceneId, createForm]
