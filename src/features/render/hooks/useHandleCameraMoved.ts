@@ -10,16 +10,13 @@ import { ViewMode } from "types/misc";
 
 import { renderActions, selectCameraType, selectClippingInEdit, selectViewMode } from "../renderSlice";
 import { CameraType, DeepMutable } from "../types";
-import { useMoveMarkers } from "./useMoveMarkers";
 
 export function useHandleCameraMoved({
-    svg,
     engine2dRenderFnRef,
-    htmlInteractionContainer,
+    containers,
 }: {
-    svg: SVGSVGElement | null;
     engine2dRenderFnRef: MutableRefObject<((moved: boolean, idleframe: boolean) => void) | undefined>;
-    htmlInteractionContainer: { update: () => void } | null;
+    containers: ({ update: () => void } | null)[];
 }) {
     const {
         state: { view },
@@ -29,8 +26,6 @@ export function useHandleCameraMoved({
     const viewMode = useAppSelector(selectViewMode);
     const editClipping = useAppSelector(selectClippingInEdit);
     const currentTopDownElevation = useAppSelector(selectCurrentTopDownElevation);
-
-    const moveSvgMarkers = useMoveMarkers(svg);
 
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const orthoMovementTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -58,8 +53,7 @@ export function useHandleCameraMoved({
                     return;
                 }
 
-                moveSvgMarkers();
-                htmlInteractionContainer?.update();
+                containers.forEach((container) => container && container.update());
                 dispatch(renderActions.setStamp(null));
                 dispatch(measureActions.selectHoverObj(undefined));
 
@@ -148,16 +142,6 @@ export function useHandleCameraMoved({
                 }, 500);
             }
         },
-        [
-            view,
-            dispatch,
-            currentTopDownElevation,
-            cameraType,
-            viewMode,
-            moveSvgMarkers,
-            engine2dRenderFnRef,
-            editClipping,
-            htmlInteractionContainer,
-        ]
+        [view, dispatch, currentTopDownElevation, cameraType, viewMode, engine2dRenderFnRef, editClipping, containers]
     );
 }

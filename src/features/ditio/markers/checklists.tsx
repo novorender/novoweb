@@ -1,7 +1,8 @@
 import { css, styled, Theme } from "@mui/material";
-import { MouseEvent, SVGProps } from "react";
+import { forwardRef, MouseEvent, SVGProps, useCallback, useEffect, useImperativeHandle, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { renderActions, selectStamp, StampKind } from "features/render";
 import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 
@@ -38,27 +39,51 @@ const markerStyles = ({ theme, active }: { theme: Theme; active?: boolean }) => 
 `;
 
 const ChecklistMarker = styled(
-    (props: SVGProps<SVGGElement>) => (
-        <g {...props}>
+    forwardRef<SVGGElement, SVGProps<SVGGElement>>((props, ref) => (
+        <g {...props} ref={ref}>
             <circle cx="12" cy="12" r="18" />
             <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1m-2 14-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9z" />
         </g>
-    ),
+    )),
     { shouldForwardProp: (prop) => prop !== "active" }
 )<{ active?: boolean }>(markerStyles);
 
-export function DitioChecklistMarkers() {
+export const DitioChecklistMarkers = forwardRef<{ update: () => void }>(function DitioChecklistMarkers(_, ref) {
+    const {
+        state: { view },
+    } = useExplorerGlobals();
+
     const stamp = useAppSelector(selectStamp);
     const dispatch = useAppDispatch();
+
     const markers = useDitioChecklistMarkers();
     const onWheel = useRedirectWheelEvents();
 
+    const containerRef = useRef<(SVGGElement | null)[]>([]);
+
+    const update = useCallback(() => {
+        if (!view?.measure || !containerRef.current.length || !markers.length) {
+            return;
+        }
+
+        view.measure.draw.toMarkerPoints(markers.map((marker) => marker.position)).forEach((pos, idx) => {
+            containerRef.current[idx]?.setAttribute(
+                "transform",
+                pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)"
+            );
+        });
+    }, [markers, view]);
+
+    useImperativeHandle(ref, () => ({ update }), [update]);
+
+    useEffect(() => {
+        update();
+    }, [update]);
+
     return (
         <>
-            {markers.map((marker) => (
+            {markers.map((marker, i) => (
                 <ChecklistMarker
-                    id={`ditio-checklist-marker-${marker.id}`}
-                    name={`ditio-checklist-marker-${marker.id}`}
                     key={marker.id}
                     active={stamp?.kind === StampKind.DitioChecklist && stamp.data.checklist.id === marker.id}
                     height={32}
@@ -90,8 +115,9 @@ export function DitioChecklistMarkers() {
                         );
                     }}
                     onWheel={onWheel}
+                    ref={(el) => (containerRef.current[i] = el)}
                 />
             ))}
         </>
     );
-}
+});

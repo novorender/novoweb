@@ -58,11 +58,21 @@ export function Save({ sceneId }: { sceneId: string }) {
                     );
             }
 
-            await dataApi.putScene({
+            const success = await dataApi.putScene({
                 ...originalScene,
                 url: `${sceneId}:${scene.id}`,
                 objectGroups: updated,
             });
+
+            console.log({
+                ...originalScene,
+                url: `${sceneId}:${scene.id}`,
+                objectGroups: updated,
+            });
+
+            if (!success) {
+                throw new Error("An error occurred while saving groups.");
+            }
 
             dispatch(groupsActions.setSaveStatus(AsyncStatus.Success));
         } catch (e) {

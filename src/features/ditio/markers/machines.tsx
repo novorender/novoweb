@@ -1,7 +1,8 @@
 import { css, styled, Theme } from "@mui/material";
-import { MouseEvent, SVGProps } from "react";
+import { forwardRef, MouseEvent, SVGProps, useCallback, useEffect, useImperativeHandle, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { renderActions, selectStamp, StampKind } from "features/render";
 import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 import { msToMins } from "utils/time";
@@ -85,38 +86,62 @@ const markerStyles = ({
 `;
 
 const LoaderMarker = styled(
-    (props: SVGProps<SVGGElement>) => (
-        <g {...props}>
+    forwardRef<SVGGElement, SVGProps<SVGGElement>>((props, ref) => (
+        <g {...props} ref={ref}>
             <circle cx="12" cy="12" r="18" />
             <path d="M18.5 18.5C19.04 18.5 19.5 18.96 19.5 19.5S19.04 20.5 18.5 20.5H6.5C5.96 20.5 5.5 20.04 5.5 19.5S5.96 18.5 6.5 18.5H18.5M18.5 17H6.5C5.13 17 4 18.13 4 19.5S5.13 22 6.5 22H18.5C19.88 22 21 20.88 21 19.5S19.88 17 18.5 17M21 11H18V7H13L10 11V16H22L21 11M11.54 11L13.5 8.5H16V11H11.54M9.76 3.41L4.76 2L2 11.83C1.66 13.11 2.41 14.44 3.7 14.8L4.86 15.12L8.15 12.29L4.27 11.21L6.15 4.46L8.94 5.24C9.5 5.53 10.71 6.34 11.47 7.37L12.5 6H12.94C11.68 4.41 9.85 3.46 9.76 3.41Z" />
         </g>
-    ),
+    )),
     { shouldForwardProp: (prop) => !["current", "hovered", "inactive", "hasLoad"].includes(String(prop)) }
 )<{ current?: boolean; hovered?: boolean; inactive?: boolean }>(markerStyles);
 
 const DumperMarker = styled(
-    (props: SVGProps<SVGGElement>) => (
-        <g {...props}>
+    forwardRef<SVGGElement, SVGProps<SVGGElement>>((props, ref) => (
+        <g {...props} ref={ref}>
             <circle cx="12" cy="12" r="18" />
             <path d="M20,8H19L17,8H15V14H2V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8M6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5M18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5M17,12V9.5H19.5L21.46,12H17M18,7H14V13H3L1.57,8H1V6H13L14,5H18V7Z" />
         </g>
-    ),
+    )),
     { shouldForwardProp: (prop) => !["current", "hovered", "inactive", "hasLoad"].includes(String(prop)) }
 )<{ current?: boolean; hovered?: boolean; inactive?: boolean; hasLoad?: boolean }>(markerStyles);
 
-export function DitioMachineMarkers() {
+export const DitioMachineMarkers = forwardRef<{ update: () => void }>(function DitioMachineMarkers(_, ref) {
+    const {
+        state: { view },
+    } = useExplorerGlobals();
+
     const stamp = useAppSelector(selectStamp);
     const dispatch = useAppDispatch();
+
     const machineMarkers = useDitioMachineMarkers();
     const onWheel = useRedirectWheelEvents();
+
+    const containerRef = useRef<(SVGGElement | null)[]>([]);
+
+    const update = useCallback(() => {
+        if (!view?.measure || !containerRef.current.length || !machineMarkers.length) {
+            return;
+        }
+
+        view.measure.draw.toMarkerPoints(machineMarkers.map((marker) => marker.scenePosition)).forEach((pos, idx) => {
+            containerRef.current[idx]?.setAttribute(
+                "transform",
+                pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)"
+            );
+        });
+    }, [machineMarkers, view]);
+
+    useImperativeHandle(ref, () => ({ update }), [update]);
+
+    useEffect(() => {
+        update();
+    }, [update]);
 
     const now = Date.now();
     return (
         <>
-            {machineMarkers.map((marker) => {
+            {machineMarkers.map((marker, i) => {
                 const props = {
-                    id: `ditioMachineMarker-${marker.id}`,
-                    name: `ditioMachineMarker-${marker.id}`,
                     key: marker.id,
                     current: stamp?.kind === StampKind.DitioMachine && stamp.data.machine.id === marker.id,
                     inactive: msToMins(now - new Date(marker.lastSeen).getTime()) >= 15,
@@ -152,8 +177,12 @@ export function DitioMachineMarkers() {
                     },
                 };
 
-                return marker.kind === "dumper" ? <DumperMarker {...props} /> : <LoaderMarker {...props} />;
+                return marker.kind === "dumper" ? (
+                    <DumperMarker {...props} ref={(el) => (containerRef.current[i] = el)} />
+                ) : (
+                    <LoaderMarker {...props} ref={(el) => (containerRef.current[i] = el)} />
+                );
             })}
         </>
     );
-}
+});
