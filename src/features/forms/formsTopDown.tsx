@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
 import { CameraType, selectCameraType } from "features/render";
+import { selectWidgets } from "slices/explorerSlice";
 import { AsyncStatus } from "types/misc";
 
 import { useFetchAssetList } from "./hooks/useFetchAssetList";
@@ -45,7 +46,8 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
     const templates = useAppSelector(selectTemplates);
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const selectedTemplateId = useAppSelector(selectCurrentFormsList);
-    const active = useAppSelector(selectCameraType) === CameraType.Orthographic;
+    const isFormsWidgetAdded = useAppSelector((state) => selectWidgets(state).includes("forms"));
+    const active = useAppSelector(selectCameraType) === CameraType.Orthographic && isFormsWidgetAdded;
     const dispatch = useAppDispatch();
     const containerRef = useRef<HTMLDivElement | null>(null);
     const assetList = useFetchAssetList();
