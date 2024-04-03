@@ -15,7 +15,7 @@ import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { FormEventHandler, useCallback, useMemo, useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectAssets } from "features/forms/slice";

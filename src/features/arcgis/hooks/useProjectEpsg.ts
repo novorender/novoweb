@@ -1,14 +1,14 @@
 import { useGetProjectQuery } from "apis/dataV2/dataV2Api";
-
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectProjectSettings } from "features/render";
+import { projectV1ZoneNameToEpsg } from "utils/misc";
 
 // We either have TM Zone from the old API or EPSG code from the new API
 // For old API - convert zone name to EPSG
 // For new API just return EPSG
 // New API takes precedence
-export function useProjectEpsg() {
+export function useProjectEpsg({ skip }: { skip?: boolean } = {}) {
     const projectId = useExplorerGlobals(true).state.scene.id;
     const {
         data: projectInfoV2,
@@ -17,6 +17,7 @@ export function useProjectEpsg() {
     } = useGetProjectQuery(
         { projectId },
         {
+            skip,
             selectFromResult: ({ data, error, isFetching }) => ({
                 data: data && { epsg: data.epsg },
                 error,
@@ -34,26 +35,9 @@ export function useProjectEpsg() {
         }
 
         if (tmZone) {
-            result = zoneNameToEpsg(tmZone);
+            result = projectV1ZoneNameToEpsg(tmZone);
         }
     }
 
     return { data: result, error, isFetching };
-}
-
-function zoneNameToEpsg(tmZone: string) {
-    let m = tmZone.match(/WGS 84 \/ UTM zone (\d+)N/);
-    if (m) {
-        return "326" + m[1].padStart(2, "0");
-    }
-
-    m = tmZone.match(/WGS 84 \/ UTM zone (\d+)S/);
-    if (m) {
-        return "327" + m[1].padStart(2, "0");
-    }
-
-    m = tmZone.match(/ETRS89 \/ NTM zone (\d+)/);
-    if (m) {
-        return "51" + m[1].padStart(2, "0");
-    }
 }

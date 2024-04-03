@@ -2,7 +2,7 @@ import { rotationFromDirection } from "@novorender/api";
 import { RenderSettings } from "@novorender/webgl-api";
 import { quat, vec3, vec4 } from "gl-matrix";
 
-import { ObjectVisibility } from "features/render/renderSlice";
+import { ObjectVisibility } from "features/render";
 import { Viewpoint } from "types/bcf";
 import { VecRGB, VecRGBA, vecToHex } from "utils/color";
 import { base64UrlEncodeImg, createCanvasSnapshot, uniqueArray } from "utils/misc";

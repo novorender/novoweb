@@ -4,7 +4,7 @@ import { CylinerMeasureType, MeasurementValues } from "@novorender/api";
 import { vec3 } from "gl-matrix";
 import { useEffect, useRef, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
     AccordionDetails,
@@ -20,10 +20,10 @@ import {
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { MeasurementData } from "features/measure/measuredObject";
-import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
+import { Picker, renderActions, selectPicker } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { getMeasurementValueKind, measureObjectIsVertex } from "utils/misc";
 
 import {

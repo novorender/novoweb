@@ -1,4 +1,4 @@
-import { FlatImage, Image, PanoramaImage } from "./imagesSlice";
+import { FlatImage, Image, PanoramaImage } from "./types";
 
 export function isPanorama(image: Image): image is PanoramaImage {
     return "gltf" in image;

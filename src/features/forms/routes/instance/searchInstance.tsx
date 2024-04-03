@@ -3,8 +3,7 @@ import { Box, Button, LinearProgress, Typography, useTheme } from "@mui/material
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
-import { useAppDispatch } from "app/store";
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox } from "components";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";

@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import { FormEventHandler, useCallback, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
 import { Divider, ScrollBox, TextArea, TextField } from "components";
 import { useToggle } from "hooks/useToggle";
@@ -47,7 +46,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
             }
 
             const newItem: FormItem = {
-                id: uuidv4(),
+                id: window.crypto.randomUUID(),
                 title,
                 type,
                 value: type === FormItemType.Text ? [value] : undefined,

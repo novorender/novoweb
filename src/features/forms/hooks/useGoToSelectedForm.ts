@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 
 import { selectCurrentTemplate, selectSelectedFormId } from "../slice";
 import { TemplateType } from "../types";

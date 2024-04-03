@@ -1,8 +1,8 @@
 import { Box, Button, Modal, Typography, useTheme } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import ConsentIcon from "media/icons/consent.svg?react";
-import { explorerActions, selectOrganization, selectRequireConsent } from "slices/explorerSlice";
+import { explorerActions, selectOrganization, selectRequireConsent } from "slices/explorer";
 
 export function Consent() {
     const theme = useTheme();

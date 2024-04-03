@@ -1,17 +1,11 @@
 import { Box } from "@mui/material";
 import { lazy, Suspense, useEffect } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { WidgetErrorBoundary, WidgetSkeleton } from "components";
 import { featuresConfig, WidgetKey } from "config/features";
 import { MenuWidget } from "features/menuWidget";
-import {
-    explorerActions,
-    selectIsOnline,
-    selectMaximized,
-    selectWidgetLayout,
-    selectWidgets,
-} from "slices/explorerSlice";
+import { explorerActions, selectIsOnline, selectMaximized, selectWidgetLayout, selectWidgets } from "slices/explorer";
 
 const Properties = lazy(() => import("features/properties/properties"));
 const PropertiesTree = lazy(() => import("features/propertyTree/propertyTree"));

@@ -16,7 +16,7 @@ import { MeasureError, Profile } from "@novorender/api";
 import { ParentSize } from "@visx/responsive";
 import { useEffect, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Divider,
     IosSwitch,
@@ -30,10 +30,10 @@ import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { singleCylinderOptions } from "features/measure";
-import { Picker, renderActions, selectPicker } from "features/render/renderSlice";
+import { Picker, renderActions, selectPicker } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { AsyncState, AsyncStatus, hasFinished } from "types/misc";
 
 import { HeightProfileChart } from "./heightProfileChart";

@@ -13,12 +13,12 @@ import { HierarcicalObjectReference, ObjectData } from "@novorender/webgl-api";
 import { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useSelectionBasket } from "contexts/selectionBasket";
-import { CameraType, renderActions, selectCameraType, selectMainObject } from "features/render/renderSlice";
+import { CameraType, renderActions, selectCameraType, selectMainObject } from "features/render";
 import { flip, isGlSpace } from "features/render/utils";
 import { useAbortController } from "hooks/useAbortController";
 import { AsyncState, AsyncStatus, hasFinished } from "types/misc";

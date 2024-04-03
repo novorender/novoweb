@@ -3,14 +3,15 @@ import { minutesToSeconds } from "date-fns";
 
 import { ArcgisWidgetConfig } from "features/arcgis";
 
+import { DeviationProjectConfig } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
-import { ProjectInfo } from "./projectTypes";
+import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
 import { getDataV2DynamicBaseQuery } from "./utils";
 
 export const dataV2Api = createApi({
     reducerPath: "dataV2",
     baseQuery: getDataV2DynamicBaseQuery(),
-    tagTypes: ["PropertyTreeFavorites"],
+    tagTypes: ["PropertyTreeFavorites", "ProjectProgress", "Deviation"],
     endpoints: (builder) => ({
         isOmega365ConfiguredForProject: builder.query<{ configured: boolean }, { projectId: string }>({
             query: ({ projectId }) => `/explorer/${projectId}/omega365/configured`,
@@ -55,6 +56,55 @@ export const dataV2Api = createApi({
                 body: config,
             }),
         }),
+        getDeviationProfiles: builder.query<DeviationProjectConfig, { projectId: string }>({
+            query: ({ projectId }) => `/explorer/${projectId}/deviations`,
+            providesTags: (_result, _error, { projectId }) => [{ type: "Deviation", id: projectId }],
+        }),
+        setDeviationProfiles: builder.mutation<void, { projectId: string; config: DeviationProjectConfig }>({
+            query: ({ projectId, config }) => ({
+                url: `/explorer/${projectId}/deviations`,
+                method: "PUT",
+                body: config,
+            }),
+            invalidatesTags: (_result, _error, { projectId }) => [{ type: "Deviation", id: projectId }],
+        }),
+        calcDeviations: builder.mutation<void, { projectId: string; config: DeviationProjectConfig }>({
+            query: ({ projectId, config }) => ({
+                url: `/projects/${projectId}/calcdeviations`,
+                method: "PATCH",
+                body: config,
+            }),
+            invalidatesTags: (_result, _error, { projectId }) => [{ type: "ProjectProgress", id: projectId }],
+        }),
+        getProjectProgress: builder.query<BuildProgressResult, { projectId: string; position?: number }>({
+            query: ({ projectId, position }) => ({
+                url: `/projects/${projectId}/progress`,
+                params: { position },
+            }),
+            providesTags: (_result, _error, { projectId }) => [{ type: "ProjectProgress", id: projectId }],
+        }),
+        getFileDownloadLink: builder.query<
+            string,
+            { relativeUrl: string } | { projectId: string; fileId: string; version: number }
+        >({
+            query: (params) => ({
+                url:
+                    "relativeUrl" in params
+                        ? `/${params.relativeUrl}`
+                        : `/projects/${params.projectId}/files/${params.fileId}/downloadlink/${params.version}`,
+                responseHandler: async (resp) => {
+                    const result = await resp.text();
+                    return result;
+                },
+            }),
+        }),
+        searchEpsg: builder.query<EpsgSearchResult, { query: string }>({
+            query: ({ query }) => ({
+                url: `/epsg`,
+                method: "POST",
+                body: query,
+            }),
+        }),
     }),
 });
 
@@ -67,4 +117,10 @@ export const {
     useSetPropertyTreeFavoritesMutation,
     useLazyGetProjectQuery,
     useGetProjectQuery,
+    useLazyGetDeviationProfilesQuery,
+    useSetDeviationProfilesMutation,
+    useCalcDeviationsMutation,
+    useGetProjectProgressQuery,
+    useLazyGetFileDownloadLinkQuery,
+    useSearchEpsgQuery,
 } = dataV2Api;

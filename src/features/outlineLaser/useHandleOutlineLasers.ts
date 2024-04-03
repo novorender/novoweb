@@ -1,15 +1,16 @@
 import { vec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { selectCamera, selectClippingPlanes } from "features/render";
+
 import {
     clippingOutlineLaserActions,
     OutlineLaser,
     selectOutlineLaserPlane,
     selectOutlineLasers,
-} from "features/outlineLaser";
-import { selectCamera, selectClippingPlanes } from "features/render";
+} from "./outlineLaserSlice";
 
 export function useHandleOutlineLasers() {
     const {

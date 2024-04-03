@@ -2,7 +2,7 @@ import { Autocomplete, Box, useTheme } from "@mui/material";
 import { FormEventHandler, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 
-import { useAppDispatch } from "app/store";
+import { useAppDispatch } from "app/redux-store-interactions";
 import { Confirmation, TextField } from "components";
 import { objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
 

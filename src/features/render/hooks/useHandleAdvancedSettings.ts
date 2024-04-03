@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
-import { selectAdvanced, selectPoints } from "..";
+import { selectAdvanced, selectPoints } from "../renderSlice";
 
 export function useHandleAdvancedSettings() {
     const {

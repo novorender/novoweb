@@ -3,7 +3,7 @@ import { Box, ListItemButton, Skeleton, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useGetTemplateQuery } from "features/forms/api";
 import { formsActions, selectTemplatesFilters } from "features/forms/slice";
 import { type TemplateId, TemplateType } from "features/forms/types";

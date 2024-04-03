@@ -1,7 +1,7 @@
 import { PickSampleExt } from "@novorender/api";
 import { useCallback } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 
 import { useFormsGlobals } from "../formsGlobals";
 import { formsActions, selectCurrentFormsList, selectSelectedFormId } from "../slice";

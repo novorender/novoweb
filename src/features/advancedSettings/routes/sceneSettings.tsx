@@ -4,7 +4,7 @@ import { quat, vec3 } from "gl-matrix";
 import { MouseEvent, SyntheticEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
     AccordionDetails,
@@ -25,7 +25,7 @@ import {
     selectTerrain,
     selectViewMode,
     SubtreeStatus,
-} from "features/render/renderSlice";
+} from "features/render";
 import { getAsyncStateData, ViewMode } from "types/misc";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 

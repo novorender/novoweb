@@ -2,7 +2,7 @@ import { ArrowDownward, DeleteSweep, SyncAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, Switch } from "@mui/material";
 import { ChangeEvent, useCallback } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
     AccordionDetails,
@@ -32,7 +32,7 @@ import {
 } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { hslToVec } from "utils/color";
 import { getFilePathFromObjectPath } from "utils/objectData";
 import { searchByPatterns } from "utils/search";

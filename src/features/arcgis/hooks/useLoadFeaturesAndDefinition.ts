@@ -2,10 +2,11 @@ import { IQueryFeaturesResponse } from "@esri/arcgis-rest-feature-service";
 import { IFeature, request } from "@esri/arcgis-rest-request";
 import { useEffect, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { arcgisActions, FeatureServer, Layer, LayerDefinition, selectArcgisFeatureServers } from "../arcgisSlice";
+import { arcgisActions, selectArcgisFeatureServers } from "../arcgisSlice";
+import { FeatureServer, Layer, LayerDefinition } from "../types";
 import { makeWhereStatement } from "../utils";
 import { useProjectEpsg } from "./useProjectEpsg";
 
@@ -19,7 +20,7 @@ export function useLoadFeaturesAndDefinition() {
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const dispatch = useAppDispatch();
     const abortControllers = useRef([] as LayerAbortController[]);
-    const { data: epsg } = useProjectEpsg();
+    const { data: epsg } = useProjectEpsg({ skip: featureServers.status !== AsyncStatus.Success });
 
     useEffect(() => {
         const { current } = abortControllers;

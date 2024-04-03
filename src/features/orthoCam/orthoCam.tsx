@@ -2,7 +2,7 @@ import { ArrowDownward, ColorLens } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, Slider, Typography } from "@mui/material";
 import { ChangeEvent, MouseEvent, SyntheticEvent, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, IosSwitch, LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -19,10 +19,10 @@ import {
     selectTerrain,
     selectViewMode,
     SubtreeStatus,
-} from "features/render/renderSlice";
+} from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { ViewMode } from "types/misc";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 

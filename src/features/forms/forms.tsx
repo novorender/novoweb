@@ -2,15 +2,16 @@ import { Box } from "@mui/material";
 import { PropsWithChildren, useEffect, useRef } from "react";
 import { MemoryRouter, Route, Switch, SwitchProps, useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { ObjectVisibility, renderActions, selectMainObject } from "features/render/renderSlice";
+import { ObjectVisibility } from "features/render";
+import { renderActions, selectMainObject } from "features/render/renderSlice";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import { useGoToSelectedForm } from "./hooks/useGoToSelectedForm";
 import { useRenderLocationFormAssets } from "./hooks/useRenderLocationFormAssets";

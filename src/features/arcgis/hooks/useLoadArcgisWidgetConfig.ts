@@ -1,21 +1,35 @@
-import { useGetArcgisWidgetConfigQuery } from "apis/dataV2/dataV2Api";
 import { useEffect } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useGetArcgisWidgetConfigQuery } from "apis/dataV2/dataV2Api";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
-import { arcgisActions, FeatureServer, selectArcgisFeatureServersStatus } from "../arcgisSlice";
+import { arcgisActions, selectArcgisFeatureServersStatus } from "../arcgisSlice";
+import { FeatureServer } from "../types";
 
 export function useLoadArcgisWidgetConfig() {
     const dispatch = useAppDispatch();
     const projectId = useExplorerGlobals(true).state.scene.id;
     const status = useAppSelector(selectArcgisFeatureServersStatus);
+    const isProjectV2 = useAppSelector(selectProjectIsV2);
 
     const { data, isFetching, error } = useGetArcgisWidgetConfigQuery(
         { projectId },
-        { skip: !projectId || status === AsyncStatus.Success }
+        { skip: !projectId || status === AsyncStatus.Success || !isProjectV2 }
     );
+
+    useEffect(() => {
+        if (!isProjectV2) {
+            dispatch(
+                arcgisActions.setFeatureServers({
+                    status: AsyncStatus.Error,
+                    msg: "Feature is not supported for the current project, please contact support",
+                })
+            );
+        }
+    }, [dispatch, isProjectV2]);
 
     useEffect(() => {
         if (data) {

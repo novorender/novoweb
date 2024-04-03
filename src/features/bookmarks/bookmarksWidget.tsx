@@ -1,25 +1,20 @@
 import { Box } from "@mui/material";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Switch } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import { selectUser } from "slices/authSlice";
-import { selectIsOnline, selectMaximized, selectMinimized } from "slices/explorerSlice";
+import { selectIsOnline, selectMaximized, selectMinimized } from "slices/explorer";
+import { AsyncStatus } from "types/misc";
 
-import {
-    BookmarkAccess,
-    bookmarksActions,
-    BookmarksStatus,
-    selectBookmarks,
-    selectBookmarksStatus,
-} from "./bookmarksSlice";
+import { BookmarkAccess, bookmarksActions, selectBookmarks, selectBookmarksStatus } from "./bookmarksSlice";
+import { BookmarksSnackbar } from "./bookmarksSnackbar";
 import { BookmarkList } from "./routes/bookmarkList";
 import { Crupdate } from "./routes/crupdate";
 import { Delete } from "./routes/delete";
@@ -38,12 +33,12 @@ export default function Bookmarks() {
     const dispatch = useAppDispatch();
 
     useEffect(() => {
-        if (status === BookmarksStatus.Initial) {
+        if (status === AsyncStatus.Initial) {
             initBookmarks();
         }
 
         async function initBookmarks() {
-            dispatch(bookmarksActions.setStatus(BookmarksStatus.Loading));
+            dispatch(bookmarksActions.setInitStatus(AsyncStatus.Loading));
 
             try {
                 const [publicBmks, personalBmks] = await Promise.all([
@@ -51,20 +46,21 @@ export default function Bookmarks() {
                     user || !isOnline ? dataApi.getBookmarks(sceneId, { personal: true }) : Promise.resolve([]),
                 ]);
 
+                dispatch(bookmarksActions.setInitStatus(AsyncStatus.Success));
                 dispatch(
                     bookmarksActions.setBookmarks(
                         [
                             ...publicBmks.map((bm) => ({ ...bm, access: BookmarkAccess.Public })),
                             ...personalBmks.map((bm) => ({ ...bm, access: BookmarkAccess.Personal })),
-                        ].map((bm) => (bm.id ? bm : { ...bm, id: uuidv4() }))
+                        ].map((bm) => (bm.id ? bm : { ...bm, id: window.crypto.randomUUID() }))
                     )
                 );
-                dispatch(bookmarksActions.setStatus(BookmarksStatus.Running));
-            } catch {
-                dispatch(bookmarksActions.setStatus(BookmarksStatus.Error));
+            } catch (e) {
+                console.warn(e);
+                dispatch(bookmarksActions.setInitStatus(AsyncStatus.Error));
             }
         }
-    }, [bookmarks, dispatch, sceneId, status, user, isOnline]);
+    }, [bookmarks, dispatch, sceneId, user, isOnline, status]);
 
     return (
         <>
@@ -97,6 +93,7 @@ export default function Bookmarks() {
                     </MemoryRouter>
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.bookmarks.key} onSelect={toggleMenu} />}
+                <BookmarksSnackbar />
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>

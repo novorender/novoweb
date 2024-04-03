@@ -26,15 +26,16 @@ import { vec3 } from "gl-matrix";
 import { useCallback, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary, ScrollBox } from "components";
 import { CameraType, renderActions } from "features/render";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
-import { arcgisActions, FeatureServer, Layer, selectArcgisFeatureServers } from "../arcgisSlice";
+import { arcgisActions, selectArcgisFeatureServers } from "../arcgisSlice";
 import { useIsCameraSetCorrectly } from "../hooks/useIsCameraSetCorrectly";
 import { useProjectEpsg } from "../hooks/useProjectEpsg";
+import { FeatureServer, Layer } from "../types";
 import { aabb2ToBoundingSphere, getTotalAabb2, makeWhereStatement } from "../utils";
 
 export function FeatureServerList() {
@@ -43,7 +44,7 @@ export function FeatureServerList() {
     const dispatch = useAppDispatch();
     const history = useHistory();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    const epsg = useProjectEpsg();
+    const epsg = useProjectEpsg({ skip: featureServers.status !== AsyncStatus.Success });
     const isCameraSetCorrectly = useIsCameraSetCorrectly();
 
     const handleFeatureCheck = useCallback(
@@ -194,7 +195,7 @@ function FeatureServerItem({
         setMenuAnchor(null);
     };
 
-    const canFlyTo = layers.some((l) => l.checked && l.definition.status === AsyncStatus.Success && l.aabb);
+    const canFlyTo = layers.some((l) => l.checked && l.features.status === AsyncStatus.Success && l.aabb);
 
     return (
         <Accordion defaultExpanded={defaultExpanded}>

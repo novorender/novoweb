@@ -8,7 +8,7 @@ import {
 import { ReadonlyVec3 } from "gl-matrix";
 import { useEffect, useMemo, useRef } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
 import { CameraType, selectCameraType } from "features/render";

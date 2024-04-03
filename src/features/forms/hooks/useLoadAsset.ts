@@ -1,7 +1,7 @@
 import { downloadGLTF, RenderStateDynamicObject } from "@novorender/api";
 import { useCallback, useMemo } from "react";
 
-import { useAppSelector } from "app/store";
+import { useAppSelector } from "app/redux-store-interactions";
 import { useAbortController } from "hooks/useAbortController";
 import { AsyncStatus } from "types/misc";
 

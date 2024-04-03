@@ -1,13 +1,14 @@
 import { Menu, popoverClasses } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { DeviationStamp } from "features/deviations";
 import { DitioMachineStamp } from "features/ditio";
 import { PropertiesStamp } from "features/properties";
-import { renderActions, selectStamp, StampKind } from "features/render";
 import { LogPointStamp, MachineLocationStamp as XsiteMachineLocationStamp } from "features/xsiteManage";
 
 import { CanvasContextMenuStamp } from "./canvasContextMenuStamp";
+import { renderActions, selectStamp } from "./renderSlice";
+import { StampKind } from "./types";
 
 export function Stamp() {
     const dispatch = useAppDispatch();

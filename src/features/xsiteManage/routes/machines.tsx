@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, FixedSizeVirualizedList, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { msToHrs } from "utils/time";
 

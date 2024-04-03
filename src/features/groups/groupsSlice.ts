@@ -1,6 +1,6 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-import { RootState } from "app/store";
+import { type RootState } from "app";
 import { AsyncStatus } from "types/misc";
 
 const initialState = {

@@ -1,8 +1,13 @@
-import { createColorSetHighlight, createNeutralHighlight, createTransparentHighlight } from "@novorender/api";
+import {
+    createColorSetHighlight,
+    createNeutralHighlight,
+    createTransparentHighlight,
+    RenderStateHighlightGroup,
+} from "@novorender/api";
 import { useEffect, useRef } from "react";
 
-import { dataApi } from "app";
-import { useAppDispatch, useAppSelector } from "app/store";
+import { dataApi } from "apis/dataV1";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHidden } from "contexts/hidden";
 import { useHighlightCollections } from "contexts/highlightCollections";
@@ -12,19 +17,16 @@ import { useSelectionBasket } from "contexts/selectionBasket";
 import { selectVisibleOutlineGroups } from "features/outlineLaser";
 import { selectPropertyTreeGroups } from "features/propertyTree/slice";
 import { useSceneId } from "hooks/useSceneId";
-import { VecRGBA } from "utils/color";
 
 import {
-    CameraType,
-    ObjectVisibility,
     renderActions,
     selectCameraType,
     selectDefaultVisibility,
-    SelectionBasketMode,
     selectMainObject,
     selectSelectionBasketColor,
     selectSelectionBasketMode,
-} from "..";
+} from "../renderSlice";
+import { CameraType, ObjectVisibility, SelectionBasketMode } from "../types";
 
 export function useHandleHighlights() {
     const {
@@ -77,10 +79,23 @@ export function useHandleHighlights() {
             }
 
             const { coloredGroups, hiddenGroups, semiTransparent } = groups.reduce(
-                (prev, group) => {
+                (prev, group, idx) => {
                     switch (group.status) {
                         case GroupStatus.Selected: {
-                            prev.coloredGroups.push(group);
+                            const color = group.color.toString();
+
+                            if (prev.coloredGroups[color]) {
+                                group.ids.forEach((id) => {
+                                    prev.coloredGroups[color].ids.add(id);
+                                    prev.coloredGroups[color].idx = idx;
+                                });
+                            } else {
+                                prev.coloredGroups[color] = {
+                                    idx,
+                                    action: createColorSetHighlight(group.color),
+                                    ids: new Set(group.ids),
+                                };
+                            }
                             break;
                         }
                         case GroupStatus.Hidden: {
@@ -98,7 +113,9 @@ export function useHandleHighlights() {
                     return prev;
                 },
                 {
-                    coloredGroups: [] as ObjectGroup[],
+                    coloredGroups: {} as {
+                        [color: string]: { ids: Set<number>; action: RenderStateHighlightGroup["action"]; idx: number };
+                    },
                     frozenGroups: [] as ObjectGroup[],
                     hiddenGroups: [] as { ids: Set<number> }[],
                     semiTransparent: [] as ObjectGroup[],
@@ -109,7 +126,18 @@ export function useHandleHighlights() {
                 (prev, group) => {
                     switch (group.status) {
                         case GroupStatus.Selected: {
-                            prev.coloredPropertyTreeGroups.push(group);
+                            const color = group.color.toString();
+
+                            if (prev.coloredPropertyTreeGroups[color]) {
+                                Object.values(group.ids).forEach((id) => {
+                                    prev.coloredPropertyTreeGroups[color].ids.add(id);
+                                });
+                            } else {
+                                prev.coloredPropertyTreeGroups[color] = {
+                                    action: createColorSetHighlight(group.color),
+                                    ids: new Set(Object.values(group.ids)),
+                                };
+                            }
                             break;
                         }
                         case GroupStatus.Hidden: {
@@ -123,7 +151,9 @@ export function useHandleHighlights() {
                     return prev;
                 },
                 {
-                    coloredPropertyTreeGroups: [] as { ids: { [key: number]: number }; color: VecRGBA }[],
+                    coloredPropertyTreeGroups: {} as {
+                        [color: string]: { ids: Set<number>; action: RenderStateHighlightGroup["action"] };
+                    },
                     hiddenGroups: hiddenGroups as { ids: Set<number> }[],
                 }
             );
@@ -150,25 +180,27 @@ export function useHandleHighlights() {
                                 ? createColorSetHighlight(basketColor.color)
                                 : createNeutralHighlight(),
                         },
-                        ...coloredGroups.map((group) => ({
+                        ...Object.values(coloredGroups)
+                            .sort((a, b) => a.idx - b.idx)
+                            .map((group) => ({
+                                objectIds: new Uint32Array(
+                                    basketMode === SelectionBasketMode.Loose
+                                        ? group.ids
+                                        : basket.idArr.filter((id) => group.ids.has(id))
+                                ).sort(),
+                                action: group.action,
+                            })),
+                        ...Object.values(coloredPropertyTreeGroups).map((group) => ({
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose
                                     ? group.ids
                                     : basket.idArr.filter((id) => group.ids.has(id))
                             ).sort(),
-                            action: createColorSetHighlight(group.color),
-                        })),
-                        ...coloredPropertyTreeGroups.map((group) => ({
-                            objectIds: new Uint32Array(
-                                basketMode === SelectionBasketMode.Loose
-                                    ? Object.values(group.ids)
-                                    : basket.idArr.filter((id) => group.ids[id] !== undefined)
-                            ).sort(),
-                            action: createColorSetHighlight(group.color),
+                            action: group.action,
                         })),
                         ...(cameraType === CameraType.Orthographic
                             ? outlineGroups.map((group) => ({
-                                  objectIds: new Uint32Array(group.ids).sort(),
+                                  objectIds: new Uint32Array(group.ids).sort().filter((f) => !allHidden.has(f)),
                                   outlineColor: group.color,
                               }))
                             : []),

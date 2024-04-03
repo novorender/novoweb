@@ -1,7 +1,7 @@
 import { ReadonlyVec3 } from "gl-matrix";
 import { useCallback } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useCreateLocationFormMutation } from "../api";

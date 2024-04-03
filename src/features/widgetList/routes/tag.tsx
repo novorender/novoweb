@@ -2,10 +2,12 @@ import { ArrowBack } from "@mui/icons-material";
 import { Box, Button, Grid, IconButton, Typography, useTheme } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom";
 
-import { useAppSelector } from "app/store";
-import { Divider, ScrollBox, WidgetMenuButtonWrapper } from "components";
+import { useAppSelector } from "app/redux-store-interactions";
+import { Divider } from "components/divider";
+import { ScrollBox } from "components/scrollBox";
+import { WidgetMenuButtonWrapper } from "components/widgetMenuButtonWrapper";
 import { FeatureTagKey, WidgetKey } from "config/features";
-import { selectEnabledWidgets, selectIsOnline, selectLockedWidgets, selectWidgets } from "slices/explorerSlice";
+import { selectEnabledWidgets, selectIsOnline, selectLockedWidgets, selectWidgets } from "slices/explorer";
 
 import { sorting } from "../sorting";
 

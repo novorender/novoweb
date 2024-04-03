@@ -2,10 +2,10 @@ import { Grain, LineAxis, PictureAsPdf, Terrain, Token } from "@mui/icons-materi
 import { IconButton, Menu, SpeedDialActionProps, Typography } from "@mui/material";
 import { MouseEvent, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction, WidgetMenuButtonWrapper } from "components";
 import { featuresConfig } from "config/features";
-import { renderActions, selectSubtrees, selectViewMode, SubtreeStatus } from "features/render/renderSlice";
+import { renderActions, selectSubtrees, selectViewMode, SubtreeStatus } from "features/render";
 import { ViewMode } from "types/misc";
 
 export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {

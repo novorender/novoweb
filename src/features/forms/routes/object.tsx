@@ -14,8 +14,7 @@ import { skipToken } from "@reduxjs/toolkit/query";
 import { useEffect, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router-dom";
 
-import { useAppDispatch } from "app/store";
-import { useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";

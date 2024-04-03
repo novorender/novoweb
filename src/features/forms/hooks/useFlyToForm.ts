@@ -1,7 +1,7 @@
 import { ReadonlyVec3, vec3 } from "gl-matrix";
 import { useCallback } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { getCameraDir } from "features/engine2D/utils";
 import { CameraType, renderActions, selectCameraType } from "features/render";

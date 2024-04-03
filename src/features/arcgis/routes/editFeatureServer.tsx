@@ -14,12 +14,13 @@ import {
 import { FormEventHandler, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation, TextField } from "components";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { arcgisActions, FeatureServer, selectArcgisFeatureServers } from "../arcgisSlice";
+import { arcgisActions, selectArcgisFeatureServers } from "../arcgisSlice";
 import { FeatureServerDefinition } from "../arcgisTypes";
+import { FeatureServer } from "../types";
 
 export function EditFeatureServer() {
     const history = useHistory();
@@ -177,7 +178,7 @@ export function EditFeatureServer() {
 
     const handleUrlChange = (url: string) => {
         const prevUrl = featureServer.url;
-        const newConfig = { ...featureServer, url };
+        const newConfig = { ...featureServer, url, enabledLayerIds: [] } as FeatureServer;
         if (!newConfig.name) {
             const match = url.match(/services\/(.+)\/FeatureServer/);
             if (match) {
@@ -269,7 +270,7 @@ export function EditFeatureServer() {
                                         checked={useOnlySelectedLayers}
                                         onChange={(e) => {
                                             setUseOnlySelectedLayers(e.target.checked);
-                                            if (e.target.checked) {
+                                            if (e.target.checked && fsDefinition.status === AsyncStatus.Success) {
                                                 setIsEditingLayerList(true);
                                             }
                                         }}
@@ -282,7 +283,12 @@ export function EditFeatureServer() {
                                             variant="text"
                                             size="small"
                                             onClick={() => setIsEditingLayerList(true)}
-                                            hidden={!useOnlySelectedLayers}
+                                            sx={{
+                                                display:
+                                                    useOnlySelectedLayers && fsDefinition.status === AsyncStatus.Success
+                                                        ? "block"
+                                                        : "none",
+                                            }}
                                         >
                                             Select layers
                                         </Button>

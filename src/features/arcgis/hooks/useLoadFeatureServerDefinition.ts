@@ -1,7 +1,7 @@
 import { request } from "@esri/arcgis-rest-request";
 import { useEffect } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useAbortController } from "hooks/useAbortController";
 import { AsyncState, AsyncStatus } from "types/misc";
 

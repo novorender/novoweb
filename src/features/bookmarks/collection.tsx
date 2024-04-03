@@ -3,9 +3,9 @@ import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } fro
 import { MouseEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
-import { selectHasAdminCapabilities } from "slices/explorerSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { Bookmark } from "./bookmark";
 import { bookmarksActions, ExtendedBookmark, selectIsCollectionExpanded } from "./bookmarksSlice";

@@ -6,161 +6,33 @@ import {
     TonemappingMode,
     View,
 } from "@novorender/api";
-import type { Bookmark, ObjectGroup } from "@novorender/data-js-api";
-import type { BoundingSphere, Camera, EnvironmentDescription } from "@novorender/webgl-api";
+import type { Bookmark } from "@novorender/data-js-api";
+import type { EnvironmentDescription } from "@novorender/webgl-api";
 import { createAction, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { quat, vec3, vec4 } from "gl-matrix";
 
-import type { RootState } from "app/store";
-import { DitioMachine } from "features/ditio";
-import { LogPoint, MachineLocation } from "features/xsiteManage";
-import { ProjectType } from "slices/explorerSlice";
+import type { RootState } from "app";
+import type { ProjectType } from "slices/explorer";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 import { VecRGB, VecRGBA } from "utils/color";
 import { mergeRecursive } from "utils/misc";
 
-import { SceneConfig } from "./hooks/useHandleInit";
+import {
+    CameraSpeedLevel,
+    CameraState,
+    CameraStep,
+    CameraType,
+    ObjectVisibility,
+    Picker,
+    SavedCameraPositions,
+    SceneConfig,
+    SelectionBasketMode,
+    Stamp,
+    Subtree,
+    Subtrees,
+    SubtreeStatus,
+} from "./types";
 import { getLegacySubtrees, getSubtrees } from "./utils";
-
-export enum CameraSpeedLevel {
-    Slow = "slow",
-    Default = "default",
-    Fast = "fast",
-}
-
-export enum ObjectVisibility {
-    Neutral = "neutral",
-    SemiTransparent = "semiTransparent",
-    Transparent = "transparent",
-}
-
-export enum CameraType {
-    Orthographic,
-    Pinhole,
-}
-
-export enum SubtreeStatus {
-    Unavailable,
-    Shown,
-    Hidden,
-}
-
-export enum SelectionBasketMode {
-    Loose,
-    Strict,
-}
-
-export enum Picker {
-    Object,
-    Measurement,
-    FollowPathObject,
-    ClippingPlane,
-    ClippingBox,
-    OrthoPlane,
-    CrossSection,
-    Area,
-    PointLine,
-    HeightProfileEntity,
-    Manhole,
-    OutlineLaser,
-    FormLocation,
-}
-
-export type Subtree = keyof NonNullable<State["subtrees"]>;
-
-type CameraStep = { position: vec3; rotation: quat; fov?: number; kind: CameraType };
-export type ObjectGroups = { default: ObjectGroup; defaultHidden: ObjectGroup; custom: ObjectGroup[] };
-
-// Redux toolkit with immer removes readonly modifier of state in the reducer so we get ts errors
-// unless we cast the types to writable ones.
-export type DeepMutable<T> = { -readonly [P in keyof T]: DeepMutable<T[P]> };
-type CameraState =
-    | {
-          type: CameraType.Orthographic;
-          goTo?: {
-              position: Camera["position"];
-              rotation: Camera["rotation"];
-              fov?: number;
-              far?: number;
-              near?: number;
-              flyTime?: number;
-          };
-          gridOrigo?: vec3;
-      }
-    | {
-          type: CameraType.Pinhole;
-          goTo?: {
-              position: Camera["position"];
-              rotation: Camera["rotation"];
-              fov?: number;
-              far?: number;
-              near?: number;
-              flyTime?: number;
-          };
-          zoomTo?: BoundingSphere;
-      };
-
-type SavedCameraPositions = { currentIndex: number; positions: CameraStep[] };
-
-export enum StampKind {
-    LogPoint,
-    XsiteManageMachineLocation,
-    DitioMachine,
-    Deviation,
-    CanvasContextMenu,
-    Properties,
-}
-
-type LogPointStamp = {
-    kind: StampKind.LogPoint;
-    data: {
-        logPoint: LogPoint;
-    };
-};
-
-type XsiteManageMachineLocationStamp = {
-    kind: StampKind.XsiteManageMachineLocation;
-    data: {
-        location: MachineLocation;
-    };
-};
-
-type DitioMachineStamp = {
-    kind: StampKind.DitioMachine;
-    data: {
-        machine: DitioMachine;
-    };
-};
-
-type DeviationStamp = {
-    kind: StampKind.Deviation;
-    data: {
-        deviation: number;
-    };
-};
-
-type CanvasContextMenuStamp = {
-    kind: StampKind.CanvasContextMenu;
-    data: {
-        object?: number;
-        position?: Vec3;
-        normal?: Vec3 | undefined;
-    };
-};
-
-type PropertiesStamp = {
-    kind: StampKind.Properties;
-    properties: [key: string, value: string][];
-};
-
-type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
-    | LogPointStamp
-    | XsiteManageMachineLocationStamp
-    | DeviationStamp
-    | CanvasContextMenuStamp
-    | PropertiesStamp
-    | DitioMachineStamp
-);
 
 const initialState = {
     sceneStatus: { status: AsyncStatus.Initial } as AsyncState<void>,
@@ -176,7 +48,7 @@ const initialState = {
         terrain: SubtreeStatus.Unavailable,
         points: SubtreeStatus.Unavailable,
         documents: SubtreeStatus.Unavailable,
-    },
+    } as Subtrees,
     selectionBasketMode: SelectionBasketMode.Loose,
     selectionBasketColor: {
         color: [0, 0, 1, 1] as VecRGB | VecRGBA,
@@ -342,6 +214,7 @@ type State = typeof initialState;
 
 export const initScene = createAction<{
     projectType: ProjectType;
+    tmZoneForCalc: string | undefined;
     sceneData: Omit<SceneConfig, "db" | "url">;
     sceneConfig: OctreeSceneConfig;
     initialCamera: {

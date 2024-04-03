@@ -1,7 +1,7 @@
 import { SearchPattern } from "@novorender/webgl-api";
 import { ReactNode, useEffect } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
 import { HiddenProvider } from "contexts/hidden";
 import { HighlightCollectionsProvider } from "contexts/highlightCollections";
@@ -12,9 +12,10 @@ import { Consent } from "features/consent";
 import { FormsGlobalsProvider } from "features/forms/formsGlobals";
 import { Hud } from "features/hud";
 import { QuirkAlert } from "features/quirkAlert";
-import { Render3D, selectSceneStatus } from "features/render";
+import { selectSceneStatus } from "features/render";
+import { Render3D } from "features/render/render";
 import { VersionAlert } from "features/versionAlert";
-import { explorerActions } from "slices/explorerSlice";
+import { explorerActions } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { getOAuthState } from "utils/auth";
 

@@ -1,11 +1,24 @@
-import { Folder, Visibility } from "@mui/icons-material";
-import { Box, Checkbox, ListItem, ListItemProps, Typography, useTheme } from "@mui/material";
-import { HierarcicalObjectReference } from "@novorender/webgl-api";
-import { ChangeEvent, CSSProperties, forwardRef, MouseEventHandler, MutableRefObject } from "react";
+import { Download, Folder, MoreVert, Visibility } from "@mui/icons-material";
+import {
+    Box,
+    Checkbox,
+    IconButton,
+    ListItem,
+    ListItemIcon,
+    ListItemProps,
+    ListItemText,
+    Menu,
+    MenuItem,
+    Typography,
+    useTheme,
+} from "@mui/material";
+import { HierarcicalObjectReference, ObjectData } from "@novorender/webgl-api";
+import { ChangeEvent, CSSProperties, forwardRef, MouseEventHandler, MutableRefObject, useMemo, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
 
-import { useAppDispatch } from "app/store";
+import { useLazyGetFileDownloadLinkQuery } from "apis/dataV2/dataV2Api";
+import { useAppDispatch } from "app/redux-store-interactions";
 import { FixedSizeVirualizedList, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden, useIsHidden } from "contexts/hidden";
@@ -16,13 +29,16 @@ import { NodeType } from "types/misc";
 import { extractObjectIds, getObjectNameFromPath } from "utils/objectData";
 import { getDescendants, searchByParentPath } from "utils/search";
 
+const DOWNLOAD_PROPERTY = "Novorender/Download";
+
 type Props = {
-    nodes: HierarcicalObjectReference[];
+    nodes: (HierarcicalObjectReference | ObjectData)[];
     parentNode?: HierarcicalObjectReference;
     CustomParent?: (props: { style: CSSProperties }) => JSX.Element;
     onScroll?: (props: ListOnScrollProps) => void;
     outerRef?: FixedSizeListProps["outerRef"];
     loading?: boolean;
+    allowDownload?: boolean;
     setLoading: (state: boolean) => void;
     abortController: MutableRefObject<AbortController>;
 };
@@ -30,6 +46,11 @@ type Props = {
 export const NodeList = forwardRef<FixedSizeList, Props>(
     ({ nodes, onScroll, outerRef, CustomParent, parentNode, ...nodeProps }, ref) => {
         const theme = useTheme();
+
+        const atLeastOneNodeHasMenu = useMemo(
+            () => nodeProps.allowDownload && nodes.some(shouldShowNodeMenu),
+            [nodeProps.allowDownload, nodes]
+        );
 
         return (
             <AutoSizer>
@@ -64,14 +85,25 @@ export const NodeList = forwardRef<FixedSizeList, Props>(
                                 parent = CustomParent ? (
                                     <CustomParent style={parentStyles} />
                                 ) : (
-                                    <Node parent style={parentStyles} node={parentNode!} {...nodeProps} />
+                                    <Node
+                                        parent
+                                        style={parentStyles}
+                                        node={parentNode!}
+                                        canHaveMenu={atLeastOneNodeHasMenu}
+                                        {...nodeProps}
+                                    />
                                 );
                             }
 
                             return (
                                 <>
                                     {parent}
-                                    <Node style={nodeStyles} node={node} {...nodeProps} />
+                                    <Node
+                                        style={nodeStyles}
+                                        node={node}
+                                        canHaveMenu={atLeastOneNodeHasMenu}
+                                        {...nodeProps}
+                                    />
                                 </>
                             );
                         }}
@@ -83,14 +115,15 @@ export const NodeList = forwardRef<FixedSizeList, Props>(
 );
 
 type NodeProps = {
-    node: HierarcicalObjectReference;
+    node: HierarcicalObjectReference | ObjectData;
     parent?: boolean;
     loading?: boolean;
+    canHaveMenu?: boolean;
     setLoading: (state: boolean) => void;
     abortController: MutableRefObject<AbortController>;
 } & ListItemProps;
 
-function Node({ node, parent, loading, setLoading, abortController, ...props }: NodeProps) {
+function Node({ node, parent, loading, canHaveMenu, setLoading, abortController, ...props }: NodeProps) {
     const theme = useTheme();
 
     const {
@@ -110,6 +143,10 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
 
     const pathName = getObjectNameFromPath(node.path);
 
+    const [getFileDownloadLink] = useLazyGetFileDownloadLinkQuery();
+
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+
     const onNodeClick = async (node: HierarcicalObjectReference, isSelected: boolean) => {
         if (node.type === NodeType.Internal) {
             dispatch(renderActions.setMainObject(node.id));
@@ -117,6 +154,8 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
             isSelected ? unSelect(node) : select(node);
         }
     };
+
+    const showMenu = canHaveMenu && shouldShowNodeMenu(node);
 
     const handleChange =
         (type: "select" | "hide") => (e: ChangeEvent<HTMLInputElement>, node: HierarcicalObjectReference) => {
@@ -279,6 +318,20 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
         }
     };
 
+    const download = async () => {
+        setMenuAnchor(null);
+
+        const data = node as ObjectData;
+        const relativeUrl = data.properties.find((p) => p[0] === DOWNLOAD_PROPERTY)![1];
+        const downloadLink = await getFileDownloadLink({ relativeUrl }).unwrap();
+
+        const link = document.createElement("a");
+        link.href = downloadLink;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    };
+
     return (
         <ListItem
             disableGutters
@@ -328,7 +381,46 @@ function Node({ node, parent, loading, setLoading, abortController, ...props }: 
                     onChange={(e) => handleChange("hide")(e, node)}
                     onClick={stopPropagation}
                 />
+                {canHaveMenu && (
+                    <Box flex="0 0 auto" visibility={showMenu ? "visible" : "hidden"}>
+                        <IconButton
+                            color={menuAnchor ? "primary" : "default"}
+                            size="small"
+                            sx={{ p: 1 }}
+                            aria-haspopup="true"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setMenuAnchor(e.currentTarget.parentElement);
+                            }}
+                        >
+                            <MoreVert />
+                        </IconButton>
+                    </Box>
+                )}
             </Box>
+
+            {showMenu && (
+                <Menu
+                    onClick={(e) => e.stopPropagation()}
+                    anchorEl={menuAnchor}
+                    open={Boolean(menuAnchor)}
+                    onClose={() => setMenuAnchor(null)}
+                    id={`${node.id}-menu`}
+                    MenuListProps={{ sx: { maxWidth: "100%", minWidth: 100 } }}
+                >
+                    <MenuItem onClick={download}>
+                        <ListItemIcon>
+                            <Download fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Download</ListItemText>
+                    </MenuItem>
+                </Menu>
+            )}
         </ListItem>
     );
+}
+
+function shouldShowNodeMenu(node: HierarcicalObjectReference | ObjectData) {
+    const canDownload = "properties" in node && node.properties.some((p) => p[0] === DOWNLOAD_PROPERTY);
+    return canDownload;
 }

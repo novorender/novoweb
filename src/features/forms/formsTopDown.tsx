@@ -2,11 +2,11 @@ import { Box, css, IconButton, IconButtonProps, styled } from "@mui/material";
 import { ReadonlyVec2, ReadonlyVec3 } from "gl-matrix";
 import { forwardRef, MouseEvent, useImperativeHandle, useMemo, useRef } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/store";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
 import { CameraType, selectCameraType } from "features/render";
-import { selectWidgets } from "slices/explorerSlice";
+import { selectWidgets } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { useFetchAssetList } from "./hooks/useFetchAssetList";

@@ -28,7 +28,7 @@
                     // Things that start with a letter (or digit or underscore), or `@` followed by a letter.
                     ["^@?\\w"],
                     // App imports
-                    ["^(app|pages|features|components|hooks|slices|contexts|config|utils|types|media)"],
+                    ["^(app|pages|features|components|hooks|slices|contexts|config|utils|types|media|apis)"],
                     // Anything not matched in another group.
                     ["^"],
                     // Relative imports.

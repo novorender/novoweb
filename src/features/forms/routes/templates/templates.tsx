@@ -3,7 +3,7 @@ import { Box, Button, List, Typography, useTheme } from "@mui/material";
 import { type MouseEvent, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch } from "app/store";
+import { useAppDispatch } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
