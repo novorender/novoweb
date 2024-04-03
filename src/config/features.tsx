@@ -440,7 +440,7 @@ export const featuresConfig = {
         name: "Forms",
         Icon: Ballot,
         type: FeatureType.Widget,
-        defaultLocked: false,
+        defaultLocked: true,
         offline: false,
     },
 } as const;
