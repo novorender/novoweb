@@ -72,15 +72,6 @@ export function Root() {
                                     <Box p={2} pb={0}>
                                         <Alert severity="info">Deviation calculation is in progress.</Alert>
                                     </Box>
-                                ) : profiles.data.rebuildRequired &&
-                                  calculationStatus.status !== DeviationCalculationStatus.Initial &&
-                                  calculationStatus.status !== DeviationCalculationStatus.Loading ? (
-                                    <Box p={2} pb={0}>
-                                        <Alert severity="warning">
-                                            Deviation configuration changed since the last calculation. Please rerun the
-                                            calculation.
-                                        </Alert>
-                                    </Box>
                                 ) : undefined}
 
                                 <Box p={2}>
