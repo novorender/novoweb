@@ -6,11 +6,10 @@ import { useHistory, useParams } from "react-router-dom";
 import { useAppDispatch } from "app/store";
 import { useAppSelector } from "app/store";
 import { Divider, ScrollBox } from "components";
-import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { selectCurrentFormsList } from "features/forms/slice";
-import { ObjectVisibility, renderActions } from "features/render";
+import { renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useGetSearchFormQuery, useUpdateSearchFormMutation } from "../../api";
@@ -26,13 +25,13 @@ export function SearchInstance() {
     const currentFormsList = useAppSelector(selectCurrentFormsList);
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
-    const dispatchHighlightCollections = useDispatchHighlightCollections();
     const { idArr: highlighted } = useHighlighted();
     const flyToForm = useFlyToForm();
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);
     const [isUpdated, setIsUpdated] = useState(false);
+    const didHighlightId = useRef(false);
 
     const { data: form, isLoading: isFormLoading } = useGetSearchFormQuery({
         projectId: sceneId,
@@ -48,6 +47,7 @@ export function SearchInstance() {
             return;
         }
         dispatchHighlighted(highlightActions.setIds([+id]));
+        didHighlightId.current = true;
     }, [dispatchHighlighted, highlighted, history.location.state]);
 
     useEffect(() => {
@@ -57,6 +57,7 @@ export function SearchInstance() {
     }, [form]);
 
     useEffect(() => {
+        willUnmount.current = false;
         return () => {
             willUnmount.current = true;
         };
@@ -77,27 +78,15 @@ export function SearchInstance() {
                 }
                 if (
                     !history.location.pathname.startsWith("/forms") &&
-                    !history.location.pathname.startsWith("/object")
+                    !history.location.pathname.startsWith("/object") &&
+                    didHighlightId.current
                 ) {
                     dispatchHighlighted(highlightActions.setIds([]));
-                    dispatchHighlightCollections(highlightCollectionsActions.clearAll());
-                    dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
-                    dispatchHighlighted(highlightActions.resetColor());
+                    didHighlightId.current = false;
                 }
             }
         };
-    }, [
-        history.location.pathname,
-        dispatch,
-        dispatchHighlighted,
-        dispatchHighlightCollections,
-        isUpdated,
-        items,
-        updateForm,
-        sceneId,
-        objectGuid,
-        formId,
-    ]);
+    }, [history.location.pathname, dispatchHighlighted, isUpdated, items, updateForm, sceneId, objectGuid, formId]);
 
     const handleBackClick = useCallback(() => {
         dispatchHighlighted(highlightActions.setIds([]));

@@ -49,6 +49,7 @@ export function LocationInstance() {
     }, [form, formId]);
 
     useEffect(() => {
+        willUnmount.current = false;
         return () => {
             willUnmount.current = true;
         };

@@ -5,7 +5,9 @@ import { MemoryRouter, Route, Switch, SwitchProps, useHistory } from "react-rout
 import { useAppDispatch, useAppSelector } from "app/store";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import { selectMainObject } from "features/render/renderSlice";
+import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { ObjectVisibility, renderActions, selectMainObject } from "features/render/renderSlice";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorerSlice";
@@ -67,6 +69,8 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
     const willUnmount = useRef(false);
     const dispatch = useAppDispatch();
     const mainObject = useAppSelector(selectMainObject);
+    const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchHighlightCollections = useDispatchHighlightCollections();
 
     useEffect(() => {
         if (mainObject !== undefined && !history.location.pathname.startsWith("/create")) {
@@ -75,6 +79,7 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
     }, [history, mainObject]);
 
     useEffect(() => {
+        willUnmount.current = false;
         return () => {
             willUnmount.current = true;
         };
@@ -85,9 +90,14 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
             if (willUnmount.current) {
                 dispatch(formsActions.resetTemplatesFilters());
                 dispatch(formsActions.setLastViewedPath(history.location.pathname));
+
+                dispatchHighlighted(highlightActions.setIds([]));
+                dispatchHighlightCollections(highlightCollectionsActions.clearAll());
+                dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
+                dispatchHighlighted(highlightActions.resetColor());
             }
         },
-        [dispatch, history.location.pathname]
+        [dispatch, history.location.pathname, dispatchHighlightCollections, dispatchHighlighted]
     );
 
     useGoToSelectedForm();
