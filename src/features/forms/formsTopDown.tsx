@@ -173,9 +173,9 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
 });
 
 const stateColors = new Map<FormState, string>();
-stateColors.set("new", "#8BC34A");
-stateColors.set("ongoing", "#FF9800");
-stateColors.set("finished", "#F44336");
+stateColors.set("new", "red");
+stateColors.set("ongoing", "orange");
+stateColors.set("finished", "green");
 
 const FormButton = styled(IconButton, { shouldForwardProp: (prop) => prop !== "active" })<
     IconButtonProps & { active?: boolean }
