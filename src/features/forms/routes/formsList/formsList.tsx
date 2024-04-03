@@ -140,13 +140,15 @@ export function FormsList() {
             if (
                 willUnmount.current &&
                 !history.location.pathname.startsWith("/search-instance") &&
-                !history.location.pathname.startsWith("/object") &&
-                template?.type === TemplateType.Search
+                !history.location.pathname.startsWith("/location-instance") &&
+                !history.location.pathname.startsWith("/object")
             ) {
-                dispatchHighlighted(highlightActions.setIds([]));
-                dispatchHighlightCollections(highlightCollectionsActions.clearAll());
-                dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
-                dispatchHighlighted(highlightActions.resetColor());
+                if (template?.type === TemplateType.Search) {
+                    dispatchHighlighted(highlightActions.setIds([]));
+                    dispatchHighlightCollections(highlightCollectionsActions.clearAll());
+                    dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
+                    dispatchHighlighted(highlightActions.resetColor());
+                }
                 dispatch(formsActions.setCurrentFormsList(null));
             }
         },
