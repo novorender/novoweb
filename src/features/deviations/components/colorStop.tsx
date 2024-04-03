@@ -22,6 +22,7 @@ import { ColorPicker } from "features/colorPicker";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 import { ColorStopGroup } from "../deviationTypes";
+import { formatColorStopPos, sortColorStops } from "../utils";
 import { DeviationFormErrors } from "../validation";
 
 export function ColorStopList({
@@ -40,14 +41,7 @@ export function ColorStopList({
     const theme = useTheme();
     const history = useHistory();
     const colorStops = useMemo(
-        () =>
-            colorStopsUnsorted
-                .slice()
-                .sort(
-                    absoluteValues
-                        ? (a, b) => Math.abs(b.position) - Math.abs(a.position)
-                        : (a, b) => b.position - a.position
-                ),
+        () => sortColorStops(colorStopsUnsorted.slice(), absoluteValues),
         [colorStopsUnsorted, absoluteValues]
     );
 
@@ -128,14 +122,7 @@ export function ColorStop({
 
     const color = vecToRgb(colorStop.color);
 
-    const text =
-        colorStop.position === 0
-            ? "0"
-            : absoluteValues
-            ? `±${Math.abs(colorStop.position)}`
-            : colorStop.position > 0
-            ? `+${colorStop.position}`
-            : colorStop.position;
+    const text = formatColorStopPos(colorStop.position, absoluteValues);
 
     const content = (
         <>

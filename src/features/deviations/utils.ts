@@ -126,3 +126,13 @@ export function colorStopSortFn(a: ColorStop, b: ColorStop) {
 }
 
 export const DELETED_DEVIATION_LABEL = "[deleted]";
+
+export function formatColorStopPos(pos: number, absoluteValues: boolean) {
+    return pos === 0 ? "0" : absoluteValues ? `±${Math.abs(pos)}` : pos > 0 ? `+${pos}` : pos;
+}
+
+export function sortColorStops(colorStops: ColorStop[], absoluteValues: boolean) {
+    return colorStops.sort(
+        absoluteValues ? (a, b) => Math.abs(b.position) - Math.abs(a.position) : (a, b) => b.position - a.position
+    );
+}

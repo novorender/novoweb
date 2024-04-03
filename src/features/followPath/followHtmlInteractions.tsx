@@ -1,13 +1,15 @@
 import { css } from "@emotion/react";
-import { Box, Button, Slider, styled, Typography } from "@mui/material";
+import { Box, Button, Slider, styled } from "@mui/material";
 import { DuoMeasurementValues } from "@novorender/api";
 import { ReadonlyVec2 } from "gl-matrix";
 import { forwardRef, memo, SyntheticEvent, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { areArraysEqual } from "features/arcgis/utils";
 import { selectRightmost2dDeviationCoordinate } from "features/deviations";
 import { GroupsAndColorsHud } from "features/deviations/components/groupsAndColorsHud";
+import { selectBackground } from "features/render";
 import { selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 
@@ -31,10 +33,15 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
     const currentProfileCenter = useAppSelector(selectCurrentCenter);
     const viewMode = useAppSelector(selectViewMode);
     const rightmost2dDeviationCoordinate = useAppSelector(selectRightmost2dDeviationCoordinate);
+    const lastRightmost2dDeviationCorrdinate = useRef(rightmost2dDeviationCoordinate);
     const followPathId = useAppSelector(selectSelectedPath);
     const isView2d = useAppSelector(selectView2d);
     const lastPt = useRef<ReadonlyVec2>();
+    const bgColor = useAppSelector(selectBackground);
+    const isBlackBg = bgColor && areArraysEqual(bgColor.color, [0, 0, 0, 1]);
     const [centerLinePt, setCenterLinePt] = useState<ReadonlyVec2>();
+    const legendOffset = useRef(160);
+    const lastFov = useRef<number>();
 
     const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -135,10 +142,18 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
 
         lastPt.current = pt;
 
-        let legendOffset = 160;
-        if (rightmost2dDeviationCoordinate) {
-            legendOffset = Math.max(legendOffset, rightmost2dDeviationCoordinate - pt[0] + 50);
+        const fov = view.renderState.camera.fov;
+        if (
+            rightmost2dDeviationCoordinate &&
+            rightmost2dDeviationCoordinate !== lastRightmost2dDeviationCorrdinate.current
+        ) {
+            legendOffset.current = Math.max(160, rightmost2dDeviationCoordinate - pt[0] + 50);
+            lastRightmost2dDeviationCorrdinate.current = rightmost2dDeviationCoordinate;
+            lastFov.current = fov;
         }
+
+        const k = (lastFov.current ?? fov) / fov;
+        const scaledLegendOffset = legendOffset.current * k;
 
         return (
             <div
@@ -146,6 +161,8 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                     left: `${pt[0]}px`,
                     top: `${pt[1]}px`,
                     position: "absolute",
+                    color: isBlackBg ? "white" : undefined,
+                    fontWeight: 600,
                 }}
                 ref={containerRef}
             >
@@ -165,7 +182,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                 <div
                     style={{
                         position: "absolute",
-                        transform: `translate(${legendOffset}px, 0px)`,
+                        transform: `translate(${scaledLegendOffset}px, 0px)`,
                         width: "200px",
                         bottom: 0,
                     }}
@@ -258,7 +275,7 @@ const FollowPathControls = memo(function FollowPathControls() {
                 Recenter
             </Button>
 
-            <Typography mt={2}>Clipping: {clipping} m</Typography>
+            <Box mt={2}>Clipping: {clipping} m</Box>
             <Box mx={2} width="100%">
                 <Slider
                     getAriaLabel={() => "Clipping far"}

@@ -1,5 +1,5 @@
 import { Palette, Visibility, VisibilityOff } from "@mui/icons-material";
-import { Box, Checkbox, Typography } from "@mui/material";
+import { Box, Checkbox } from "@mui/material";
 import { memo, useMemo } from "react";
 
 import { ColorStop } from "apis/dataV2/deviationTypes";
@@ -8,6 +8,7 @@ import { GroupStatus, isInternalGroup, ObjectGroup, useObjectGroups } from "cont
 import { vecToRgb } from "utils/color";
 
 import { deviationsActions, selectDeviationLegendGroups, selectSelectedProfile } from "../deviationsSlice";
+import { formatColorStopPos, sortColorStops } from "../utils";
 
 export const GroupsAndColorsHud = memo(function GroupsAndColorsHud() {
     const profile = useAppSelector(selectSelectedProfile);
@@ -24,6 +25,11 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud() {
                 })
                 .filter((g) => g) as ObjectGroup[],
         [legendGroups, objectGroups]
+    );
+
+    const colorStops = useMemo(
+        () => (profile ? sortColorStops(profile.colors.colorStops.slice(), profile.colors.absoluteValues) : []),
+        [profile]
     );
 
     const handleClick = (group: ObjectGroup) => {
@@ -52,8 +58,12 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud() {
                 ))}
             </Box>
             <Box mt={2}>
-                {profile.colors.colorStops.map((colorStop) => (
-                    <ColorStopNode key={colorStop.position} colorStop={colorStop} />
+                {colorStops.map((colorStop) => (
+                    <ColorStopNode
+                        key={colorStop.position}
+                        colorStop={colorStop}
+                        absoluteValues={profile.colors.absoluteValues}
+                    />
                 ))}
             </Box>
         </>
@@ -76,20 +86,20 @@ function GroupNode({ group, onClick }: { group: ObjectGroup; onClick: (group: Ob
                 onClick={(event) => event.stopPropagation()}
                 onChange={() => onClick(group)}
             />
-            <Typography textOverflow="ellipsis" overflow="hidden" title={group.name}>
+            <Box textOverflow="ellipsis" overflow="hidden" title={group.name}>
                 {group.name}
-            </Typography>
+            </Box>
         </Box>
     );
 }
 
-function ColorStopNode({ colorStop }: { colorStop: ColorStop }) {
-    const position = `${colorStop.position > 0 ? "+" : ""}${colorStop.position}`;
+function ColorStopNode({ colorStop, absoluteValues }: { colorStop: ColorStop; absoluteValues: boolean }) {
+    const position = formatColorStopPos(colorStop.position, absoluteValues);
     const color = vecToRgb(colorStop.color);
 
     return (
         <Box display="flex" alignItems="center" gap={1} pl={1}>
-            <Typography minWidth="50px">{position}</Typography>
+            <Box minWidth="50px">{position}</Box>
             <Palette
                 fontSize="small"
                 sx={{
