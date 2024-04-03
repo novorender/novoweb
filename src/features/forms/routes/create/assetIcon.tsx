@@ -9,7 +9,6 @@ export function AssetIcon({ icon }: { icon: string }) {
             return;
         }
 
-        console.log("ref.current", ref.current);
         ref.current.innerHTML = icon;
     }, [icon]);
 
