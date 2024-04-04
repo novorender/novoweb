@@ -1,8 +1,9 @@
 import { CameraAlt } from "@mui/icons-material";
 import { css, styled } from "@mui/material";
-import { SVGProps } from "react";
+import { forwardRef, SVGProps, useCallback, useEffect, useImperativeHandle, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectViewMode } from "features/render";
 import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 import { AsyncStatus, ViewMode } from "types/misc";
@@ -10,11 +11,13 @@ import { AsyncStatus, ViewMode } from "types/misc";
 import { imagesActions, selectActiveImage, selectImages, selectShowImageMarkers } from "./imagesSlice";
 import { ImageType } from "./types";
 
-const Marker = styled((props: SVGProps<SVGGElement>) => (
-    <g {...props}>
-        <CameraAlt color="primary" height="32px" width="32px" />
-    </g>
-))(
+const Marker = styled(
+    forwardRef<SVGGElement, SVGProps<SVGGElement>>((props, ref) => (
+        <g {...props} ref={ref}>
+            <CameraAlt color="primary" height="32px" width="32px" />
+        </g>
+    ))
+)(
     () => css`
         cursor: pointer;
         pointer-events: bounding-box;
@@ -25,13 +28,38 @@ const Marker = styled((props: SVGProps<SVGGElement>) => (
     `
 );
 
-export function ImageMarkers() {
+export const ImageMarkers = forwardRef<{ update: () => void }>(function ImageMarkers(_, ref) {
+    const {
+        state: { view },
+    } = useExplorerGlobals();
+
     const dispatch = useAppDispatch();
     const images = useAppSelector(selectImages);
     const showImageMarkers = useAppSelector(selectShowImageMarkers);
     const viewMode = useAppSelector(selectViewMode);
     const activeImage = useAppSelector(selectActiveImage);
+
     const onWheel = useRedirectWheelEvents();
+    const containerRef = useRef<(SVGGElement | null)[]>([]);
+
+    const update = useCallback(() => {
+        if (!view?.measure || !containerRef.current.length || images.status !== AsyncStatus.Success) {
+            return;
+        }
+
+        view.measure.draw.toMarkerPoints(images.data.map((marker) => marker.position)).forEach((pos, idx) => {
+            containerRef.current[idx]?.setAttribute(
+                "transform",
+                pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)"
+            );
+        });
+    }, [images, view]);
+
+    useImperativeHandle(ref, () => ({ update }), [update]);
+
+    useEffect(() => {
+        update();
+    }, [update, showImageMarkers]);
 
     return (
         <>
@@ -40,8 +68,6 @@ export function ImageMarkers() {
                       if (!activeImage || viewMode !== ViewMode.Panorama) {
                           return (
                               <Marker
-                                  id={`image-${idx}`}
-                                  name={`image-${idx}`}
                                   key={image.guid}
                                   onClick={() =>
                                       dispatch(
@@ -53,6 +79,7 @@ export function ImageMarkers() {
                                       )
                                   }
                                   onWheel={onWheel}
+                                  ref={(el) => (containerRef.current[idx] = el)}
                               />
                           );
                       }
@@ -62,8 +89,6 @@ export function ImageMarkers() {
                       if (Math.abs(idx - activeIdx) === 1) {
                           return (
                               <Marker
-                                  id={`image-${idx}`}
-                                  name={`image-${idx}`}
                                   key={image.guid}
                                   onClick={() =>
                                       dispatch(
@@ -75,6 +100,7 @@ export function ImageMarkers() {
                                       )
                                   }
                                   onWheel={onWheel}
+                                  ref={(el) => (containerRef.current[idx] = el)}
                               />
                           );
                       }
@@ -84,4 +110,4 @@ export function ImageMarkers() {
                 : null}
         </>
     );
-}
+});
