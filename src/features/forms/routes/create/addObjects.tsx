@@ -1,5 +1,5 @@
-import { AddCircle, SearchOutlined } from "@mui/icons-material";
-import { Box, Button, FormControlLabel, Typography } from "@mui/material";
+import { AddCircle, Close, SearchOutlined } from "@mui/icons-material";
+import { Box, Button, FormControlLabel, IconButton, Snackbar, Typography } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { FormEventHandler, useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
@@ -12,6 +12,8 @@ import { useToggle } from "hooks/useToggle";
 import { AsyncState, AsyncStatus } from "types/misc";
 import { uniqueArray } from "utils/misc";
 import { searchDeepByPatterns } from "utils/search";
+
+const MAX_OBJECTS_COUNT = 3000;
 
 export function AddObjects({
     onSave,
@@ -41,6 +43,7 @@ export function AddObjects({
     const focusedInput = advancedInputs[focusedInputIdx];
 
     const [ids, setIds] = useState(objects?.ids ?? []);
+    const [limitSnackbarOpen, setLimitSnackbarOpen] = useState(ids.length > MAX_OBJECTS_COUNT);
     const [{ status }, setStatus] = useState<AsyncState<null>>({
         status: AsyncStatus.Initial,
     });
@@ -49,6 +52,9 @@ export function AddObjects({
     useEffect(() => {
         if (objects?.ids) {
             dispatchHighlighted(highlightActions.setIds(objects.ids));
+            if (objects.ids.length > MAX_OBJECTS_COUNT) {
+                setLimitSnackbarOpen(true);
+            }
         }
     }, [dispatchHighlighted, objects?.ids]);
 
@@ -97,7 +103,13 @@ export function AddObjects({
             });
         }
 
-        setIds((ids) => uniqueArray(ids));
+        setIds((ids) => {
+            const uniqueIds = uniqueArray(ids);
+            if (uniqueIds.length > MAX_OBJECTS_COUNT) {
+                setLimitSnackbarOpen(true);
+            }
+            return uniqueIds;
+        });
         setStatus({ status: AsyncStatus.Success, data: null });
     };
 
@@ -120,6 +132,10 @@ export function AddObjects({
         setIds([]);
         dispatchHighlighted(highlightActions.setIds([]));
         toggleAdvanced();
+    };
+
+    const handleLimitSnackbarClose = () => {
+        setLimitSnackbarOpen(false);
     };
 
     return (
@@ -239,13 +255,30 @@ export function AddObjects({
                             variant="contained"
                             color="primary"
                             fullWidth
-                            disabled={!ids.length || status !== AsyncStatus.Success}
+                            disabled={!ids.length || status !== AsyncStatus.Success || ids.length > MAX_OBJECTS_COUNT}
                             type="submit"
                         >
                             Assign ({ids.length})
                         </Button>
                     </Box>
                 </Box>
+                <Snackbar
+                    anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                    sx={{
+                        width: { xs: "auto", sm: 350 },
+                        bottom: { xs: "auto", sm: 24 },
+                        top: { xs: 24, sm: "auto" },
+                    }}
+                    autoHideDuration={2500}
+                    open={limitSnackbarOpen}
+                    onClose={handleLimitSnackbarClose}
+                    message={`Your search is over the limit (${MAX_OBJECTS_COUNT}).`}
+                    action={
+                        <IconButton size="small" aria-label="close" color="inherit" onClick={handleLimitSnackbarClose}>
+                            <Close fontSize="small" />
+                        </IconButton>
+                    }
+                />
             </ScrollBox>
         </>
     );
