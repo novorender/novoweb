@@ -1,9 +1,9 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-import { RootState } from "app/store";
+import { type RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { FormGLtfAsset, FormRecord, Template } from "./types";
+import { type FormGLtfAsset, type FormRecord, type Template } from "./types";
 
 const initialState = {
     currentFormsList: null,

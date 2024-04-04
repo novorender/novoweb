@@ -1,6 +1,6 @@
 import { BaseQueryFn, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from "@reduxjs/toolkit/query";
 
-import { RootState } from "app/store";
+import { type RootState } from "app/store";
 import { selectConfig } from "slices/explorer";
 
 const rawBaseQuery = fetchBaseQuery({

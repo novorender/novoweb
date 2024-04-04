@@ -1,5 +1,6 @@
-export * from "./templates";
-export * from "./create";
-export * from "./formsList";
-export * from "./instance";
-export * from "./object";
+export { Create } from "./create";
+export { FormsList } from "./formsList";
+export { LocationInstance } from "./instance";
+export { Object } from "./object";
+export { SearchInstance } from "./instance";
+export { Templates } from "./templates";
