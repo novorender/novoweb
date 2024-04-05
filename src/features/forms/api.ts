@@ -156,6 +156,7 @@ export const {
     useGetLocationFormQuery,
     useGetSearchFormsQuery,
     useGetTemplateQuery,
+    useLazyGetTemplateQuery,
     useCreateSearchFormMutation,
     useCreateLocationFormMutation,
     useUpdateSearchFormMutation,

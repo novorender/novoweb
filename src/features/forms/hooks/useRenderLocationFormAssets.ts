@@ -6,14 +6,14 @@ import {
     RGBA,
 } from "@novorender/api";
 import { ReadonlyVec3 } from "gl-matrix";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
 import { CameraType, selectCameraType } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
-import { AsyncStatus } from "types/misc";
+import { AsyncState, AsyncStatus } from "types/misc";
 
 import { useFormsGlobals } from "../formsGlobals";
 import {
@@ -52,6 +52,11 @@ export function useRenderLocationFormAssets() {
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const selectedMeshCache = useRef(new WeakMap<RenderStateDynamicMesh, RenderStateDynamicMesh>());
     const active = useAppSelector(selectCameraType) === CameraType.Pinhole;
+
+    const [assetAbortController, assetAbort] = useAbortController();
+    const [assetGltfMap, setAssetGltfMap] = useState<AsyncState<Map<string, readonly RenderStateDynamicObject[]>>>({
+        status: AsyncStatus.Initial,
+    });
     const needCleaning = useRef(false);
 
     const prevRenderedForms = useRef<RenderedForm[]>();
@@ -82,6 +87,42 @@ export function useRenderLocationFormAssets() {
         }
     }, [templates, locationForms, active]);
 
+    const uniqueMarkers = useMemo(() => {
+        const uniqueMarkers = new Set<string>();
+        for (const form of renderedForms) {
+            uniqueMarkers.add(form.marker);
+        }
+
+        return uniqueMarkers;
+    }, [renderedForms]);
+
+    useEffect(() => {
+        setAssetGltfMap({ status: AsyncStatus.Initial });
+        assetAbort();
+        loadAssets();
+
+        async function loadAssets() {
+            if (assetInfoList.status !== AsyncStatus.Success) {
+                return;
+            }
+
+            const result = new Map<string, readonly RenderStateDynamicObject[]>();
+
+            try {
+                await Promise.all(
+                    [...uniqueMarkers].sort().map(async (name) => {
+                        const assetInfo = assetInfoList.data.find((a) => a.name === name)!;
+                        result.set(name, await loadAsset(name, assetInfo, assetAbortController.current));
+                    })
+                );
+            } catch (e) {
+                setAssetGltfMap({ status: AsyncStatus.Error, msg: "Error loading assets" });
+            }
+
+            setAssetGltfMap({ status: AsyncStatus.Success, data: result });
+        }
+    }, [uniqueMarkers, assetInfoList, assetAbort, assetAbortController]);
+
     const willUnmount = useRef(false);
     useEffect(() => {
         willUnmount.current = false;
@@ -106,7 +147,7 @@ export function useRenderLocationFormAssets() {
         };
 
         function cleanup() {
-            if (!view || assetInfoList.status !== AsyncStatus.Success) {
+            if (!view || assetInfoList.status !== AsyncStatus.Success || assetGltfMap.status !== AsyncStatus.Success) {
                 return;
             }
 
@@ -125,8 +166,8 @@ export function useRenderLocationFormAssets() {
             setFormsGlobals((s) => ({ ...s, objectIdToFormIdMap: new Map() }));
         }
 
-        async function updateDynamicObjects() {
-            if (!view || assetInfoList.status !== AsyncStatus.Success) {
+        function updateDynamicObjects() {
+            if (!view || assetInfoList.status !== AsyncStatus.Success || assetGltfMap.status !== AsyncStatus.Success) {
                 return;
             }
 
@@ -139,11 +180,6 @@ export function useRenderLocationFormAssets() {
                 return;
             }
 
-            const uniqueMarkers = new Set<string>();
-            for (const form of renderedForms) {
-                uniqueMarkers.add(form.marker);
-            }
-
             const assetMap = new Map<
                 string,
                 {
@@ -152,24 +188,25 @@ export function useRenderLocationFormAssets() {
                     selectedInstances: RenderStateDynamicInstance[];
                 }[]
             >();
-            await Promise.all(
-                [...uniqueMarkers].sort().map(async (name) => {
-                    const assetInfo = assetInfoList.data.find((a) => a.name === name)!;
-                    assetMap.set(
-                        name,
-                        (await loadAsset(name, assetInfo, abortController.current)).map((ref) => ({
-                            ref,
-                            instances: [],
-                            selectedInstances: [],
-                        }))
-                    );
-                })
-            );
+            assetGltfMap.data.forEach((asset, name) => {
+                assetMap.set(
+                    name,
+                    asset.map((ref) => ({
+                        ref,
+                        instances: [],
+                        selectedInstances: [],
+                    }))
+                );
+            });
 
             const objectIdToFormIdMap = new Map<number, { templateId: string; formId: string }>();
 
             for (const form of renderedForms) {
                 const asset = assetMap.get(form.marker)!;
+                if (!asset) {
+                    continue;
+                }
+
                 for (const { ref, instances, selectedInstances } of asset) {
                     for (const refInst of ref.instances) {
                         let objectId: number;
@@ -246,6 +283,7 @@ export function useRenderLocationFormAssets() {
         selectedTemplateId,
         selectedFormId,
         active,
+        assetGltfMap,
     ]);
 }
 

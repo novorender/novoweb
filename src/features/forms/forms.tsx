@@ -14,6 +14,7 @@ import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import { useGoToSelectedForm } from "./hooks/useGoToSelectedForm";
+import { useLoadLocationTemplates } from "./hooks/useLoadLocationTemplates";
 import { useRenderLocationFormAssets } from "./hooks/useRenderLocationFormAssets";
 import { Create, FormsList, LocationInstance, Object, SearchInstance, Templates } from "./routes";
 import { formsActions } from "./slice";
@@ -23,6 +24,7 @@ export default function Forms() {
     const minimized = useAppSelector(selectMinimized) === featuresConfig.forms.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.forms.key);
 
+    useLoadLocationTemplates();
     useRenderLocationFormAssets();
 
     return (
