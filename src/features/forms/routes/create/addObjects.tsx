@@ -13,7 +13,7 @@ import { AsyncState, AsyncStatus } from "types/misc";
 import { uniqueArray } from "utils/misc";
 import { searchDeepByPatterns } from "utils/search";
 
-const MAX_OBJECTS_COUNT = 3000;
+const MAX_OBJECTS_COUNT = 2000;
 
 export function AddObjects({
     onSave,
@@ -59,18 +59,19 @@ export function AddObjects({
     }, [dispatchHighlighted, objects?.ids]);
 
     const getSearchPattern = useCallback(() => {
-        const searchPattern = advanced
-            ? advancedInputs.filter(({ property, value }) => property || value)
-            : simpleInput;
-
-        if (
-            (Array.isArray(searchPattern) && !searchPattern.length) ||
-            (typeof searchPattern === "string" && searchPattern.length < 3)
-        ) {
+        if (!advanced && simpleInput.length < 3) {
             return;
         }
 
-        return searchPattern;
+        const searchPattern = advanced
+            ? advancedInputs.filter(({ property, value }) => property || value)
+            : [{ value: simpleInput }];
+
+        if (searchPattern.length === 0) {
+            return;
+        }
+
+        return [...searchPattern, { property: "GUID", range: { min: "0", max: "z" } }];
     }, [advanced, advancedInputs, simpleInput]);
 
     const handleSearch = async () => {
@@ -92,7 +93,15 @@ export function AddObjects({
                 searchPatterns,
                 abortSignal,
                 callback: (ids) => {
-                    setIds((state) => state.concat(ids));
+                    setIds((state) => {
+                        if (state.length + ids.length > MAX_OBJECTS_COUNT) {
+                            setLimitSnackbarOpen(true);
+                            abort();
+                            return state;
+                        }
+
+                        return state.concat(ids);
+                    });
                     dispatchHighlighted(highlightActions.add(ids));
                 },
             });
@@ -103,13 +112,7 @@ export function AddObjects({
             });
         }
 
-        setIds((ids) => {
-            const uniqueIds = uniqueArray(ids);
-            if (uniqueIds.length > MAX_OBJECTS_COUNT) {
-                setLimitSnackbarOpen(true);
-            }
-            return uniqueIds;
-        });
+        setIds((ids) => uniqueArray(ids));
         setStatus({ status: AsyncStatus.Success, data: null });
     };
 
