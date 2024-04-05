@@ -13,6 +13,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
 import { CameraType, selectCameraType } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
+import { selectConfig } from "slices/explorer";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { useFormsGlobals } from "../formsGlobals";
@@ -52,6 +53,7 @@ export function useRenderLocationFormAssets() {
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const selectedMeshCache = useRef(new WeakMap<RenderStateDynamicMesh, RenderStateDynamicMesh>());
     const active = useAppSelector(selectCameraType) === CameraType.Pinhole;
+    const assetsUrl = useAppSelector(selectConfig).assetsUrl;
 
     const [assetAbortController, assetAbort] = useAbortController();
     const [assetGltfMap, setAssetGltfMap] = useState<AsyncState<Map<string, readonly RenderStateDynamicObject[]>>>({
@@ -112,7 +114,7 @@ export function useRenderLocationFormAssets() {
                 await Promise.all(
                     [...uniqueMarkers].sort().map(async (name) => {
                         const assetInfo = assetInfoList.data.find((a) => a.name === name)!;
-                        result.set(name, await loadAsset(name, assetInfo, assetAbortController.current));
+                        result.set(name, await loadAsset(assetsUrl, name, assetInfo, assetAbortController.current));
                     })
                 );
             } catch (e) {
@@ -121,7 +123,7 @@ export function useRenderLocationFormAssets() {
 
             setAssetGltfMap({ status: AsyncStatus.Success, data: result });
         }
-    }, [uniqueMarkers, assetInfoList, assetAbort, assetAbortController]);
+    }, [uniqueMarkers, assetInfoList, assetAbort, assetAbortController, assetsUrl]);
 
     const willUnmount = useRef(false);
     useEffect(() => {
@@ -300,16 +302,16 @@ function createSelectedMesh(mesh: RenderStateDynamicMesh): RenderStateDynamicMes
 
 const ASSET_CACHE = new Map<string, readonly RenderStateDynamicObject[]>();
 
-async function loadAsset(name: string, asset: FormGLtfAsset, abortController: AbortController) {
+async function loadAsset(assetsUrl: string, name: string, asset: FormGLtfAsset, abortController: AbortController) {
     let loadedGltfList = ASSET_CACHE.get(name);
     if (!loadedGltfList) {
-        const url = getAssetGlbUrl(asset.name);
+        const url = getAssetGlbUrl(assetsUrl, asset.name);
         loadedGltfList = await downloadGLTF(new URL(url), asset.baseObjectId, abortController);
         ASSET_CACHE.set(name, loadedGltfList);
     }
     return loadedGltfList;
 }
 
-function getAssetGlbUrl(asset: string) {
-    return `https://novorenderblobs.blob.core.windows.net/assets/glbs/${asset}.glb`;
+function getAssetGlbUrl(assetsUrl: string, asset: string) {
+    return `${assetsUrl}/glbs/${asset}.glb`;
 }

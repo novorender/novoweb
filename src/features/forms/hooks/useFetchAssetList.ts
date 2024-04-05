@@ -2,6 +2,7 @@ import { useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useAbortController } from "hooks/useAbortController";
+import { selectConfig } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { formsActions, selectAssets } from "../slice";
@@ -11,6 +12,7 @@ export function useFetchAssetList() {
     const [abortController] = useAbortController();
     const assets = useAppSelector(selectAssets);
     const dispatch = useAppDispatch();
+    const assetsUrl = useAppSelector(selectConfig).assetsUrl;
 
     useEffect(() => {
         getAssets();
@@ -21,10 +23,9 @@ export function useFetchAssetList() {
             }
 
             dispatch(formsActions.setAssets({ status: AsyncStatus.Loading }));
-            const response = await fetch(
-                new URL("https://novorenderblobs.blob.core.windows.net/assets/glbs/assets.json"),
-                { signal: abortController.current.signal }
-            );
+            const response = await fetch(new URL(`${assetsUrl}/glbs/assets.json`), {
+                signal: abortController.current.signal,
+            });
             const json = await response.json();
             const data: FormGLtfAsset[] = (json as FormGLtfAsset[]).map((item, i) => ({
                 ...item,
@@ -32,7 +33,7 @@ export function useFetchAssetList() {
             }));
             dispatch(formsActions.setAssets({ status: AsyncStatus.Success, data }));
         }
-    }, [dispatch, abortController, assets]);
+    }, [dispatch, abortController, assets, assetsUrl]);
 
     return assets;
 }
