@@ -14,6 +14,8 @@ import { highlightActions, useDispatchHighlighted, useHighlighted } from "contex
 import { useArcgisCanvasClickHandler } from "features/arcgis/hooks/useArcgisCanvasHandler";
 import { areaActions } from "features/area";
 import { followPathActions } from "features/followPath";
+import { useCreateLocationForm } from "features/forms/hooks/useCreateLocationForm";
+import { useLocationFormAssetClickHandler } from "features/forms/hooks/useLocationFormAssetClickHandler";
 import { heightProfileActions } from "features/heightProfile";
 import { manholeActions } from "features/manhole";
 import { measureActions, selectMeasure, selectMeasurePickSettings } from "features/measure";
@@ -82,6 +84,8 @@ export function useCanvasClickHandler({
     const secondaryHighlightProperty = useAppSelector(selectSecondaryHighlightProperty);
 
     const arcgisCanvasClickHandler = useArcgisCanvasClickHandler();
+    const createLocationForm = useCreateLocationForm();
+    const locationFormAssetClickHandler = useLocationFormAssetClickHandler();
 
     const handleCanvasPick: MouseEventHandler<HTMLCanvasElement> = async (evt) => {
         const pointerDownState = pointerDownStateRef.current;
@@ -276,6 +280,12 @@ export function useCanvasClickHandler({
         const position = vec3.clone(result.position);
 
         switch (picker) {
+            case Picker.FormLocation:
+                if (result) {
+                    createLocationForm({ location: position });
+                    dispatch(renderActions.stopPicker(Picker.FormLocation));
+                }
+                return;
             case Picker.Object: {
                 if (
                     deviation.mixFactor !== 0 &&
@@ -293,6 +303,10 @@ export function useCanvasClickHandler({
                             },
                         })
                     );
+                    return;
+                }
+
+                if (locationFormAssetClickHandler(result)) {
                     return;
                 }
 

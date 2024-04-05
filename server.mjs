@@ -123,6 +123,7 @@ app.get("/config.json", (_req, res) => {
         dataServerUrl: process.env.DATA_SERVER_URL ?? "",
         dataV2ServerUrl: process.env.DATA_V2_SERVER_URL ?? "",
         authServerUrl: process.env.AUTH_SERVER_URL ?? "",
+        assetsUrl: process.env.ASSETS_URL ?? "",
     });
 });
 app.get("/*", function (_req, res) {
