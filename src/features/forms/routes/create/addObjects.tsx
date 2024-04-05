@@ -44,6 +44,7 @@ export function AddObjects({
 
     const [ids, setIds] = useState(objects?.ids ?? []);
     const [limitSnackbarOpen, setLimitSnackbarOpen] = useState(ids.length > MAX_OBJECTS_COUNT);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
     const [{ status }, setStatus] = useState<AsyncState<null>>({
         status: AsyncStatus.Initial,
     });
@@ -54,6 +55,7 @@ export function AddObjects({
             dispatchHighlighted(highlightActions.setIds(objects.ids));
             if (objects.ids.length > MAX_OBJECTS_COUNT) {
                 setLimitSnackbarOpen(true);
+                setSnackbarMessage(`Your search is over the limit (${MAX_OBJECTS_COUNT}).`);
             }
         }
     }, [dispatchHighlighted, objects?.ids]);
@@ -88,6 +90,7 @@ export function AddObjects({
         setStatus({ status: AsyncStatus.Loading });
 
         try {
+            let idCount = 0;
             await searchDeepByPatterns({
                 db,
                 searchPatterns,
@@ -96,15 +99,24 @@ export function AddObjects({
                     setIds((state) => {
                         if (state.length + ids.length > MAX_OBJECTS_COUNT) {
                             setLimitSnackbarOpen(true);
+                            setSnackbarMessage(`Your search is over the limit (${MAX_OBJECTS_COUNT}).`);
                             abort();
                             return state;
                         }
 
+                        idCount = state.length + ids.length;
                         return state.concat(ids);
                     });
                     dispatchHighlighted(highlightActions.add(ids));
                 },
             });
+
+            if (idCount === 0) {
+                setLimitSnackbarOpen(true);
+                setSnackbarMessage(
+                    `No objects found satisfying the search criteria. Ensure objects you're looking for have GUID property defined.`
+                );
+            }
         } catch {
             return setStatus({
                 status: AsyncStatus.Error,
@@ -272,10 +284,10 @@ export function AddObjects({
                         bottom: { xs: "auto", sm: 24 },
                         top: { xs: 24, sm: "auto" },
                     }}
-                    autoHideDuration={2500}
+                    autoHideDuration={10000}
                     open={limitSnackbarOpen}
                     onClose={handleLimitSnackbarClose}
-                    message={`Your search is over the limit (${MAX_OBJECTS_COUNT}).`}
+                    message={snackbarMessage}
                     action={
                         <IconButton size="small" aria-label="close" color="inherit" onClick={handleLimitSnackbarClose}>
                             <Close fontSize="small" />
