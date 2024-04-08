@@ -124,5 +124,5 @@ export function useSetCenterLineFollowPath() {
 
             installedFollowPathId.current = followPathId;
         }
-    }, [view, followPathId, dispatch, dispatchHighlighted, centerLine, restore]);
+    }, [view, followPathId, dispatch, dispatchHighlighted, centerLine, restore, goToProfile]);
 }
