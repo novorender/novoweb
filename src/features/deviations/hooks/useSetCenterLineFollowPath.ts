@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { followPathActions, selectView2d } from "features/followPath";
+import { followPathActions, selectView2d } from "features/followPath/followPathSlice";
 import { useGoToProfile } from "features/followPath/useGoToProfile";
 import { measureActions } from "features/measure";
 import { renderActions } from "features/render";
