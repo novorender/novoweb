@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { followPathActions } from "features/followPath";
+import { followPathActions, selectView2d } from "features/followPath";
+import { useGoToProfile } from "features/followPath/useGoToProfile";
 import { measureActions } from "features/measure";
 import { renderActions } from "features/render";
 import { ViewMode } from "types/misc";
@@ -25,6 +26,14 @@ export function useSetCenterLineFollowPath() {
     const followPathId = centerLine?.objectId;
     const dispatchHighlighted = useDispatchHighlighted();
     const installedFollowPathId = useRef<number>();
+    const goToProfile = useGoToProfile();
+    const view2d = useAppSelector(selectView2d);
+
+    const view2dRef = useRef(view2d);
+
+    useEffect(() => {
+        view2dRef.current = view2d;
+    });
 
     const restore = useCallback(() => {
         if (installedFollowPathId.current !== undefined) {
@@ -88,6 +97,21 @@ export function useSetCenterLineFollowPath() {
                             );
                             dispatch(followPathActions.setProfile(pos.toFixed(3)));
                             initPos = false;
+
+                            if (view2dRef.current) {
+                                const fpObj = await view.measure?.followPath.followParametricObjects([followPathId], {
+                                    cylinderMeasure: "center",
+                                });
+
+                                if (fpObj) {
+                                    goToProfile({
+                                        fpObj: fpObj,
+                                        p: pos,
+                                        newView2d: true,
+                                        keepOffset: false,
+                                    });
+                                }
+                            }
                         }
                     } else {
                         dispatch(followPathActions.setProfile(centerLine.parameterBounds[0].toFixed(3)));

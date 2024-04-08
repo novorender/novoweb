@@ -19,7 +19,7 @@ import {
 export function useGoToProfile() {
     const {
         state: { view },
-    } = useExplorerGlobals(true);
+    } = useExplorerGlobals();
     const dispatch = useAppDispatch();
 
     const verticalClipping = useAppSelector(selectVerticalClipping);

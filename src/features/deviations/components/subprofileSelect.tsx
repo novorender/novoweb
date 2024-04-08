@@ -11,28 +11,20 @@ import {
 import { useMemo } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useObjectGroups } from "contexts/objectGroups";
-import { selectLandXmlPaths, selectProfile, selectView2d } from "features/followPath";
+import { selectLandXmlPaths } from "features/followPath";
 import { useLoadLandXmlPath } from "features/followPath/hooks/useLoadLandXmlPath";
-import { useGoToProfile } from "features/followPath/useGoToProfile";
 import { AsyncStatus } from "types/misc";
 
 import { deviationsActions, selectSelectedProfile, selectSelectedSubprofileIndex } from "../deviationsSlice";
 import { DELETED_DEVIATION_LABEL } from "../utils";
 
 export function SubprofileSelect() {
-    const {
-        state: { view },
-    } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
     const landXmlPaths = useAppSelector(selectLandXmlPaths);
     const selectedProfile = useAppSelector(selectSelectedProfile);
     const selectedSubprofileIndex = useAppSelector(selectSelectedSubprofileIndex);
     const objectGroups = useObjectGroups();
-    const view2d = useAppSelector(selectView2d);
-    const profilePos = useAppSelector(selectProfile);
-    const goToProfile = useGoToProfile();
 
     useLoadLandXmlPath();
 
@@ -84,29 +76,8 @@ export function SubprofileSelect() {
         }
 
         const spIndex = Number(e.target.value);
-        const sp = selectedProfile.subprofiles[spIndex];
 
         dispatch(deviationsActions.setSelectedSubprofileIndex(spIndex));
-
-        if (view2d && sp.centerLine) {
-            const fpObj = await view.measure?.followPath.followParametricObjects([sp.centerLine.objectId], {
-                cylinderMeasure: "center",
-            });
-
-            if (fpObj) {
-                const pos = Math.max(
-                    sp.centerLine.parameterBounds[0],
-                    Math.min(sp.centerLine.parameterBounds[1], Number(profilePos))
-                );
-
-                goToProfile({
-                    fpObj: fpObj,
-                    p: pos,
-                    newView2d: true,
-                    keepOffset: false,
-                });
-            }
-        }
     };
 
     return (
