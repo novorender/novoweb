@@ -389,7 +389,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             <Typography sx={{ mb: 0.5 }}>Profile:</Typography>
                             <OutlinedInput
                                 value={profileInput}
-                                inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
+                                inputProps={{ inputMode: "numeric", pattern: "-?[0-9,.]*" }}
                                 onChange={(e) => setProfileInput(e.target.value.replace(",", "."))}
                                 fullWidth
                                 size="small"

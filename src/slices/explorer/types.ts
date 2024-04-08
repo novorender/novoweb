@@ -69,6 +69,7 @@ export type State = {
         xsiteManageClientId: string;
         novorenderClientId: string;
         novorenderClientSecret: string;
+        assetsUrl: string;
     };
 };
 
