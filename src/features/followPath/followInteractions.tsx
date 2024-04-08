@@ -128,6 +128,7 @@ export function FollowInteractions() {
                 id={`followInfo`}
                 name={`followInfo`}
                 onClick={() => {
+                    dispatch(followPathActions.setLastViewedRouterPath("/followIds"));
                     dispatch(explorerActions.forceOpenWidget(featuresConfig.followPath.key));
                 }}
             />
