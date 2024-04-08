@@ -64,6 +64,7 @@ export interface FormField<T> {
 export type DeviationForm = {
     id: string;
     name: FormField<string>;
+    isCopyingFromProfileId: boolean;
     copyFromProfileId: FormField<string | undefined>;
     deviationType: FormField<DeviationType>;
     colorSetup: ColorSetupGroup;

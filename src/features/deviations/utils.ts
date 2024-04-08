@@ -10,6 +10,7 @@ export const EMPTY_PARAMETER_BOUNDS = [0, 0] as [number, number];
 export function newDeviationForm(): DeviationForm {
     return {
         id: NEW_DEVIATION_ID,
+        isCopyingFromProfileId: false,
         copyFromProfileId: { value: undefined },
         name: { value: "" },
         deviationType: { value: DeviationType.PointToTriangle },
@@ -44,6 +45,7 @@ export function newDeviationSubprofile(): SubprofileGroup {
 export function profileToDeviationForm(profile: UiDeviationProfile): DeviationForm {
     return {
         id: profile.id,
+        isCopyingFromProfileId: profile.copyFromProfileId !== undefined,
         copyFromProfileId: { value: profile.copyFromProfileId },
         name: { value: profile.name },
         subprofiles: profile.subprofiles.map((sp) => ({

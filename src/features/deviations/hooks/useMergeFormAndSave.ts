@@ -133,7 +133,7 @@ async function deviationFormToProfile({
     return {
         id: deviationForm.id,
         name: deviationForm.name.value,
-        copyFromProfileId: deviationForm.copyFromProfileId.value,
+        copyFromProfileId: deviationForm.isCopyingFromProfileId ? deviationForm.copyFromProfileId.value : undefined,
         colors: {
             absoluteValues: deviationForm.colorSetup.absoluteValues,
             colorStops: deviationForm.colorSetup.colorStops.value,

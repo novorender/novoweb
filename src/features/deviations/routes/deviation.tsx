@@ -232,29 +232,57 @@ export function Deviation() {
                 <Typography fontWeight={600} fontSize="1.5rem" mb={2}>
                     Create deviation profile
                 </Typography>
-                <FormControl fullWidth>
-                    <InputLabel id="select-profile-to-copy-from-label">
-                        Copy from existing profile (optional)
-                    </InputLabel>
-                    <Select
-                        labelId="select-profile-to-copy-from-label"
-                        id="select-profile-to-copy-from"
-                        value={deviationForm.copyFromProfileId.value ?? ""}
-                        label="Copy from existing profile (optional)"
+                <FormControl>
+                    <RadioGroup
+                        row
+                        aria-labelledby="is-copy-from-existing-label"
+                        name="is-copy-from-existing"
+                        value={deviationForm.isCopyingFromProfileId ? "true" : "false"}
                         onChange={(e) => {
-                            const source = profileList.find((p) => p.id === e.target.value)!;
-                            const newForm = copyProfile(profileList, source);
-                            update(newForm);
+                            update({
+                                isCopyingFromProfileId: e.target.value === "true",
+                            });
                         }}
-                        disabled={formDisabled}
                     >
-                        {profileList.map((profile, idx) => (
-                            <MenuItem key={profile.id} value={profile.id}>
-                                {profile.name ?? `Deviation ${idx + 1}`}
-                            </MenuItem>
-                        ))}
-                    </Select>
+                        <FormControlLabel
+                            value="false"
+                            control={<Radio />}
+                            label="New profile"
+                            disabled={formDisabled}
+                        />
+                        <FormControlLabel
+                            value="true"
+                            control={<Radio />}
+                            label="Copy from existing"
+                            disabled={formDisabled}
+                        />
+                    </RadioGroup>
                 </FormControl>
+                {deviationForm.isCopyingFromProfileId && (
+                    <FormControl fullWidth sx={{ my: 2 }}>
+                        <InputLabel id="select-profile-to-copy-from-label">
+                            Copy from existing profile (optional)
+                        </InputLabel>
+                        <Select
+                            labelId="select-profile-to-copy-from-label"
+                            id="select-profile-to-copy-from"
+                            value={deviationForm.copyFromProfileId.value ?? ""}
+                            label="Copy from existing profile (optional)"
+                            onChange={(e) => {
+                                const source = profileList.find((p) => p.id === e.target.value)!;
+                                const newForm = copyProfile(profileList, source);
+                                update(newForm);
+                            }}
+                            disabled={formDisabled}
+                        >
+                            {profileList.map((profile, idx) => (
+                                <MenuItem key={profile.id} value={profile.id}>
+                                    {profile.name ?? `Deviation ${idx + 1}`}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                )}
                 <TextField
                     fullWidth
                     value={deviationForm.name.value}
@@ -491,6 +519,7 @@ function copyProfile(profiles: UiDeviationProfile[], source: UiDeviationProfile)
         ...profileToDeviationForm(source),
         id: window.crypto.randomUUID(),
         copyFromProfileId: updateFormField(source.id),
+        isCopyingFromProfileId: true,
         name: updateFormField(nextName(new Set(profiles.map((p) => p.name)), source.name)),
     };
 }
