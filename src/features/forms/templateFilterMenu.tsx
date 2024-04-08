@@ -1,4 +1,4 @@
-import { Search } from "@mui/icons-material";
+import { Place, Search } from "@mui/icons-material";
 import { Checkbox, InputAdornment, Menu, MenuItem, MenuProps, Typography, useTheme } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -20,7 +20,10 @@ const TemplateFilterMenuItem = ({
         onClick={() => dispatch(formsActions.toggleTemplatesFilter(filterKey))}
         sx={{ display: "flex", justifyContent: "space-between" }}
     >
-        <Typography>{filterKey.charAt(0).toUpperCase() + filterKey.slice(1)}</Typography>
+        {filterKey === "object" ? <Search /> : <Place />}
+        <Typography flex={1} pl={1}>
+            {filterKey.charAt(0).toUpperCase() + filterKey.slice(1)}
+        </Typography>
         <Checkbox checked={filterValue} />
     </MenuItem>
 );
@@ -29,7 +32,7 @@ export function TemplateFilterMenu({ ...MenuProps }: MenuProps) {
     const theme = useTheme();
 
     const templatesFilters = useAppSelector(selectTemplatesFilters);
-    const { name, search, location } = templatesFilters;
+    const { name, object, geo } = templatesFilters;
     const dispatch = useAppDispatch();
 
     return (
@@ -43,7 +46,7 @@ export function TemplateFilterMenu({ ...MenuProps }: MenuProps) {
                     autoFocus
                     fullWidth
                     variant="standard"
-                    placeholder="Search"
+                    placeholder="Search by name"
                     value={name}
                     onChange={(e) => dispatch(formsActions.setTemplatesFilters({ name: e.target.value }))}
                     InputProps={{
@@ -57,8 +60,8 @@ export function TemplateFilterMenu({ ...MenuProps }: MenuProps) {
                     }}
                 />
             </MenuItem>
-            <TemplateFilterMenuItem filterKey="search" filterValue={search} dispatch={dispatch} />
-            <TemplateFilterMenuItem filterKey="location" filterValue={location} dispatch={dispatch} />
+            <TemplateFilterMenuItem filterKey="object" filterValue={object} dispatch={dispatch} />
+            <TemplateFilterMenuItem filterKey="geo" filterValue={geo} dispatch={dispatch} />
         </Menu>
     );
 }

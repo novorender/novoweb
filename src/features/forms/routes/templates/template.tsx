@@ -23,8 +23,8 @@ export function Template({ templateId }: { templateId: TemplateId }) {
         () =>
             !isLoading &&
             (!template!.title?.toLocaleLowerCase().includes(templatesFilters.name.toLocaleLowerCase()) ||
-                (!templatesFilters.location && template!.type === TemplateType.Location) ||
-                (!templatesFilters.search && template!.type === TemplateType.Search)),
+                (!templatesFilters.geo && template!.type === TemplateType.Location) ||
+                (!templatesFilters.object && template!.type === TemplateType.Search)),
         [isLoading, template, templatesFilters]
     );
 

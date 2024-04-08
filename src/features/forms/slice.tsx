@@ -17,8 +17,8 @@ const initialState = {
     },
     templatesFilters: {
         name: "",
-        search: true,
-        location: true,
+        object: true,
+        geo: true,
     },
     // Templates are loading progressively so status doesn't matter,
     // but just in case we will ever load them all at once I leave it here
@@ -37,8 +37,8 @@ const initialState = {
     };
     templatesFilters: {
         name: string;
-        search: boolean;
-        location: boolean;
+        object: boolean;
+        geo: boolean;
     };
     templates: AsyncState<Partial<Template>[]>;
     assets: AsyncState<FormGLtfAsset[]>;

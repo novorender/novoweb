@@ -1,4 +1,4 @@
-import { Search } from "@mui/icons-material";
+import { Circle, Search } from "@mui/icons-material";
 import { Checkbox, InputAdornment, Menu, MenuItem, MenuProps, Typography, useTheme } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -20,7 +20,10 @@ const FormFilterMenuItem = ({
         onClick={() => dispatch(formsActions.toggleFormFilter(filterKey))}
         sx={{ display: "flex", justifyContent: "space-between" }}
     >
-        <Typography>{filterKey.charAt(0).toUpperCase() + filterKey.slice(1)}</Typography>
+        <Circle htmlColor={filterKey === "new" ? "red" : filterKey === "finished" ? "green" : "orange"} />
+        <Typography flex={1} pl={1}>
+            {filterKey.charAt(0).toUpperCase() + filterKey.slice(1)}
+        </Typography>
         <Checkbox checked={filterValue} />
     </MenuItem>
 );
@@ -43,7 +46,7 @@ export function FormFilterMenu({ ...MenuProps }: MenuProps) {
                     autoFocus
                     fullWidth
                     variant="standard"
-                    placeholder="Search"
+                    placeholder="Search by name"
                     value={name}
                     onChange={(e) => dispatch(formsActions.setFormFilters({ name: e.target.value }))}
                     InputProps={{
