@@ -7,7 +7,7 @@ import {
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
 import { useDispatchHighlighted } from "contexts/highlighted";
-import { GroupStatus, useObjectGroups } from "contexts/objectGroups";
+import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
 import { ObjectVisibility, renderActions, selectDefaultVisibility } from "features/render";
 
 import { selectDeviationLegendGroups, selectSelectedCenterLineFollowPathId } from "../deviationsSlice";
@@ -19,6 +19,7 @@ export function useHighlightDeviation() {
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
+    const dispatchObjectGroups = useDispatchObjectGroups();
 
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const originalDefaultVisibility = useRef(defaultVisibility);
@@ -44,7 +45,7 @@ export function useHighlightDeviation() {
 
         const ids = new Set<number>();
         for (const fav of legendGroups) {
-            if (fav.status !== GroupStatus.Hidden) {
+            if (fav.status !== GroupStatus.Hidden && !fav.usesGroupColor) {
                 const group = objectGroups.find((g) => g.id === fav.id);
                 if (group) {
                     for (const id of group.ids) {
@@ -62,11 +63,29 @@ export function useHighlightDeviation() {
         );
         dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
 
+        let modifiedGroups = false;
+        const newObjectGroups = objectGroups.map((group) => {
+            const fav = legendGroups.find((g) => g.id === group.id);
+            if (!fav || !fav.usesGroupColor) {
+                return group;
+            } else if (group.status !== fav.status) {
+                modifiedGroups = true;
+                return { ...group, status: fav.status };
+            }
+
+            return group;
+        });
+
+        if (modifiedGroups) {
+            dispatchObjectGroups(objectGroupsActions.set(newObjectGroups));
+        }
+
         installed.current = true;
     }, [
         dispatch,
         dispatchHighlightCollections,
         dispatchHighlighted,
+        dispatchObjectGroups,
         objectGroups,
         legendGroups,
         restore,

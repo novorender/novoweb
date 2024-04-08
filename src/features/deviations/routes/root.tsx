@@ -7,6 +7,7 @@ import { AsyncStatus, hasFinished } from "types/misc";
 
 import { ColorStopList } from "../components/colorStop";
 import { DeviationsSnackbar } from "../components/deviationsSnackbar";
+import { GroupsAndColorsHud } from "../components/groupsAndColorsHud";
 import { MixFactorInput } from "../components/mixFactorInput";
 import { SubprofileSelect } from "../components/subprofileSelect";
 import { ViewSwitchSection } from "../components/viewSwitchSection";
@@ -15,6 +16,7 @@ import {
     selectDeviationCalculationStatus,
     selectDeviationProfileList,
     selectDeviationProfiles,
+    selectIsLegendFloating,
     selectSaveStatus,
     selectSelectedProfile,
 } from "../deviationsSlice";
@@ -30,6 +32,7 @@ export function Root() {
     const saveStatus = useAppSelector(selectSaveStatus);
     const isSaving = saveStatus.status === AsyncStatus.Loading;
     const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
+    const isLegendFloating = useAppSelector(selectIsLegendFloating);
 
     return (
         <>
@@ -120,6 +123,12 @@ export function Root() {
                                 <SubprofileSelect />
 
                                 <ViewSwitchSection />
+
+                                {!isLegendFloating && (
+                                    <Box mt={2}>
+                                        <GroupsAndColorsHud widgetMode />
+                                    </Box>
+                                )}
                             </Box>
                         )}
                     </ScrollBox>

@@ -7,9 +7,10 @@ import { forwardRef, memo, SyntheticEvent, useCallback, useEffect, useImperative
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
-import { selectRightmost2dDeviationCoordinate } from "features/deviations";
+import { selectIsLegendFloating, selectRightmost2dDeviationCoordinate } from "features/deviations";
 import { GroupsAndColorsHud } from "features/deviations/components/groupsAndColorsHud";
-import { selectBackground } from "features/render";
+import { useIsTopDownOrthoCamera } from "features/deviations/hooks/useIsTopDownOrthoCamera";
+import { CameraType, selectBackground, selectCameraType } from "features/render";
 import { selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 
@@ -36,6 +37,10 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
     const lastRightmost2dDeviationCorrdinate = useRef(rightmost2dDeviationCoordinate);
     const followPathId = useAppSelector(selectSelectedPath);
     const isView2d = useAppSelector(selectView2d);
+    const cameraType = useAppSelector(selectCameraType);
+    const isTopDownOrtho = useIsTopDownOrthoCamera();
+    const isCrossSectionView = isView2d && cameraType === CameraType.Orthographic && !isTopDownOrtho;
+    const isLegendFloating = useAppSelector(selectIsLegendFloating);
     const lastPt = useRef<ReadonlyVec2>();
     const bgColor = useAppSelector(selectBackground);
     const isBlackBg = bgColor && areArraysEqual(bgColor.color, [0, 0, 0, 1]);
@@ -48,8 +53,12 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
     const isFindingPoint = useRef(false);
     const findPoint = useCallback(
         async function findPoint() {
-            if (!view?.measure || !followPathId || isFindingPoint.current) {
+            if (!view?.measure || !followPathId) {
                 setCenterLinePt(undefined);
+                return;
+            }
+
+            if (isFindingPoint.current) {
                 return;
             }
 
@@ -129,7 +138,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
         }
     }, [view?.measure, view?.renderState.camera, followPathId]);
 
-    if (isView2d) {
+    if (isCrossSectionView) {
         if (!view?.measure || !currentProfileCenter || viewMode !== ViewMode.FollowPath) {
             return null;
         }
@@ -144,11 +153,11 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
 
         const fov = view.renderState.camera.fov;
         if (
-            rightmost2dDeviationCoordinate &&
+            Number.isFinite(rightmost2dDeviationCoordinate) &&
             rightmost2dDeviationCoordinate !== lastRightmost2dDeviationCorrdinate.current
         ) {
-            legendOffset.current = Math.max(160, rightmost2dDeviationCoordinate - pt[0] + 50);
-            lastRightmost2dDeviationCorrdinate.current = rightmost2dDeviationCoordinate;
+            legendOffset.current = Math.max(160, rightmost2dDeviationCoordinate! - pt[0] + 50);
+            lastRightmost2dDeviationCorrdinate.current = rightmost2dDeviationCoordinate!;
             lastFov.current = fov;
         }
 
@@ -179,19 +188,21 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                     <FollowPathControls />
                 </div>
 
-                <div
-                    style={{
-                        position: "absolute",
-                        transform: `translate(${scaledLegendOffset}px, 0px)`,
-                        width: "200px",
-                        bottom: 0,
-                    }}
-                >
-                    <GroupsAndColorsHud />
-                </div>
+                {isLegendFloating && (
+                    <div
+                        style={{
+                            position: "absolute",
+                            transform: `translate(${scaledLegendOffset}px, 0px)`,
+                            width: "400px",
+                            bottom: 0,
+                        }}
+                    >
+                        <GroupsAndColorsHud />
+                    </div>
+                )}
             </div>
         );
-    } else if (centerLinePt) {
+    } else if (centerLinePt && isLegendFloating) {
         return (
             <LegendAlongCenterLine
                 style={{
@@ -207,7 +218,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
 const LegendAlongCenterLine = styled("div")(
     ({ theme }) => css`
         position: absolute;
-        max-width: 300px;
+        max-width: 400px;
         padding: 1rem;
         margin: 1rem;
         border-radius: ${theme.shape.borderRadius}px;

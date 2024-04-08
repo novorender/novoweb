@@ -15,7 +15,9 @@ import { searchByPatterns } from "utils/search";
 
 import { deviationsActions, selectDeviationProfiles, selectSelectedProfile } from "./deviationsSlice";
 import { DeviationType, FavoriteGroupState, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
-import { colorStopSortFn } from "./utils";
+import { useHighlightDeviation } from "./hooks/useHighlightDeviation";
+import { useSetCenterLineFollowPath } from "./hooks/useSetCenterLineFollowPath";
+import { accountForAbsValues } from "./utils";
 
 const EMPTY_ARRAY: ColorStop[] = [];
 
@@ -34,6 +36,9 @@ export function useHandleDeviations() {
     const [abortController] = useAbortController();
 
     const [getDeviationProfiles] = useLazyGetDeviationProfilesQuery();
+
+    useSetCenterLineFollowPath();
+    useHighlightDeviation();
 
     useEffect(() => {
         initDeviationProfiles();
@@ -154,12 +159,6 @@ export function useHandleDeviations() {
     );
 }
 
-function accountForAbsValues(colorStops: ColorStop[]) {
-    const absolute = colorStops.map((cs) => ({ ...cs, position: Math.abs(cs.position) }));
-    const negatives = absolute.filter((cs) => cs.position > 0).map((cs) => ({ ...cs, position: -cs.position }));
-    return [...absolute, ...negatives].sort(colorStopSortFn);
-}
-
 function getEmptyDeviationConfig(): UiDeviationConfig {
     return {
         version: "1.0",
@@ -277,6 +276,7 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
                             from: g.from,
                             to: g.to,
                             favorites: g.favorites ?? [],
+                            legendGroups: [],
                         },
                     ],
                     colors: g.colors ?? defaultColors,
@@ -295,14 +295,18 @@ function populateMissingData(profile: UiDeviationProfile): UiDeviationProfile {
             return {
                 ...sp,
                 favorites: sp.favorites ?? [],
-                legendGroups: makeLegendGroups(allIds),
+                legendGroups: makeLegendGroups(allIds, sp.from.groupIds ?? []),
             };
         }),
     };
 }
 
-export function makeLegendGroups(ids: string[]): FavoriteGroupState[] {
-    return uniqueArray(ids).map((id) => ({ id, status: GroupStatus.None }));
+export function makeLegendGroups(ids: string[], fromGroupIds: string[]): FavoriteGroupState[] {
+    return uniqueArray(ids).map((id) => ({
+        id,
+        status: GroupStatus.Selected,
+        usesGroupColor: !fromGroupIds.includes(id),
+    }));
 }
 
 function matchProfileIndexes(current: UiDeviationConfig, calculated: DeviationProjectConfig) {

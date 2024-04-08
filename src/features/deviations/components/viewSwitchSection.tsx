@@ -10,7 +10,7 @@ import { followPathActions, selectCurrentCenter, selectProfile, selectView2d } f
 import { useGoToProfile } from "features/followPath/useGoToProfile";
 import { getTopDownParams, selectDefaultTopDownElevation, selectTopDownSnapToAxis } from "features/orthoCam";
 import { CameraType, renderActions } from "features/render";
-import { AsyncState, AsyncStatus } from "types/misc";
+import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 
 import { selectSelectedCenterLineId, selectSelectedProfile } from "../deviationsSlice";
 import { useIsTopDownOrthoCamera } from "../hooks/useIsTopDownOrthoCamera";
@@ -71,6 +71,7 @@ export function ViewSwitchSection() {
         );
 
         dispatch(followPathActions.setView2d(newState));
+        dispatch(renderActions.setViewMode(newState ? ViewMode.FollowPath : ViewMode.Default));
         goToProfile({
             fpObj: fpObj.data,
             p: pos,

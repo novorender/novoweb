@@ -132,7 +132,11 @@ export function formatColorStopPos(pos: number, absoluteValues: boolean) {
 }
 
 export function sortColorStops(colorStops: ColorStop[], absoluteValues: boolean) {
-    return colorStops.sort(
-        absoluteValues ? (a, b) => Math.abs(b.position) - Math.abs(a.position) : (a, b) => b.position - a.position
-    );
+    return colorStops.sort(absoluteValues ? (a, b) => Math.abs(b.position) - Math.abs(a.position) : colorStopSortFn);
+}
+
+export function accountForAbsValues(colorStops: ColorStop[]) {
+    const absolute = colorStops.map((cs) => ({ ...cs, position: Math.abs(cs.position) }));
+    const negatives = absolute.filter((cs) => cs.position > 0).map((cs) => ({ ...cs, position: -cs.position }));
+    return [...absolute, ...negatives].sort(colorStopSortFn);
 }

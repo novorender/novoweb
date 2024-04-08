@@ -14,7 +14,7 @@ import { selectSelectedCenterLineId, selectSelectedProfile } from "../deviations
 export function useSetCenterLineFollowPath() {
     const {
         state: { view },
-    } = useExplorerGlobals(true);
+    } = useExplorerGlobals();
     const dispatch = useAppDispatch();
     const selectedProfile = useAppSelector(selectSelectedProfile);
     const selectedCenterLineId = useAppSelector(selectSelectedCenterLineId);
@@ -47,7 +47,7 @@ export function useSetCenterLineFollowPath() {
         setFollowPath();
 
         async function setFollowPath() {
-            if (!followPathId || !centerLine) {
+            if (!followPathId || !centerLine || !view) {
                 restore();
                 return;
             }

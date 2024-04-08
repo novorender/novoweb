@@ -25,6 +25,7 @@ const initialState = {
     // Stores pixel position of the rightmost deviation label
     // in follow path 2D view, which is used to position the legend
     rightmost2dDeviationCoordinate: undefined as number | undefined,
+    isLegendFloating: true,
 };
 
 type State = typeof initialState;
@@ -97,6 +98,9 @@ export const deviationsSlice = createSlice({
         setRightmost2dDeviationCoordinate: (state, action: PayloadAction<State["rightmost2dDeviationCoordinate"]>) => {
             state.rightmost2dDeviationCoordinate = action.payload;
         },
+        setIsLegendFloating: (state, action: PayloadAction<State["isLegendFloating"]>) => {
+            state.isLegendFloating = action.payload;
+        },
         setSelectedSubprofileLegendGroups: (state, action: PayloadAction<FavoriteGroupState[]>) => {
             if (
                 state.config.status !== AsyncStatus.Success ||
@@ -143,6 +147,7 @@ export const selectSelectedCenterLineFollowPathId = createSelector(
 export const selectSaveStatus = (state: RootState) => state.deviations.saveStatus;
 export const selectRightmost2dDeviationCoordinate = (state: RootState) =>
     state.deviations.rightmost2dDeviationCoordinate;
+export const selectIsLegendFloating = (state: RootState) => state.deviations.isLegendFloating;
 export const selectDeviationLegendGroups = createSelector([selectSelectedSubprofile], (sp) => sp?.legendGroups);
 
 const { actions, reducer } = deviationsSlice;

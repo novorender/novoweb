@@ -302,7 +302,7 @@ export function Deviation() {
                 </Typography>
                 <GroupAutocomplete
                     options={groups1Options}
-                    label="Groups to analyse"
+                    label="Select GROUPS to analyse"
                     onChange={(groups) => updateSubprofile({ groups1: updateFormField(groups.map((g) => g.id)) })}
                     selected={groups1}
                     sx={{ mt: 2 }}
@@ -329,13 +329,13 @@ export function Deviation() {
                             <FormControlLabel
                                 value={DeviationType.PointToTriangle}
                                 control={<Radio />}
-                                label="Mesh"
+                                label="Mesh vs points"
                                 disabled={formDisabled}
                             />
                             <FormControlLabel
                                 value={DeviationType.PointToPoint}
                                 control={<Radio />}
-                                label="Point"
+                                label="Points vs points"
                                 disabled={formDisabled}
                             />
                         </RadioGroup>
@@ -357,7 +357,7 @@ export function Deviation() {
                 </Box>
                 <GroupAutocomplete
                     options={groups2Options}
-                    label="Analyse against"
+                    label="Select GROUPS to analyse against (reference dataset)"
                     onChange={(groups) => updateSubprofile({ groups2: updateFormField(groups.map((g) => g.id)) })}
                     selected={groups2}
                     sx={{ mt: 1 }}
