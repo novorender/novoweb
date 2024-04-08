@@ -165,10 +165,7 @@ async function deviationFormToProfile({
                     groupIds: sp.groups2.value,
                     objectIds: [] as number[],
                 },
-                legendGroups: makeLegendGroups(
-                    [...sp.groups1.value, ...sp.groups2.value, ...sp.favorites.value],
-                    sp.groups1.value
-                ),
+                legendGroups: makeLegendGroups(sp.groups1.value),
             };
         }),
         hasFromAndTo: deviationForm.hasFromAndTo,

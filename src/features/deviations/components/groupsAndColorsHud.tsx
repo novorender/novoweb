@@ -4,21 +4,36 @@ import { memo, useMemo } from "react";
 
 import { ColorStop } from "apis/dataV2/deviationTypes";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { GroupStatus, isInternalGroup, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
+import {
+    GroupStatus,
+    isInternalGroup,
+    ObjectGroup,
+    objectGroupsActions,
+    useDispatchObjectGroups,
+    useObjectGroups,
+} from "contexts/objectGroups";
 import { selectView2d } from "features/followPath";
 import { vecToRgb } from "utils/color";
+import { uniqueArray } from "utils/misc";
 
-import { deviationsActions, selectDeviationLegendGroups, selectSelectedProfile } from "../deviationsSlice";
+import {
+    deviationsActions,
+    selectDeviationLegendGroups,
+    selectSelectedProfile,
+    selectSelectedSubprofile,
+} from "../deviationsSlice";
 import { formatColorStopPos, sortColorStops } from "../utils";
 
 export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({ widgetMode = false }: { widgetMode?: boolean }) {
     const profile = useAppSelector(selectSelectedProfile);
+    const subprofile = useAppSelector(selectSelectedSubprofile);
     const legendGroups = useAppSelector(selectDeviationLegendGroups);
     const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
     const dispatch = useAppDispatch();
+    const dispatchObjectGroups = useDispatchObjectGroups();
     const isCrossSection = useAppSelector(selectView2d);
 
-    const groups = useMemo(
+    const fromGroups = useMemo(
         () =>
             (legendGroups ?? [])
                 .map((g1) => {
@@ -27,12 +42,25 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({ widgetMode 
                         ? ({
                               ...group,
                               status: g1.status,
-                              color: g1.usesGroupColor ? (isCrossSection ? "grey" : group.color) : undefined,
                           } as ObjectGroup)
                         : undefined;
                 })
                 .filter((g) => g) as ObjectGroup[],
-        [legendGroups, objectGroups, isCrossSection]
+        [legendGroups, objectGroups]
+    );
+
+    const otherGroups = useMemo(
+        () =>
+            uniqueArray([...(subprofile?.to.groupIds ?? []), ...(subprofile?.favorites ?? [])])
+                .filter((id) => !fromGroups.some((g) => g.id === id))
+                .map((id) => {
+                    const group = objectGroups.find((g) => g.id === id);
+                    if (group) {
+                        return isCrossSection ? { ...group, color: "grey" } : group;
+                    }
+                })
+                .filter((g) => g) as ObjectGroup[],
+        [fromGroups, subprofile, objectGroups, isCrossSection]
     );
 
     const colorStops = useMemo(
@@ -40,7 +68,7 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({ widgetMode 
         [profile]
     );
 
-    const handleClick = (group: ObjectGroup) => {
+    const handleFromGroupClick = (group: ObjectGroup) => {
         if (!legendGroups) {
             return;
         }
@@ -52,6 +80,14 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({ widgetMode 
             return g;
         });
         dispatch(deviationsActions.setSelectedSubprofileLegendGroups(newGroups));
+    };
+
+    const handleOtherGroupClick = (group: ObjectGroup) => {
+        dispatchObjectGroups(
+            objectGroupsActions.update(group.id, {
+                status: group.status === GroupStatus.Hidden ? GroupStatus.Selected : GroupStatus.Hidden,
+            })
+        );
     };
 
     if (!profile) {
@@ -70,7 +106,7 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({ widgetMode 
                 alignItems="center"
                 justifyContent="space-between"
             >
-                {widgetMode ? "Group visibility" : profile.name}
+                {widgetMode ? "Groups" : profile.name}
                 {widgetMode ? (
                     <IconButton color="default" onClick={() => dispatch(deviationsActions.setIsLegendFloating(true))}>
                         <OpenInNew />
@@ -82,8 +118,17 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({ widgetMode 
                 )}
             </Box>
             <Box>
-                {groups.map((group) => (
-                    <GroupNode key={group.id} group={group} onClick={handleClick} colorStops={colorStops} />
+                {fromGroups.map((group) => (
+                    <GroupNode
+                        key={group.id}
+                        group={group}
+                        onClick={handleFromGroupClick}
+                        colorStops={colorStops}
+                        rainbow
+                    />
+                ))}
+                {(otherGroups || []).map((group) => (
+                    <GroupNode key={group.id} group={group} onClick={handleOtherGroupClick} colorStops={colorStops} />
                 ))}
             </Box>
 
@@ -106,12 +151,14 @@ function GroupNode({
     group,
     onClick,
     colorStops,
+    rainbow,
 }: {
     group: ObjectGroup;
     onClick: (group: ObjectGroup) => void;
     colorStops: ColorStop[];
+    rainbow?: boolean;
 }) {
-    const color = group.color ? vecToRgb(group.color) : undefined;
+    const color = vecToRgb(group.color);
     const hidden = group.status === GroupStatus.Hidden;
 
     return (
@@ -121,12 +168,12 @@ function GroupNode({
                 aria-label="toggle group visibility"
                 size="small"
                 icon={
-                    color ? (
+                    rainbow ? (
+                        <RainbowVisibility colorStops={colorStops} />
+                    ) : (
                         <Visibility
                             htmlColor={`rgba(${color.r}, ${color.g}, ${color.b}, ${Math.max(color.a ?? 0, 0.2)})`}
                         />
-                    ) : (
-                        <RainbowVisibility colorStops={colorStops} />
                     )
                 }
                 checkedIcon={!group.opacity ? <VisibilityOff color="disabled" /> : <Visibility color="disabled" />}

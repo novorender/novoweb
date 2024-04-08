@@ -103,7 +103,6 @@ export type ColorStopGroup = ColorStop;
 export type FavoriteGroupState = {
     id: string;
     status: GroupStatus;
-    usesGroupColor: boolean;
 };
 
 export type ObjectGroupExt = { id: string; name: string; deleted?: boolean };

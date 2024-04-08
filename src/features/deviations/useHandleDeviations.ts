@@ -291,21 +291,19 @@ function populateMissingData(profile: UiDeviationProfile): UiDeviationProfile {
     return {
         ...profile,
         subprofiles: profile.subprofiles.map((sp) => {
-            const allIds = [...(sp.from.groupIds ?? []), ...(sp.to.groupIds ?? []), ...(sp.favorites ?? [])];
             return {
                 ...sp,
                 favorites: sp.favorites ?? [],
-                legendGroups: makeLegendGroups(allIds, sp.from.groupIds ?? []),
+                legendGroups: makeLegendGroups(sp.from.groupIds ?? []),
             };
         }),
     };
 }
 
-export function makeLegendGroups(ids: string[], fromGroupIds: string[]): FavoriteGroupState[] {
-    return uniqueArray(ids).map((id) => ({
+export function makeLegendGroups(fromGroupIds: string[]): FavoriteGroupState[] {
+    return uniqueArray(fromGroupIds).map((id) => ({
         id,
         status: GroupStatus.Selected,
-        usesGroupColor: !fromGroupIds.includes(id),
     }));
 }
 

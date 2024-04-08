@@ -10,7 +10,11 @@ import { useDispatchHighlighted } from "contexts/highlighted";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
 import { ObjectVisibility, renderActions, selectDefaultVisibility } from "features/render";
 
-import { selectDeviationLegendGroups, selectSelectedCenterLineFollowPathId } from "../deviationsSlice";
+import {
+    selectDeviationLegendGroups,
+    selectSelectedCenterLineFollowPathId,
+    selectSelectedSubprofile,
+} from "../deviationsSlice";
 
 export function useHighlightDeviation() {
     const legendGroups = useAppSelector(selectDeviationLegendGroups);
@@ -18,12 +22,18 @@ export function useHighlightDeviation() {
     const objectGroups = useObjectGroups();
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
-    const dispatchHighlightCollections = useDispatchHighlightCollections();
     const dispatchObjectGroups = useDispatchObjectGroups();
+    const dispatchHighlightCollections = useDispatchHighlightCollections();
+    const subprofile = useAppSelector(selectSelectedSubprofile);
 
+    const objectGroupsRef = useRef(objectGroups);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const originalDefaultVisibility = useRef(defaultVisibility);
     const installed = useRef(false);
+
+    useEffect(() => {
+        objectGroupsRef.current = objectGroups;
+    }, [objectGroups]);
 
     const restore = useCallback(() => {
         if (installed.current) {
@@ -45,7 +55,7 @@ export function useHighlightDeviation() {
 
         const ids = new Set<number>();
         for (const fav of legendGroups) {
-            if (fav.status !== GroupStatus.Hidden && !fav.usesGroupColor) {
+            if (fav.status !== GroupStatus.Hidden) {
                 const group = objectGroups.find((g) => g.id === fav.id);
                 if (group) {
                     for (const id of group.ids) {
@@ -63,32 +73,35 @@ export function useHighlightDeviation() {
         );
         dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
 
-        let modifiedGroups = false;
-        const newObjectGroups = objectGroups.map((group) => {
-            const fav = legendGroups.find((g) => g.id === group.id);
-            if (!fav || !fav.usesGroupColor) {
-                return group;
-            } else if (group.status !== fav.status) {
-                modifiedGroups = true;
-                return { ...group, status: fav.status };
-            }
-
-            return group;
-        });
-
-        if (modifiedGroups) {
-            dispatchObjectGroups(objectGroupsActions.set(newObjectGroups));
-        }
-
         installed.current = true;
     }, [
         dispatch,
         dispatchHighlightCollections,
         dispatchHighlighted,
-        dispatchObjectGroups,
-        objectGroups,
         legendGroups,
         restore,
         followPathId,
+        objectGroups,
     ]);
+
+    useEffect(() => {
+        if (!subprofile?.to) {
+            return;
+        }
+
+        const ids = new Set(
+            [...subprofile.to.groupIds, ...subprofile.favorites].filter((id) => !subprofile.from.groupIds.includes(id))
+        );
+        const objectGroups = objectGroupsRef.current.map((group) => {
+            if (ids.has(group.id)) {
+                return { ...group, status: GroupStatus.Selected };
+            } else if (group.status === GroupStatus.Selected) {
+                return { ...group, status: GroupStatus.None };
+            } else {
+                return group;
+            }
+        });
+
+        dispatchObjectGroups(objectGroupsActions.set(objectGroups));
+    }, [dispatchObjectGroups, subprofile?.from, subprofile?.to, subprofile?.favorites]);
 }
