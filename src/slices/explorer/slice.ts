@@ -69,6 +69,7 @@ const initialState: State = {
         xsiteManageClientId: import.meta.env.REACT_APP_XSITEMANAGE_CLIENT_ID ?? "",
         novorenderClientId: import.meta.env.REACT_APP_NOVORENDER_CLIENT_ID ?? "",
         novorenderClientSecret: import.meta.env.REACT_APP_NOVORENDER_CLIENT_SECRET ?? "",
+        assetsUrl: import.meta.env.ASSETS_URL ?? "https://novorenderblobs.blob.core.windows.net/assets",
     },
 };
 

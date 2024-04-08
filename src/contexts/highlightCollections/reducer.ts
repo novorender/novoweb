@@ -8,6 +8,9 @@ import { toIdArr, toIdObj } from "../utils";
 export enum HighlightCollection {
     SecondaryHighlight = "secondaryHighlight",
     SelectedDeviation = "selectedDeviation",
+    FormsNew = "formsNew",
+    FormsOngoing = "formsOngoing",
+    FormsCompleted = "formsCompleted",
 }
 
 export const initialState = {
@@ -20,6 +23,21 @@ export const initialState = {
         ids: {} as Record<ObjectId, true | undefined>,
         idArr: [] as ObjectId[],
         color: [1, 1, 1, 1] as VecRGBA,
+    },
+    [HighlightCollection.FormsNew]: {
+        ids: {} as Record<ObjectId, true | undefined>,
+        idArr: [] as ObjectId[],
+        color: [0.5, 0, 0, 1] as VecRGBA,
+    },
+    [HighlightCollection.FormsOngoing]: {
+        ids: {} as Record<ObjectId, true | undefined>,
+        idArr: [] as ObjectId[],
+        color: [1, 0.75, 0, 1] as VecRGBA,
+    },
+    [HighlightCollection.FormsCompleted]: {
+        ids: {} as Record<ObjectId, true | undefined>,
+        idArr: [] as ObjectId[],
+        color: [0, 0.5, 0, 1] as VecRGBA,
     },
 };
 
@@ -166,6 +184,21 @@ export function reducer(state: State, action: Actions): State {
                 },
                 [HighlightCollection.SelectedDeviation]: {
                     color: state.selectedDeviation.color,
+                    idArr: [],
+                    ids: {},
+                },
+                [HighlightCollection.FormsNew]: {
+                    color: state.formsNew.color,
+                    idArr: [],
+                    ids: {},
+                },
+                [HighlightCollection.FormsOngoing]: {
+                    color: state.formsOngoing.color,
+                    idArr: [],
+                    ids: {},
+                },
+                [HighlightCollection.FormsCompleted]: {
+                    color: state.formsCompleted.color,
                     idArr: [],
                     ids: {},
                 },

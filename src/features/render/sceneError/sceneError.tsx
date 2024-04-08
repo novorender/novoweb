@@ -46,7 +46,7 @@ export function SceneError() {
                 config.authServerUrl +
                 `/auth` +
                 "?response_type=code" +
-                `&client_id=${"IWOHeLxNRxoqGtVZ3I6guPo2UvZ6mI5n"}` +
+                `&client_id=${config.novorenderClientId}` +
                 `&redirect_uri=${window.location.origin}` +
                 `&state=${state}` +
                 `&code_challenge=${challenge}` +

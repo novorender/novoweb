@@ -1,6 +1,7 @@
 import { forwardRef, useImperativeHandle, useRef } from "react";
 
 import { FollowHtmlInteractions } from "features/followPath/followHtmlInteractions";
+import { FormsTopDown } from "features/forms/formsTopDown";
 
 export const Engine2DHtmlInteractions = forwardRef(function Engine2DHtmlInteractions(_, ref) {
     const childRefs = useRef([] as { update: () => void }[]);
@@ -19,7 +20,8 @@ export const Engine2DHtmlInteractions = forwardRef(function Engine2DHtmlInteract
 
     return (
         <div>
-            <FollowHtmlInteractions ref={(e) => (childRefs.current[0] = e as { update: () => void })} />
+            <FormsTopDown ref={(e) => (childRefs.current[0] = e as { update: () => void })} />
+            <FollowHtmlInteractions ref={(e) => (childRefs.current[1] = e as { update: () => void })} />
         </div>
     );
 });

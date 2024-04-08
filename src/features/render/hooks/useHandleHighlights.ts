@@ -35,7 +35,7 @@ export function useHandleHighlights() {
     const sceneId = useSceneId();
     const mainObject = useAppSelector(selectMainObject);
     const highlighted = useHighlighted();
-    const { secondaryHighlight, selectedDeviation } = useHighlightCollections();
+    const { secondaryHighlight, selectedDeviation, formsNew, formsOngoing, formsCompleted } = useHighlightCollections();
     const hidden = useHidden().idArr;
     const groups = useObjectGroups();
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
@@ -219,6 +219,30 @@ export function useHandleHighlights() {
                         {
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose
+                                    ? formsNew.idArr
+                                    : basket.idArr.filter((id) => formsNew.ids[id])
+                            ).sort(),
+                            action: createColorSetHighlight(formsNew.color),
+                        },
+                        {
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
+                                    ? formsOngoing.idArr
+                                    : basket.idArr.filter((id) => formsOngoing.ids[id])
+                            ).sort(),
+                            action: createColorSetHighlight(formsOngoing.color),
+                        },
+                        {
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
+                                    ? formsCompleted.idArr
+                                    : basket.idArr.filter((id) => formsCompleted.ids[id])
+                            ).sort(),
+                            action: createColorSetHighlight(formsCompleted.color),
+                        },
+                        {
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
                                     ? mainObject !== undefined
                                         ? highlighted.idArr.concat(mainObject)
                                         : highlighted.idArr
@@ -237,6 +261,9 @@ export function useHandleHighlights() {
         sceneId,
         highlighted,
         secondaryHighlight,
+        formsNew,
+        formsOngoing,
+        formsCompleted,
         hidden,
         groups,
         propertyTreeGroups,
