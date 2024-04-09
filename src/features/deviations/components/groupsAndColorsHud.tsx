@@ -104,7 +104,8 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({ widgetMode 
                 title={profile.name}
                 display="flex"
                 alignItems="center"
-                justifyContent="space-between"
+                justifyContent={widgetMode ? "space-between" : undefined}
+                gap={1}
             >
                 {widgetMode ? "Groups" : profile.name}
                 {widgetMode ? (
