@@ -26,11 +26,15 @@ export function useSetCenterLineFollowPath() {
     const followPathId = centerLine?.objectId;
     const dispatchHighlighted = useDispatchHighlighted();
     const installedFollowPathId = useRef<number>();
+
     const goToProfile = useGoToProfile();
+    const goToProfileRef = useRef(goToProfile);
+    useEffect(() => {
+        goToProfileRef.current = goToProfile;
+    });
+
     const view2d = useAppSelector(selectView2d);
-
     const view2dRef = useRef(view2d);
-
     useEffect(() => {
         view2dRef.current = view2d;
     });
@@ -104,7 +108,7 @@ export function useSetCenterLineFollowPath() {
                                 });
 
                                 if (fpObj) {
-                                    goToProfile({
+                                    goToProfileRef.current({
                                         fpObj: fpObj,
                                         p: pos,
                                         newView2d: true,
@@ -124,5 +128,5 @@ export function useSetCenterLineFollowPath() {
 
             installedFollowPathId.current = followPathId;
         }
-    }, [view, followPathId, dispatch, dispatchHighlighted, centerLine, restore, goToProfile]);
+    }, [view, followPathId, dispatch, dispatchHighlighted, centerLine, restore]);
 }
