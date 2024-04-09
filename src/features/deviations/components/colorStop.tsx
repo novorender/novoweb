@@ -61,6 +61,14 @@ export function ColorStopList({
                         }}
                         disabled={disabled}
                         absoluteValues={absoluteValues}
+                        hasErrors={
+                            absoluteValues &&
+                            colorStops.some(
+                                (cs, i) =>
+                                    i !== index &&
+                                    Math.abs(Math.abs(cs.position) - Math.abs(colorStops[index].position)) < 0.01
+                            )
+                        }
                     />
                 ))}
             </List>
@@ -89,6 +97,7 @@ export function ColorStop({
     onChange,
     onDelete,
     absoluteValues,
+    hasErrors,
 }: {
     colorStops: ColorStopGroup[];
     index: number;
@@ -96,6 +105,7 @@ export function ColorStop({
     onChange: (value: ColorStopGroup) => void;
     onDelete: () => void;
     absoluteValues: boolean;
+    hasErrors: boolean;
 }) {
     const colorStop = colorStops[index];
     const history = useHistory();
@@ -126,7 +136,9 @@ export function ColorStop({
 
     const content = (
         <>
-            <Typography flex="1 1 auto">{text}</Typography>
+            <Typography flex="1 1 auto" color={hasErrors ? "error" : undefined}>
+                {text}
+            </Typography>
             <IconButton
                 size="small"
                 onClick={(evt) => {
