@@ -162,7 +162,10 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
         }
 
         const k = (lastFov.current ?? fov) / fov;
-        const scaledLegendOffset = legendOffset.current * k;
+        let scaledLegendOffset = legendOffset.current * k;
+        if (scaledLegendOffset > 500) {
+            scaledLegendOffset = 140;
+        }
 
         return (
             <div
