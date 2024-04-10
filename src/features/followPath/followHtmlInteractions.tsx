@@ -197,7 +197,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                             bottom: 0,
                         }}
                     >
-                        <GroupsAndColorsHud />
+                        <GroupsAndColorsHud absPos />
                     </div>
                 )}
             </div>
@@ -209,7 +209,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                     transform: `translate(${centerLinePt[0]}px, ${centerLinePt[1]}px)`,
                 }}
             >
-                <GroupsAndColorsHud />
+                <GroupsAndColorsHud absPos={false} />
             </LegendAlongCenterLine>
         );
     }

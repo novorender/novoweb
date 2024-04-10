@@ -24,7 +24,13 @@ import {
 } from "../deviationsSlice";
 import { formatColorStopPos, sortColorStops } from "../utils";
 
-export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({ widgetMode = false }: { widgetMode?: boolean }) {
+export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({
+    widgetMode = false,
+    absPos,
+}: {
+    widgetMode?: boolean;
+    absPos: boolean;
+}) {
     const profile = useAppSelector(selectSelectedProfile);
     const subprofile = useAppSelector(selectSelectedSubprofile);
     const legendGroups = useAppSelector(selectDeviationLegendGroups);
@@ -101,8 +107,6 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({ widgetMode 
     const headerBottom = groupsBottom + (fromGroups.length + otherGroups.length) * groupNodeHeight;
     const groupNodeBottom = (index: number) => (fromGroups.length + otherGroups.length - index - 1) * groupNodeHeight;
 
-    const absPos = !widgetMode && isCrossSection;
-
     return (
         <>
             <Box
@@ -137,18 +141,16 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({ widgetMode 
             </Box>
             <Box sx={absPos ? { position: "absolute", bottom: groupsBottom } : {}}>
                 {fromGroups.map((group, i) => (
-                    <Box sx={absPos ? { position: "absolute", maxWidth: "300px", bottom: groupNodeBottom(i) } : {}}>
-                        <GroupNode
-                            key={group.id}
-                            group={group}
-                            onClick={handleFromGroupClick}
-                            colorStops={colorStops}
-                            rainbow
-                        />
+                    <Box
+                        key={group.id}
+                        sx={absPos ? { position: "absolute", maxWidth: "300px", bottom: groupNodeBottom(i) } : {}}
+                    >
+                        <GroupNode group={group} onClick={handleFromGroupClick} colorStops={colorStops} rainbow />
                     </Box>
                 ))}
                 {(otherGroups || []).map((group, i) => (
                     <Box
+                        key={group.id}
                         sx={
                             absPos
                                 ? {
@@ -159,12 +161,7 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({ widgetMode 
                                 : {}
                         }
                     >
-                        <GroupNode
-                            key={group.id}
-                            group={group}
-                            onClick={handleOtherGroupClick}
-                            colorStops={colorStops}
-                        />
+                        <GroupNode group={group} onClick={handleOtherGroupClick} colorStops={colorStops} />
                     </Box>
                 ))}
             </Box>

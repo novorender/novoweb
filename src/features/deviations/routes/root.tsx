@@ -126,7 +126,7 @@ export function Root() {
 
                                 {!isLegendFloating && (
                                     <Box mt={2}>
-                                        <GroupsAndColorsHud widgetMode />
+                                        <GroupsAndColorsHud widgetMode absPos={false} />
                                     </Box>
                                 )}
                             </Box>
