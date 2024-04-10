@@ -17,6 +17,7 @@ import { useSelectionBasket } from "contexts/selectionBasket";
 import { selectVisibleOutlineGroups } from "features/outlineLaser";
 import { selectPropertyTreeGroups } from "features/propertyTree/slice";
 import { useSceneId } from "hooks/useSceneId";
+import { ViewMode } from "types/misc";
 
 import {
     renderActions,
@@ -25,6 +26,7 @@ import {
     selectMainObject,
     selectSelectionBasketColor,
     selectSelectionBasketMode,
+    selectViewMode,
 } from "../renderSlice";
 import { CameraType, ObjectVisibility, SelectionBasketMode } from "../types";
 
@@ -46,6 +48,7 @@ export function useHandleHighlights() {
     const outlineGroups = useAppSelector(selectVisibleOutlineGroups);
     const { groups: propertyTreeGroups } = useAppSelector(selectPropertyTreeGroups);
     const cameraType = useAppSelector(selectCameraType);
+    const viewMode = useAppSelector(selectViewMode);
 
     const id = useRef(0);
 
@@ -198,7 +201,7 @@ export function useHandleHighlights() {
                             ).sort(),
                             action: group.action,
                         })),
-                        ...(cameraType === CameraType.Orthographic
+                        ...(cameraType === CameraType.Orthographic && viewMode !== ViewMode.FollowPath
                             ? outlineGroups.map((group) => ({
                                   objectIds: new Uint32Array(group.ids).sort().filter((f) => !allHidden.has(f)),
                                   outlineColor: group.color,
@@ -275,6 +278,7 @@ export function useHandleHighlights() {
         outlineGroups,
         cameraType,
         selectedDeviation,
+        viewMode,
     ]);
 }
 
