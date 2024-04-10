@@ -94,6 +94,15 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({ widgetMode 
         return;
     }
 
+    const groupNodeHeight = 38;
+    const colorStopNodeHeight = 24;
+    const gap = 16;
+    const groupsBottom = colorStops.length * colorStopNodeHeight + gap;
+    const headerBottom = groupsBottom + (fromGroups.length + otherGroups.length) * groupNodeHeight;
+    const groupNodeBottom = (index: number) => (fromGroups.length + otherGroups.length - index - 1) * groupNodeHeight;
+
+    const absPos = !widgetMode && isCrossSection;
+
     return (
         <>
             <Box
@@ -106,6 +115,14 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({ widgetMode 
                 alignItems="center"
                 justifyContent={widgetMode ? "space-between" : undefined}
                 gap={1}
+                sx={
+                    absPos
+                        ? {
+                              position: "absolute",
+                              bottom: headerBottom,
+                          }
+                        : {}
+                }
             >
                 {widgetMode ? "Groups" : profile.name}
                 {widgetMode ? (
@@ -118,23 +135,42 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({ widgetMode 
                     </IconButton>
                 )}
             </Box>
-            <Box>
-                {fromGroups.map((group) => (
-                    <GroupNode
-                        key={group.id}
-                        group={group}
-                        onClick={handleFromGroupClick}
-                        colorStops={colorStops}
-                        rainbow
-                    />
+            <Box sx={absPos ? { position: "absolute", bottom: groupsBottom } : {}}>
+                {fromGroups.map((group, i) => (
+                    <Box sx={absPos ? { position: "absolute", maxWidth: "300px", bottom: groupNodeBottom(i) } : {}}>
+                        <GroupNode
+                            key={group.id}
+                            group={group}
+                            onClick={handleFromGroupClick}
+                            colorStops={colorStops}
+                            rainbow
+                        />
+                    </Box>
                 ))}
-                {(otherGroups || []).map((group) => (
-                    <GroupNode key={group.id} group={group} onClick={handleOtherGroupClick} colorStops={colorStops} />
+                {(otherGroups || []).map((group, i) => (
+                    <Box
+                        sx={
+                            absPos
+                                ? {
+                                      position: "absolute",
+                                      maxWidth: "300px",
+                                      bottom: groupNodeBottom(fromGroups.length + i),
+                                  }
+                                : {}
+                        }
+                    >
+                        <GroupNode
+                            key={group.id}
+                            group={group}
+                            onClick={handleOtherGroupClick}
+                            colorStops={colorStops}
+                        />
+                    </Box>
                 ))}
             </Box>
 
             {!widgetMode && (
-                <Box mt={2}>
+                <Box sx={absPos ? { position: "absolute", bottom: "0px" } : {}}>
                     {colorStops.map((colorStop) => (
                         <ColorStopNode
                             key={colorStop.position}
@@ -182,7 +218,7 @@ function GroupNode({
                 onClick={(event) => event.stopPropagation()}
                 onChange={() => onClick(group)}
             />
-            <Box textOverflow="ellipsis" overflow="hidden" title={group.name}>
+            <Box textOverflow="ellipsis" overflow="hidden" whiteSpace="nowrap" title={group.name}>
                 {group.name}
             </Box>
         </Box>

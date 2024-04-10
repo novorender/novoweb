@@ -178,7 +178,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                 <div
                     style={{
                         position: "absolute",
-                        transform: `translate(-100px, -180px)`,
+                        transform: `translate(-100px, -80px)`,
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
@@ -270,24 +270,28 @@ const FollowPathControls = memo(function FollowPathControls() {
     };
 
     return (
-        <>
-            <Button
-                variant="contained"
-                color="grey"
-                onClick={() => {
-                    const fpObj =
-                        followObject ?? (following.status === AsyncStatus.Success ? following.data : undefined);
+        <Box position="absolute">
+            <Box position="absolute" bottom="70px" sx={{ translate: "-50% 0" }}>
+                <Button
+                    variant="contained"
+                    color="grey"
+                    onClick={() => {
+                        const fpObj =
+                            followObject ?? (following.status === AsyncStatus.Success ? following.data : undefined);
 
-                    if (fpObj) {
-                        goToProfile({ fpObj, p: Number(profile), keepOffset: false });
-                    }
-                }}
-            >
-                Recenter
-            </Button>
+                        if (fpObj) {
+                            goToProfile({ fpObj, p: Number(profile), keepOffset: false });
+                        }
+                    }}
+                >
+                    Recenter
+                </Button>
+            </Box>
 
-            <Box mt={2}>Clipping: {clipping} m</Box>
-            <Box mx={2} width="100%">
+            <Box position="absolute" bottom="36px" whiteSpace="nowrap" textAlign="center" sx={{ translate: "-50% 0" }}>
+                Clipping: {clipping} m
+            </Box>
+            <Box position="absolute" bottom="0px" width="200px" sx={{ translate: "-50% 0" }}>
                 <Slider
                     getAriaLabel={() => "Clipping far"}
                     value={clipping}
@@ -299,6 +303,6 @@ const FollowPathControls = memo(function FollowPathControls() {
                     valueLabelDisplay="off"
                 />
             </Box>
-        </>
+        </Box>
     );
 });
