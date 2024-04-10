@@ -17,6 +17,7 @@ import { useSelectionBasket } from "contexts/selectionBasket";
 import { selectVisibleOutlineGroups } from "features/outlineLaser";
 import { selectPropertyTreeGroups } from "features/propertyTree/slice";
 import { useSceneId } from "hooks/useSceneId";
+import { ViewMode } from "types/misc";
 
 import {
     renderActions,
@@ -25,6 +26,7 @@ import {
     selectMainObject,
     selectSelectionBasketColor,
     selectSelectionBasketMode,
+    selectViewMode,
 } from "../renderSlice";
 import { CameraType, ObjectVisibility, SelectionBasketMode } from "../types";
 
@@ -35,7 +37,7 @@ export function useHandleHighlights() {
     const sceneId = useSceneId();
     const mainObject = useAppSelector(selectMainObject);
     const highlighted = useHighlighted();
-    const { secondaryHighlight, formsNew, formsOngoing, formsCompleted } = useHighlightCollections();
+    const { secondaryHighlight, selectedDeviation, formsNew, formsOngoing, formsCompleted } = useHighlightCollections();
     const hidden = useHidden().idArr;
     const groups = useObjectGroups();
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
@@ -46,6 +48,7 @@ export function useHandleHighlights() {
     const outlineGroups = useAppSelector(selectVisibleOutlineGroups);
     const { groups: propertyTreeGroups } = useAppSelector(selectPropertyTreeGroups);
     const cameraType = useAppSelector(selectCameraType);
+    const viewMode = useAppSelector(selectViewMode);
 
     const id = useRef(0);
 
@@ -198,7 +201,7 @@ export function useHandleHighlights() {
                             ).sort(),
                             action: group.action,
                         })),
-                        ...(cameraType === CameraType.Orthographic
+                        ...(cameraType === CameraType.Orthographic && viewMode !== ViewMode.FollowPath
                             ? outlineGroups.map((group) => ({
                                   objectIds: new Uint32Array(group.ids).sort().filter((f) => !allHidden.has(f)),
                                   outlineColor: group.color,
@@ -211,6 +214,10 @@ export function useHandleHighlights() {
                                     : basket.idArr.filter((id) => secondaryHighlight.ids[id])
                             ).sort(),
                             action: createColorSetHighlight(secondaryHighlight.color),
+                        },
+                        {
+                            objectIds: new Uint32Array(selectedDeviation.idArr).sort(),
+                            action: createNeutralHighlight(),
                         },
                         {
                             objectIds: new Uint32Array(
@@ -270,6 +277,8 @@ export function useHandleHighlights() {
         basketMode,
         outlineGroups,
         cameraType,
+        selectedDeviation,
+        viewMode,
     ]);
 }
 

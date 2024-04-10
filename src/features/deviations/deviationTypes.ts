@@ -1,4 +1,5 @@
-import { ColorConfig, ColorStop, DeviationRunData, DeviationSubprofile } from "apis/dataV2/deviationTypes";
+import { ColorConfig, ColorStop, DeviationRunData } from "apis/dataV2/deviationTypes";
+import { GroupStatus } from "contexts/objectGroups";
 
 export enum DeviationCalculationStatus {
     Initial,
@@ -30,8 +31,28 @@ export type UiDeviationProfile = {
     index: number; // index of deviation for coloring. -1 for none
     copyFromProfileId?: string;
     colors: ColorConfig;
+    subprofiles: UiDeviationSubprofile[];
+};
+
+export type UiDeviationSubprofile = {
+    from: {
+        groupIds: string[];
+        objectIds: number[];
+    };
+    to: {
+        groupIds: string[];
+        objectIds: number[];
+    };
     favorites: string[];
-    subprofiles: DeviationSubprofile[];
+    centerLine?: UiCenterLine;
+    heightToCeiling?: number;
+    legendGroups: FavoriteGroupState[]; // not saved anywhere
+};
+
+export type UiCenterLine = {
+    brepId: string;
+    objectId: number;
+    parameterBounds: [number, number];
 };
 
 // Deviation form
@@ -43,9 +64,9 @@ export interface FormField<T> {
 export type DeviationForm = {
     id: string;
     name: FormField<string>;
+    isCopyingFromProfileId: boolean;
     copyFromProfileId: FormField<string | undefined>;
     deviationType: FormField<DeviationType>;
-    favorites: FormField<string[]>;
     colorSetup: ColorSetupGroup;
     hasFromAndTo: boolean;
     index: number;
@@ -56,6 +77,7 @@ export type DeviationForm = {
 export type SubprofileGroup = {
     groups1: FormField<string[]>;
     groups2: FormField<string[]>;
+    favorites: FormField<string[]>;
     centerLine: CenterLineGroup;
     tunnelInfo: TunnelInfoGroup;
 };
@@ -78,3 +100,10 @@ export type ColorSetupGroup = {
 };
 
 export type ColorStopGroup = ColorStop;
+
+export type FavoriteGroupState = {
+    id: string;
+    status: GroupStatus;
+};
+
+export type ObjectGroupExt = { id: string; name: string; deleted?: boolean };

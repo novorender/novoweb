@@ -1,15 +1,12 @@
-import { Add, Delete, RestartAlt, Settings } from "@mui/icons-material";
-import { Divider, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
+import { Add, Delete, Settings } from "@mui/icons-material";
+import { ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
 import { Box } from "@mui/system";
+import { useEffect } from "react";
 import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
-import { useCalcDeviationsMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, Tooltip, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { isInternalGroup, useObjectGroups } from "contexts/objectGroups";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectIsAdminScene, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
@@ -24,17 +21,20 @@ import {
 } from "./deviationsSlice";
 import { DeviationCalculationStatus } from "./deviationTypes";
 import { useListenCalculationState } from "./hooks/useListenCalculationState";
-import { updateObjectIds } from "./hooks/useSaveDeviationConfig";
 import { CrupdateColorStop } from "./routes/crupdateColorStop";
 import { DeleteDeviation } from "./routes/deleteDeviation";
 import { Deviation } from "./routes/deviation";
 import { Root } from "./routes/root";
-import { MAX_DEVIATION_PROFILE_COUNT, newDeviationForm, profileToDeviationForm, uiConfigToServerConfig } from "./utils";
+import { SaveDeviation } from "./routes/saveDeviation";
+import { MAX_DEVIATION_PROFILE_COUNT, newDeviationForm, profileToDeviationForm } from "./utils";
 
 export default function Deviations() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.deviations.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.deviations.key);
+
+    // useSetCenterLineFollowPath();
+    // useHighlightDeviation();
 
     return (
         <MemoryRouter>
@@ -56,6 +56,9 @@ export default function Deviations() {
                         <Route path="/deviation/edit" exact>
                             <Deviation />
                         </Route>
+                        <Route path="/deviation/save" exact>
+                            <SaveDeviation />
+                        </Route>
                         <Route path="/deviation/delete" exact>
                             <DeleteDeviation />
                         </Route>
@@ -76,9 +79,6 @@ export default function Deviations() {
 }
 
 function WidgetMenu(props: MenuProps) {
-    const {
-        state: { scene },
-    } = useExplorerGlobals(true);
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const history = useHistory();
     const isProjectV2 = useAppSelector(selectProjectIsV2);
@@ -87,62 +87,16 @@ function WidgetMenu(props: MenuProps) {
     const selectedProfile = useAppSelector(selectSelectedProfile);
     const isDeviationFormSet = useAppSelector((state) => selectDeviationForm(state) !== undefined);
     const dispatch = useAppDispatch();
-    const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
 
     useListenCalculationState();
 
-    const [calcDeviations] = useCalcDeviationsMutation();
+    useEffect(() => {
+        dispatch(deviationsActions.setDeviationForm(undefined));
+    }, [dispatch]);
 
     const closeMenu = () => {
         if (props.onClose) {
             props.onClose({}, "backdropClick");
-        }
-    };
-
-    const handleCalculateDeviations = async () => {
-        if (config.status !== AsyncStatus.Success) {
-            return;
-        }
-
-        dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
-
-        try {
-            let success = false;
-            if (isProjectV2) {
-                const serverConfig = uiConfigToServerConfig(updateObjectIds(config.data, objectGroups));
-                await calcDeviations({ projectId: scene.id, config: serverConfig }).unwrap();
-
-                success = true;
-            } else {
-                const res = await dataApi.fetch(`deviations/${scene.id}`).then((r) => r.json());
-
-                if (!res.success) {
-                    dispatch(
-                        deviationsActions.setCalculationStatus({
-                            status: DeviationCalculationStatus.Error,
-                            error: res.error ?? "Unknown error calculating deviations",
-                        })
-                    );
-                }
-            }
-
-            if (success) {
-                dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
-                dispatch(
-                    deviationsActions.setProfiles({
-                        status: AsyncStatus.Success,
-                        data: { ...config.data, rebuildRequired: false },
-                    })
-                );
-            }
-        } catch (ex) {
-            console.warn(ex);
-            dispatch(
-                deviationsActions.setCalculationStatus({
-                    status: DeviationCalculationStatus.Error,
-                    error: "Unknown error calculating deviations",
-                })
-            );
         }
     };
 
@@ -219,20 +173,6 @@ function WidgetMenu(props: MenuProps) {
                             </MenuItem>
                         </span>
                     </Tooltip>
-                    <Divider />
-                    <MenuItem
-                        onClick={handleCalculateDeviations}
-                        disabled={
-                            calculationStatus.status === DeviationCalculationStatus.Running ||
-                            calculationStatus.status === DeviationCalculationStatus.Loading ||
-                            isDeviationFormSet
-                        }
-                    >
-                        <ListItemIcon>
-                            <RestartAlt fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText>Calculate deviations</ListItemText>
-                    </MenuItem>
                 </div>
             </Tooltip>
         </Menu>

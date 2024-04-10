@@ -1,48 +1,38 @@
-import { Save } from "@mui/icons-material";
-import { Alert, Box, Button, FormControl, InputLabel, MenuItem, Select, Typography, useTheme } from "@mui/material";
+import { Alert, Box, FormControl, InputLabel, MenuItem, Select, Typography, useTheme } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
-import { selectDeviations } from "features/render";
-import { selectHasAdminCapabilities, selectProjectIsV2 } from "slices/explorer";
+import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus, hasFinished } from "types/misc";
 
 import { ColorStopList } from "../components/colorStop";
 import { DeviationsSnackbar } from "../components/deviationsSnackbar";
+import { GroupsAndColorsHud } from "../components/groupsAndColorsHud";
 import { MixFactorInput } from "../components/mixFactorInput";
+import { SubprofileSelect } from "../components/subprofileSelect";
+import { ViewSwitchSection } from "../components/viewSwitchSection";
 import {
     deviationsActions,
     selectDeviationCalculationStatus,
     selectDeviationProfileList,
     selectDeviationProfiles,
+    selectIsLegendFloating,
     selectSaveStatus,
     selectSelectedProfile,
 } from "../deviationsSlice";
 import { DeviationCalculationStatus } from "../deviationTypes";
-import { useSaveDeviationConfig } from "../hooks/useSaveDeviationConfig";
 
 export function Root() {
     const theme = useTheme();
     const isProjectV2 = useAppSelector(selectProjectIsV2);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const profiles = useAppSelector(selectDeviationProfiles);
     const profileList = useAppSelector(selectDeviationProfileList);
     const selectedProfile = useAppSelector(selectSelectedProfile);
     const dispatch = useAppDispatch();
-    const deviations = useAppSelector(selectDeviations);
     const saveStatus = useAppSelector(selectSaveStatus);
     const isSaving = saveStatus.status === AsyncStatus.Loading;
     const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
-
-    const saveConfig = useSaveDeviationConfig();
-
-    const handleSave = async () => {
-        if (profiles.status !== AsyncStatus.Success) {
-            return;
-        }
-
-        await saveConfig({ uiConfig: profiles.data, deviations });
-    };
+    const isLegendFloating = useAppSelector(selectIsLegendFloating);
 
     return (
         <>
@@ -67,17 +57,6 @@ export function Root() {
                         </Box>
                         <Box display="flex" justifyContent="space-between">
                             <MixFactorInput />
-
-                            {isAdmin && (
-                                <Button
-                                    color="grey"
-                                    onClick={handleSave}
-                                    disabled={isSaving || profileList.length === 0}
-                                >
-                                    <Save fontSize="small" sx={{ mr: 1 }} />
-                                    Save
-                                </Button>
-                            )}
                         </Box>
                     </Box>
 
@@ -95,15 +74,6 @@ export function Root() {
                                 {calculationStatus.status === DeviationCalculationStatus.Running ? (
                                     <Box p={2} pb={0}>
                                         <Alert severity="info">Deviation calculation is in progress.</Alert>
-                                    </Box>
-                                ) : profiles.data.rebuildRequired &&
-                                  calculationStatus.status !== DeviationCalculationStatus.Initial &&
-                                  calculationStatus.status !== DeviationCalculationStatus.Loading ? (
-                                    <Box p={2} pb={0}>
-                                        <Alert severity="warning">
-                                            Deviation configuration changed since the last calculation. Please rerun the
-                                            calculation.
-                                        </Alert>
                                     </Box>
                                 ) : undefined}
 
@@ -131,9 +101,10 @@ export function Root() {
                         )}
 
                         {selectedProfile && (
-                            <Box px={2}>
+                            <Box px={2} pb={2}>
                                 <ColorStopList
                                     colorStops={selectedProfile.colors!.colorStops}
+                                    absoluteValues={selectedProfile.colors!.absoluteValues}
                                     onChange={(colorStops) => {
                                         dispatch(
                                             deviationsActions.setProfile({
@@ -146,7 +117,18 @@ export function Root() {
                                             })
                                         );
                                     }}
+                                    disabled
                                 />
+
+                                <SubprofileSelect />
+
+                                <ViewSwitchSection />
+
+                                {!isLegendFloating && (
+                                    <Box mt={2}>
+                                        <GroupsAndColorsHud widgetMode absPos={false} />
+                                    </Box>
+                                )}
                             </Box>
                         )}
                     </ScrollBox>

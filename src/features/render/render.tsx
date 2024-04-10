@@ -143,7 +143,7 @@ export function Render3D() {
     });
 
     return (
-        <Box position="relative" width="100dvw" height="100dvh" sx={{ userSelect: "none" }}>
+        <Box position="relative" width="100dvw" height="100dvh" sx={{ userSelect: "none", overflow: "hidden" }}>
             {loadingHandles.length !== 0 && (
                 <Box position={"absolute"} top={0} width={1} display={"flex"} justifyContent={"center"}>
                     <LinearProgress />

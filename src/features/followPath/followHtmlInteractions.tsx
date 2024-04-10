@@ -1,11 +1,17 @@
-import { Box, Button, Slider, Typography } from "@mui/material";
-import { forwardRef, memo, SyntheticEvent, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { css } from "@emotion/react";
+import { Box, Button, Slider, styled } from "@mui/material";
+import { DuoMeasurementValues } from "@novorender/api";
+import { ReadonlyVec2 } from "gl-matrix";
+import { forwardRef, memo, SyntheticEvent, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectRightmost2dDeviationCoordinate } from "features/deviations";
+import { areArraysEqual } from "features/arcgis/utils";
+import { selectIsLegendFloating, selectRightmost2dDeviationCoordinate } from "features/deviations";
 import { GroupsAndColorsHud } from "features/deviations/components/groupsAndColorsHud";
-import { CameraType, selectCameraType, selectViewMode } from "features/render";
+import { useIsTopDownOrthoCamera } from "features/deviations/hooks/useIsTopDownOrthoCamera";
+import { CameraType, selectBackground, selectCameraType } from "features/render";
+import { selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import {
@@ -15,6 +21,8 @@ import {
     selectCurrentCenter,
     selectFollowObject,
     selectProfile,
+    selectSelectedPath,
+    selectView2d,
 } from "./followPathSlice";
 import { useFollowPathFromIds } from "./useFollowPathFromIds";
 import { useGoToProfile } from "./useGoToProfile";
@@ -26,83 +34,200 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
     const currentProfileCenter = useAppSelector(selectCurrentCenter);
     const viewMode = useAppSelector(selectViewMode);
     const rightmost2dDeviationCoordinate = useAppSelector(selectRightmost2dDeviationCoordinate);
+    const lastRightmost2dDeviationCorrdinate = useRef(rightmost2dDeviationCoordinate);
+    const followPathId = useAppSelector(selectSelectedPath);
+    const isView2d = useAppSelector(selectView2d);
     const cameraType = useAppSelector(selectCameraType);
+    const isTopDownOrtho = useIsTopDownOrthoCamera();
+    const isCrossSectionView = isView2d && cameraType === CameraType.Orthographic && !isTopDownOrtho;
+    const isLegendFloating = useAppSelector(selectIsLegendFloating);
+    const lastPt = useRef<ReadonlyVec2>();
+    const bgColor = useAppSelector(selectBackground);
+    const isBlackBg = bgColor && areArraysEqual(bgColor.color, [0, 0, 0, 1]);
+    const [centerLinePt, setCenterLinePt] = useState<ReadonlyVec2>();
+    const legendOffset = useRef(160);
+    const lastFov = useRef<number>();
 
     const containerRef = useRef<HTMLDivElement | null>(null);
+
+    const isFindingPoint = useRef(false);
+    const findPoint = useCallback(
+        async function findPoint() {
+            if (!view?.measure || !followPathId) {
+                setCenterLinePt(undefined);
+                return;
+            }
+
+            if (isFindingPoint.current) {
+                return;
+            }
+
+            isFindingPoint.current = true;
+            const segment = await view.measure.core.pickCurveSegment(followPathId);
+            if (segment) {
+                const measure = await view.measure.core.measure(segment, {
+                    drawKind: "vertex",
+                    ObjectId: -1,
+                    parameter: view.renderState.camera.position,
+                });
+                if (measure) {
+                    const duoMeasure = measure as DuoMeasurementValues;
+                    if (duoMeasure.measureInfoB && typeof duoMeasure.measureInfoB.parameter === "number") {
+                        const pt3d = duoMeasure.measureInfoB.point;
+                        if (pt3d) {
+                            const pt = view.measure.draw.toMarkerPoints([pt3d])[0];
+                            setCenterLinePt(pt);
+                        }
+                    }
+                }
+            }
+            isFindingPoint.current = false;
+        },
+        [view?.measure, view?.renderState.camera, followPathId]
+    );
 
     useImperativeHandle(
         ref,
         () => ({
             update: () => {
-                if (!view?.measure || !currentProfileCenter || !containerRef.current) {
+                if (!view?.measure) {
                     return;
                 }
 
-                const pt = view.measure.draw.toMarkerPoints([currentProfileCenter])[0]!;
-                if (pt) {
-                    containerRef.current.style.left = `${pt[0]}px`;
-                    containerRef.current.style.top = `${pt[1]}px`;
+                if (currentProfileCenter && containerRef.current) {
+                    const pt = view.measure.draw.toMarkerPoints([currentProfileCenter])[0];
+                    if (pt) {
+                        containerRef.current.style.left = `${pt[0]}px`;
+                        containerRef.current.style.top = `${pt[1]}px`;
+                    }
                 }
+
+                findPoint();
             },
         }),
-        [view?.measure, currentProfileCenter]
+        [view?.measure, currentProfileCenter, findPoint]
     );
 
-    if (
-        !view?.measure ||
-        !currentProfileCenter ||
-        viewMode !== ViewMode.FollowPath ||
-        cameraType !== CameraType.Orthographic
-    ) {
-        return null;
-    }
+    useEffect(() => {
+        findPoint();
 
-    const pt = view.measure.draw.toMarkerPoints([currentProfileCenter])[0]!;
+        async function findPoint() {
+            if (!view?.measure || !followPathId) {
+                setCenterLinePt(undefined);
+                return;
+            }
 
-    if (!pt) {
-        return null;
-    }
+            const segment = await view.measure.core.pickCurveSegment(followPathId);
+            if (segment) {
+                const measure = await view.measure.core.measure(segment, {
+                    drawKind: "vertex",
+                    ObjectId: -1,
+                    parameter: view.renderState.camera.position,
+                });
+                if (measure) {
+                    const duoMeasure = measure as DuoMeasurementValues;
+                    if (duoMeasure.measureInfoB && typeof duoMeasure.measureInfoB.parameter === "number") {
+                        const pt3d = duoMeasure.measureInfoB.point;
+                        if (pt3d) {
+                            const pt = view.measure.draw.toMarkerPoints([pt3d])[0];
+                            setCenterLinePt(pt);
+                        }
+                    }
+                }
+            }
+        }
+    }, [view?.measure, view?.renderState.camera, followPathId]);
 
-    let legendOffset = 160;
-    if (rightmost2dDeviationCoordinate) {
-        legendOffset = Math.max(legendOffset, rightmost2dDeviationCoordinate - pt[0] + 50);
-    }
+    if (isCrossSectionView) {
+        if (!view?.measure || !currentProfileCenter || viewMode !== ViewMode.FollowPath) {
+            return null;
+        }
 
-    return (
-        <div
-            style={{
-                left: `${pt[0]}px`,
-                top: `${pt[1]}px`,
-                position: "absolute",
-            }}
-            ref={containerRef}
-        >
+        const pt = view.measure.draw.toMarkerPoints([currentProfileCenter])[0]! || lastPt.current;
+
+        if (!pt) {
+            return null;
+        }
+
+        lastPt.current = pt;
+
+        const fov = view.renderState.camera.fov;
+        if (
+            Number.isFinite(rightmost2dDeviationCoordinate) &&
+            rightmost2dDeviationCoordinate !== lastRightmost2dDeviationCorrdinate.current
+        ) {
+            legendOffset.current = Math.max(160, rightmost2dDeviationCoordinate! - pt[0] + 50);
+            lastRightmost2dDeviationCorrdinate.current = rightmost2dDeviationCoordinate!;
+            lastFov.current = fov;
+        }
+
+        const k = (lastFov.current ?? fov) / fov;
+        let scaledLegendOffset = legendOffset.current * k;
+        if (scaledLegendOffset > 500) {
+            scaledLegendOffset = 140;
+        }
+
+        return (
             <div
                 style={{
+                    left: `${pt[0]}px`,
+                    top: `${pt[1]}px`,
                     position: "absolute",
-                    transform: `translate(-100px, -180px)`,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    width: "200px",
+                    color: isBlackBg ? "white" : undefined,
+                    fontWeight: 600,
                 }}
+                ref={containerRef}
             >
-                <FollowPathControls />
-            </div>
+                <div
+                    style={{
+                        position: "absolute",
+                        transform: `translate(-100px, -80px)`,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        width: "200px",
+                    }}
+                >
+                    <FollowPathControls />
+                </div>
 
-            <div
+                {isLegendFloating && (
+                    <div
+                        style={{
+                            position: "absolute",
+                            transform: `translate(${scaledLegendOffset}px, 0px)`,
+                            width: "400px",
+                            bottom: 0,
+                        }}
+                    >
+                        <GroupsAndColorsHud absPos />
+                    </div>
+                )}
+            </div>
+        );
+    } else if (centerLinePt && isLegendFloating) {
+        return (
+            <LegendAlongCenterLine
                 style={{
-                    position: "absolute",
-                    transform: `translate(${legendOffset}px, 0px)`,
-                    width: "200px",
-                    bottom: 0,
+                    transform: `translate(${centerLinePt[0]}px, ${centerLinePt[1]}px)`,
                 }}
             >
-                <GroupsAndColorsHud />
-            </div>
-        </div>
-    );
+                <GroupsAndColorsHud absPos={false} />
+            </LegendAlongCenterLine>
+        );
+    }
 });
+
+const LegendAlongCenterLine = styled("div")(
+    ({ theme }) => css`
+        position: absolute;
+        max-width: 400px;
+        padding: 1rem;
+        margin: 1rem;
+        border-radius: ${theme.shape.borderRadius}px;
+        background: ${theme.palette.background.paper};
+    `
+);
 
 const FollowPathControls = memo(function FollowPathControls() {
     const {
@@ -148,24 +273,28 @@ const FollowPathControls = memo(function FollowPathControls() {
     };
 
     return (
-        <>
-            <Button
-                variant="contained"
-                color="grey"
-                onClick={() => {
-                    const fpObj =
-                        followObject ?? (following.status === AsyncStatus.Success ? following.data : undefined);
+        <Box position="absolute">
+            <Box position="absolute" bottom="70px" sx={{ translate: "-50% 0" }}>
+                <Button
+                    variant="contained"
+                    color="grey"
+                    onClick={() => {
+                        const fpObj =
+                            followObject ?? (following.status === AsyncStatus.Success ? following.data : undefined);
 
-                    if (fpObj) {
-                        goToProfile({ fpObj, p: Number(profile), keepOffset: false });
-                    }
-                }}
-            >
-                Recenter
-            </Button>
+                        if (fpObj) {
+                            goToProfile({ fpObj, p: Number(profile), keepOffset: false });
+                        }
+                    }}
+                >
+                    Recenter
+                </Button>
+            </Box>
 
-            <Typography mt={2}>Clipping: {clipping} m</Typography>
-            <Box mx={2} width="100%">
+            <Box position="absolute" bottom="36px" whiteSpace="nowrap" textAlign="center" sx={{ translate: "-50% 0" }}>
+                Clipping: {clipping} m
+            </Box>
+            <Box position="absolute" bottom="0px" width="200px" sx={{ translate: "-50% 0" }}>
                 <Slider
                     getAriaLabel={() => "Clipping far"}
                     value={clipping}
@@ -177,6 +306,6 @@ const FollowPathControls = memo(function FollowPathControls() {
                     valueLabelDisplay="off"
                 />
             </Box>
-        </>
+        </Box>
     );
 });

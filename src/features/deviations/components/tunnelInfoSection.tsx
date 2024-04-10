@@ -29,7 +29,7 @@ export function TunnelInfoSection({
                     size="large"
                     onClick={() => onChange({ ...tunnelInfo, enabled: true })}
                 >
-                    <Add sx={{ mr: 1 }} /> Add tunnel diameter
+                    <Add sx={{ mr: 1 }} /> Add tunnel height
                 </Button>
             </Box>
         );
