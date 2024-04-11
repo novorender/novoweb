@@ -10,7 +10,7 @@ import { measureActions } from "features/measure";
 import { renderActions } from "features/render";
 import { ViewMode } from "types/misc";
 
-import { selectSelectedCenterLineId, selectSelectedProfile } from "../deviationsSlice";
+import { selectActive, selectSelectedCenterLineId, selectSelectedProfile } from "../deviationsSlice";
 
 export function useSetCenterLineFollowPath() {
     const {
@@ -26,6 +26,7 @@ export function useSetCenterLineFollowPath() {
     const followPathId = centerLine?.objectId;
     const dispatchHighlighted = useDispatchHighlighted();
     const installedFollowPathId = useRef<number>();
+    const active = useAppSelector(selectActive);
 
     const goToProfile = useGoToProfile();
     const goToProfileRef = useRef(goToProfile);
@@ -60,7 +61,7 @@ export function useSetCenterLineFollowPath() {
         setFollowPath();
 
         async function setFollowPath() {
-            if (!followPathId || !centerLine || !view) {
+            if (!followPathId || !centerLine || !view || !active) {
                 restore();
                 return;
             }
@@ -128,5 +129,5 @@ export function useSetCenterLineFollowPath() {
 
             installedFollowPathId.current = followPathId;
         }
-    }, [view, followPathId, dispatch, dispatchHighlighted, centerLine, restore]);
+    }, [view, followPathId, dispatch, dispatchHighlighted, centerLine, restore, active]);
 }

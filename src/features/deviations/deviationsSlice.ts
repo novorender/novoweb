@@ -26,7 +26,7 @@ const initialState = {
     // in follow path 2D view, which is used to position the legend
     rightmost2dDeviationCoordinate: undefined as number | undefined,
     isLegendFloating: true,
-    active: true,
+    active: false,
 };
 
 type State = typeof initialState;
