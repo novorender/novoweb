@@ -26,6 +26,7 @@ const initialState = {
     // in follow path 2D view, which is used to position the legend
     rightmost2dDeviationCoordinate: undefined as number | undefined,
     isLegendFloating: true,
+    active: true,
 };
 
 type State = typeof initialState;
@@ -39,6 +40,9 @@ export const deviationsSlice = createSlice({
         },
         setProfiles: (state, action: PayloadAction<State["config"]>) => {
             state.config = action.payload;
+        },
+        setActive: (state, action: PayloadAction<State["active"]>) => {
+            state.active = action.payload;
         },
         setProfile: (
             state,
@@ -149,6 +153,7 @@ export const selectRightmost2dDeviationCoordinate = (state: RootState) =>
     state.deviations.rightmost2dDeviationCoordinate;
 export const selectIsLegendFloating = (state: RootState) => state.deviations.isLegendFloating;
 export const selectDeviationLegendGroups = createSelector([selectSelectedSubprofile], (sp) => sp?.legendGroups);
+export const selectActive = (state: RootState) => state.deviations.active;
 
 const { actions, reducer } = deviationsSlice;
 export { actions as deviationsActions, reducer as deviationsReducer };

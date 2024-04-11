@@ -11,6 +11,7 @@ import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGro
 import { ObjectVisibility, renderActions, selectDefaultVisibility } from "features/render";
 
 import {
+    selectActive,
     selectDeviationLegendGroups,
     selectSelectedCenterLineFollowPathId,
     selectSelectedSubprofile,
@@ -25,6 +26,7 @@ export function useHighlightDeviation() {
     const dispatchObjectGroups = useDispatchObjectGroups();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const subprofile = useAppSelector(selectSelectedSubprofile);
+    const active = useAppSelector(selectActive);
 
     const objectGroupsRef = useRef(objectGroups);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
@@ -48,7 +50,7 @@ export function useHighlightDeviation() {
     }, [restore]);
 
     useEffect(() => {
-        if (!legendGroups?.length) {
+        if (!legendGroups?.length || !active) {
             restore();
             return;
         }
@@ -82,10 +84,11 @@ export function useHighlightDeviation() {
         restore,
         followPathId,
         objectGroups,
+        active,
     ]);
 
     useEffect(() => {
-        if (!subprofile?.to) {
+        if (!subprofile?.to || !active) {
             return;
         }
 
@@ -103,5 +106,5 @@ export function useHighlightDeviation() {
         });
 
         dispatchObjectGroups(objectGroupsActions.set(objectGroups));
-    }, [dispatchObjectGroups, subprofile?.from, subprofile?.to, subprofile?.favorites]);
+    }, [dispatchObjectGroups, subprofile?.from, subprofile?.to, subprofile?.favorites, active]);
 }

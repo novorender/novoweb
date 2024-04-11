@@ -7,7 +7,7 @@ import { forwardRef, memo, SyntheticEvent, useCallback, useEffect, useImperative
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
-import { selectIsLegendFloating, selectRightmost2dDeviationCoordinate } from "features/deviations";
+import { selectActive, selectIsLegendFloating, selectRightmost2dDeviationCoordinate } from "features/deviations";
 import { GroupsAndColorsHud } from "features/deviations/components/groupsAndColorsHud";
 import { useIsTopDownOrthoCamera } from "features/deviations/hooks/useIsTopDownOrthoCamera";
 import { CameraType, selectBackground, selectCameraType } from "features/render";
@@ -47,6 +47,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
     const [centerLinePt, setCenterLinePt] = useState<ReadonlyVec2>();
     const legendOffset = useRef(160);
     const lastFov = useRef<number>();
+    const active = useAppSelector(selectActive);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -112,7 +113,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
         findPoint();
 
         async function findPoint() {
-            if (!view?.measure || !followPathId) {
+            if (!view?.measure || !followPathId || !active) {
                 setCenterLinePt(undefined);
                 return;
             }
@@ -136,7 +137,11 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                 }
             }
         }
-    }, [view?.measure, view?.renderState.camera, followPathId]);
+    }, [view?.measure, view?.renderState.camera, followPathId, active]);
+
+    if (!active) {
+        return;
+    }
 
     if (isCrossSectionView) {
         if (!view?.measure || !currentProfileCenter || viewMode !== ViewMode.FollowPath) {

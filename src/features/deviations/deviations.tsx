@@ -33,9 +33,6 @@ export default function Deviations() {
     const minimized = useAppSelector(selectMinimized) === featuresConfig.deviations.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.deviations.key);
 
-    // useSetCenterLineFollowPath();
-    // useHighlightDeviation();
-
     return (
         <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
@@ -87,6 +84,10 @@ function WidgetMenu(props: MenuProps) {
     const selectedProfile = useAppSelector(selectSelectedProfile);
     const isDeviationFormSet = useAppSelector((state) => selectDeviationForm(state) !== undefined);
     const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        dispatch(deviationsActions.setActive(true));
+    }, [dispatch]);
 
     useListenCalculationState();
 
