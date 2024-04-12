@@ -133,7 +133,7 @@ export function ViewSwitchSection() {
                             disabled={!selectedCenterLine}
                         />
                     }
-                    label={<Box>Cross section</Box>}
+                    label={<Box>Follow path</Box>}
                 />
             </Box>
             <Box>

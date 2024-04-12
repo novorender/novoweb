@@ -13,7 +13,7 @@ import { AsyncStatus } from "types/misc";
 import { getAssetUrl, uniqueArray } from "utils/misc";
 import { searchByPatterns } from "utils/search";
 
-import { deviationsActions, selectDeviationProfiles, selectSelectedProfile } from "./deviationsSlice";
+import { deviationsActions, selectActive, selectDeviationProfiles, selectSelectedProfile } from "./deviationsSlice";
 import { DeviationType, FavoriteGroupState, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
 import { useHighlightDeviation } from "./hooks/useHighlightDeviation";
 import { useSetCenterLineFollowPath } from "./hooks/useSetCenterLineFollowPath";
@@ -34,6 +34,7 @@ export function useHandleDeviations() {
     const profile = useAppSelector(selectSelectedProfile);
     const deviation = useAppSelector(selectDeviations);
     const [abortController] = useAbortController();
+    const active = useAppSelector(selectActive);
 
     const [getDeviationProfiles] = useLazyGetDeviationProfilesQuery();
 
@@ -120,7 +121,7 @@ export function useHandleDeviations() {
 
     // Set current deviation and colors
     useEffect(() => {
-        if (profile) {
+        if (profile && active) {
             let colorStops = profile.colors.colorStops.slice();
             if (profile.colors.absoluteValues) {
                 colorStops = accountForAbsValues(colorStops);
@@ -136,7 +137,7 @@ export function useHandleDeviations() {
                 })
             );
         }
-    }, [dispatch, profile]);
+    }, [dispatch, profile, active]);
 
     // Promote current deviation to render state
     useEffect(
@@ -146,7 +147,7 @@ export function useHandleDeviations() {
             }
 
             let patchedDeviation = { ...deviation };
-            if (deviation.index === -1) {
+            if (deviation.index === -1 || !active) {
                 patchedDeviation = {
                     ...deviation,
                     index: 0,
@@ -155,7 +156,7 @@ export function useHandleDeviations() {
             }
             view.modifyRenderState({ points: { deviation: patchedDeviation } });
         },
-        [view, deviation]
+        [view, deviation, active]
     );
 }
 
