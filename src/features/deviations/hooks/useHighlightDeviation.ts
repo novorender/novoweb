@@ -14,8 +14,10 @@ import {
     selectActive,
     selectDeviationLegendGroups,
     selectSelectedCenterLineFollowPathId,
+    selectSelectedProfile,
     selectSelectedSubprofile,
 } from "../deviationsSlice";
+import { DeviationType } from "../deviationTypes";
 
 export function useHighlightDeviation() {
     const legendGroups = useAppSelector(selectDeviationLegendGroups);
@@ -25,6 +27,7 @@ export function useHighlightDeviation() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchObjectGroups = useDispatchObjectGroups();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
+    const deviationType = useAppSelector(selectSelectedProfile)?.deviationType;
     const subprofile = useAppSelector(selectSelectedSubprofile);
     const active = useAppSelector(selectActive);
 
@@ -88,13 +91,17 @@ export function useHighlightDeviation() {
     ]);
 
     useEffect(() => {
-        if (!subprofile?.to || !active) {
+        if (!subprofile?.from || !subprofile?.to || !active) {
             return;
         }
 
-        const ids = new Set(
-            [...subprofile.to.groupIds, ...subprofile.favorites].filter((id) => !subprofile.from.groupIds.includes(id))
-        );
+        const [coloredGroups, otherGroups] =
+            deviationType === DeviationType.PointToTriangle
+                ? [subprofile.from.groupIds, subprofile.to.groupIds]
+                : [subprofile.to.groupIds, subprofile.from.groupIds];
+
+        const ids = new Set([...otherGroups, ...subprofile.favorites].filter((id) => !coloredGroups.includes(id)));
+
         const objectGroups = objectGroupsRef.current.map((group) => {
             if (ids.has(group.id)) {
                 return { ...group, status: GroupStatus.Selected };
@@ -106,5 +113,5 @@ export function useHighlightDeviation() {
         });
 
         dispatchObjectGroups(objectGroupsActions.set(objectGroups));
-    }, [dispatchObjectGroups, subprofile?.from, subprofile?.to, subprofile?.favorites, active]);
+    }, [dispatchObjectGroups, subprofile?.from, subprofile?.to, subprofile?.favorites, active, deviationType]);
 }

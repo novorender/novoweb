@@ -295,14 +295,16 @@ function populateMissingData(profile: UiDeviationProfile): UiDeviationProfile {
             return {
                 ...sp,
                 favorites: sp.favorites ?? [],
-                legendGroups: makeLegendGroups(sp.from.groupIds ?? []),
+                legendGroups: makeLegendGroups(
+                    (profile.deviationType === DeviationType.PointToTriangle ? sp.from.groupIds : sp.to.groupIds) ?? []
+                ),
             };
         }),
     };
 }
 
-export function makeLegendGroups(fromGroupIds: string[]): FavoriteGroupState[] {
-    return uniqueArray(fromGroupIds).map((id) => ({
+export function makeLegendGroups(groupIds: string[]): FavoriteGroupState[] {
+    return uniqueArray(groupIds).map((id) => ({
         id,
         status: GroupStatus.Selected,
     }));
