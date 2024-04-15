@@ -323,7 +323,7 @@ function objectIdSet(idSets: (Set<number> | number[])[]) {
     const range = maxId - minId;
     const threshold = 0.8; // Allow array to have up to 20% of waste space
 
-    if (count > range * threshold) {
+    if (count > Math.max(1, range * threshold)) {
         const allIds = new Array<boolean>(range + 1);
         let count = 0;
         idSets.forEach((ids) =>
