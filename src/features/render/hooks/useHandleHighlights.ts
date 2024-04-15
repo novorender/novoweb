@@ -301,7 +301,7 @@ async function fillActiveGroupIds(sceneId: string, groups: ObjectGroup[]): Promi
  * The idea is to use array (index is object ID) instead of set if ID range is
  * so array is not too big and pretty close or smaller than total ID count of the underlying sets.
  * @param idSets Array of object ID sets or arrays
- * @returns Combined ID
+ * @returns Sorted combined ID array
  */
 function objectIdSet(idSets: (Set<number> | number[])[]) {
     // Find object ID range
@@ -324,6 +324,7 @@ function objectIdSet(idSets: (Set<number> | number[])[]) {
     const threshold = 0.8; // Allow array to have up to 20% of waste space
 
     if (count > Math.max(1, range * threshold)) {
+        // Use array
         const allIds = new Array<boolean>(range + 1);
         let count = 0;
         idSets.forEach((ids) =>
@@ -348,6 +349,7 @@ function objectIdSet(idSets: (Set<number> | number[])[]) {
             },
         };
     } else {
+        // Use set
         const allIds = new Set<number>();
         idSets.forEach((ids) => ids.forEach((id) => allIds.add(id)));
 
