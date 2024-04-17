@@ -321,30 +321,34 @@ function objectIdSet(idSets: (Set<number> | number[])[]) {
     });
 
     const range = maxId - minId;
-    const threshold = 0.8; // Allow array to have up to 20% of waste space
 
-    if (count > Math.max(1, range * threshold)) {
+    // We use single byte array which is going to much more efficient than set
+    // so here we allow array to have 75% of waste space (actually memory profiler shows set mem consumption is a lot larger),
+    // which means if range is 400 and there are only 100 items - still use array
+    const threshold = 0.25;
+
+    if (count >= Math.max(1, range * threshold)) {
         // Use array
-        const allIds = new Array<boolean>(range + 1);
+        const allIds = new Uint8Array(range + 1);
         let count = 0;
         idSets.forEach((ids) =>
             ids.forEach((id) => {
-                if (!allIds[id - minId]) {
-                    allIds[id - minId] = true;
+                if (allIds[id - minId] === 0) {
+                    allIds[id - minId] = 1;
                     count++;
                 }
             })
         );
         return {
-            has: (id: number) => allIds[id - minId],
+            has: (id: number) => allIds[id - minId] === 1,
             toArray: () => {
                 const result = new Uint32Array(count);
                 let j = 0;
-                for (let i = 0; i < allIds.length; i++) {
-                    if (allIds[i]) {
+                allIds.forEach((flag, i) => {
+                    if (flag === 1) {
                         result[j++] = i + minId;
                     }
-                }
+                });
                 return result;
             },
         };
