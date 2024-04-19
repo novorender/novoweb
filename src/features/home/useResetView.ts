@@ -71,7 +71,6 @@ export function useResetView() {
                     )
                 )
             );
-            dispatch(deviationsActions.setActive(false));
         } catch (e) {
             console.warn(e);
         }

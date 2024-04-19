@@ -1,12 +1,15 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { type RootState } from "app";
+import { GroupStatus } from "contexts/objectGroups";
+import { resetView, selectBookmark } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import {
     DeviationCalculationStatus,
     DeviationForm,
-    FavoriteGroupState,
+    DeviationType,
+    LegendGroupInfo,
     UiDeviationConfig,
     UiDeviationProfile,
 } from "./deviationTypes";
@@ -25,8 +28,8 @@ const initialState = {
     // Stores pixel position of the rightmost deviation label
     // in follow path 2D view, which is used to position the legend
     rightmost2dDeviationCoordinate: undefined as number | undefined,
+    hiddenLegendGroups: {} as { [profileId: string]: { [subprofileIndex: number]: string[] } },
     isLegendFloating: true,
-    active: false,
 };
 
 type State = typeof initialState;
@@ -41,8 +44,35 @@ export const deviationsSlice = createSlice({
         setProfiles: (state, action: PayloadAction<State["config"]>) => {
             state.config = action.payload;
         },
-        setActive: (state, action: PayloadAction<State["active"]>) => {
-            state.active = action.payload;
+        // Deviations can be loaded after selected profile ID is set in case of bookmarks.
+        // In this case only update selected profile/subprofile info if they are invalid.
+        initFromProfileIndex: (state, action: PayloadAction<{ index: number }>) => {
+            if (state.config.status !== AsyncStatus.Success) {
+                return;
+            }
+
+            const { profiles } = state.config.data;
+            if (profiles.length === 0) {
+                state.selectedProfileId = undefined;
+                state.selectedSubprofileIndex = undefined;
+            }
+
+            const { index } = action.payload;
+            if (!state.selectedProfileId || !profiles.some((p) => p.id === state.selectedProfileId)) {
+                if (index < profiles.length) {
+                    state.selectedProfileId = profiles[index].id;
+                } else {
+                    state.selectedProfileId = profiles[0].id;
+                }
+            }
+
+            const profile = profiles.find((p) => p.id === state.selectedProfileId)!;
+            if (
+                state.selectedSubprofileIndex === undefined ||
+                state.selectedSubprofileIndex >= profile.subprofiles.length
+            ) {
+                state.selectedSubprofileIndex = 0;
+            }
         },
         setProfile: (
             state,
@@ -105,19 +135,68 @@ export const deviationsSlice = createSlice({
         setIsLegendFloating: (state, action: PayloadAction<State["isLegendFloating"]>) => {
             state.isLegendFloating = action.payload;
         },
-        setSelectedSubprofileLegendGroups: (state, action: PayloadAction<FavoriteGroupState[]>) => {
-            if (
-                state.config.status !== AsyncStatus.Success ||
-                !state.selectedProfileId ||
-                state.selectedSubprofileIndex === undefined
-            ) {
+        resetHiddenLegendGroupsForProfile: (state, action: PayloadAction<{ profileId: string }>) => {
+            const { profileId } = action.payload;
+            if (state.hiddenLegendGroups[profileId]) {
+                state.hiddenLegendGroups[profileId] = {};
+            }
+        },
+        toggleHiddenLegendGroup: (state, action: PayloadAction<{ groupId: string; hidden: boolean }>) => {
+            const profileId = state.selectedProfileId;
+            const subprofileIndex = state.selectedSubprofileIndex;
+            if (!profileId || subprofileIndex === undefined) {
                 return;
             }
 
-            const profile = state.config.data.profiles.find((p) => p.id === state.selectedProfileId)!;
-            const sp = profile.subprofiles[state.selectedSubprofileIndex];
-            sp.legendGroups = action.payload;
+            const { groupId, hidden } = action.payload;
+            let profile = state.hiddenLegendGroups[profileId];
+            if (!profile) {
+                profile = {};
+                state.hiddenLegendGroups[profileId] = profile;
+            }
+            if (!profile[subprofileIndex]) {
+                profile[subprofileIndex] = [];
+            }
+            const alreadyAdded = profile[subprofileIndex].includes(groupId);
+            if (hidden && !alreadyAdded) {
+                profile[subprofileIndex].push(groupId);
+            } else if (!hidden && alreadyAdded) {
+                profile[subprofileIndex] = profile[subprofileIndex].filter((id) => id !== groupId);
+            }
         },
+    },
+    extraReducers: (builder) => {
+        builder.addCase(selectBookmark, (state, action) => {
+            const { deviations } = action.payload;
+            if (!deviations) {
+                return;
+            }
+
+            if (deviations.isLegendFloating !== undefined) {
+                state.isLegendFloating = deviations.isLegendFloating;
+            }
+            state.hiddenLegendGroups = {};
+            if (deviations.profileId) {
+                state.selectedProfileId = deviations.profileId;
+                if (deviations.subprofileIndex !== undefined) {
+                    state.selectedSubprofileIndex = deviations.subprofileIndex;
+                } else {
+                    state.selectedSubprofileIndex = 0;
+                }
+
+                if (deviations.hiddenGroupIds) {
+                    state.hiddenLegendGroups[state.selectedProfileId] = {
+                        [state.selectedSubprofileIndex]: deviations.hiddenGroupIds,
+                    };
+                }
+                state.deviationForm = undefined;
+                state.rightmost2dDeviationCoordinate = undefined;
+            }
+        });
+        builder.addCase(resetView, (state, _action) => {
+            state.hiddenLegendGroups = {};
+            state.isLegendFloating = true;
+        });
     },
 });
 
@@ -152,8 +231,39 @@ export const selectSaveStatus = (state: RootState) => state.deviations.saveStatu
 export const selectRightmost2dDeviationCoordinate = (state: RootState) =>
     state.deviations.rightmost2dDeviationCoordinate;
 export const selectIsLegendFloating = (state: RootState) => state.deviations.isLegendFloating;
-export const selectDeviationLegendGroups = createSelector([selectSelectedSubprofile], (sp) => sp?.legendGroups);
-export const selectActive = (state: RootState) => state.deviations.active;
+export const selectHiddenLegendGroups = (state: RootState) => state.deviations.hiddenLegendGroups;
+const selectCurrentHiddenLegendGroups = createSelector(
+    [selectSelectedProfileId, selectSelectedSubprofileIndex, selectHiddenLegendGroups],
+    (profileId, spIndex, allHiddenGroups) => {
+        if (!profileId || spIndex === undefined) {
+            return;
+        }
+        return allHiddenGroups[profileId]?.[spIndex];
+    }
+);
+export const selectDeviationLegendGroups = createSelector(
+    [selectSelectedProfile, selectSelectedSubprofileIndex, selectSelectedSubprofile, selectCurrentHiddenLegendGroups],
+    (profile, spIndex, sp, hiddenGroupIds) => {
+        if (!profile || spIndex === undefined || !sp) {
+            return [];
+        }
+
+        const [colored, others] =
+            profile.deviationType === DeviationType.PointToTriangle
+                ? [sp.from.groupIds, sp.to.groupIds]
+                : [sp.to.groupIds, sp.from.groupIds];
+
+        const allOthers = [...others, ...sp.favorites].filter((id) => !colored.includes(id));
+
+        return [
+            ...colored.map((id) => ({ id, isDeviationColored: true })),
+            ...allOthers.map((id) => ({ id, isDeviationColored: false })),
+        ].map((g) => ({
+            ...g,
+            status: hiddenGroupIds?.includes(g.id) ? GroupStatus.Hidden : GroupStatus.Selected,
+        })) as LegendGroupInfo[];
+    }
+);
 
 const { actions, reducer } = deviationsSlice;
 export { actions as deviationsActions, reducer as deviationsReducer };

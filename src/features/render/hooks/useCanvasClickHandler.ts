@@ -107,7 +107,9 @@ export function useCanvasClickHandler({
         pointerDownStateRef.current = undefined;
         const pickCameraPlane =
             cameraState.type === CameraType.Orthographic &&
-            (viewMode === ViewMode.CrossSection || viewMode === ViewMode.FollowPath);
+            (viewMode === ViewMode.CrossSection ||
+                viewMode === ViewMode.FollowPath ||
+                viewMode === ViewMode.Deviations);
 
         const isTouch = evt.nativeEvent instanceof PointerEvent && evt.nativeEvent.pointerType === "touch";
         const pickOutline = measure.snapKind === "clippingOutline" && picker === Picker.Measurement;

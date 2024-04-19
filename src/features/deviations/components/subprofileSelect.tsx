@@ -14,7 +14,8 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useObjectGroups } from "contexts/objectGroups";
 import { selectLandXmlPaths } from "features/followPath";
 import { useLoadLandXmlPath } from "features/followPath/hooks/useLoadLandXmlPath";
-import { AsyncStatus } from "types/misc";
+import { renderActions } from "features/render";
+import { AsyncStatus, ViewMode } from "types/misc";
 
 import { deviationsActions, selectSelectedProfile, selectSelectedSubprofileIndex } from "../deviationsSlice";
 import { DELETED_DEVIATION_LABEL } from "../utils";
@@ -77,6 +78,7 @@ export function SubprofileSelect() {
 
         const spIndex = Number(e.target.value);
 
+        dispatch(renderActions.setViewMode(ViewMode.Deviations));
         dispatch(deviationsActions.setSelectedSubprofileIndex(spIndex));
     };
 

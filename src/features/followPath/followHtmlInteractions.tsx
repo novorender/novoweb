@@ -7,7 +7,7 @@ import { forwardRef, memo, SyntheticEvent, useCallback, useEffect, useImperative
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
-import { selectActive, selectIsLegendFloating, selectRightmost2dDeviationCoordinate } from "features/deviations";
+import { selectIsLegendFloating, selectRightmost2dDeviationCoordinate } from "features/deviations";
 import { GroupsAndColorsHud } from "features/deviations/components/groupsAndColorsHud";
 import { useIsTopDownOrthoCamera } from "features/deviations/hooks/useIsTopDownOrthoCamera";
 import { CameraType, selectBackground, selectCameraType } from "features/render";
@@ -47,7 +47,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
     const [centerLinePt, setCenterLinePt] = useState<ReadonlyVec2>();
     const legendOffset = useRef(160);
     const lastFov = useRef<number>();
-    const active = useAppSelector(selectActive);
+    const isActive = viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations;
 
     const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -113,7 +113,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
         findPoint();
 
         async function findPoint() {
-            if (!view?.measure || !followPathId || !active) {
+            if (!view?.measure || !followPathId || !isActive) {
                 setCenterLinePt(undefined);
                 return;
             }
@@ -137,14 +137,14 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                 }
             }
         }
-    }, [view?.measure, view?.renderState.camera, followPathId, active]);
+    }, [view?.measure, view?.renderState.camera, followPathId, isActive]);
 
-    if (!active) {
+    if (!isActive) {
         return;
     }
 
     if (isCrossSectionView) {
-        if (!view?.measure || !currentProfileCenter || viewMode !== ViewMode.FollowPath) {
+        if (!view?.measure || !currentProfileCenter) {
             return null;
         }
 
@@ -196,7 +196,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                     <FollowPathControls />
                 </div>
 
-                {isLegendFloating && (
+                {viewMode === ViewMode.Deviations && isLegendFloating && (
                     <div
                         style={{
                             position: "absolute",
@@ -210,7 +210,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                 )}
             </div>
         );
-    } else if (centerLinePt && isLegendFloating) {
+    } else if (viewMode === ViewMode.Deviations && centerLinePt && isLegendFloating) {
         return (
             <LegendAlongCenterLine
                 style={{

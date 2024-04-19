@@ -8,16 +8,14 @@ import {
 } from "contexts/highlightCollections";
 import { useDispatchHighlighted } from "contexts/highlighted";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
-import { ObjectVisibility, renderActions, selectDefaultVisibility } from "features/render";
+import { ObjectVisibility, renderActions, selectDefaultVisibility, selectViewMode } from "features/render";
+import { ViewMode } from "types/misc";
 
 import {
-    selectActive,
     selectDeviationLegendGroups,
     selectSelectedCenterLineFollowPathId,
     selectSelectedProfile,
-    selectSelectedSubprofile,
 } from "../deviationsSlice";
-import { DeviationType } from "../deviationTypes";
 
 export function useHighlightDeviation() {
     const legendGroups = useAppSelector(selectDeviationLegendGroups);
@@ -28,8 +26,7 @@ export function useHighlightDeviation() {
     const dispatchObjectGroups = useDispatchObjectGroups();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const deviationType = useAppSelector(selectSelectedProfile)?.deviationType;
-    const subprofile = useAppSelector(selectSelectedSubprofile);
-    const active = useAppSelector(selectActive);
+    const active = useAppSelector(selectViewMode) === ViewMode.Deviations;
 
     const objectGroupsRef = useRef(objectGroups);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
@@ -52,6 +49,7 @@ export function useHighlightDeviation() {
         return restore;
     }, [restore]);
 
+    // Update SelectedDeviation highlight collection with deviation-colored groups
     useEffect(() => {
         if (!legendGroups?.length || !active) {
             restore();
@@ -60,7 +58,7 @@ export function useHighlightDeviation() {
 
         const ids = new Set<number>();
         for (const fav of legendGroups) {
-            if (fav.status !== GroupStatus.Hidden) {
+            if (fav.isDeviationColored && fav.status !== GroupStatus.Hidden) {
                 const group = objectGroups.find((g) => g.id === fav.id);
                 if (group) {
                     for (const id of group.ids) {
@@ -90,28 +88,26 @@ export function useHighlightDeviation() {
         active,
     ]);
 
+    // Sync non deviation-colored groups with objectGroups
     useEffect(() => {
-        if (!subprofile?.from || !subprofile?.to || !active) {
+        if (!active) {
             return;
         }
 
-        const [coloredGroups, otherGroups] =
-            deviationType === DeviationType.PointToTriangle
-                ? [subprofile.from.groupIds, subprofile.to.groupIds]
-                : [subprofile.to.groupIds, subprofile.from.groupIds];
-
-        const ids = new Set([...otherGroups, ...subprofile.favorites].filter((id) => !coloredGroups.includes(id)));
+        const otherGroups = legendGroups.filter((g) => !g.isDeviationColored);
 
         const objectGroups = objectGroupsRef.current.map((group) => {
-            if (ids.has(group.id)) {
-                return { ...group, status: GroupStatus.Selected };
+            const g = otherGroups.find((g2) => g2.id === group.id)!;
+            if (g) {
+                if (group.status !== g.status) {
+                    return { ...group, status: g.status };
+                }
             } else if (group.status === GroupStatus.Selected) {
                 return { ...group, status: GroupStatus.None };
-            } else {
-                return group;
             }
+            return group;
         });
 
         dispatchObjectGroups(objectGroupsActions.set(objectGroups));
-    }, [dispatchObjectGroups, subprofile?.from, subprofile?.to, subprofile?.favorites, active, deviationType]);
+    }, [dispatchObjectGroups, legendGroups, active, deviationType]);
 }

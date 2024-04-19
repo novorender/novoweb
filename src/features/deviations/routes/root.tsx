@@ -2,8 +2,9 @@ import { Alert, Box, FormControl, InputLabel, MenuItem, Select, Typography, useT
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
+import { renderActions } from "features/render";
 import { selectProjectIsV2 } from "slices/explorer";
-import { AsyncStatus, hasFinished } from "types/misc";
+import { AsyncStatus, hasFinished, ViewMode } from "types/misc";
 
 import { ColorStopList } from "../components/colorStop";
 import { DeviationsSnackbar } from "../components/deviationsSnackbar";
@@ -19,6 +20,7 @@ import {
     selectIsLegendFloating,
     selectSaveStatus,
     selectSelectedProfile,
+    selectSelectedSubprofile,
 } from "../deviationsSlice";
 import { DeviationCalculationStatus } from "../deviationTypes";
 
@@ -28,6 +30,7 @@ export function Root() {
     const profiles = useAppSelector(selectDeviationProfiles);
     const profileList = useAppSelector(selectDeviationProfileList);
     const selectedProfile = useAppSelector(selectSelectedProfile);
+    const selectedSubprofile = useAppSelector(selectSelectedSubprofile);
     const dispatch = useAppDispatch();
     const saveStatus = useAppSelector(selectSaveStatus);
     const isSaving = saveStatus.status === AsyncStatus.Loading;
@@ -86,6 +89,7 @@ export function Root() {
                                             value={selectedProfile?.id ?? ""}
                                             label="Select deviation profile"
                                             onChange={(e) => {
+                                                dispatch(renderActions.setViewMode(ViewMode.Deviations));
                                                 dispatch(deviationsActions.setSelectedProfileId(e.target.value));
                                             }}
                                         >
@@ -106,6 +110,7 @@ export function Root() {
                                     colorStops={selectedProfile.colors!.colorStops}
                                     absoluteValues={selectedProfile.colors!.absoluteValues}
                                     onChange={(colorStops) => {
+                                        dispatch(renderActions.setViewMode(ViewMode.Deviations));
                                         dispatch(
                                             deviationsActions.setProfile({
                                                 id: selectedProfile!.id,
@@ -124,11 +129,15 @@ export function Root() {
 
                                 <ViewSwitchSection />
 
-                                {!isLegendFloating && (
+                                {!isLegendFloating || (selectedSubprofile && !selectedSubprofile.centerLine) ? (
                                     <Box mt={2}>
-                                        <GroupsAndColorsHud widgetMode absPos={false} />
+                                        <GroupsAndColorsHud
+                                            widgetMode
+                                            absPos={false}
+                                            canDetach={selectedSubprofile?.centerLine !== undefined}
+                                        />
                                     </Box>
-                                )}
+                                ) : undefined}
                             </Box>
                         )}
                     </ScrollBox>

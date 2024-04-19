@@ -404,7 +404,7 @@ export function useCanvasEventHandlers({
             !stamp?.pinned &&
             deviation.mixFactor !== 0 &&
             cameraType === CameraType.Orthographic &&
-            [ViewMode.CrossSection, ViewMode.FollowPath].includes(viewMode) &&
+            [ViewMode.CrossSection, ViewMode.FollowPath, ViewMode.Deviations].includes(viewMode) &&
             e.buttons === 0 &&
             subtrees.points === SubtreeStatus.Shown;
         if (setDeviationStamp) {
