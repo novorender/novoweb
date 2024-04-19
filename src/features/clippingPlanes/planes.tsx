@@ -42,7 +42,6 @@ export default function Planes() {
                     },
                 })
             );
-            dispatch(renderActions.setBackground({ color: [0, 0, 0, 1] }));
         }
     };
 
@@ -116,7 +115,6 @@ export default function Planes() {
                 goTo: getSnapToPlaneParams({ planeIdx: idx, view }),
             })
         );
-        dispatch(renderActions.setBackground({ color: [0, 0, 0, 1] }));
     };
 
     const handleCameraSwap = (idx: number) => {

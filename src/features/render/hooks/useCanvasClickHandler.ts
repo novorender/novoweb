@@ -219,7 +219,6 @@ export function useCanvasClickHandler({
                             gridOrigo: p as vec3,
                         })
                     );
-                    dispatch(renderActions.setBackground({ color: [0, 0, 0, 1] }));
                     const w = vec3.dot(dir, p);
                     dispatch(
                         renderActions.setClippingPlanes({
