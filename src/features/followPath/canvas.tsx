@@ -81,7 +81,7 @@ export function FollowPathCanvas({
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        if (!roadCrossSectionData || viewMode !== ViewMode.FollowPath) {
+        if (!roadCrossSectionData || !(viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations)) {
             return;
         }
 
@@ -406,17 +406,17 @@ export function FollowPathCanvas({
         drawDeviations,
     ]);
 
-    const canDrawRoad = roadCrossSectionData && viewMode === ViewMode.FollowPath;
+    const isFollowPathOrDeviations = viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations;
+    const canDrawRoad = roadCrossSectionData && isFollowPathOrDeviations;
     const canDrawSelectedEntity = drawSelectedEntities && Boolean(selectedEntitiesData?.length);
     const canDrawTracer =
         showTracer &&
         cameraType === CameraType.Orthographic &&
-        viewMode === ViewMode.FollowPath &&
+        isFollowPathOrDeviations &&
         roadCrossSectionData &&
         roadCrossSectionData.length >= 2;
-    const canDrawProfile = viewMode === ViewMode.FollowPath && currentProfileCenter && currentProfile;
-    const canDrawDeviations =
-        viewMode === ViewMode.FollowPath && cameraType == CameraType.Orthographic && currentProfileCenter;
+    const canDrawProfile = isFollowPathOrDeviations && currentProfileCenter && currentProfile;
+    const canDrawDeviations = isFollowPathOrDeviations && cameraType == CameraType.Orthographic && currentProfileCenter;
 
     return (
         <>

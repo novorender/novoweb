@@ -16,14 +16,14 @@ import {
 } from "@mui/material";
 import { FollowParametricObject } from "@novorender/api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
-import { FormEvent, MouseEvent, SyntheticEvent, useEffect, useState } from "react";
+import { FormEvent, MouseEvent, SyntheticEvent, useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, IosSwitch, ScrollBox, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ColorPicker } from "features/colorPicker";
-import { renderActions } from "features/render";
+import { renderActions, selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { rgbToVec, vecToRgb } from "utils/color";
 import { uniqueArray } from "utils/misc";
@@ -80,11 +80,17 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const traceVerical = useAppSelector(selectVerticalTracer);
     const deviations = useAppSelector(selectFollowDeviations);
     const goToProfile = useGoToProfile();
+    const viewMode = useAppSelector(selectViewMode);
+    const viewModeRef = useRef(viewMode);
 
     const [profileInput, setProfileInput] = useState(profile);
     const [clipping, setClipping] = useState(_clipping);
 
     const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        viewModeRef.current = viewMode;
+    }, [viewMode]);
 
     useEffect(() => setClipping(_clipping), [_clipping]);
 
@@ -308,10 +314,14 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     };
 
     useEffect(() => {
-        dispatch(renderActions.setViewMode(ViewMode.FollowPath));
+        if (viewModeRef.current !== ViewMode.Deviations) {
+            dispatch(renderActions.setViewMode(ViewMode.FollowPath));
+        }
 
         return () => {
-            dispatch(renderActions.setViewMode(ViewMode.Default));
+            if (viewModeRef.current === ViewMode.FollowPath) {
+                dispatch(renderActions.setViewMode(ViewMode.Default));
+            }
         };
     }, [dispatch]);
 

@@ -7,10 +7,11 @@ import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, Tooltip, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
+import { renderActions } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectIsAdminScene, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
-import { AsyncStatus } from "types/misc";
+import { AsyncStatus, ViewMode } from "types/misc";
 
 import {
     deviationsActions,
@@ -86,7 +87,7 @@ function WidgetMenu(props: MenuProps) {
     const dispatch = useAppDispatch();
 
     useEffect(() => {
-        dispatch(deviationsActions.setActive(true));
+        dispatch(renderActions.setViewMode(ViewMode.Deviations));
     }, [dispatch]);
 
     useListenCalculationState();

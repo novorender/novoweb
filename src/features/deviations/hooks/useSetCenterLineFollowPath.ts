@@ -7,10 +7,10 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { followPathActions, selectView2d } from "features/followPath/followPathSlice";
 import { useGoToProfile } from "features/followPath/useGoToProfile";
 import { measureActions } from "features/measure";
-import { renderActions } from "features/render";
+import { renderActions, selectViewMode } from "features/render";
 import { ViewMode } from "types/misc";
 
-import { selectActive, selectSelectedCenterLineId, selectSelectedProfile } from "../deviationsSlice";
+import { selectSelectedCenterLineId, selectSelectedProfile } from "../deviationsSlice";
 
 export function useSetCenterLineFollowPath() {
     const {
@@ -26,7 +26,7 @@ export function useSetCenterLineFollowPath() {
     const followPathId = centerLine?.objectId;
     const dispatchHighlighted = useDispatchHighlighted();
     const installedFollowPathId = useRef<number>();
-    const active = useAppSelector(selectActive);
+    const active = useAppSelector(selectViewMode) === ViewMode.Deviations;
 
     const goToProfile = useGoToProfile();
     const goToProfileRef = useRef(goToProfile);
@@ -68,7 +68,7 @@ export function useSetCenterLineFollowPath() {
 
             installedFollowPathId.current = undefined;
 
-            dispatch(renderActions.setViewMode(ViewMode.FollowPath));
+            dispatch(renderActions.setViewMode(ViewMode.Deviations));
             dispatch(followPathActions.setSelectedPath(followPathId));
             dispatch(followPathActions.setSelectedIds([followPathId]));
             dispatch(followPathActions.setRoadIds(undefined));
@@ -79,8 +79,6 @@ export function useSetCenterLineFollowPath() {
                     max: centerLine.parameterBounds[1],
                 })
             );
-            dispatch(renderActions.setMainObject(followPathId));
-            dispatchHighlighted(highlightActions.setIds([followPathId]));
             dispatch(renderActions.setMainObject(followPathId));
             dispatchHighlighted(highlightActions.setIds([followPathId]));
             let initPos = true;

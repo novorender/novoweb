@@ -9,6 +9,12 @@ import { useLazyHighlighted } from "contexts/highlighted";
 import { GroupStatus, isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
 import { selectAreas } from "features/area/areaSlice";
+import {
+    selectDeviationLegendGroups,
+    selectIsLegendFloating,
+    selectSelectedProfileId,
+    selectSelectedSubprofileIndex,
+} from "features/deviations";
 import { selectFollowPath } from "features/followPath/followPathSlice";
 import {
     selectManholeCollisionSettings,
@@ -60,6 +66,10 @@ export function useCreateBookmark() {
     const outlineLasers = useAppSelector(selectOutlineLasers);
     const laserPlane = useAppSelector(selectOutlineLaserPlane);
     const propertyTree = useAppSelector(selectPropertyTreeBookmarkState);
+    const deviationProfileId = useAppSelector(selectSelectedProfileId);
+    const deviationSubprofileIndex = useAppSelector(selectSelectedSubprofileIndex);
+    const deviationLegendFloating = useAppSelector(selectIsLegendFloating);
+    const deviationLegendGroups = useAppSelector(selectDeviationLegendGroups);
 
     const {
         state: { view },
@@ -116,10 +126,19 @@ export function useCreateBookmark() {
                 terrain: {
                     asBackground: terrain.asBackground,
                 },
-                deviations: {
-                    index: deviations.index,
-                    mixFactor: deviations.mixFactor,
-                },
+                deviations:
+                    viewMode === ViewMode.Deviations && deviationProfileId
+                        ? {
+                              index: deviations.index,
+                              mixFactor: deviations.mixFactor,
+                              profileId: deviationProfileId,
+                              subprofileIndex: deviationSubprofileIndex,
+                              isLegendFloating: deviationLegendFloating,
+                              hiddenGroupIds: deviationLegendGroups
+                                  ?.filter((g) => g.status === GroupStatus.Hidden)
+                                  .map((g) => g.id),
+                          }
+                        : undefined,
                 groups: groups.current
                     .filter((group) => !isInternalGroup(group))
                     .filter((group) => group.status !== GroupStatus.None)
@@ -158,7 +177,7 @@ export function useCreateBookmark() {
                     },
                 },
                 followPath:
-                    viewMode === ViewMode.FollowPath &&
+                    (viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations) &&
                     followPath.currentCenter &&
                     (followPath.selectedIds.length || followPath.selectedPositions.length)
                         ? {

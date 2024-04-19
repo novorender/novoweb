@@ -40,10 +40,16 @@ declare module "@novorender/data-js-api" {
         options: {
             addToSelectionBasket: boolean;
         };
-        deviations: {
-            index: number;
-            mixFactor: number;
-        };
+        deviations:
+            | {
+                  index: number; // deprecated in favor of profileId
+                  mixFactor: number;
+                  profileId?: string;
+                  subprofileIndex?: number;
+                  isLegendFloating: boolean;
+                  hiddenGroupIds?: string[];
+              }
+            | undefined;
         subtrees: {
             triangles: boolean;
             lines: boolean;
