@@ -147,6 +147,15 @@ export const formsApi = createApi({
                 },
             ],
         }),
+        deleteLocationForm: builder.mutation<void, { projectId: ProjectId; templateId: TemplateId; formId: FormId }>({
+            query: ({ projectId, templateId, formId }) => ({
+                url: `projects/${projectId}/location/${templateId}/${formId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: (_result, _error, { projectId, templateId }) => [
+                { type: "Template" as const, id: `${projectId}-${templateId}` },
+            ],
+        }),
     }),
 });
 
@@ -161,4 +170,5 @@ export const {
     useCreateLocationFormMutation,
     useUpdateSearchFormMutation,
     useUpdateLocationFormMutation,
+    useDeleteLocationFormMutation,
 } = formsApi;
