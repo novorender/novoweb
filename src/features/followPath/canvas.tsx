@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Canvas2D } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { deviationsActions } from "features/deviations";
+import { useIsTopDownOrthoCamera } from "features/deviations/hooks/useIsTopDownOrthoCamera";
 import {
     drawLineStrip,
     drawPart,
@@ -55,6 +56,7 @@ export function FollowPathCanvas({
 
     const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);
+    const isTopDownOrtho = useIsTopDownOrthoCamera();
 
     const roadCrossSection = useCrossSection();
     const roadCrossSectionData = roadCrossSection.status === AsyncStatus.Success ? roadCrossSection.data : undefined;
@@ -407,6 +409,7 @@ export function FollowPathCanvas({
     ]);
 
     const isFollowPathOrDeviations = viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations;
+
     const canDrawRoad = roadCrossSectionData && isFollowPathOrDeviations;
     const canDrawSelectedEntity = drawSelectedEntities && Boolean(selectedEntitiesData?.length);
     const canDrawTracer =
@@ -416,7 +419,8 @@ export function FollowPathCanvas({
         roadCrossSectionData &&
         roadCrossSectionData.length >= 2;
     const canDrawProfile = isFollowPathOrDeviations && currentProfileCenter && currentProfile;
-    const canDrawDeviations = isFollowPathOrDeviations && cameraType == CameraType.Orthographic && currentProfileCenter;
+    const canDrawDeviations =
+        isFollowPathOrDeviations && cameraType == CameraType.Orthographic && !isTopDownOrtho && currentProfileCenter;
 
     return (
         <>
