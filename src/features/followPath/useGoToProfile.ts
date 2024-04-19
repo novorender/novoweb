@@ -105,7 +105,7 @@ export function useGoToProfile() {
                         goTo: {
                             rotation,
                             position: offsetPt,
-                            fov: view.renderState.camera.fov,
+                            fov: 60,
                             far: clipping + 0.02,
                         },
                         gridOrigo: pt as vec3,
