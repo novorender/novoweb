@@ -130,6 +130,7 @@ export function FormsList() {
     }, [db, abortSignal, template]);
 
     useEffect(() => {
+        willUnmount.current = false;
         return () => {
             willUnmount.current = true;
         };
