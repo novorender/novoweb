@@ -28,31 +28,27 @@ export function DeleteDeviation() {
         remove();
 
         async function remove() {
-            remove();
-
-            async function remove() {
-                if (profiles.status !== AsyncStatus.Success) {
-                    return;
-                }
-
-                const newProfileData = {
-                    ...profiles.data,
-                    profiles: profiles.data.profiles.filter((p) => p.id !== id),
-                };
-
-                await saveConfig({
-                    uiConfig: newProfileData,
-                    deviations,
-                    showRebuildMessage: false,
-                });
-
-                if (newProfileData && recalc) {
-                    await calcDeviations(newProfileData);
-                }
-
-                dispatch(deviationsActions.setProfiles({ status: AsyncStatus.Success, data: newProfileData }));
-                history.goBack();
+            if (profiles.status !== AsyncStatus.Success) {
+                return;
             }
+
+            const newProfileData = {
+                ...profiles.data,
+                profiles: profiles.data.profiles.filter((p) => p.id !== id),
+            };
+
+            await saveConfig({
+                uiConfig: newProfileData,
+                deviations,
+                showRebuildMessage: false,
+            });
+
+            if (newProfileData && recalc) {
+                await calcDeviations(newProfileData);
+            }
+
+            dispatch(deviationsActions.setProfiles({ status: AsyncStatus.Success, data: newProfileData }));
+            history.goBack();
         }
     };
 
