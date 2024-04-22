@@ -31,6 +31,7 @@ export type ExtendedMeasureEntity = MeasureEntity & {
 export enum ViewMode {
     Default = "default",
     FollowPath = "followPath",
+    Deviations = "deviations",
     CrossSection = "crossSection",
     Panorama = "panorama",
 }

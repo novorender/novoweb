@@ -32,6 +32,7 @@ export type UiDeviationProfile = {
     copyFromProfileId?: string;
     colors: ColorConfig;
     subprofiles: UiDeviationSubprofile[];
+    fromAndToSwapped: boolean;
 };
 
 export type UiDeviationSubprofile = {
@@ -46,7 +47,6 @@ export type UiDeviationSubprofile = {
     favorites: string[];
     centerLine?: UiCenterLine;
     heightToCeiling?: number;
-    legendGroups: FavoriteGroupState[]; // not saved anywhere
 };
 
 export type UiCenterLine = {
@@ -99,11 +99,12 @@ export type ColorSetupGroup = {
     colorStops: FormField<ColorStopGroup[]>;
 };
 
-export type ColorStopGroup = ColorStop;
-
-export type FavoriteGroupState = {
+export type LegendGroupInfo = {
     id: string;
+    isDeviationColored: boolean;
     status: GroupStatus;
 };
+
+export type ColorStopGroup = ColorStop;
 
 export type ObjectGroupExt = { id: string; name: string; deleted?: boolean };

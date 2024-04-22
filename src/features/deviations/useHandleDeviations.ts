@@ -5,18 +5,18 @@ import { useLazyGetDeviationProfilesQuery } from "apis/dataV2/dataV2Api";
 import { ColorStop, DeviationProjectConfig } from "apis/dataV2/deviationTypes";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { GroupStatus } from "contexts/objectGroups";
-import { renderActions, selectDeviations, selectPoints } from "features/render";
+import { renderActions, selectDeviations, selectPoints, selectViewMode } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { selectProjectIsV2 } from "slices/explorer";
-import { AsyncStatus } from "types/misc";
-import { getAssetUrl, uniqueArray } from "utils/misc";
+import { AsyncStatus, ViewMode } from "types/misc";
+import { getAssetUrl } from "utils/misc";
 import { searchByPatterns } from "utils/search";
 
-import { deviationsActions, selectActive, selectDeviationProfiles, selectSelectedProfile } from "./deviationsSlice";
-import { DeviationType, FavoriteGroupState, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
+import { deviationsActions } from "./deviationsSlice";
+import { DeviationType, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
 import { useHighlightDeviation } from "./hooks/useHighlightDeviation";
 import { useSetCenterLineFollowPath } from "./hooks/useSetCenterLineFollowPath";
+import { selectDeviationProfiles, selectSelectedProfile, selectSelectedProfileId } from "./selectors";
 import { accountForAbsValues } from "./utils";
 
 const EMPTY_ARRAY: ColorStop[] = [];
@@ -28,13 +28,14 @@ export function useHandleDeviations() {
     const isProjectV2 = useAppSelector(selectProjectIsV2);
     const projectId = view?.renderState.scene?.config.id;
     const profiles = useAppSelector(selectDeviationProfiles);
+    const selectedProfileId = useAppSelector(selectSelectedProfileId);
     const dispatch = useAppDispatch();
     const points = useAppSelector(selectPoints);
     const defaultColorStops = points.deviation.colorGradient.knots ?? EMPTY_ARRAY;
     const profile = useAppSelector(selectSelectedProfile);
     const deviation = useAppSelector(selectDeviations);
     const [abortController] = useAbortController();
-    const active = useAppSelector(selectActive);
+    const active = useAppSelector(selectViewMode) === ViewMode.Deviations;
 
     const [getDeviationProfiles] = useLazyGetDeviationProfilesQuery();
 
@@ -90,12 +91,7 @@ export function useHandleDeviations() {
                     })
                 );
 
-                const selectedProfile = config.profiles.find((p) => p.index === points.deviation.index);
-                if (selectedProfile) {
-                    dispatch(deviationsActions.setSelectedProfileId(selectedProfile.id));
-                } else if (config.profiles.length > 0) {
-                    dispatch(deviationsActions.setSelectedProfileId(config.profiles[0].id));
-                }
+                dispatch(deviationsActions.initFromProfileIndex({ index: points.deviation.index }));
             } catch (e) {
                 console.warn(e);
                 dispatch(
@@ -117,6 +113,7 @@ export function useHandleDeviations() {
         getDeviationProfiles,
         points.deviation.index,
         abortController,
+        selectedProfileId,
     ]);
 
     // Set current deviation and colors
@@ -263,6 +260,7 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
                     ],
                     colors: g.colors ?? defaultColors,
                     hasFromAndTo: g.subprofiles !== undefined,
+                    fromAndToSwapped: false,
                 } as UiDeviationProfile)
             ),
             ...config.pointToPoint.groups.map((g) =>
@@ -272,16 +270,21 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
                     copyFromProfileId: g.copyFromProfileId,
                     deviationType: DeviationType.PointToPoint,
                     index: -1,
-                    subprofiles: g.subprofiles ?? [
+                    subprofiles: g.subprofiles?.map((sp) => ({
+                        ...sp,
+                        from: g.fromAndToSwapped ? sp.to : sp.from,
+                        to: g.fromAndToSwapped ? sp.from : sp.to,
+                    })) ?? [
                         {
-                            from: g.from,
-                            to: g.to,
+                            from: g.fromAndToSwapped ? g.to : g.from,
+                            to: g.fromAndToSwapped ? g.from : g.to,
                             favorites: g.favorites ?? [],
                             legendGroups: [],
                         },
                     ],
                     colors: g.colors ?? defaultColors,
                     hasFromAndTo: true,
+                    fromAndToSwapped: g.fromAndToSwapped,
                 } as UiDeviationProfile)
             ),
         ],
@@ -295,19 +298,9 @@ function populateMissingData(profile: UiDeviationProfile): UiDeviationProfile {
             return {
                 ...sp,
                 favorites: sp.favorites ?? [],
-                legendGroups: makeLegendGroups(
-                    (profile.deviationType === DeviationType.PointToTriangle ? sp.from.groupIds : sp.to.groupIds) ?? []
-                ),
             };
         }),
     };
-}
-
-export function makeLegendGroups(groupIds: string[]): FavoriteGroupState[] {
-    return uniqueArray(groupIds).map((id) => ({
-        id,
-        status: GroupStatus.Selected,
-    }));
 }
 
 function matchProfileIndexes(current: UiDeviationConfig, calculated: DeviationProjectConfig) {

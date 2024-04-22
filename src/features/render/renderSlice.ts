@@ -618,6 +618,9 @@ export const renderSlice = createSlice({
             state.picker = initialState.picker;
             state.clipping = initialState.clipping;
             state.selectionBasketMode = initialState.selectionBasketMode;
+            if (state.viewMode === ViewMode.Deviations) {
+                state.viewMode = ViewMode.Default;
+            }
 
             // Camera
             if (initialCamera) {
@@ -714,8 +717,10 @@ export const renderSlice = createSlice({
                 : (objects.defaultVisibility as ObjectVisibility);
             state.background.color = background.color;
             state.terrain.asBackground = terrain.asBackground;
-            state.points.deviation.index = deviations.index;
-            state.points.deviation.mixFactor = deviations.mixFactor;
+            if (deviations) {
+                state.points.deviation.index = deviations.index;
+                state.points.deviation.mixFactor = deviations.mixFactor;
+            }
             state.grid = grid;
             state.clipping = {
                 ...clipping,

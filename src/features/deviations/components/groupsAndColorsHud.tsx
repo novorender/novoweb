@@ -4,44 +4,35 @@ import { memo, useMemo } from "react";
 
 import { ColorStop } from "apis/dataV2/deviationTypes";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import {
-    GroupStatus,
-    isInternalGroup,
-    ObjectGroup,
-    objectGroupsActions,
-    useDispatchObjectGroups,
-    useObjectGroups,
-} from "contexts/objectGroups";
+import { GroupStatus, isInternalGroup, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { selectView2d } from "features/followPath";
+import { renderActions } from "features/render";
+import { ViewMode } from "types/misc";
 import { vecToRgb } from "utils/color";
-import { uniqueArray } from "utils/misc";
 
-import {
-    deviationsActions,
-    selectDeviationLegendGroups,
-    selectSelectedProfile,
-    selectSelectedSubprofile,
-} from "../deviationsSlice";
+import { deviationsActions } from "../deviationsSlice";
+import { selectDeviationLegendGroups, selectSelectedProfile } from "../selectors";
 import { formatColorStopPos, sortColorStops } from "../utils";
 
 export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({
     widgetMode = false,
+    canDetach = true,
     absPos,
 }: {
     widgetMode?: boolean;
+    canDetach?: boolean;
     absPos: boolean;
 }) {
     const profile = useAppSelector(selectSelectedProfile);
-    const subprofile = useAppSelector(selectSelectedSubprofile);
     const legendGroups = useAppSelector(selectDeviationLegendGroups);
     const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
     const dispatch = useAppDispatch();
-    const dispatchObjectGroups = useDispatchObjectGroups();
     const isCrossSection = useAppSelector(selectView2d);
 
-    const fromGroups = useMemo(
+    const deviationColoredGroups = useMemo(
         () =>
             (legendGroups ?? [])
+                .filter((g) => g.isDeviationColored)
                 .map((g1) => {
                     const group = objectGroups.find((g2) => g2.id === g1.id);
                     return group
@@ -57,16 +48,16 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({
 
     const otherGroups = useMemo(
         () =>
-            uniqueArray([...(subprofile?.to.groupIds ?? []), ...(subprofile?.favorites ?? [])])
-                .filter((id) => !fromGroups.some((g) => g.id === id))
-                .map((id) => {
-                    const group = objectGroups.find((g) => g.id === id);
+            (legendGroups ?? [])
+                .filter((g) => !g.isDeviationColored)
+                .map((g1) => {
+                    const group = objectGroups.find((g2) => g2.id === g1.id);
                     if (group) {
                         return isCrossSection ? { ...group, color: "grey" } : group;
                     }
                 })
                 .filter((g) => g) as ObjectGroup[],
-        [fromGroups, subprofile, objectGroups, isCrossSection]
+        [objectGroups, isCrossSection, legendGroups]
     );
 
     const colorStops = useMemo(
@@ -74,24 +65,16 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({
         [profile]
     );
 
-    const handleFromGroupClick = (group: ObjectGroup) => {
+    const handleGroupClick = (group: ObjectGroup) => {
         if (!legendGroups) {
             return;
         }
 
-        const newGroups = legendGroups.map((g) => {
-            if (g.id === group.id) {
-                return { ...g, status: g.status === GroupStatus.Hidden ? GroupStatus.Selected : GroupStatus.Hidden };
-            }
-            return g;
-        });
-        dispatch(deviationsActions.setSelectedSubprofileLegendGroups(newGroups));
-    };
-
-    const handleOtherGroupClick = (group: ObjectGroup) => {
-        dispatchObjectGroups(
-            objectGroupsActions.update(group.id, {
-                status: group.status === GroupStatus.Hidden ? GroupStatus.Selected : GroupStatus.Hidden,
+        dispatch(renderActions.setViewMode(ViewMode.Deviations));
+        dispatch(
+            deviationsActions.toggleHiddenLegendGroup({
+                groupId: group.id,
+                hidden: group.status !== GroupStatus.Hidden,
             })
         );
     };
@@ -104,8 +87,9 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({
     const colorStopNodeHeight = 24;
     const gap = 16;
     const groupsBottom = colorStops.length * colorStopNodeHeight + gap;
-    const headerBottom = groupsBottom + (fromGroups.length + otherGroups.length) * groupNodeHeight;
-    const groupNodeBottom = (index: number) => (fromGroups.length + otherGroups.length - index - 1) * groupNodeHeight;
+    const headerBottom = groupsBottom + (deviationColoredGroups.length + otherGroups.length) * groupNodeHeight;
+    const groupNodeBottom = (index: number) =>
+        (deviationColoredGroups.length + otherGroups.length - index - 1) * groupNodeHeight;
 
     return (
         <>
@@ -129,23 +113,23 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({
                 }
             >
                 {widgetMode ? "Groups" : profile.name}
-                {widgetMode ? (
+                {widgetMode && canDetach ? (
                     <IconButton color="default" onClick={() => dispatch(deviationsActions.setIsLegendFloating(true))}>
                         <OpenInNew />
                     </IconButton>
-                ) : (
+                ) : !widgetMode ? (
                     <IconButton color="default" onClick={() => dispatch(deviationsActions.setIsLegendFloating(false))}>
                         <Close />
                     </IconButton>
-                )}
+                ) : undefined}
             </Box>
             <Box sx={absPos ? { position: "absolute", bottom: groupsBottom } : {}}>
-                {fromGroups.map((group, i) => (
+                {deviationColoredGroups.map((group, i) => (
                     <Box
                         key={group.id}
                         sx={absPos ? { position: "absolute", maxWidth: "300px", bottom: groupNodeBottom(i) } : {}}
                     >
-                        <GroupNode group={group} onClick={handleFromGroupClick} colorStops={colorStops} rainbow />
+                        <GroupNode group={group} onClick={handleGroupClick} colorStops={colorStops} rainbow />
                     </Box>
                 ))}
                 {(otherGroups || []).map((group, i) => (
@@ -156,12 +140,12 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({
                                 ? {
                                       position: "absolute",
                                       maxWidth: "300px",
-                                      bottom: groupNodeBottom(fromGroups.length + i),
+                                      bottom: groupNodeBottom(deviationColoredGroups.length + i),
                                   }
                                 : {}
                         }
                     >
-                        <GroupNode group={group} onClick={handleOtherGroupClick} colorStops={colorStops} />
+                        <GroupNode group={group} onClick={handleGroupClick} colorStops={colorStops} />
                     </Box>
                 ))}
             </Box>

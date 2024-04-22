@@ -107,7 +107,9 @@ export function useCanvasClickHandler({
         pointerDownStateRef.current = undefined;
         const pickCameraPlane =
             cameraState.type === CameraType.Orthographic &&
-            (viewMode === ViewMode.CrossSection || viewMode === ViewMode.FollowPath);
+            (viewMode === ViewMode.CrossSection ||
+                viewMode === ViewMode.FollowPath ||
+                viewMode === ViewMode.Deviations);
 
         const isTouch = evt.nativeEvent instanceof PointerEvent && evt.nativeEvent.pointerType === "touch";
         const pickOutline = measure.snapKind === "clippingOutline" && picker === Picker.Measurement;
@@ -217,7 +219,6 @@ export function useCanvasClickHandler({
                             gridOrigo: p as vec3,
                         })
                     );
-                    dispatch(renderActions.setBackground({ color: [0, 0, 0, 1] }));
                     const w = vec3.dot(dir, p);
                     dispatch(
                         renderActions.setClippingPlanes({

@@ -4,8 +4,9 @@ import { IconButton, Snackbar } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { AsyncStatus } from "types/misc";
 
-import { deviationsActions, selectDeviationCalculationStatus, selectSaveStatus } from "../deviationsSlice";
+import { deviationsActions } from "../deviationsSlice";
 import { DeviationCalculationStatus } from "../deviationTypes";
+import { selectDeviationCalculationStatus, selectSaveStatus } from "../selectors";
 
 export function DeviationsSnackbar() {
     const dispatch = useAppDispatch();

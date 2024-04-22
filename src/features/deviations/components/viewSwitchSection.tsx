@@ -12,8 +12,8 @@ import { getTopDownParams, selectDefaultTopDownElevation, selectTopDownSnapToAxi
 import { CameraType, renderActions } from "features/render";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 
-import { selectSelectedCenterLineId, selectSelectedProfile } from "../deviationsSlice";
 import { useIsTopDownOrthoCamera } from "../hooks/useIsTopDownOrthoCamera";
+import { selectSelectedCenterLineId, selectSelectedProfile } from "../selectors";
 
 export function ViewSwitchSection() {
     const {
@@ -70,8 +70,8 @@ export function ViewSwitchSection() {
             Math.min(selectedCenterLine.parameterBounds[1], Number(profilePos))
         );
 
+        dispatch(renderActions.setViewMode(ViewMode.Deviations));
         dispatch(followPathActions.setView2d(newState));
-        dispatch(renderActions.setViewMode(newState ? ViewMode.FollowPath : ViewMode.Default));
         goToProfile({
             fpObj: fpObj.data,
             p: pos,
@@ -81,6 +81,7 @@ export function ViewSwitchSection() {
     };
 
     const handleTopDownChange = () => {
+        dispatch(renderActions.setViewMode(ViewMode.Deviations));
         dispatch(followPathActions.setView2d(false));
         dispatch(renderActions.setGrid({ enabled: false }));
         dispatch(renderActions.setClippingPlanes({ enabled: false, planes: [] }));

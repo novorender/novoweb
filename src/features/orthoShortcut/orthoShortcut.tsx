@@ -34,7 +34,6 @@ export function OrthoShortcut({ position, ...speedDialProps }: Props) {
                         goTo: getSnapToPlaneParams({ planeIdx: 0, view }),
                     })
                 );
-                dispatch(renderActions.setBackground({ color: [0, 0, 0, 1] }));
             } else {
                 dispatch(
                     renderActions.setCamera({

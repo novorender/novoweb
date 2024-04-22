@@ -11,7 +11,6 @@ import { getObjectData } from "utils/search";
 
 import { deviationsActions, selectDeviationForm, selectDeviationProfiles } from "..";
 import { DeviationForm, DeviationType, UiDeviationConfig, UiDeviationProfile } from "../deviationTypes";
-import { makeLegendGroups } from "../useHandleDeviations";
 import { NEW_DEVIATION_ID } from "../utils";
 import { useSaveDeviationConfig } from "./useSaveDeviationConfig";
 
@@ -55,7 +54,7 @@ export function useMergeFormAndSave() {
             });
 
             dispatch(deviationsActions.setProfiles({ status: AsyncStatus.Success, data: newProfileData }));
-
+            dispatch(deviationsActions.resetHiddenLegendGroupsForProfile({ profileId: profile.id }));
             dispatch(deviationsActions.setDeviationForm(undefined));
 
             return newProfileData;
@@ -81,7 +80,7 @@ function mergeDeviationFormIntoProfiles(config: UiDeviationConfig, profile: UiDe
         const typeChanged = existing.deviationType !== profile.deviationType;
         rebuildRequired = rebuildRequired || checkIfRebuildIsRequired(existing, profile);
         if (typeChanged) {
-            list.slice(existingIndex, 1);
+            list.splice(existingIndex, 1);
             list.push(profile);
         } else {
             list[existingIndex] = profile;
@@ -165,12 +164,12 @@ async function deviationFormToProfile({
                     groupIds: sp.groups2.value,
                     objectIds: [] as number[],
                 },
-                legendGroups: makeLegendGroups(sp.groups1.value),
             };
         }),
         hasFromAndTo: deviationForm.hasFromAndTo,
         deviationType: deviationForm.deviationType.value,
         index: deviationForm.index,
+        fromAndToSwapped: deviationForm.deviationType.value === DeviationType.PointToPoint,
     };
 }
 

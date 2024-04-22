@@ -7,18 +7,13 @@ import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, Tooltip, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
+import { renderActions } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectIsAdminScene, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
-import { AsyncStatus } from "types/misc";
+import { AsyncStatus, ViewMode } from "types/misc";
 
-import {
-    deviationsActions,
-    selectDeviationCalculationStatus,
-    selectDeviationForm,
-    selectDeviationProfiles,
-    selectSelectedProfile,
-} from "./deviationsSlice";
+import { deviationsActions } from "./deviationsSlice";
 import { DeviationCalculationStatus } from "./deviationTypes";
 import { useListenCalculationState } from "./hooks/useListenCalculationState";
 import { CrupdateColorStop } from "./routes/crupdateColorStop";
@@ -26,6 +21,12 @@ import { DeleteDeviation } from "./routes/deleteDeviation";
 import { Deviation } from "./routes/deviation";
 import { Root } from "./routes/root";
 import { SaveDeviation } from "./routes/saveDeviation";
+import {
+    selectDeviationCalculationStatus,
+    selectDeviationForm,
+    selectDeviationProfiles,
+    selectSelectedProfile,
+} from "./selectors";
 import { MAX_DEVIATION_PROFILE_COUNT, newDeviationForm, profileToDeviationForm } from "./utils";
 
 export default function Deviations() {
@@ -86,7 +87,7 @@ function WidgetMenu(props: MenuProps) {
     const dispatch = useAppDispatch();
 
     useEffect(() => {
-        dispatch(deviationsActions.setActive(true));
+        dispatch(renderActions.setViewMode(ViewMode.Deviations));
     }, [dispatch]);
 
     useListenCalculationState();

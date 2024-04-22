@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Canvas2D } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { deviationsActions } from "features/deviations";
+import { useIsTopDownOrthoCamera } from "features/deviations/hooks/useIsTopDownOrthoCamera";
 import {
     drawLineStrip,
     drawPart,
@@ -55,6 +56,7 @@ export function FollowPathCanvas({
 
     const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);
+    const isTopDownOrtho = useIsTopDownOrthoCamera();
 
     const roadCrossSection = useCrossSection();
     const roadCrossSectionData = roadCrossSection.status === AsyncStatus.Success ? roadCrossSection.data : undefined;
@@ -81,7 +83,7 @@ export function FollowPathCanvas({
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        if (!roadCrossSectionData || viewMode !== ViewMode.FollowPath) {
+        if (!roadCrossSectionData || !(viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations)) {
             return;
         }
 
@@ -406,17 +408,19 @@ export function FollowPathCanvas({
         drawDeviations,
     ]);
 
-    const canDrawRoad = roadCrossSectionData && viewMode === ViewMode.FollowPath;
+    const isFollowPathOrDeviations = viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations;
+
+    const canDrawRoad = roadCrossSectionData && isFollowPathOrDeviations;
     const canDrawSelectedEntity = drawSelectedEntities && Boolean(selectedEntitiesData?.length);
     const canDrawTracer =
         showTracer &&
         cameraType === CameraType.Orthographic &&
-        viewMode === ViewMode.FollowPath &&
+        isFollowPathOrDeviations &&
         roadCrossSectionData &&
         roadCrossSectionData.length >= 2;
-    const canDrawProfile = viewMode === ViewMode.FollowPath && currentProfileCenter && currentProfile;
+    const canDrawProfile = isFollowPathOrDeviations && currentProfileCenter && currentProfile;
     const canDrawDeviations =
-        viewMode === ViewMode.FollowPath && cameraType == CameraType.Orthographic && currentProfileCenter;
+        isFollowPathOrDeviations && cameraType == CameraType.Orthographic && !isTopDownOrtho && currentProfileCenter;
 
     return (
         <>

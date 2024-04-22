@@ -201,7 +201,9 @@ export function useHandleHighlights() {
                             ).sort(),
                             action: group.action,
                         })),
-                        ...(cameraType === CameraType.Orthographic && viewMode !== ViewMode.FollowPath
+                        ...(cameraType === CameraType.Orthographic &&
+                        viewMode !== ViewMode.FollowPath &&
+                        viewMode !== ViewMode.Deviations
                             ? outlineGroups.map((group) => ({
                                   objectIds: new Uint32Array(group.ids).sort().filter((f) => !allHidden.has(f)),
                                   outlineColor: group.color,
