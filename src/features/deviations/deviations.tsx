@@ -13,13 +13,7 @@ import { useToggle } from "hooks/useToggle";
 import { selectIsAdminScene, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus, ViewMode } from "types/misc";
 
-import {
-    deviationsActions,
-    selectDeviationCalculationStatus,
-    selectDeviationForm,
-    selectDeviationProfiles,
-    selectSelectedProfile,
-} from "./deviationsSlice";
+import { deviationsActions } from "./deviationsSlice";
 import { DeviationCalculationStatus } from "./deviationTypes";
 import { useListenCalculationState } from "./hooks/useListenCalculationState";
 import { CrupdateColorStop } from "./routes/crupdateColorStop";
@@ -27,6 +21,12 @@ import { DeleteDeviation } from "./routes/deleteDeviation";
 import { Deviation } from "./routes/deviation";
 import { Root } from "./routes/root";
 import { SaveDeviation } from "./routes/saveDeviation";
+import {
+    selectDeviationCalculationStatus,
+    selectDeviationForm,
+    selectDeviationProfiles,
+    selectSelectedProfile,
+} from "./selectors";
 import { MAX_DEVIATION_PROFILE_COUNT, newDeviationForm, profileToDeviationForm } from "./utils";
 
 export default function Deviations() {

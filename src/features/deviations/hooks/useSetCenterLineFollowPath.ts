@@ -10,7 +10,7 @@ import { measureActions } from "features/measure";
 import { renderActions, selectViewMode } from "features/render";
 import { ViewMode } from "types/misc";
 
-import { selectSelectedCenterLineId, selectSelectedProfile } from "../deviationsSlice";
+import { selectSelectedCenterLineId, selectSelectedProfile } from "../selectors";
 
 export function useSetCenterLineFollowPath() {
     const {

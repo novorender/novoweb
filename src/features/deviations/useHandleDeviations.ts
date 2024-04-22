@@ -12,15 +12,11 @@ import { AsyncStatus, ViewMode } from "types/misc";
 import { getAssetUrl } from "utils/misc";
 import { searchByPatterns } from "utils/search";
 
-import {
-    deviationsActions,
-    selectDeviationProfiles,
-    selectSelectedProfile,
-    selectSelectedProfileId,
-} from "./deviationsSlice";
+import { deviationsActions } from "./deviationsSlice";
 import { DeviationType, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
 import { useHighlightDeviation } from "./hooks/useHighlightDeviation";
 import { useSetCenterLineFollowPath } from "./hooks/useSetCenterLineFollowPath";
+import { selectDeviationProfiles, selectSelectedProfile, selectSelectedProfileId } from "./selectors";
 import { accountForAbsValues } from "./utils";
 
 const EMPTY_ARRAY: ColorStop[] = [];

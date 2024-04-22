@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { renderActions, selectDeviations } from "features/render";
 import { AsyncStatus } from "types/misc";
 
-import { selectSaveStatus } from "../deviationsSlice";
+import { selectSaveStatus } from "../selectors";
 
 export function MixFactorInput() {
     const deviations = useAppSelector(selectDeviations);

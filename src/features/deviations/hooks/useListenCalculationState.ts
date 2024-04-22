@@ -7,8 +7,9 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectIsAdminScene, selectProjectIsV2 } from "slices/explorer";
 
-import { deviationsActions, selectDeviationCalculationStatus } from "../deviationsSlice";
+import { deviationsActions } from "../deviationsSlice";
 import { DeviationCalculationStatus } from "../deviationTypes";
+import { selectDeviationCalculationStatus } from "../selectors";
 
 export function useListenCalculationState() {
     const {

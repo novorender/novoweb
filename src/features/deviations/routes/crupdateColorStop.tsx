@@ -6,7 +6,8 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation } from "components";
 import { selectProjectIsV2 } from "slices/explorer";
 
-import { deviationsActions, selectDeviationForm, selectSelectedProfile } from "../deviationsSlice";
+import { deviationsActions } from "../deviationsSlice";
+import { selectDeviationForm, selectSelectedProfile } from "../selectors";
 import { updateFormField } from "../validation";
 
 export function CrupdateColorStop() {

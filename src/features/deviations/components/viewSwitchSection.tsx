@@ -12,8 +12,8 @@ import { getTopDownParams, selectDefaultTopDownElevation, selectTopDownSnapToAxi
 import { CameraType, renderActions } from "features/render";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 
-import { selectSelectedCenterLineId, selectSelectedProfile } from "../deviationsSlice";
 import { useIsTopDownOrthoCamera } from "../hooks/useIsTopDownOrthoCamera";
+import { selectSelectedCenterLineId, selectSelectedProfile } from "../selectors";
 
 export function ViewSwitchSection() {
     const {

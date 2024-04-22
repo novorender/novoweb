@@ -7,9 +7,10 @@ import { Confirmation } from "components";
 import { selectDeviations } from "features/render";
 import { AsyncStatus } from "types/misc";
 
-import { deviationsActions, selectDeviationProfiles, selectSaveStatus } from "../deviationsSlice";
+import { deviationsActions } from "../deviationsSlice";
 import { useCalcDeviations } from "../hooks/useCalcDeviations";
 import { useSaveDeviationConfig } from "../hooks/useSaveDeviationConfig";
+import { selectDeviationProfiles, selectSaveStatus } from "../selectors";
 
 export function DeleteDeviation() {
     const history = useHistory();

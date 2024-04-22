@@ -35,13 +35,7 @@ import { ColorStopList } from "../components/colorStop";
 import { SectionHeader } from "../components/sectionHeader";
 import { SubprofileList } from "../components/subprofileList";
 import { TunnelInfoSection } from "../components/tunnelInfoSection";
-import {
-    deviationsActions,
-    selectDeviationForm,
-    selectDeviationProfileList,
-    selectDeviationProfiles,
-    selectSaveStatus,
-} from "../deviationsSlice";
+import { deviationsActions } from "../deviationsSlice";
 import {
     CenterLineGroup,
     DeviationForm,
@@ -51,6 +45,12 @@ import {
     TunnelInfoGroup,
     UiDeviationProfile,
 } from "../deviationTypes";
+import {
+    selectDeviationForm,
+    selectDeviationProfileList,
+    selectDeviationProfiles,
+    selectSaveStatus,
+} from "../selectors";
 import { DELETED_DEVIATION_LABEL, newDeviationForm, newDeviationSubprofile, profileToDeviationForm } from "../utils";
 import {
     getActiveErrorText,

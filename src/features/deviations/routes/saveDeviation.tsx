@@ -6,9 +6,9 @@ import { useAppSelector } from "app/redux-store-interactions";
 import { Confirmation } from "components";
 import { AsyncStatus } from "types/misc";
 
-import { selectSaveStatus } from "../deviationsSlice";
 import { useCalcDeviations } from "../hooks/useCalcDeviations";
 import { useMergeFormAndSave } from "../hooks/useMergeFormAndSave";
+import { selectSaveStatus } from "../selectors";
 
 export function SaveDeviation() {
     const history = useHistory();

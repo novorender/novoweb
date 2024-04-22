@@ -11,11 +11,7 @@ import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGro
 import { ObjectVisibility, renderActions, selectDefaultVisibility, selectViewMode } from "features/render";
 import { ViewMode } from "types/misc";
 
-import {
-    selectDeviationLegendGroups,
-    selectSelectedCenterLineFollowPathId,
-    selectSelectedProfile,
-} from "../deviationsSlice";
+import { selectDeviationLegendGroups, selectSelectedCenterLineFollowPathId, selectSelectedProfile } from "../selectors";
 
 export function useHighlightDeviation() {
     const legendGroups = useAppSelector(selectDeviationLegendGroups);

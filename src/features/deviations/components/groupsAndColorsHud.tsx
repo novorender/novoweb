@@ -10,7 +10,8 @@ import { renderActions } from "features/render";
 import { ViewMode } from "types/misc";
 import { vecToRgb } from "utils/color";
 
-import { deviationsActions, selectDeviationLegendGroups, selectSelectedProfile } from "../deviationsSlice";
+import { deviationsActions } from "../deviationsSlice";
+import { selectDeviationLegendGroups, selectSelectedProfile } from "../selectors";
 import { formatColorStopPos, sortColorStops } from "../utils";
 
 export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({

@@ -17,7 +17,8 @@ import { useLoadLandXmlPath } from "features/followPath/hooks/useLoadLandXmlPath
 import { renderActions } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 
-import { deviationsActions, selectSelectedProfile, selectSelectedSubprofileIndex } from "../deviationsSlice";
+import { deviationsActions } from "../deviationsSlice";
+import { selectSelectedProfile, selectSelectedSubprofileIndex } from "../selectors";
 import { DELETED_DEVIATION_LABEL } from "../utils";
 
 export function SubprofileSelect() {

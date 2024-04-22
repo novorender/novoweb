@@ -12,8 +12,9 @@ import { GroupsAndColorsHud } from "../components/groupsAndColorsHud";
 import { MixFactorInput } from "../components/mixFactorInput";
 import { SubprofileSelect } from "../components/subprofileSelect";
 import { ViewSwitchSection } from "../components/viewSwitchSection";
+import { deviationsActions } from "../deviationsSlice";
+import { DeviationCalculationStatus } from "../deviationTypes";
 import {
-    deviationsActions,
     selectDeviationCalculationStatus,
     selectDeviationProfileList,
     selectDeviationProfiles,
@@ -21,8 +22,7 @@ import {
     selectSaveStatus,
     selectSelectedProfile,
     selectSelectedSubprofile,
-} from "../deviationsSlice";
-import { DeviationCalculationStatus } from "../deviationTypes";
+} from "../selectors";
 
 export function Root() {
     const theme = useTheme();

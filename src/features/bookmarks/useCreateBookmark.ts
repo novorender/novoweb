@@ -14,7 +14,7 @@ import {
     selectIsLegendFloating,
     selectSelectedProfileId,
     selectSelectedSubprofileIndex,
-} from "features/deviations";
+} from "features/deviations/selectors";
 import { selectFollowPath } from "features/followPath/followPathSlice";
 import {
     selectManholeCollisionSettings,
