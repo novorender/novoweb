@@ -161,8 +161,7 @@ export function useHandleHighlights() {
                 }
             );
 
-            const allHidden = new Set<number>(hidden);
-            hiddenGroups.forEach((group) => group.ids.forEach((id) => allHidden.add(id)));
+            const allHidden = objectIdSet([hidden, ...hiddenGroups.map((g) => g.ids)]);
 
             view.modifyRenderState({
                 highlights: {
@@ -174,7 +173,7 @@ export function useHandleHighlights() {
                               }))
                             : []),
                         {
-                            objectIds: new Uint32Array(allHidden).sort(),
+                            objectIds: allHidden.toArray(),
                             action: "hide",
                         },
                         {
@@ -298,4 +297,71 @@ async function fillActiveGroupIds(sceneId: string, groups: ObjectGroup[]): Promi
 
     await Promise.all(proms);
     return;
+}
+
+/**
+ * The idea is to use array (index is object ID) instead of set if ID range is
+ * so array is not too big and pretty close or smaller than total ID count of the underlying sets.
+ * @param idSets Array of object ID sets or arrays
+ * @returns Sorted combined ID array
+ */
+function objectIdSet(idSets: (Set<number> | number[])[]) {
+    // Find object ID range
+    let minId = Number.MAX_SAFE_INTEGER;
+    let maxId = 0;
+    let count = 0;
+    idSets.forEach((ids) => {
+        ids.forEach((id) => {
+            if (id < minId) {
+                minId = id;
+            }
+            if (id > maxId) {
+                maxId = id;
+            }
+            count++;
+        });
+    });
+
+    const range = maxId - minId;
+
+    // We use single byte array which is going to much more efficient than set
+    // so here we allow array to have 75% of waste space (actually memory profiler shows set mem consumption is a lot larger),
+    // which means if range is 400 and there are only 100 items - still use array
+    const threshold = 0.25;
+
+    if (count >= Math.max(1, range * threshold)) {
+        // Use array
+        const allIds = new Uint8Array(range + 1);
+        let count = 0;
+        idSets.forEach((ids) =>
+            ids.forEach((id) => {
+                if (allIds[id - minId] === 0) {
+                    allIds[id - minId] = 1;
+                    count++;
+                }
+            })
+        );
+        return {
+            has: (id: number) => allIds[id - minId] === 1,
+            toArray: () => {
+                const result = new Uint32Array(count);
+                let j = 0;
+                allIds.forEach((flag, i) => {
+                    if (flag === 1) {
+                        result[j++] = i + minId;
+                    }
+                });
+                return result;
+            },
+        };
+    } else {
+        // Use set
+        const allIds = new Set<number>();
+        idSets.forEach((ids) => ids.forEach((id) => allIds.add(id)));
+
+        return {
+            has: (id: number) => allIds.has(id),
+            toArray: () => new Uint32Array(allIds).sort(),
+        };
+    }
 }
