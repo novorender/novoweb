@@ -3,6 +3,7 @@ import { createSelector } from "@reduxjs/toolkit";
 import { type RootState } from "app";
 import { GroupStatus } from "contexts/objectGroups";
 import { AsyncStatus } from "types/misc";
+import { uniqueArray } from "utils/misc";
 
 import { DeviationType, LegendGroupInfo } from "./deviationTypes";
 
@@ -59,7 +60,7 @@ export const selectDeviationLegendGroups = createSelector(
                 ? [sp.from.groupIds, sp.to.groupIds]
                 : [sp.to.groupIds, sp.from.groupIds];
 
-        const allOthers = [...others, ...sp.favorites].filter((id) => !colored.includes(id));
+        const allOthers = uniqueArray([...others, ...sp.favorites].filter((id) => !colored.includes(id)));
 
         return [
             ...colored.map((id) => ({ id, isDeviationColored: true })),
