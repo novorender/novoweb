@@ -249,7 +249,7 @@ export const selectDeviationLegendGroups = createSelector(
         }
 
         const [colored, others] =
-            profile.deviationType === DeviationType.PointToTriangle
+            profile.deviationType === DeviationType.PointToTriangle || profile.fromAndToSwapped
                 ? [sp.from.groupIds, sp.to.groupIds]
                 : [sp.to.groupIds, sp.from.groupIds];
 

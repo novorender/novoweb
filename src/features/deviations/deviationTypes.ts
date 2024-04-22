@@ -32,6 +32,7 @@ export type UiDeviationProfile = {
     copyFromProfileId?: string;
     colors: ColorConfig;
     subprofiles: UiDeviationSubprofile[];
+    fromAndToSwapped: boolean;
 };
 
 export type UiDeviationSubprofile = {

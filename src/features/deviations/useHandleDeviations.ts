@@ -264,6 +264,7 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
                     ],
                     colors: g.colors ?? defaultColors,
                     hasFromAndTo: g.subprofiles !== undefined,
+                    fromAndToSwapped: false,
                 } as UiDeviationProfile)
             ),
             ...config.pointToPoint.groups.map((g) =>
@@ -273,16 +274,21 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
                     copyFromProfileId: g.copyFromProfileId,
                     deviationType: DeviationType.PointToPoint,
                     index: -1,
-                    subprofiles: g.subprofiles ?? [
+                    subprofiles: g.subprofiles?.map((sp) => ({
+                        ...sp,
+                        from: g.fromAndToSwapped ? sp.to : sp.from,
+                        to: g.fromAndToSwapped ? sp.from : sp.to,
+                    })) ?? [
                         {
-                            from: g.from,
-                            to: g.to,
+                            from: g.fromAndToSwapped ? g.to : g.from,
+                            to: g.fromAndToSwapped ? g.from : g.to,
                             favorites: g.favorites ?? [],
                             legendGroups: [],
                         },
                     ],
                     colors: g.colors ?? defaultColors,
                     hasFromAndTo: true,
+                    fromAndToSwapped: g.fromAndToSwapped,
                 } as UiDeviationProfile)
             ),
         ],

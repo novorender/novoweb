@@ -169,6 +169,7 @@ async function deviationFormToProfile({
         hasFromAndTo: deviationForm.hasFromAndTo,
         deviationType: deviationForm.deviationType.value,
         index: deviationForm.index,
+        fromAndToSwapped: deviationForm.deviationType.value === DeviationType.PointToPoint,
     };
 }
 

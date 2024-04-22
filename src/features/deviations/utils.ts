@@ -98,12 +98,13 @@ export function uiConfigToServerConfig(config: UiDeviationConfig): DeviationProj
             copyFromProfileId: p.copyFromProfileId,
             colors: p.colors,
             subprofiles: p.subprofiles.map((sp) => ({
-                from: sp.from,
-                to: sp.to,
+                from: p.fromAndToSwapped ? sp.to : sp.from,
+                to: p.fromAndToSwapped ? sp.from : sp.to,
                 centerLine: sp.centerLine,
                 heightToCeiling: sp.heightToCeiling,
                 favorites: sp.favorites,
             })),
+            fromAndToSwapped: p.fromAndToSwapped,
         } as PointToPointGroup | PointToTriangleGroup;
     };
 

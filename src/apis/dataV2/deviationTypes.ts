@@ -23,6 +23,10 @@ export type DeviationProfileBase = {
     colors?: ColorConfig;
     favorites?: string[];
     subprofiles?: DeviationSubprofile[];
+    // Calculation colors From group for mesh-to-points but To group for points-to-points,
+    // so for points we're going to swap From and To when passing to calculation,
+    // but in UI still show as defined by the user
+    fromAndToSwapped?: boolean;
 };
 
 export type DeviationSubprofile = {
