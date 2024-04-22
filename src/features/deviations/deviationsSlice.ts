@@ -49,20 +49,22 @@ export const deviationsSlice = createSlice({
             }
 
             const { index } = action.payload;
-            if (!state.selectedProfileId || !profiles.some((p) => p.id === state.selectedProfileId)) {
-                if (index >= 0 && index < profiles.length) {
-                    state.selectedProfileId = profiles[index].id;
-                } else {
-                    state.selectedProfileId = profiles[0].id;
+            if (profiles.length > 0) {
+                if (!state.selectedProfileId || !profiles.some((p) => p.id === state.selectedProfileId)) {
+                    if (index >= 0 && index < profiles.length) {
+                        state.selectedProfileId = profiles[index].id;
+                    } else {
+                        state.selectedProfileId = profiles[0].id;
+                    }
                 }
-            }
 
-            const profile = profiles.find((p) => p.id === state.selectedProfileId)!;
-            if (
-                state.selectedSubprofileIndex === undefined ||
-                state.selectedSubprofileIndex >= profile.subprofiles.length
-            ) {
-                state.selectedSubprofileIndex = 0;
+                const profile = state.selectedProfileId && profiles.find((p) => p.id === state.selectedProfileId)!;
+                if (
+                    state.selectedSubprofileIndex === undefined ||
+                    (profile && state.selectedSubprofileIndex >= profile.subprofiles.length)
+                ) {
+                    state.selectedSubprofileIndex = 0;
+                }
             }
         },
         setProfile: (
