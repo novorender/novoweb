@@ -80,7 +80,7 @@ function mergeDeviationFormIntoProfiles(config: UiDeviationConfig, profile: UiDe
         const typeChanged = existing.deviationType !== profile.deviationType;
         rebuildRequired = rebuildRequired || checkIfRebuildIsRequired(existing, profile);
         if (typeChanged) {
-            list.slice(existingIndex, 1);
+            list.splice(existingIndex, 1);
             list.push(profile);
         } else {
             list[existingIndex] = profile;

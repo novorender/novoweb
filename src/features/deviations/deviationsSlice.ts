@@ -59,7 +59,7 @@ export const deviationsSlice = createSlice({
 
             const { index } = action.payload;
             if (!state.selectedProfileId || !profiles.some((p) => p.id === state.selectedProfileId)) {
-                if (index < profiles.length) {
+                if (index >= 0 && index < profiles.length) {
                     state.selectedProfileId = profiles[index].id;
                 } else {
                     state.selectedProfileId = profiles[0].id;
