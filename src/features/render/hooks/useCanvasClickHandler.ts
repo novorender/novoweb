@@ -89,7 +89,7 @@ export function useCanvasClickHandler({
 
     const handleCanvasPick: MouseEventHandler<HTMLCanvasElement> = async (evt) => {
         const pointerDownState = pointerDownStateRef.current;
-        const longPress = pointerDownState && evt.timeStamp - pointerDownState.timestamp >= 300;
+        const longPress = pointerDownState && evt.timeStamp - pointerDownState.timestamp >= 800;
         const drag =
             pointerDownState &&
             vec2.dist([pointerDownState.x, pointerDownState.y], [evt.nativeEvent.offsetX, evt.nativeEvent.offsetY]) >=
