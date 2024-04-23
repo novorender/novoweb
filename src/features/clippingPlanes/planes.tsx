@@ -72,7 +72,7 @@ export default function Planes() {
                 planes: planes.map((p, i) => {
                     if (i === idx) {
                         return { ...selected, outline: { enabled: false }, normalOffset: plane };
-                    } else if (p.outline.enabled) {
+                    } else if (p.outline?.enabled) {
                         // Disable all clipping plane outlines while moving slider for better perf
                         return { ...p, outline: { enabled: false } };
                     }
