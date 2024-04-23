@@ -69,9 +69,15 @@ export default function Planes() {
         plane[3] = -newVal;
         view.modifyRenderState({
             clipping: {
-                planes: planes.map((p, i) =>
-                    i === idx ? { ...selected, outline: { enabled: false }, normalOffset: plane } : p
-                ),
+                planes: planes.map((p, i) => {
+                    if (i === idx) {
+                        return { ...selected, outline: { enabled: false }, normalOffset: plane };
+                    } else if (p.outline?.enabled) {
+                        // Disable all clipping plane outlines while moving slider for better perf
+                        return { ...p, outline: { enabled: false } };
+                    }
+                    return p;
+                }),
             },
         });
         if (cameraType === CameraType.Orthographic) {
