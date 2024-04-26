@@ -1,6 +1,6 @@
-import { AddCircle, FilterAlt } from "@mui/icons-material";
+import { AddCircle, Delete, FilterAlt } from "@mui/icons-material";
 import { Box, Button, List, Typography, useTheme } from "@mui/material";
-import { type MouseEvent, useEffect, useState } from "react";
+import { type MouseEvent, useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch } from "app/redux-store-interactions";
@@ -11,7 +11,8 @@ import { TemplateFilterMenu } from "features/forms/templateFilterMenu";
 import { ObjectVisibility, renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
 
-import { useListTemplatesQuery } from "../../api";
+import { useDeleteAllFormsMutation, useListTemplatesQuery } from "../../api";
+import { formsActions } from "../../slice";
 import { Template } from "./template";
 
 const FILTER_MENU_ID = "templates-filter-menu";
@@ -24,7 +25,10 @@ export function Templates() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
 
+    const [deleteAllForms] = useDeleteAllFormsMutation();
+
     const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
+    const [templateIds, setTemplateIds] = useState<string[]>([]);
 
     useEffect(() => {
         dispatchHighlightCollections(highlightCollectionsActions.clearAll());
@@ -32,9 +36,15 @@ export function Templates() {
         dispatchHighlighted(highlightActions.resetColor());
     }, [dispatch, dispatchHighlighted, dispatchHighlightCollections]);
 
-    const { data: templateIds = [], isLoading } = useListTemplatesQuery({
+    const { data: fetchedTemplateIds = [], isLoading } = useListTemplatesQuery({
         projectId: sceneId,
     });
+
+    useEffect(() => {
+        if (!isLoading) {
+            setTemplateIds(fetchedTemplateIds);
+        }
+    }, [fetchedTemplateIds, isLoading]);
 
     const handleAddFormClick = () => {
         history.push("/create");
@@ -49,6 +59,14 @@ export function Templates() {
         setFilterMenuAnchor(null);
     };
 
+    const handleDelete = useCallback(async () => {
+        await deleteAllForms({
+            projectId: sceneId,
+        });
+        dispatch(formsActions.setLocationForms([]));
+        setTemplateIds([]);
+    }, [deleteAllForms, dispatch, sceneId]);
+
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -56,21 +74,30 @@ export function Templates() {
                     <Box px={1}>
                         <Divider />
                     </Box>
-                    <Box display="flex">
-                        <Button color="grey" onClick={handleAddFormClick}>
-                            <AddCircle sx={{ mr: 1 }} />
-                            Add form
-                        </Button>
-                        <Button
-                            color="grey"
-                            onClick={openFilters}
-                            aria-haspopup="true"
-                            aria-controls={FILTER_MENU_ID}
-                            aria-expanded={Boolean(filterMenuAnchor)}
-                        >
-                            <FilterAlt sx={{ mr: 1 }} />
-                            Filters
-                        </Button>
+                    <Box display="flex" justifyContent="space-between">
+                        <Box display="flex">
+                            <Button color="grey" onClick={handleAddFormClick}>
+                                <AddCircle sx={{ mr: 1 }} />
+                                Add form
+                            </Button>
+                            <Button
+                                color="grey"
+                                onClick={openFilters}
+                                aria-haspopup="true"
+                                aria-controls={FILTER_MENU_ID}
+                                aria-expanded={Boolean(filterMenuAnchor)}
+                                disabled={isLoading || !templateIds.length}
+                            >
+                                <FilterAlt sx={{ mr: 1 }} />
+                                Filters
+                            </Button>
+                        </Box>
+                        <Box display="flex">
+                            <Button color="grey" onClick={handleDelete} disabled={isLoading || !templateIds.length}>
+                                <Delete fontSize="small" sx={{ mr: 1 }} />
+                                Delete all forms
+                            </Button>
+                        </Box>
                     </Box>
                 </>
             </Box>

@@ -116,6 +116,9 @@ export const formsSlice = createSlice({
                 (f) => f.templateId !== action.payload.templateId || f.id !== action.payload.formId
             );
         },
+        removeLocationTemplate: (state, action: PayloadAction<TemplateId>) => {
+            state.locationForms = state.locationForms.filter((f) => f.templateId !== action.payload);
+        },
     },
 });
 

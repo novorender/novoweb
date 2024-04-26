@@ -101,6 +101,13 @@ export const formsApi = createApi({
                 { type: "Template" as const, id: `${projectId}-${templateId}` },
             ],
         }),
+        deleteTemplate: builder.mutation<void, { projectId: ProjectId; templateId: TemplateId }>({
+            query: ({ projectId, templateId }) => ({
+                url: `projects/${projectId}/templates/${templateId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: () => [{ type: "Template" as const, id: "ID_LIST" }],
+        }),
         updateSearchForm: builder.mutation<
             void,
             { projectId: ProjectId; formId: FormId; objectGuid: FormObjectGuid; form: Partial<Form> }
@@ -156,6 +163,12 @@ export const formsApi = createApi({
                 { type: "Template" as const, id: `${projectId}-${templateId}` },
             ],
         }),
+        deleteAllForms: builder.mutation<void, { projectId: ProjectId }>({
+            query: ({ projectId }) => ({
+                url: `projects/${projectId}/forms`,
+                method: "DELETE",
+            }),
+        }),
     }),
 });
 
@@ -171,4 +184,6 @@ export const {
     useUpdateSearchFormMutation,
     useUpdateLocationFormMutation,
     useDeleteLocationFormMutation,
+    useDeleteTemplateMutation,
+    useDeleteAllFormsMutation,
 } = formsApi;
