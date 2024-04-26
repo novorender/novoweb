@@ -124,6 +124,7 @@ export function LocationInstance() {
             formId,
         });
         dispatch(formsActions.removeLocationForm({ templateId, formId }));
+        dispatch(formsActions.setSelectedFormId(undefined));
         history.goBack();
     }, [sceneId, templateId, formId, deleteForm, dispatch, history]);
 
