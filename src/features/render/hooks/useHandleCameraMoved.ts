@@ -117,7 +117,9 @@ export function useHandleCameraMoved({
                             renderActions.setClippingPlanes({
                                 planes: [
                                     { ...plane, normalOffset: [...z, w] as Vec4, baseW: w },
-                                    ...view.renderState.clipping.planes.slice(1),
+                                    ...view.renderState.clipping.planes
+                                        .slice(1)
+                                        .map((p) => ({ ...p, baseW: p.normalOffset[3] })),
                                 ] as DeepMutable<RenderState["clipping"]["planes"]>,
                             })
                         );
