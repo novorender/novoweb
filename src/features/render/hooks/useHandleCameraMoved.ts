@@ -1,4 +1,4 @@
-import { RenderState, View } from "@novorender/api";
+import { View } from "@novorender/api";
 import { mat3, quat, vec3 } from "gl-matrix";
 import { MutableRefObject, useEffect, useRef } from "react";
 
@@ -8,7 +8,13 @@ import { measureActions } from "features/measure";
 import { orthoCamActions, selectCurrentTopDownElevation } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
-import { renderActions, selectCameraType, selectClippingInEdit, selectViewMode } from "../renderSlice";
+import {
+    renderActions,
+    selectCameraType,
+    selectClippingInEdit,
+    selectClippingPlanes,
+    selectViewMode,
+} from "../renderSlice";
 import { CameraType, DeepMutable } from "../types";
 
 export function useHandleCameraMoved({
@@ -120,7 +126,7 @@ export function useHandleCameraMoved({
                                     ...view.renderState.clipping.planes
                                         .slice(1)
                                         .map((p) => ({ ...p, baseW: p.normalOffset[3] })),
-                                ] as DeepMutable<RenderState["clipping"]["planes"]>,
+                                ] as DeepMutable<ReturnType<typeof selectClippingPlanes>["planes"]>,
                             })
                         );
                     }
