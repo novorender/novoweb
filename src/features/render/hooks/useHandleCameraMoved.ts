@@ -12,7 +12,7 @@ import {
     renderActions,
     selectCameraType,
     selectClippingInEdit,
-    selectClippingPlanes,
+    type selectClippingPlanes,
     selectViewMode,
 } from "../renderSlice";
 import { CameraType, DeepMutable } from "../types";
