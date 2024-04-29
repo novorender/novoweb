@@ -10,6 +10,7 @@ import { ColorStopList } from "../components/colorStop";
 import { DeviationsSnackbar } from "../components/deviationsSnackbar";
 import { GroupsAndColorsHud } from "../components/groupsAndColorsHud";
 import { MixFactorInput } from "../components/mixFactorInput";
+import { RunLog } from "../components/runLog";
 import { SubprofileSelect } from "../components/subprofileSelect";
 import { ViewSwitchSection } from "../components/viewSwitchSection";
 import { deviationsActions } from "../deviationsSlice";
@@ -79,6 +80,8 @@ export function Root() {
                                         <Alert severity="info">Deviation calculation is in progress.</Alert>
                                     </Box>
                                 ) : undefined}
+
+                                <RunLog data={profiles.data} />
 
                                 <Box p={2}>
                                     <FormControl fullWidth>

@@ -22,7 +22,8 @@ export function SaveDeviation() {
         save();
 
         async function save() {
-            const uiConfig = await mergeFormAndSave();
+            // If we recalculate immediately - set rebuild required to false
+            const uiConfig = await mergeFormAndSave({ clearRebuildRequired: recalc });
             if (uiConfig && recalc) {
                 await calcDeviations(uiConfig);
             }
