@@ -24,50 +24,56 @@ export function useMergeFormAndSave() {
     const deviations = useAppSelector(selectDeviations);
     const saveConfig = useSaveDeviationConfig();
 
-    return useCallback(async () => {
-        if (!db || !view || !deviationForm || profiles.status !== AsyncStatus.Success) {
-            return;
-        }
-
-        dispatch(deviationsActions.setSaveStatus({ status: AsyncStatus.Loading }));
-        try {
-            const profile = await deviationFormToProfile({
-                db,
-                view,
-                deviationForm: deviationForm,
-            });
-            const isNew = deviationForm.id === NEW_DEVIATION_ID;
-            if (isNew) {
-                profile.id = window.crypto.randomUUID();
+    return useCallback(
+        async ({ clearRebuildRequired }: { clearRebuildRequired: boolean }) => {
+            if (!db || !view || !deviationForm || profiles.status !== AsyncStatus.Success) {
+                return;
             }
-            const newProfileData = mergeDeviationFormIntoProfiles(profiles.data, profile);
 
-            await saveConfig({
-                uiConfig: newProfileData,
-                deviations: {
-                    ...deviations,
-                    colorGradient: {
-                        knots: profile.colors.colorStops,
+            dispatch(deviationsActions.setSaveStatus({ status: AsyncStatus.Loading }));
+            try {
+                const profile = await deviationFormToProfile({
+                    db,
+                    view,
+                    deviationForm: deviationForm,
+                });
+                const isNew = deviationForm.id === NEW_DEVIATION_ID;
+                if (isNew) {
+                    profile.id = window.crypto.randomUUID();
+                }
+                const newProfileData = mergeDeviationFormIntoProfiles(profiles.data, profile);
+                if (clearRebuildRequired) {
+                    newProfileData.rebuildRequired = false;
+                }
+
+                await saveConfig({
+                    uiConfig: newProfileData,
+                    deviations: {
+                        ...deviations,
+                        colorGradient: {
+                            knots: profile.colors.colorStops,
+                        },
                     },
-                },
-                showRebuildMessage: false, //newProfileData.rebuildRequired,
-            });
+                    showRebuildMessage: false, //newProfileData.rebuildRequired,
+                });
 
-            dispatch(deviationsActions.setProfiles({ status: AsyncStatus.Success, data: newProfileData }));
-            dispatch(deviationsActions.resetHiddenLegendGroupsForProfile({ profileId: profile.id }));
-            dispatch(deviationsActions.setDeviationForm(undefined));
+                dispatch(deviationsActions.setProfiles({ status: AsyncStatus.Success, data: newProfileData }));
+                dispatch(deviationsActions.resetHiddenLegendGroupsForProfile({ profileId: profile.id }));
+                dispatch(deviationsActions.setDeviationForm(undefined));
 
-            return newProfileData;
-        } catch (ex) {
-            console.warn(ex);
-            dispatch(
-                deviationsActions.setSaveStatus({
-                    status: AsyncStatus.Error,
-                    msg: "Failed to save deviation profile",
-                })
-            );
-        }
-    }, [db, view, profiles, deviationForm, deviations, dispatch, saveConfig]);
+                return newProfileData;
+            } catch (ex) {
+                console.warn(ex);
+                dispatch(
+                    deviationsActions.setSaveStatus({
+                        status: AsyncStatus.Error,
+                        msg: "Failed to save deviation profile",
+                    })
+                );
+            }
+        },
+        [db, view, profiles, deviationForm, deviations, dispatch, saveConfig]
+    );
 }
 
 function mergeDeviationFormIntoProfiles(config: UiDeviationConfig, profile: UiDeviationProfile) {
@@ -180,8 +186,8 @@ function checkIfRebuildIsRequired(prev: UiDeviationProfile, next: UiDeviationPro
         prev.subprofiles.some((spPrev, i) => {
             const spNext = next.subprofiles[i];
             return (
-                !areGroupsIdsEqual(spPrev.from.groupIds, spNext.from.groupIds) ||
-                !areGroupsIdsEqual(spPrev.to.groupIds, spNext.to.groupIds) ||
+                !areArraysEqual(spPrev.from.groupIds, spNext.from.groupIds) ||
+                !areArraysEqual(spPrev.to.groupIds, spNext.to.groupIds) ||
                 spPrev.centerLine?.brepId !== spNext.centerLine?.brepId ||
                 !areArraysEqual(
                     spPrev.centerLine?.parameterBounds || ([] as number[]),
@@ -191,8 +197,4 @@ function checkIfRebuildIsRequired(prev: UiDeviationProfile, next: UiDeviationPro
             );
         })
     );
-}
-
-function areGroupsIdsEqual(a: string[], b: string[]) {
-    return a.every((e) => b.includes(e));
 }

@@ -14,6 +14,13 @@ export type DeviationRunData = {
     runTime: string;
     rebuilt: boolean;
     version: string;
+    log?: DeviationRunLogEntry[];
+};
+
+export type DeviationRunLogEntry = {
+    severity: "warning";
+    id: string;
+    message: "EMPTY_DEVIATION_GROUPS";
 };
 
 export type DeviationProfileBase = {

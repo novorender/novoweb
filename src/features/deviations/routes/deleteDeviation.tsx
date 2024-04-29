@@ -8,6 +8,7 @@ import { selectDeviations } from "features/render";
 import { AsyncStatus } from "types/misc";
 
 import { deviationsActions } from "../deviationsSlice";
+import { UiDeviationConfig } from "../deviationTypes";
 import { useCalcDeviations } from "../hooks/useCalcDeviations";
 import { useSaveDeviationConfig } from "../hooks/useSaveDeviationConfig";
 import { selectDeviationProfiles, selectSaveStatus } from "../selectors";
@@ -32,9 +33,10 @@ export function DeleteDeviation() {
                 return;
             }
 
-            const newProfileData = {
+            const newProfileData: UiDeviationConfig = {
                 ...profiles.data,
                 profiles: profiles.data.profiles.filter((p) => p.id !== id),
+                rebuildRequired: !recalc,
             };
 
             await saveConfig({
