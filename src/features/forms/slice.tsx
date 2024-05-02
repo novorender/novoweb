@@ -62,6 +62,15 @@ export const formsSlice = createSlice({
         setLocationForms: (state, action: PayloadAction<State["locationForms"]>) => {
             state.locationForms = action.payload;
         },
+        setTemplateLocationForms: (
+            state,
+            action: PayloadAction<{ templateId: string; forms: State["locationForms"] }>
+        ) => {
+            state.locationForms = [
+                ...state.locationForms.filter((f) => f.templateId !== action.payload.templateId),
+                ...action.payload.forms,
+            ];
+        },
         setSelectedFormId: (state, action: PayloadAction<State["selectedFormId"]>) => {
             state.selectedFormId = action.payload;
         },

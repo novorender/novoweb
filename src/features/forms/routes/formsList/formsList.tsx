@@ -87,13 +87,14 @@ export function FormsList() {
                 })) ?? []
             );
             dispatch(
-                formsActions.addLocationForms(
-                    Object.entries(template.forms || {}).map(([id, f]) => ({
+                formsActions.setTemplateLocationForms({
+                    templateId: template.id!,
+                    forms: Object.entries(template.forms || {}).map(([id, f]) => ({
                         ...f,
                         templateId: template.id!,
                         id: id!,
-                    }))
-                )
+                    })),
+                })
             );
         } else if (template.type === TemplateType.Search) {
             setItems(
