@@ -168,6 +168,7 @@ export const formsApi = createApi({
                 url: `projects/${projectId}/forms`,
                 method: "DELETE",
             }),
+            invalidatesTags: (_result, _error) => [{ type: "Template" as const, id: "ID_LIST" }],
         }),
     }),
 });

@@ -1,10 +1,10 @@
 import { ArrowBack, Clear, Delete, FlightTakeoff } from "@mui/icons-material";
 import { Box, Button, LinearProgress, useTheme } from "@mui/material";
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { type FormEvent, Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, ScrollBox, TextField } from "components";
+import { Confirmation, Divider, ScrollBox, TextField } from "components";
 import {
     useDeleteLocationFormMutation,
     useGetLocationFormQuery,
@@ -30,6 +30,7 @@ export function LocationInstance() {
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);
     const [isUpdated, setIsUpdated] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const { data: form, isLoading: isFormLoading } = useGetLocationFormQuery({
         projectId: sceneId,
@@ -43,7 +44,7 @@ export function LocationInstance() {
 
     const [updateForm, { isLoading: isFormUpdating }] = useUpdateLocationFormMutation();
 
-    const [deleteForm] = useDeleteLocationFormMutation();
+    const [deleteForm, { isLoading: isFormDeleting }] = useDeleteLocationFormMutation();
 
     const [title, setTitle] = useState(form?.title || formId);
 
@@ -117,18 +118,31 @@ export function LocationInstance() {
         flyToForm({ location: form.location });
     }, [flyToForm, form?.location]);
 
-    const handleDelete = useCallback(async () => {
-        await deleteForm({
-            projectId: sceneId,
-            templateId,
-            formId,
-        });
-        dispatch(formsActions.removeLocationForm({ templateId, formId }));
-        dispatch(formsActions.setSelectedFormId(undefined));
-        history.goBack();
-    }, [sceneId, templateId, formId, deleteForm, dispatch, history]);
+    const handleDelete = useCallback(
+        async (e: FormEvent) => {
+            e.preventDefault();
+            await deleteForm({
+                projectId: sceneId,
+                templateId,
+                formId,
+            });
+            dispatch(formsActions.removeLocationForm({ templateId, formId }));
+            dispatch(formsActions.setSelectedFormId(undefined));
+            history.goBack();
+        },
+        [sceneId, templateId, formId, deleteForm, dispatch, history]
+    );
 
-    return (
+    return isDeleting ? (
+        <Confirmation
+            title={`Delete form "${title}"?`}
+            confirmBtnText="Delete"
+            onCancel={() => setIsDeleting(false)}
+            component="form"
+            onSubmit={handleDelete}
+            loading={isFormDeleting}
+        />
+    ) : (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
                 <>
@@ -148,7 +162,7 @@ export function LocationInstance() {
                             <Clear sx={{ mr: 1 }} />
                             Clear
                         </Button>
-                        <Button color="grey" onClick={handleDelete}>
+                        <Button color="grey" onClick={() => setIsDeleting(true)}>
                             <Delete fontSize="small" sx={{ mr: 1 }} />
                             Delete
                         </Button>

@@ -1,10 +1,10 @@
 import { AddCircle, Delete, FilterAlt } from "@mui/icons-material";
 import { Box, Button, List, Typography, useTheme } from "@mui/material";
-import { type MouseEvent, useCallback, useEffect, useState } from "react";
+import { type FormEvent, type MouseEvent, useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch } from "app/redux-store-interactions";
-import { Divider, LinearProgress, ScrollBox } from "components";
+import { Confirmation, Divider, LinearProgress, ScrollBox } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { TemplateFilterMenu } from "features/forms/templateFilterMenu";
@@ -25,10 +25,10 @@ export function Templates() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
 
-    const [deleteAllForms] = useDeleteAllFormsMutation();
+    const [deleteAllForms, { isLoading: isAllFormsDeleting }] = useDeleteAllFormsMutation();
 
     const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
-    const [templateIds, setTemplateIds] = useState<string[]>([]);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         dispatchHighlightCollections(highlightCollectionsActions.clearAll());
@@ -36,15 +36,13 @@ export function Templates() {
         dispatchHighlighted(highlightActions.resetColor());
     }, [dispatch, dispatchHighlighted, dispatchHighlightCollections]);
 
-    const { data: fetchedTemplateIds = [], isLoading } = useListTemplatesQuery({
+    const {
+        data: templateIds = [],
+        isLoading,
+        error,
+    } = useListTemplatesQuery({
         projectId: sceneId,
     });
-
-    useEffect(() => {
-        if (!isLoading) {
-            setTemplateIds(fetchedTemplateIds);
-        }
-    }, [fetchedTemplateIds, isLoading]);
 
     const handleAddFormClick = () => {
         history.push("/create");
@@ -59,15 +57,28 @@ export function Templates() {
         setFilterMenuAnchor(null);
     };
 
-    const handleDelete = useCallback(async () => {
-        await deleteAllForms({
-            projectId: sceneId,
-        });
-        dispatch(formsActions.setLocationForms([]));
-        setTemplateIds([]);
-    }, [deleteAllForms, dispatch, sceneId]);
+    const handleDelete = useCallback(
+        async (e: FormEvent) => {
+            e.preventDefault();
+            await deleteAllForms({
+                projectId: sceneId,
+            });
+            dispatch(formsActions.setLocationForms([]));
+            setIsDeleting(false);
+        },
+        [deleteAllForms, dispatch, sceneId]
+    );
 
-    return (
+    return isDeleting ? (
+        <Confirmation
+            title="Delete all forms?"
+            confirmBtnText="Delete"
+            onCancel={() => setIsDeleting(false)}
+            component="form"
+            onSubmit={handleDelete}
+            loading={isAllFormsDeleting}
+        />
+    ) : (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
                 <>
@@ -86,14 +97,18 @@ export function Templates() {
                                 aria-haspopup="true"
                                 aria-controls={FILTER_MENU_ID}
                                 aria-expanded={Boolean(filterMenuAnchor)}
-                                disabled={isLoading || !templateIds.length}
+                                disabled={isLoading || !templateIds.length || !!error}
                             >
                                 <FilterAlt sx={{ mr: 1 }} />
                                 Filters
                             </Button>
                         </Box>
                         <Box display="flex">
-                            <Button color="grey" onClick={handleDelete} disabled={isLoading || !templateIds.length}>
+                            <Button
+                                color="grey"
+                                onClick={() => setIsDeleting(true)}
+                                disabled={isLoading || !templateIds.length || !!error}
+                            >
                                 <Delete fontSize="small" sx={{ mr: 1 }} />
                                 Delete all forms
                             </Button>
@@ -107,7 +122,7 @@ export function Templates() {
                 </Box>
             ) : (
                 <ScrollBox py={2}>
-                    {templateIds.length ? (
+                    {!error && templateIds.length ? (
                         <List dense disablePadding>
                             {templateIds.map((templateId) => (
                                 <Template templateId={templateId} key={templateId} />

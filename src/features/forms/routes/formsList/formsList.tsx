@@ -1,10 +1,10 @@
 import { ArrowBack, Delete, FilterAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, List, Typography, useTheme } from "@mui/material";
-import { type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type FormEvent, type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
+import { Confirmation, Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,
@@ -49,7 +49,7 @@ export function FormsList() {
         templateId,
     });
 
-    const [deleteTemplate] = useDeleteTemplateMutation();
+    const [deleteTemplate, { isLoading: isTemplateDeleting }] = useDeleteTemplateMutation();
 
     const [items, setItems] = useState<
         (FormObject & { formState: FormState })[] | (FormRecord & { id: number; formState: FormState })[]
@@ -69,6 +69,7 @@ export function FormsList() {
             : []
     );
     const [loadingItems, setLoadingItems] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const abortSignal = abortController.current.signal;
 
@@ -236,18 +237,31 @@ export function FormsList() {
         }
     };
 
-    const handleDelete = useCallback(async () => {
-        await deleteTemplate({ projectId: sceneId, templateId });
-        if (template?.type === TemplateType.Location) {
-            if (isPickingLocation) {
-                dispatch(renderActions.stopPicker(Picker.FormLocation));
+    const handleDelete = useCallback(
+        async (e: FormEvent) => {
+            e.preventDefault();
+            await deleteTemplate({ projectId: sceneId, templateId });
+            if (template?.type === TemplateType.Location) {
+                if (isPickingLocation) {
+                    dispatch(renderActions.stopPicker(Picker.FormLocation));
+                }
+                dispatch(formsActions.removeLocationTemplate(templateId));
             }
-            dispatch(formsActions.removeLocationTemplate(templateId));
-        }
-        history.push("/");
-    }, [deleteTemplate, dispatch, history, isPickingLocation, sceneId, template, templateId]);
+            history.push("/");
+        },
+        [deleteTemplate, dispatch, history, isPickingLocation, sceneId, template, templateId]
+    );
 
-    return (
+    return isDeleting ? (
+        <Confirmation
+            title={`Delete all "${template?.title}" forms?`}
+            confirmBtnText="Delete"
+            onCancel={() => setIsDeleting(false)}
+            component="form"
+            onSubmit={handleDelete}
+            loading={isTemplateDeleting}
+        />
+    ) : (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
                 <>
@@ -287,7 +301,7 @@ export function FormsList() {
                         </Box>
                         <Button
                             color="grey"
-                            onClick={handleDelete}
+                            onClick={() => setIsDeleting(true)}
                             disabled={loadingTemplate || loadingItems || !items.length}
                         >
                             <Delete fontSize="small" sx={{ mr: 1 }} />
