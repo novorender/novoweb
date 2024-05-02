@@ -3,7 +3,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { type RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { type FormGLtfAsset, type FormRecord, type Template } from "./types";
+import { type FormGLtfAsset, type FormId, type FormRecord, type Template, type TemplateId } from "./types";
 
 const initialState = {
     currentFormsList: null,
@@ -110,6 +110,14 @@ export const formsSlice = createSlice({
         },
         toggleTemplatesFilter: (state, action: PayloadAction<Exclude<keyof State["templatesFilters"], "name">>) => {
             state.templatesFilters[action.payload] = !state.templatesFilters[action.payload];
+        },
+        removeLocationForm: (state, action: PayloadAction<{ templateId: TemplateId; formId: FormId }>) => {
+            state.locationForms = state.locationForms.filter(
+                (f) => f.templateId !== action.payload.templateId || f.id !== action.payload.formId
+            );
+        },
+        removeLocationTemplate: (state, action: PayloadAction<TemplateId>) => {
+            state.locationForms = state.locationForms.filter((f) => f.templateId !== action.payload);
         },
     },
 });

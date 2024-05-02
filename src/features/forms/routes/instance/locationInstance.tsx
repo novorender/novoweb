@@ -1,11 +1,15 @@
-import { ArrowBack, Clear, FlightTakeoff } from "@mui/icons-material";
+import { ArrowBack, Clear, Delete, FlightTakeoff } from "@mui/icons-material";
 import { Box, Button, LinearProgress, useTheme } from "@mui/material";
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { type FormEvent, Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, ScrollBox, TextField } from "components";
-import { useGetLocationFormQuery, useUpdateLocationFormMutation } from "features/forms/api";
+import { Confirmation, Divider, ScrollBox, TextField } from "components";
+import {
+    useDeleteLocationFormMutation,
+    useGetLocationFormQuery,
+    useUpdateLocationFormMutation,
+} from "features/forms/api";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { formsActions, selectCurrentFormsList } from "features/forms/slice";
 import { type FormId, type FormItem as FItype, FormItemType, type TemplateId } from "features/forms/types";
@@ -26,6 +30,7 @@ export function LocationInstance() {
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);
     const [isUpdated, setIsUpdated] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const { data: form, isLoading: isFormLoading } = useGetLocationFormQuery({
         projectId: sceneId,
@@ -38,6 +43,8 @@ export function LocationInstance() {
     }, [dispatch, formId]);
 
     const [updateForm, { isLoading: isFormUpdating }] = useUpdateLocationFormMutation();
+
+    const [deleteForm, { isLoading: isFormDeleting }] = useDeleteLocationFormMutation();
 
     const [title, setTitle] = useState(form?.title || formId);
 
@@ -73,7 +80,7 @@ export function LocationInstance() {
         };
     }, [sceneId, templateId, formId, isUpdated, items, title, updateForm]);
 
-    const handleBackClick = useCallback(() => {
+    const handleBack = useCallback(() => {
         if (currentFormsList) {
             history.push(`/forms/${currentFormsList}`);
         } else {
@@ -111,7 +118,31 @@ export function LocationInstance() {
         flyToForm({ location: form.location });
     }, [flyToForm, form?.location]);
 
-    return (
+    const handleDelete = useCallback(
+        async (e: FormEvent) => {
+            e.preventDefault();
+            await deleteForm({
+                projectId: sceneId,
+                templateId,
+                formId,
+            });
+            dispatch(formsActions.removeLocationForm({ templateId, formId }));
+            dispatch(formsActions.setSelectedFormId(undefined));
+            history.goBack();
+        },
+        [sceneId, templateId, formId, deleteForm, dispatch, history]
+    );
+
+    return isDeleting ? (
+        <Confirmation
+            title={`Delete form "${title}"?`}
+            confirmBtnText="Delete"
+            onCancel={() => setIsDeleting(false)}
+            component="form"
+            onSubmit={handleDelete}
+            loading={isFormDeleting}
+        />
+    ) : (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
                 <>
@@ -119,7 +150,7 @@ export function LocationInstance() {
                         <Divider />
                     </Box>
                     <Box display="flex" justifyContent="space-between">
-                        <Button color="grey" onClick={handleBackClick}>
+                        <Button color="grey" onClick={handleBack}>
                             <ArrowBack sx={{ mr: 1 }} />
                             Back
                         </Button>
@@ -130,6 +161,10 @@ export function LocationInstance() {
                         <Button color="grey" onClick={handleClearClick}>
                             <Clear sx={{ mr: 1 }} />
                             Clear
+                        </Button>
+                        <Button color="grey" onClick={() => setIsDeleting(true)}>
+                            <Delete fontSize="small" sx={{ mr: 1 }} />
+                            Delete
                         </Button>
                     </Box>
                 </>
