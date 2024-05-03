@@ -7,7 +7,6 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { isInternalGroup, useObjectGroups } from "contexts/objectGroups";
 import { useSceneId } from "hooks/useSceneId";
 import { selectProjectIsV2 } from "slices/explorer";
-import { AsyncStatus } from "types/misc";
 
 import { deviationsActions } from "..";
 import { DeviationCalculationStatus, UiDeviationConfig } from "../deviationTypes";
@@ -50,12 +49,6 @@ export function useCalcDeviations() {
 
                 if (success) {
                     dispatch(deviationsActions.setCalculationStatus({ status: DeviationCalculationStatus.Running }));
-                    dispatch(
-                        deviationsActions.setProfiles({
-                            status: AsyncStatus.Success,
-                            data: { ...config, rebuildRequired: false },
-                        })
-                    );
                 }
             } catch (ex) {
                 console.warn(ex);

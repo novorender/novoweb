@@ -101,6 +101,13 @@ export const formsApi = createApi({
                 { type: "Template" as const, id: `${projectId}-${templateId}` },
             ],
         }),
+        deleteTemplate: builder.mutation<void, { projectId: ProjectId; templateId: TemplateId }>({
+            query: ({ projectId, templateId }) => ({
+                url: `projects/${projectId}/templates/${templateId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: () => [{ type: "Template" as const, id: "ID_LIST" }],
+        }),
         updateSearchForm: builder.mutation<
             void,
             { projectId: ProjectId; formId: FormId; objectGuid: FormObjectGuid; form: Partial<Form> }
@@ -147,6 +154,22 @@ export const formsApi = createApi({
                 },
             ],
         }),
+        deleteLocationForm: builder.mutation<void, { projectId: ProjectId; templateId: TemplateId; formId: FormId }>({
+            query: ({ projectId, templateId, formId }) => ({
+                url: `projects/${projectId}/location/${templateId}/${formId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: (_result, _error, { projectId, templateId }) => [
+                { type: "Template" as const, id: `${projectId}-${templateId}` },
+            ],
+        }),
+        deleteAllForms: builder.mutation<void, { projectId: ProjectId }>({
+            query: ({ projectId }) => ({
+                url: `projects/${projectId}/forms`,
+                method: "DELETE",
+            }),
+            invalidatesTags: (_result, _error) => [{ type: "Template" as const, id: "ID_LIST" }],
+        }),
     }),
 });
 
@@ -161,4 +184,7 @@ export const {
     useCreateLocationFormMutation,
     useUpdateSearchFormMutation,
     useUpdateLocationFormMutation,
+    useDeleteLocationFormMutation,
+    useDeleteTemplateMutation,
+    useDeleteAllFormsMutation,
 } = formsApi;

@@ -302,7 +302,9 @@ async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?:
     const url = new URL("/novorender/api/", window.location.origin);
 
     const imports = await View.downloadImports({ baseUrl: url });
-    return new View(canvas, deviceProfile, imports);
+    const view = new View(canvas, deviceProfile, imports);
+    view.controllers.flight.input.mouseMoveSensitivity = 4;
+    return view;
 }
 
 async function loadTmZoneForCalc(projectV2: ProjectInfo | undefined, tmZoneV1: string | undefined) {

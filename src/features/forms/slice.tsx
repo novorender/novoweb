@@ -3,7 +3,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { type RootState } from "app/store";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { type FormGLtfAsset, type FormRecord, type Template } from "./types";
+import { type FormGLtfAsset, type FormRecord, type Template, type TemplateId } from "./types";
 
 const initialState = {
     currentFormsList: null,
@@ -62,6 +62,15 @@ export const formsSlice = createSlice({
         setLocationForms: (state, action: PayloadAction<State["locationForms"]>) => {
             state.locationForms = action.payload;
         },
+        setTemplateLocationForms: (
+            state,
+            action: PayloadAction<{ templateId: string; forms: State["locationForms"] }>
+        ) => {
+            state.locationForms = [
+                ...state.locationForms.filter((f) => f.templateId !== action.payload.templateId),
+                ...action.payload.forms,
+            ];
+        },
         setSelectedFormId: (state, action: PayloadAction<State["selectedFormId"]>) => {
             state.selectedFormId = action.payload;
         },
@@ -110,6 +119,12 @@ export const formsSlice = createSlice({
         },
         toggleTemplatesFilter: (state, action: PayloadAction<Exclude<keyof State["templatesFilters"], "name">>) => {
             state.templatesFilters[action.payload] = !state.templatesFilters[action.payload];
+        },
+        removeLocationFormsNotInTemplates: (state, action: PayloadAction<TemplateId[]>) => {
+            const newForms = state.locationForms.filter((f) => action.payload.includes(f.templateId));
+            if (state.locationForms.length !== newForms.length) {
+                state.locationForms = newForms;
+            }
         },
     },
 });

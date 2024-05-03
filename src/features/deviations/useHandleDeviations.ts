@@ -55,7 +55,10 @@ export function useHandleDeviations() {
             dispatch(deviationsActions.setProfiles({ status: AsyncStatus.Loading }));
 
             try {
-                const [configV1, configV2] = await Promise.all([
+                // When we run the calculation - saved config is copied to another storage where calculator picks it up, so
+                // savedConfig - the one where we save changes
+                // commitedConfig - the one picked up (and later updated!) by the service
+                const [commitedConfig, savedConfig] = await Promise.all([
                     fetch(url).then((res) => {
                         if (!res.ok) {
                             return;
@@ -70,15 +73,20 @@ export function useHandleDeviations() {
                         : undefined,
                 ]);
 
+                if (commitedConfig && savedConfig) {
+                    // Commited config always has relevant runData
+                    savedConfig.runData = commitedConfig.runData;
+                }
+
                 let config: UiDeviationConfig;
-                if (configV1 && configV2) {
-                    config = configV2;
-                    matchProfileIndexes(configV2, configV1);
-                } else if (configV1) {
-                    config = configToUi(configV1, defaultColorStops);
+                if (commitedConfig && savedConfig) {
+                    config = savedConfig;
+                    matchProfileIndexes(savedConfig, commitedConfig);
+                } else if (commitedConfig) {
+                    config = configToUi(commitedConfig, defaultColorStops);
                     config.profiles.forEach((p, i) => (p.index = i));
-                } else if (configV2) {
-                    config = configV2;
+                } else if (savedConfig) {
+                    config = savedConfig;
                 } else {
                     config = getEmptyDeviationConfig();
                 }

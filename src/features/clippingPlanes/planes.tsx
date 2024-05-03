@@ -1,4 +1,4 @@
-import { Cameraswitch } from "@mui/icons-material";
+import { Cameraswitch, Delete } from "@mui/icons-material";
 import { Box, Button, Slider } from "@mui/material";
 import { ReadonlyQuat, ReadonlyVec3, vec3, vec4 } from "gl-matrix";
 import { SyntheticEvent, useEffect, useRef, useState } from "react";
@@ -148,13 +148,31 @@ export default function Planes() {
         }
     };
 
+    const handleDeletePlane = (idx: number) => {
+        view.modifyRenderState({
+            outlines: { on: true },
+        });
+        const newPlanes = planes
+            .filter((_, i) => i !== idx)
+            .map((p, i) => (i === 0 ? { ...p, outline: { enabled: true } } : p));
+        setSliders(newPlanes.map((plane) => -plane.normalOffset[3]));
+        dispatch(
+            renderActions.setClippingPlanes({
+                planes: newPlanes,
+            })
+        );
+        if (cameraType === CameraType.Orthographic) {
+            dispatch(renderActions.setClippingInEdit(false));
+        }
+    };
+
     return (
         <>
             {planes.length === sliders.length &&
                 planes.map((plane, idx) => {
                     return (
-                        <Box mb={2} key={idx}>
-                            Plane {idx + 1}:
+                        <Box mb={2} key={idx} display="flex" alignItems="center" gap={1}>
+                            <Box flex="0 0 80px">Plane {idx + 1}</Box>
                             <Slider
                                 min={-plane.baseW - 20}
                                 max={-plane.baseW + 20}
@@ -165,6 +183,9 @@ export default function Planes() {
                             />
                             <Button onClick={() => handleCameraSwap(idx)} color="grey">
                                 <Cameraswitch sx={{ mr: 1 }} />
+                            </Button>
+                            <Button onClick={() => handleDeletePlane(idx)} color="grey">
+                                <Delete sx={{ mr: 1 }} />
                             </Button>
                         </Box>
                     );

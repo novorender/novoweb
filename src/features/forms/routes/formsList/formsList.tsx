@@ -1,10 +1,10 @@
-import { ArrowBack, FilterAlt } from "@mui/icons-material";
+import { ArrowBack, Delete, FilterAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, List, Typography, useTheme } from "@mui/material";
-import { type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type FormEvent, type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
+import { Confirmation, Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,
@@ -12,7 +12,7 @@ import {
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { useGetTemplateQuery } from "features/forms/api";
+import { useDeleteTemplateMutation, useGetTemplateQuery } from "features/forms/api";
 import { FormFilterMenu } from "features/forms/formFilterMenu";
 import { formsActions, selectCurrentFormsList, selectFormFilters } from "features/forms/slice";
 import { type FormId, type FormObject, type FormRecord, type FormState, TemplateType } from "features/forms/types";
@@ -49,6 +49,8 @@ export function FormsList() {
         templateId,
     });
 
+    const [deleteTemplate, { isLoading: isTemplateDeleting }] = useDeleteTemplateMutation();
+
     const [items, setItems] = useState<
         (FormObject & { formState: FormState })[] | (FormRecord & { id: number; formState: FormState })[]
     >(
@@ -67,6 +69,7 @@ export function FormsList() {
             : []
     );
     const [loadingItems, setLoadingItems] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const abortSignal = abortController.current.signal;
 
@@ -84,13 +87,14 @@ export function FormsList() {
                 })) ?? []
             );
             dispatch(
-                formsActions.addLocationForms(
-                    Object.entries(template.forms || {}).map(([id, f]) => ({
+                formsActions.setTemplateLocationForms({
+                    templateId: template.id!,
+                    forms: Object.entries(template.forms || {}).map(([id, f]) => ({
                         ...f,
                         templateId: template.id!,
                         id: id!,
-                    }))
-                )
+                    })),
+                })
             );
         } else if (template.type === TemplateType.Search) {
             setItems(
@@ -130,6 +134,7 @@ export function FormsList() {
     }, [db, abortSignal, template]);
 
     useEffect(() => {
+        willUnmount.current = false;
         return () => {
             willUnmount.current = true;
         };
@@ -233,42 +238,75 @@ export function FormsList() {
         }
     };
 
-    return (
+    const handleDelete = useCallback(
+        async (e: FormEvent) => {
+            e.preventDefault();
+            await deleteTemplate({ projectId: sceneId, templateId });
+            if (template?.type === TemplateType.Location) {
+                if (isPickingLocation) {
+                    dispatch(renderActions.stopPicker(Picker.FormLocation));
+                }
+            }
+            history.push("/");
+        },
+        [deleteTemplate, dispatch, history, isPickingLocation, sceneId, template, templateId]
+    );
+
+    return isDeleting ? (
+        <Confirmation
+            title={`Delete all "${template?.title}" forms?`}
+            confirmBtnText="Delete"
+            onCancel={() => setIsDeleting(false)}
+            component="form"
+            onSubmit={handleDelete}
+            loading={isTemplateDeleting}
+        />
+    ) : (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
                 <>
                     <Box px={1}>
                         <Divider />
                     </Box>
-                    <Box display="flex">
-                        <Button color="grey" onClick={handleBackClick}>
-                            <ArrowBack sx={{ mr: 1 }} />
-                            Back
-                        </Button>
+                    <Box display="flex" justifyContent="space-between">
+                        <Box display="flex">
+                            <Button color="grey" onClick={handleBackClick}>
+                                <ArrowBack sx={{ mr: 1 }} />
+                                Back
+                            </Button>
+                            <Button
+                                color="grey"
+                                onClick={openFilters}
+                                aria-haspopup="true"
+                                aria-controls={FILTER_MENU_ID}
+                                aria-expanded={Boolean(filterMenuAnchor)}
+                            >
+                                <FilterAlt sx={{ mr: 1 }} />
+                                Filters
+                            </Button>
+                            {template?.type === TemplateType.Location && (
+                                <FormControlLabel
+                                    control={
+                                        <IosSwitch
+                                            size="medium"
+                                            color="primary"
+                                            checked={isPickingLocation}
+                                            onChange={addLocationForm}
+                                        />
+                                    }
+                                    label={<Box fontSize={14}>Add</Box>}
+                                    sx={{ ml: 1 }}
+                                />
+                            )}
+                        </Box>
                         <Button
                             color="grey"
-                            onClick={openFilters}
-                            aria-haspopup="true"
-                            aria-controls={FILTER_MENU_ID}
-                            aria-expanded={Boolean(filterMenuAnchor)}
+                            onClick={() => setIsDeleting(true)}
+                            disabled={loadingTemplate || loadingItems || !items.length}
                         >
-                            <FilterAlt sx={{ mr: 1 }} />
-                            Filters
+                            <Delete fontSize="small" sx={{ mr: 1 }} />
+                            Delete all
                         </Button>
-                        {template?.type === TemplateType.Location && (
-                            <FormControlLabel
-                                control={
-                                    <IosSwitch
-                                        size="medium"
-                                        color="primary"
-                                        checked={isPickingLocation}
-                                        onChange={addLocationForm}
-                                    />
-                                }
-                                label={<Box fontSize={14}>Add</Box>}
-                                sx={{ ml: 1 }}
-                            />
-                        )}
                     </Box>
                 </>
             </Box>

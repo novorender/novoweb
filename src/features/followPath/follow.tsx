@@ -88,6 +88,13 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
 
     const dispatch = useAppDispatch();
 
+    const pathName =
+        paths.status === AsyncStatus.Initial || paths.status === AsyncStatus.Loading
+            ? "..."
+            : paths.status === AsyncStatus.Success
+            ? paths.data.find((p) => p.id === selectedPath)?.name
+            : "[error]";
+
     useEffect(() => {
         viewModeRef.current = viewMode;
     }, [viewMode]);
@@ -461,6 +468,9 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                     <Divider sx={{ mt: 2, mb: 1 }} />
 
                     <Box display="flex" flexDirection="column" mb={2}>
+                        <Box mb={1}>
+                            Selected centerline: <strong>{pathName}</strong>
+                        </Box>
                         <FormControlLabel
                             control={
                                 <IosSwitch
