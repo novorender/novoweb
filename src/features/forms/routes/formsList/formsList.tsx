@@ -246,7 +246,6 @@ export function FormsList() {
                 if (isPickingLocation) {
                     dispatch(renderActions.stopPicker(Picker.FormLocation));
                 }
-                dispatch(formsActions.removeLocationTemplate(templateId));
             }
             history.push("/");
         },

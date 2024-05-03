@@ -44,6 +44,12 @@ export function Templates() {
         projectId: sceneId,
     });
 
+    // Clean up location forms after template deletion
+    useEffect(() => {
+        const ids = error ? [] : templateIds;
+        dispatch(formsActions.removeLocationFormsNotInTemplates(ids));
+    }, [dispatch, templateIds, error]);
+
     const handleAddFormClick = () => {
         history.push("/create");
     };
