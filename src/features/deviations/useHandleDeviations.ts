@@ -1,16 +1,17 @@
-import { ObjectDB } from "@novorender/data-js-api";
 import { useEffect } from "react";
 
 import { useLazyGetDeviationProfilesQuery } from "apis/dataV2/dataV2Api";
 import { ColorStop, DeviationProjectConfig } from "apis/dataV2/deviationTypes";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { selectLandXmlPaths } from "features/followPath";
+import { useLoadLandXmlPath } from "features/followPath/hooks/useLoadLandXmlPath";
+import { LandXmlPath } from "features/followPath/types";
 import { renderActions, selectDeviations, selectPoints, selectViewMode } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { getAssetUrl } from "utils/misc";
-import { searchByPatterns } from "utils/search";
 
 import { deviationsActions } from "./deviationsSlice";
 import { DeviationType, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
@@ -23,7 +24,7 @@ const EMPTY_ARRAY: ColorStop[] = [];
 
 export function useHandleDeviations() {
     const {
-        state: { view, db },
+        state: { view },
     } = useExplorerGlobals();
     const isProjectV2 = useAppSelector(selectProjectIsV2);
     const projectId = view?.renderState.scene?.config.id;
@@ -36,9 +37,11 @@ export function useHandleDeviations() {
     const deviation = useAppSelector(selectDeviations);
     const [abortController] = useAbortController();
     const active = useAppSelector(selectViewMode) === ViewMode.Deviations;
+    const landXmlPaths = useAppSelector(selectLandXmlPaths);
 
     const [getDeviationProfiles] = useLazyGetDeviationProfilesQuery();
 
+    useLoadLandXmlPath();
     useSetCenterLineFollowPath();
     useHighlightDeviation();
 
@@ -46,7 +49,12 @@ export function useHandleDeviations() {
         initDeviationProfiles();
 
         async function initDeviationProfiles() {
-            if (!view || !db || !projectId || profiles.status !== AsyncStatus.Initial) {
+            if (
+                !view ||
+                !projectId ||
+                profiles.status !== AsyncStatus.Initial ||
+                landXmlPaths.status !== AsyncStatus.Success
+            ) {
                 return;
             }
 
@@ -90,7 +98,7 @@ export function useHandleDeviations() {
                 } else {
                     config = getEmptyDeviationConfig();
                 }
-                config = await withCenterLineObjectIds(db, config, abortController.current);
+                config = withCenterLineObjectIds(config, landXmlPaths.data);
 
                 dispatch(
                     deviationsActions.setProfiles({
@@ -113,7 +121,6 @@ export function useHandleDeviations() {
     }, [
         dispatch,
         view,
-        db,
         isProjectV2,
         projectId,
         profiles,
@@ -122,6 +129,7 @@ export function useHandleDeviations() {
         points.deviation.index,
         abortController,
         selectedProfileId,
+        landXmlPaths,
     ]);
 
     // Set current deviation and colors
@@ -173,39 +181,7 @@ function getEmptyDeviationConfig(): UiDeviationConfig {
     };
 }
 
-async function withCenterLineObjectIds(
-    db: ObjectDB,
-    config: UiDeviationConfig,
-    abortController: AbortController
-): Promise<UiDeviationConfig> {
-    const brepIds = new Set<string>();
-    for (const profile of config.profiles) {
-        for (const sp of profile.subprofiles) {
-            if (sp.centerLine) {
-                brepIds.add(sp.centerLine.brepId);
-            }
-        }
-    }
-
-    const idMap = new Map(
-        await Promise.all(
-            [...brepIds].map(async (brepId) => {
-                let objectId = 0;
-                await searchByPatterns({
-                    db,
-                    searchPatterns: [{ property: "Novorender/PathId", value: brepId, exact: true }],
-                    callback: (refs) => {
-                        if (refs.length > 0) {
-                            objectId = refs[0].id;
-                        }
-                    },
-                    abortSignal: abortController.signal,
-                });
-                return [brepId, objectId] as const;
-            })
-        )
-    );
-
+function withCenterLineObjectIds(config: UiDeviationConfig, landXmlPaths: LandXmlPath[]): UiDeviationConfig {
     return {
         ...config,
         profiles: config.profiles.map((profile) => {
@@ -224,7 +200,7 @@ async function withCenterLineObjectIds(
                         ...sp,
                         centerLine: {
                             ...sp.centerLine,
-                            objectId: idMap.get(sp.centerLine.brepId)!,
+                            objectId: landXmlPaths.find((p) => p.brepId === sp.centerLine!.brepId)?.id ?? 0,
                         },
                     };
                 }),

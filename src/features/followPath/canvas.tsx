@@ -5,7 +5,7 @@ import { MutableRefObject, useCallback, useEffect, useRef, useState } from "reac
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Canvas2D } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { deviationsActions } from "features/deviations";
+import { deviationsActions } from "features/deviations/deviationsSlice";
 import { useIsTopDownOrthoCamera } from "features/deviations/hooks/useIsTopDownOrthoCamera";
 import {
     drawLineStrip,

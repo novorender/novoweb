@@ -10,7 +10,13 @@ import { featuresConfig } from "config/features";
 import { renderActions } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
-import { selectIsAdminScene, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
+import {
+    selectIsAdminScene,
+    selectIsOnline,
+    selectMaximized,
+    selectMinimized,
+    selectProjectIsV2,
+} from "slices/explorer";
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import { deviationsActions } from "./deviationsSlice";
@@ -84,6 +90,7 @@ function WidgetMenu(props: MenuProps) {
     const config = useAppSelector(selectDeviationProfiles);
     const selectedProfile = useAppSelector(selectSelectedProfile);
     const isDeviationFormSet = useAppSelector((state) => selectDeviationForm(state) !== undefined);
+    const isOnline = useAppSelector(selectIsOnline);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
@@ -139,7 +146,7 @@ function WidgetMenu(props: MenuProps) {
                             closeMenu();
                             history.push("/deviation/delete", { id: selectedProfile!.id! });
                         }}
-                        disabled={!selectedProfile || isDeviationFormSet}
+                        disabled={!selectedProfile || isDeviationFormSet || !isOnline}
                     >
                         <ListItemIcon>
                             <Delete fontSize="small" />
@@ -165,7 +172,8 @@ function WidgetMenu(props: MenuProps) {
                                     config.status !== AsyncStatus.Success ||
                                     config.data.profiles.length === MAX_DEVIATION_PROFILE_COUNT ||
                                     !isProjectV2 ||
-                                    isDeviationFormSet
+                                    isDeviationFormSet ||
+                                    !isOnline
                                 }
                             >
                                 <ListItemIcon>

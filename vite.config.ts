@@ -88,6 +88,48 @@ const pwaOptions: Partial<VitePWAOptions> = {
                     },
                 },
             },
+            // Project info
+            {
+                urlPattern: /^https:\/\/data-v2(-staging)?\.novorender\.com\/projects\/[\w]{32}$/,
+                handler: "NetworkFirst",
+                options: {
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                },
+            },
+            // Deviations
+            {
+                urlPattern: /^https:\/\/novorenderblobs\.blob\.core\.windows\.net\/[\w]{32}\/deviations\.json/,
+                handler: "NetworkFirst",
+                options: {
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                    matchOptions: {
+                        ignoreSearch: true,
+                    },
+                    plugins: [
+                        {
+                            cacheKeyWillBeUsed: async (param) => {
+                                const url = new URL(param.request.url);
+                                url.search = "";
+                                return url.toString();
+                            },
+                        },
+                    ],
+                },
+            },
+            {
+                urlPattern: /^https:\/\/data-v2(-staging)?\.novorender\.com\/explorer\/[\w]{32}\/deviations$/,
+                handler: "NetworkFirst",
+                options: {
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                },
+            },
+            // config.json
             {
                 urlPattern: (options) => {
                     if (!options.sameOrigin) {
