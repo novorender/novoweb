@@ -14,6 +14,7 @@ import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { formsActions, selectCurrentFormsList } from "features/forms/slice";
 import { type FormId, type FormItem as FItype, FormItemType, type TemplateId } from "features/forms/types";
 import { toFormFields, toFormItems } from "features/forms/utils";
+import { ObjectVisibility, renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
 
 import { FormItem } from "./formItem";
@@ -39,6 +40,7 @@ export function LocationInstance() {
     });
 
     useEffect(() => {
+        dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
         dispatch(formsActions.setSelectedFormId(formId));
     }, [dispatch, formId]);
 
