@@ -14,7 +14,7 @@ import { AsyncStatus } from "types/misc";
 
 import { deviationsActions } from "../deviationsSlice";
 import { UiDeviationConfig } from "../deviationTypes";
-import { uiConfigToServerConfig } from "../utils";
+import { fillGroupIds, uiConfigToServerConfig } from "../utils";
 
 export function useSaveDeviationConfig() {
     const dispatch = useAppDispatch();
@@ -114,21 +114,6 @@ async function saveExplorerSettings({
             });
         }
     }
-}
-
-async function fillGroupIds(sceneId: string, groups: ObjectGroup[]): Promise<void> {
-    await Promise.all(
-        groups.map(async (group) => {
-            if (!group.ids) {
-                group.ids = new Set(
-                    await dataApi.getGroupIds(sceneId, group.id).catch(() => {
-                        console.warn("failed to load ids for group - ", group.id);
-                        return [] as number[];
-                    })
-                );
-            }
-        })
-    );
 }
 
 export async function updateObjectIds(
