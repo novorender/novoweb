@@ -7,11 +7,19 @@ import {
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
 import { useDispatchHighlighted } from "contexts/highlighted";
-import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
+import {
+    GroupStatus,
+    ObjectGroup,
+    objectGroupsActions,
+    useDispatchObjectGroups,
+    useObjectGroups,
+} from "contexts/objectGroups";
 import { ObjectVisibility, renderActions, selectDefaultVisibility, selectViewMode } from "features/render";
+import { useSceneId } from "hooks/useSceneId";
 import { ViewMode } from "types/misc";
 
 import { selectDeviationLegendGroups, selectSelectedCenterLineFollowPathId, selectSelectedProfile } from "../selectors";
+import { fillGroupIds } from "../utils";
 
 export function useHighlightDeviation() {
     const legendGroups = useAppSelector(selectDeviationLegendGroups);
@@ -23,6 +31,7 @@ export function useHighlightDeviation() {
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const deviationType = useAppSelector(selectSelectedProfile)?.deviationType;
     const active = useAppSelector(selectViewMode) === ViewMode.Deviations;
+    const sceneId = useSceneId();
 
     const objectGroupsRef = useRef(objectGroups);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
@@ -45,34 +54,49 @@ export function useHighlightDeviation() {
         return restore;
     }, [restore]);
 
+    const iterationId = useRef(0);
     // Update SelectedDeviation highlight collection with deviation-colored groups
     useEffect(() => {
-        if (!legendGroups?.length || !active) {
-            restore();
-            return;
-        }
+        highlight();
 
-        const ids = new Set<number>();
-        for (const fav of legendGroups) {
-            if (fav.isDeviationColored && fav.status !== GroupStatus.Hidden) {
-                const group = objectGroups.find((g) => g.id === fav.id);
-                if (group) {
+        async function highlight() {
+            if (!legendGroups?.length || !active) {
+                restore();
+                return;
+            }
+
+            const nonHiddenDeviationColoredGroups = legendGroups
+                .filter((fav) => fav.isDeviationColored && fav.status !== GroupStatus.Hidden)
+                .map((fav) => objectGroups.find((g) => g.id === fav.id))
+                .filter((g) => g) as ObjectGroup[];
+            iterationId.current = (iterationId.current + 1) % 100_000;
+            const currentIterationId = iterationId.current;
+
+            await fillGroupIds(sceneId, nonHiddenDeviationColoredGroups);
+
+            if (iterationId.current !== currentIterationId) {
+                return;
+            }
+
+            const ids = new Set<number>();
+            for (const group of nonHiddenDeviationColoredGroups) {
+                if (group.ids) {
                     for (const id of group.ids) {
                         ids.add(id);
                     }
                 }
             }
-        }
-        if (followPathId) {
-            ids.add(followPathId);
-        }
+            if (followPathId) {
+                ids.add(followPathId);
+            }
 
-        dispatchHighlightCollections(
-            highlightCollectionsActions.setIds(HighlightCollection.SelectedDeviation, [...ids])
-        );
-        dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
+            dispatchHighlightCollections(
+                highlightCollectionsActions.setIds(HighlightCollection.SelectedDeviation, [...ids])
+            );
+            dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
 
-        installed.current = true;
+            installed.current = true;
+        }
     }, [
         dispatch,
         dispatchHighlightCollections,
@@ -82,6 +106,7 @@ export function useHighlightDeviation() {
         followPathId,
         objectGroups,
         active,
+        sceneId,
     ]);
 
     // Sync non deviation-colored groups with objectGroups
