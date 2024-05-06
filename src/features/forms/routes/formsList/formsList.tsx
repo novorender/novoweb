@@ -234,7 +234,9 @@ export function FormsList() {
     const addLocationForm = () => {
         if (isPickingLocation) {
             dispatch(renderActions.stopPicker(Picker.FormLocation));
+            dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
         } else {
+            dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
             dispatch(renderActions.setPicker(Picker.FormLocation));
         }
     };
