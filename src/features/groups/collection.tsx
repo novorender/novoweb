@@ -48,7 +48,9 @@ export function Collection({ collection, disabled }: { collection: string; disab
 
     const name = collection.split("/").pop() ?? "";
     const collectionGroups = objectGroups.filter((group) => group.grouping === collection);
-    const nestedGroups = objectGroups.filter((group) => group.grouping?.startsWith(collection));
+    const nestedGroups = objectGroups.filter(
+        (group) => group.grouping === collection || group.grouping?.startsWith(`${collection}/`)
+    );
     const allSelected = nestedGroups.every((group) => group.status === GroupStatus.Selected);
     const allHidden = nestedGroups.every((group) => group.status === GroupStatus.Hidden);
     const allFullyHidden = nestedGroups.every((group) => group.opacity && group.opacity === 0);
