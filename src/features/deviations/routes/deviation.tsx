@@ -27,7 +27,7 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { isInternalGroup, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
-import { selectProjectIsV2 } from "slices/explorer";
+import { selectIsOnline, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { CenterLineSection } from "../components/centerLineSection";
@@ -75,6 +75,7 @@ export function Deviation() {
     const saveStatus = useAppSelector(selectSaveStatus);
     const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
     const containerRef = useRef<HTMLElement>();
+    const isOnline = useAppSelector(selectIsOnline);
 
     const deviationForm = useAppSelector(selectDeviationForm) ?? newDeviationForm();
     const subprofile = deviationForm.subprofiles[deviationForm.subprofileIndex];
@@ -109,7 +110,7 @@ export function Deviation() {
     const errors = validateDeviationForm(deviationForm, otherNames, objectGroups);
     const subprofileErrors = errors.subprofiles[deviationForm.subprofileIndex];
 
-    const formDisabled = !isProjectV2;
+    const formDisabled = !isProjectV2 || !isOnline;
 
     const groups1 = useMemo(
         () => selectGroupsForIds(objectGroups, subprofile.groups1.value),
@@ -319,6 +320,7 @@ export function Deviation() {
                                                 : deviationForm.subprofileIndex - 1,
                                     });
                                 }}
+                                disabled={formDisabled}
                             />
                         </Box>
                     </>

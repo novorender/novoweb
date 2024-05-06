@@ -7,10 +7,7 @@ import { selectBookmark } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 import { VecRGBA } from "utils/color";
 
-type LandXmlPath = {
-    id: number;
-    name: string;
-};
+import { LandXmlPath } from "./types";
 
 const initialState = {
     paths: { status: AsyncStatus.Initial } as AsyncState<LandXmlPath[]>,

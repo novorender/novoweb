@@ -15,6 +15,7 @@ export function SubprofileList({
     objectGroups,
     onClick,
     onDelete,
+    disabled,
 }: {
     subprofiles: SubprofileGroup[];
     errors: SubprofileGroupErrors[];
@@ -22,6 +23,7 @@ export function SubprofileList({
     objectGroups: ObjectGroup[];
     onClick: (sp: SubprofileGroup, index: number) => void;
     onDelete: (sp: SubprofileGroup, index: number) => void;
+    disabled?: boolean;
 }) {
     return (
         <List>
@@ -35,6 +37,7 @@ export function SubprofileList({
                         onDelete={() => onDelete(sp, i)}
                         selected={i === selectedIndex}
                         errors={errors[i]}
+                        disabled={disabled}
                     />
                 );
             })}
