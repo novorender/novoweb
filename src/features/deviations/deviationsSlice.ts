@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { ReadonlyVec2 } from "gl-matrix";
 
 import { resetView, selectBookmark } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
@@ -19,6 +20,7 @@ const initialState = {
     // Stores pixel position of the rightmost deviation label
     // in follow path 2D view, which is used to position the legend
     rightmost2dDeviationCoordinate: undefined as number | undefined,
+    closestToCenterFollowPathPoint: undefined as ReadonlyVec2 | undefined,
     hiddenLegendGroups: {} as { [profileId: string]: { [subprofileIndex: number]: string[] } },
     isLegendFloating: true,
 };
@@ -124,6 +126,9 @@ export const deviationsSlice = createSlice({
         },
         setRightmost2dDeviationCoordinate: (state, action: PayloadAction<State["rightmost2dDeviationCoordinate"]>) => {
             state.rightmost2dDeviationCoordinate = action.payload;
+        },
+        setClosestToCenterFollowPathPoint: (state, action: PayloadAction<State["closestToCenterFollowPathPoint"]>) => {
+            state.closestToCenterFollowPathPoint = action.payload;
         },
         setIsLegendFloating: (state, action: PayloadAction<State["isLegendFloating"]>) => {
             state.isLegendFloating = action.payload;

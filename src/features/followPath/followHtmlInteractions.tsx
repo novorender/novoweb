@@ -1,13 +1,16 @@
 import { css } from "@emotion/react";
 import { Box, Button, Slider, styled } from "@mui/material";
-import { DuoMeasurementValues } from "@novorender/api";
 import { ReadonlyVec2 } from "gl-matrix";
-import { forwardRef, memo, SyntheticEvent, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, memo, SyntheticEvent, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
-import { selectIsLegendFloating, selectRightmost2dDeviationCoordinate } from "features/deviations";
+import {
+    selectClosestToCenterFollowPathPoint,
+    selectIsLegendFloating,
+    selectRightmost2dDeviationCoordinate,
+} from "features/deviations";
 import { GroupsAndColorsHud } from "features/deviations/components/groupsAndColorsHud";
 import { useIsTopDownOrthoCamera } from "features/deviations/hooks/useIsTopDownOrthoCamera";
 import { CameraType, selectBackground, selectCameraType } from "features/render";
@@ -21,7 +24,6 @@ import {
     selectCurrentCenter,
     selectFollowObject,
     selectProfile,
-    selectSelectedPath,
     selectView2d,
 } from "./followPathSlice";
 import { useFollowPathFromIds } from "./useFollowPathFromIds";
@@ -35,7 +37,6 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
     const viewMode = useAppSelector(selectViewMode);
     const rightmost2dDeviationCoordinate = useAppSelector(selectRightmost2dDeviationCoordinate);
     const lastRightmost2dDeviationCorrdinate = useRef(rightmost2dDeviationCoordinate);
-    const followPathId = useAppSelector(selectSelectedPath);
     const isView2d = useAppSelector(selectView2d);
     const cameraType = useAppSelector(selectCameraType);
     const isTopDownOrtho = useIsTopDownOrthoCamera();
@@ -44,48 +45,12 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
     const lastPt = useRef<ReadonlyVec2>();
     const bgColor = useAppSelector(selectBackground);
     const isBlackBg = bgColor && areArraysEqual(bgColor.color, [0, 0, 0, 1]);
-    const [centerLinePt, setCenterLinePt] = useState<ReadonlyVec2>();
     const legendOffset = useRef(160);
     const lastFov = useRef<number>();
     const isActive = viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations;
+    const centerLinePt = useAppSelector(selectClosestToCenterFollowPathPoint);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
-
-    const isFindingPoint = useRef(false);
-    const findPoint = useCallback(
-        async function findPoint() {
-            if (!view?.measure || !followPathId) {
-                setCenterLinePt(undefined);
-                return;
-            }
-
-            if (isFindingPoint.current) {
-                return;
-            }
-
-            isFindingPoint.current = true;
-            const segment = await view.measure.core.pickCurveSegment(followPathId);
-            if (segment) {
-                const measure = await view.measure.core.measure(segment, {
-                    drawKind: "vertex",
-                    ObjectId: -1,
-                    parameter: view.renderState.camera.position,
-                });
-                if (measure) {
-                    const duoMeasure = measure as DuoMeasurementValues;
-                    if (duoMeasure.measureInfoB && typeof duoMeasure.measureInfoB.parameter === "number") {
-                        const pt3d = duoMeasure.measureInfoB.point;
-                        if (pt3d) {
-                            const pt = view.measure.draw.toMarkerPoints([pt3d])[0];
-                            setCenterLinePt(pt);
-                        }
-                    }
-                }
-            }
-            isFindingPoint.current = false;
-        },
-        [view?.measure, view?.renderState.camera, followPathId]
-    );
 
     useImperativeHandle(
         ref,
@@ -102,42 +67,10 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                         containerRef.current.style.top = `${pt[1]}px`;
                     }
                 }
-
-                findPoint();
             },
         }),
-        [view?.measure, currentProfileCenter, findPoint]
+        [view?.measure, currentProfileCenter]
     );
-
-    useEffect(() => {
-        findPoint();
-
-        async function findPoint() {
-            if (!view?.measure || !followPathId || !isActive) {
-                setCenterLinePt(undefined);
-                return;
-            }
-
-            const segment = await view.measure.core.pickCurveSegment(followPathId);
-            if (segment) {
-                const measure = await view.measure.core.measure(segment, {
-                    drawKind: "vertex",
-                    ObjectId: -1,
-                    parameter: view.renderState.camera.position,
-                });
-                if (measure) {
-                    const duoMeasure = measure as DuoMeasurementValues;
-                    if (duoMeasure.measureInfoB && typeof duoMeasure.measureInfoB.parameter === "number") {
-                        const pt3d = duoMeasure.measureInfoB.point;
-                        if (pt3d) {
-                            const pt = view.measure.draw.toMarkerPoints([pt3d])[0];
-                            setCenterLinePt(pt);
-                        }
-                    }
-                }
-            }
-        }
-    }, [view?.measure, view?.renderState.camera, followPathId, isActive]);
 
     if (!isActive) {
         return;
@@ -211,10 +144,16 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
             </div>
         );
     } else if (viewMode === ViewMode.Deviations && centerLinePt && isLegendFloating) {
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+
         return (
             <LegendAlongCenterLine
                 style={{
-                    transform: `translate(${centerLinePt[0]}px, ${centerLinePt[1]}px)`,
+                    left: centerLinePt[0] <= centerX ? `${centerLinePt[0]}px` : undefined,
+                    top: centerLinePt[1] <= centerY ? `${centerLinePt[1]}px` : undefined,
+                    right: centerLinePt[0] > centerX ? `${window.innerWidth - centerLinePt[0]}px` : undefined,
+                    bottom: centerLinePt[1] > centerY ? `${window.innerHeight - centerLinePt[1]}px` : undefined,
                 }}
             >
                 <GroupsAndColorsHud absPos={false} />
