@@ -82,6 +82,15 @@ export function EditFeatureServer() {
                 return;
             }
 
+            const parsedUrl = new URL(fsUrl);
+            if (!parsedUrl.pathname.match(/\/FeatureServer\/?$/)) {
+                setFsDefinition({
+                    status: AsyncStatus.Error,
+                    msg: "Only feature servers are supported at the moment",
+                });
+                return;
+            }
+
             setFsDefinition({ status: AsyncStatus.Loading });
 
             try {
