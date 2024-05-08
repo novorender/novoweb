@@ -14,6 +14,7 @@ import {
     RadioGroup,
     Select,
 } from "@mui/material";
+import { type Dispatch, type MouseEvent, type SetStateAction, useState } from "react";
 
 import { type FormItem, FormItemType } from "../../types";
 
@@ -83,14 +84,10 @@ const FormItemHeader = ({ item, toggleRelevant }: { item: FormItem; toggleReleva
     </Box>
 );
 
-export function FormItem({
-    item,
-    setItems,
-}: {
-    item: FormItem;
-    setItems: React.Dispatch<React.SetStateAction<FormItem[]>>;
-}) {
-    const handleChange = (value: string) =>
+export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatch<SetStateAction<FormItem[]>> }) {
+    const [editing, setEditing] = useState(false);
+
+    const handleChange = (value: string) => {
         setItems((state) =>
             state.map((_item) =>
                 _item === item
@@ -101,6 +98,7 @@ export function FormItem({
                     : _item
             )
         );
+    };
 
     const toggleRelevant = () => {
         setItems((state) =>
@@ -114,6 +112,18 @@ export function FormItem({
                     : _item
             )
         );
+    };
+
+    const handleTextFieldClick = (event: MouseEvent<HTMLDivElement>) => {
+        if (event.target instanceof HTMLAnchorElement || event.target instanceof SVGElement) {
+            // Don't turn on editing mode when the link was clicked
+            return;
+        }
+        setEditing(true);
+    };
+
+    const handleTextFieldBlur = () => {
+        setEditing(false);
     };
 
     switch (item.type) {
@@ -221,17 +231,31 @@ export function FormItem({
                     sx={{ pb: 1 }}
                 >
                     <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
-                    <OutlinedInput
-                        value={item.value ? item.value[0] : ""}
-                        onChange={(evt) => handleChange(evt.target.value)}
-                        multiline
-                        minRows={3}
-                        maxRows={5}
-                        sx={{ pr: 0 }}
-                        id={item.id}
-                    />
+                    <Box onClick={handleTextFieldClick}>
+                        {!editing && (item.value || (!item.required && !item.relevant)) ? (
+                            <Box>
+                                {item.value?.[0].split("\n").map((line, idx) => (
+                                    <Box key={item.id! + idx} sx={{ wordWrap: "break-word", overflowWrap: "anywhere" }}>
+                                        {mapLinks([line])}
+                                    </Box>
+                                ))}
+                            </Box>
+                        ) : (
+                            <OutlinedInput
+                                value={item.value ? item.value[0] : ""}
+                                onChange={(evt) => handleChange(evt.target.value)}
+                                onBlur={handleTextFieldBlur}
+                                multiline
+                                minRows={3}
+                                maxRows={5}
+                                sx={{ pr: 0 }}
+                                id={item.id}
+                            />
+                        )}
+                    </Box>
                 </FormControl>
             );
+
         case FormItemType.Text:
             return (
                 <FormControl component="fieldset" fullWidth size="small" sx={{ pb: 1 }}>
