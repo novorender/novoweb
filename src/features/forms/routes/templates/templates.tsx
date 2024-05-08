@@ -3,13 +3,14 @@ import { Box, Button, List, Typography, useTheme } from "@mui/material";
 import { type FormEvent, type MouseEvent, useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppDispatch } from "app/redux-store-interactions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation, Divider, LinearProgress, ScrollBox } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { TemplateFilterMenu } from "features/forms/templateFilterMenu";
 import { ObjectVisibility, renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
+import { selectUser } from "slices/authSlice";
 
 import { useDeleteAllFormsMutation, useListTemplatesQuery } from "../../api";
 import { formsActions } from "../../slice";
@@ -24,6 +25,7 @@ export function Templates() {
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
+    const user = useAppSelector(selectUser);
 
     const [deleteAllForms, { isLoading: isAllFormsDeleting }] = useDeleteAllFormsMutation();
 
@@ -77,7 +79,7 @@ export function Templates() {
 
     return isDeleting ? (
         <Confirmation
-            title="Delete all forms?"
+            title="Are you sure you want to delete all the forms in the project?"
             confirmBtnText="Delete"
             onCancel={() => setIsDeleting(false)}
             component="form"
@@ -93,7 +95,7 @@ export function Templates() {
                     </Box>
                     <Box display="flex" justifyContent="space-between">
                         <Box display="flex">
-                            <Button color="grey" onClick={handleAddFormClick}>
+                            <Button color="grey" onClick={handleAddFormClick} disabled={!user}>
                                 <AddCircle sx={{ mr: 1 }} />
                                 Add form
                             </Button>
@@ -113,7 +115,7 @@ export function Templates() {
                             <Button
                                 color="grey"
                                 onClick={() => setIsDeleting(true)}
-                                disabled={isLoading || !templateIds.length || !!error}
+                                disabled={!user || isLoading || !templateIds.length || !!error}
                             >
                                 <Delete fontSize="small" sx={{ mr: 1 }} />
                                 Delete all forms
@@ -135,7 +137,9 @@ export function Templates() {
                             ))}
                         </List>
                     ) : (
-                        <Typography px={1}>No forms.</Typography>
+                        <Typography px={1}>
+                            {!user ? "Please log in to your account to view the forms." : "No forms."}
+                        </Typography>
                     )}
                 </ScrollBox>
             )}
