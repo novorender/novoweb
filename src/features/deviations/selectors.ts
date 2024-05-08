@@ -37,6 +37,8 @@ export const selectSelectedCenterLineFollowPathId = createSelector(
 export const selectSaveStatus = (state: RootState) => state.deviations.saveStatus;
 export const selectRightmost2dDeviationCoordinate = (state: RootState) =>
     state.deviations.rightmost2dDeviationCoordinate;
+export const selectClosestToCenterFollowPathPoint = (state: RootState) =>
+    state.deviations.closestToCenterFollowPathPoint;
 export const selectIsLegendFloating = (state: RootState) => state.deviations.isLegendFloating;
 export const selectHiddenLegendGroups = (state: RootState) => state.deviations.hiddenLegendGroups;
 const selectCurrentHiddenLegendGroups = createSelector(
