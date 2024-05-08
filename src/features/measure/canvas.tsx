@@ -5,7 +5,7 @@ import { MutableRefObject, useCallback, useEffect, useRef, useState } from "reac
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Canvas2D } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { deviationsActions } from "features/deviations";
+import { deviationsActions } from "features/deviations/deviationsSlice";
 import { CameraState, drawPart, drawProduct, getCameraState, vec3Sum } from "features/engine2D";
 import { selectSelectedPath } from "features/followPath";
 import { ExtendedMeasureEntity } from "types/misc";
