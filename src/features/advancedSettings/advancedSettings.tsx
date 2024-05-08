@@ -108,7 +108,8 @@ export default function AdvancedSettings() {
                             .filter((widget) => widget.type !== FeatureType.AdminWidget)
                             .map((widget) => widget.key),
                     },
-                    properties: propertiesSettings,
+                    properties:
+                        originalScene.customProperties.explorerProjectState?.features?.properties ?? propertiesSettings,
                     navigationCube: navigationCube,
                     debugStats: debugStats,
                     primaryMenu: {
