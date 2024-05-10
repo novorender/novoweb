@@ -59,6 +59,7 @@ export function useMergeFormAndSave() {
 
                 dispatch(deviationsActions.setProfiles({ status: AsyncStatus.Success, data: newProfileData }));
                 dispatch(deviationsActions.resetHiddenLegendGroupsForProfile({ profileId: profile.id }));
+                dispatch(deviationsActions.resetSubprofileDeviationDistributions({ profileId: profile.id }));
                 dispatch(deviationsActions.setDeviationForm(undefined));
 
                 return newProfileData;

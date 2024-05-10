@@ -50,6 +50,16 @@ const selectCurrentHiddenLegendGroups = createSelector(
         return allHiddenGroups[profileId]?.[spIndex];
     }
 );
+const selectSubprofileDeviationDistributions = (state: RootState) => state.deviations.subprofileDeviationDistributions;
+export const selectCurrentSubprofileDeviationDistributions = createSelector(
+    [selectSelectedProfileId, selectSelectedSubprofileIndex, selectSubprofileDeviationDistributions],
+    (profileId, spIndex, distrs) => {
+        if (!profileId || spIndex === undefined) {
+            return;
+        }
+        return distrs[profileId]?.[spIndex];
+    }
+);
 export const selectDeviationLegendGroups = createSelector(
     [selectSelectedProfile, selectSelectedSubprofileIndex, selectSelectedSubprofile, selectCurrentHiddenLegendGroups],
     (profile, spIndex, sp, hiddenGroupIds) => {

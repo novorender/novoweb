@@ -10,12 +10,15 @@ import { ColorStopList } from "../components/colorStop";
 import { DeviationsSnackbar } from "../components/deviationsSnackbar";
 import { GroupsAndColorsHud } from "../components/groupsAndColorsHud";
 import { MixFactorInput } from "../components/mixFactorInput";
+import { RootParamBounds } from "../components/rootParamBounds";
 import { RunLog } from "../components/runLog";
 import { SubprofileSelect } from "../components/subprofileSelect";
 import { ViewSwitchSection } from "../components/viewSwitchSection";
 import { deviationsActions } from "../deviationsSlice";
 import { DeviationCalculationStatus } from "../deviationTypes";
+import { useCalcSubprofileDevDistr } from "../hooks/useCalcSubprofileDevDistr";
 import {
+    selectCurrentSubprofileDeviationDistributions,
     selectDeviationCalculationStatus,
     selectDeviationProfileList,
     selectDeviationProfiles,
@@ -37,6 +40,9 @@ export function Root() {
     const isSaving = saveStatus.status === AsyncStatus.Loading;
     const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
     const isLegendFloating = useAppSelector(selectIsLegendFloating);
+    const distributions = useAppSelector(selectCurrentSubprofileDeviationDistributions);
+
+    useCalcSubprofileDevDistr();
 
     return (
         <>
@@ -125,10 +131,17 @@ export function Root() {
                                             })
                                         );
                                     }}
+                                    distributions={
+                                        distributions?.points.status === AsyncStatus.Success
+                                            ? distributions.points.data
+                                            : undefined
+                                    }
                                     disabled
                                 />
 
                                 <SubprofileSelect />
+
+                                <RootParamBounds />
 
                                 <ViewSwitchSection />
 

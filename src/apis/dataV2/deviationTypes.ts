@@ -80,3 +80,16 @@ export type CenterLine = {
     brepId: string;
     parameterBounds: [number, number];
 };
+
+export type DeviationDistributionRequest = {
+    centerLine: string;
+    absoluteValues: boolean;
+    distances: number[];
+    start: number;
+    end: number;
+};
+
+export type DeviationDistributionPoint = {
+    distance: number;
+    count: number;
+};

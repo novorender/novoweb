@@ -3,7 +3,7 @@ import { minutesToSeconds } from "date-fns";
 
 import { ArcgisWidgetConfig } from "features/arcgis";
 
-import { DeviationProjectConfig } from "./deviationTypes";
+import { DeviationDistributionPoint, DeviationDistributionRequest, DeviationProjectConfig } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
 import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
 import { getDataV2DynamicBaseQuery } from "./utils";
@@ -76,6 +76,17 @@ export const dataV2Api = createApi({
             }),
             invalidatesTags: (_result, _error, { projectId }) => [{ type: "ProjectProgress", id: projectId }],
         }),
+        calcDeviationDistributions: builder.mutation<
+            DeviationDistributionPoint[],
+            { projectId: string; profileId: string; config: DeviationDistributionRequest }
+        >({
+            query: ({ projectId, profileId: deviationId, config }) => ({
+                url: `/explorer/${projectId}/deviations/${deviationId}/calcdistributions`,
+                method: "POST",
+                body: config,
+            }),
+            invalidatesTags: (_result, _error, { projectId }) => [{ type: "ProjectProgress", id: projectId }],
+        }),
         getProjectProgress: builder.query<BuildProgressResult, { projectId: string; position?: number }>({
             query: ({ projectId, position }) => ({
                 url: `/projects/${projectId}/progress`,
@@ -120,6 +131,7 @@ export const {
     useLazyGetDeviationProfilesQuery,
     useSetDeviationProfilesMutation,
     useCalcDeviationsMutation,
+    useCalcDeviationDistributionsMutation,
     useGetProjectProgressQuery,
     useLazyGetFileDownloadLinkQuery,
     useSearchEpsgQuery,

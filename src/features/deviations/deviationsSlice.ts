@@ -4,7 +4,13 @@ import { ReadonlyVec2 } from "gl-matrix";
 import { resetView, selectBookmark } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { DeviationCalculationStatus, DeviationForm, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
+import {
+    DeviationCalculationStatus,
+    DeviationForm,
+    SubprofileDeviationDistribution,
+    UiDeviationConfig,
+    UiDeviationProfile,
+} from "./deviationTypes";
 
 const initialState = {
     calculationStatus: {
@@ -22,6 +28,9 @@ const initialState = {
     rightmost2dDeviationCoordinate: undefined as number | undefined,
     closestToCenterFollowPathPoint: undefined as ReadonlyVec2 | undefined,
     hiddenLegendGroups: {} as { [profileId: string]: { [subprofileIndex: number]: string[] } },
+    subprofileDeviationDistributions: {} as {
+        [profileId: string]: { [subprofileIndex: number]: SubprofileDeviationDistribution };
+    },
     isLegendFloating: true,
 };
 
@@ -160,6 +169,24 @@ export const deviationsSlice = createSlice({
                 profile[subprofileIndex].push(groupId);
             } else if (!hidden && alreadyAdded) {
                 profile[subprofileIndex] = profile[subprofileIndex].filter((id) => id !== groupId);
+            }
+        },
+        setSubprofileDeviationDistributions: (state, action: PayloadAction<SubprofileDeviationDistribution>) => {
+            if (!state.selectedProfileId || state.selectedSubprofileIndex === undefined) {
+                return;
+            }
+
+            if (!state.subprofileDeviationDistributions[state.selectedProfileId]) {
+                state.subprofileDeviationDistributions[state.selectedProfileId] = {};
+            }
+
+            state.subprofileDeviationDistributions[state.selectedProfileId][state.selectedSubprofileIndex] =
+                action.payload;
+        },
+        resetSubprofileDeviationDistributions: (state, action: PayloadAction<{ profileId: string }>) => {
+            const { profileId } = action.payload;
+            if (state.subprofileDeviationDistributions[profileId]) {
+                state.subprofileDeviationDistributions[profileId] = {};
             }
         },
     },

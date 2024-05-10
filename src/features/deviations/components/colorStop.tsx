@@ -18,6 +18,7 @@ import { MouseEvent, useMemo, useState } from "react";
 import { ColorResult } from "react-color";
 import { useHistory } from "react-router-dom";
 
+import { DeviationDistributionPoint } from "apis/dataV2/deviationTypes";
 import { ColorPicker } from "features/colorPicker";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
@@ -31,12 +32,14 @@ export function ColorStopList({
     errors,
     disabled,
     absoluteValues,
+    distributions,
 }: {
     colorStops: ColorStopGroup[];
     onChange: (value: ColorStopGroup[]) => void;
     absoluteValues: boolean;
     errors?: DeviationFormErrors;
     disabled?: boolean;
+    distributions?: DeviationDistributionPoint[];
 }) {
     const theme = useTheme();
     const history = useHistory();
@@ -44,6 +47,8 @@ export function ColorStopList({
         () => sortColorStops(colorStopsUnsorted.slice(), absoluteValues),
         [colorStopsUnsorted, absoluteValues]
     );
+
+    const totalPointCount = distributions?.reduce((acc, { count }) => acc + count, 0);
 
     return (
         <>
@@ -61,6 +66,12 @@ export function ColorStopList({
                         }}
                         disabled={disabled}
                         absoluteValues={absoluteValues}
+                        distribution={
+                            totalPointCount !== undefined
+                                ? distributions?.find((d) => d.distance === colorStops[index].position)?.count ?? 0
+                                : undefined
+                        }
+                        totalPointCount={totalPointCount}
                         hasErrors={
                             absoluteValues &&
                             colorStops.some(
@@ -96,6 +107,8 @@ export function ColorStop({
     disabled,
     onChange,
     onDelete,
+    distribution,
+    totalPointCount,
     absoluteValues,
     hasErrors,
 }: {
@@ -105,6 +118,8 @@ export function ColorStop({
     onChange: (value: ColorStopGroup) => void;
     onDelete: () => void;
     absoluteValues: boolean;
+    distribution: number | undefined;
+    totalPointCount: number | undefined;
     hasErrors: boolean;
 }) {
     const colorStop = colorStops[index];
@@ -139,6 +154,13 @@ export function ColorStop({
             <Typography flex="1 1 auto" color={hasErrors ? "error" : undefined}>
                 {text}
             </Typography>
+
+            {distribution !== undefined && totalPointCount !== undefined ? (
+                <Typography title={`${distribution} out of ${totalPointCount} points`}>
+                    {(totalPointCount === 0 ? 0 : (distribution / totalPointCount) * 100).toFixed(2)}%
+                </Typography>
+            ) : undefined}
+
             <IconButton
                 size="small"
                 onClick={(evt) => {
