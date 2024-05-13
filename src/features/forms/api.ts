@@ -200,6 +200,20 @@ export const formsApi = createApi({
             }),
             invalidatesTags: (_result, _error) => [{ type: "Template" as const, id: "ID_LIST" }],
         }),
+        uploadFiles: builder.mutation<void, { projectId: ProjectId; files: FileList }>({
+            query: ({ projectId, files }) => {
+                const filesData = new FormData();
+                for (const file of files) {
+                    filesData.append(file.name, file);
+                }
+                return {
+                    body: filesData,
+                    url: `projects/${projectId}/files`,
+                    method: "POST",
+                    formData: true,
+                };
+            },
+        }),
     }),
 });
 
@@ -217,4 +231,5 @@ export const {
     useDeleteLocationFormMutation,
     useDeleteTemplateMutation,
     useDeleteAllFormsMutation,
+    useUploadFilesMutation,
 } = formsApi;
