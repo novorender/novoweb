@@ -3,7 +3,7 @@ import { SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
-import { renderActions, selectViewMode } from "features/render";
+import { renderActions } from "features/render";
 import { explorerActions } from "slices/explorer";
 import { ViewMode } from "types/misc";
 
@@ -67,7 +67,7 @@ const InfoMarker = styled(
             <rect width="24" height="24" fillOpacity={0} transform={"translate(88 88)"} />
             <circle r="12" transform={"translate(100 100)"} />
             <path
-                d="M 12 5 A 1 1 0 0 0 12 7 A 1 1 0 0 0 12 5 M 11 9 H 13 V 15 H 11 Z"
+                d="M 12 5 A 1 1 0 0 0 12 7 A 1 1 0 0 0 12 5 M 11 10 H 13 V 17 H 11 Z"
                 transform="translate(88 88)"
             ></path>
         </g>
