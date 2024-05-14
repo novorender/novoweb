@@ -359,7 +359,7 @@ export function Deviation() {
                             <FormControlLabel
                                 value={DeviationType.PointToTriangle}
                                 control={<Radio />}
-                                label="Mesh vs points"
+                                label="Points vs mesh"
                                 disabled={formDisabled}
                             />
                             <FormControlLabel
