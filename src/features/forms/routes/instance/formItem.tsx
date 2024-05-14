@@ -232,7 +232,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                 >
                     <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
                     <Box onClick={handleTextFieldClick}>
-                        {!editing && (item.value || (!item.required && !item.relevant)) ? (
+                        {!editing && (!!item.value || (!item.required && !item.relevant)) ? (
                             <Box>
                                 {item.value?.[0].split("\n").map((line, idx) => (
                                     <Box key={item.id! + idx} sx={{ wordWrap: "break-word", overflowWrap: "anywhere" }}>
@@ -248,8 +248,9 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                                 multiline
                                 minRows={3}
                                 maxRows={5}
-                                sx={{ pr: 0 }}
+                                sx={{ width: 1, pr: 0 }}
                                 id={item.id}
+                                inputRef={(ref) => ref?.focus()}
                             />
                         )}
                     </Box>
