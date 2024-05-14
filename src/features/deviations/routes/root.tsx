@@ -6,6 +6,7 @@ import { renderActions } from "features/render";
 import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus, hasFinished, ViewMode } from "types/misc";
 
+import { CenterlineMinimap } from "../components/centerlineMinimap";
 import { ColorStopList } from "../components/colorStop";
 import { DeviationsSnackbar } from "../components/deviationsSnackbar";
 import { GroupsAndColorsHud } from "../components/groupsAndColorsHud";
@@ -17,6 +18,7 @@ import { ViewSwitchSection } from "../components/viewSwitchSection";
 import { deviationsActions } from "../deviationsSlice";
 import { DeviationCalculationStatus } from "../deviationTypes";
 import { useCalcSubprofileDevDistr } from "../hooks/useCalcSubprofileDevDistr";
+import { useTrackVisibleTopDownProfile } from "../hooks/useTrackVisibleTopDownProfile";
 import {
     selectCurrentSubprofileDeviationDistributions,
     selectDeviationCalculationStatus,
@@ -43,6 +45,7 @@ export function Root() {
     const distributions = useAppSelector(selectCurrentSubprofileDeviationDistributions);
 
     useCalcSubprofileDevDistr();
+    useTrackVisibleTopDownProfile();
 
     return (
         <>
@@ -142,6 +145,8 @@ export function Root() {
                                 <SubprofileSelect />
 
                                 <RootParamBounds />
+
+                                <CenterlineMinimap />
 
                                 <ViewSwitchSection />
 

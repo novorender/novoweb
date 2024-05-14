@@ -27,11 +27,13 @@ const initialState = {
     // in follow path 2D view, which is used to position the legend
     rightmost2dDeviationCoordinate: undefined as number | undefined,
     closestToCenterFollowPathPoint: undefined as ReadonlyVec2 | undefined,
+    visibleTopDownProfile: undefined as [number, number] | undefined,
     hiddenLegendGroups: {} as { [profileId: string]: { [subprofileIndex: number]: string[] } },
     subprofileDeviationDistributions: {} as {
         [profileId: string]: { [subprofileIndex: number]: SubprofileDeviationDistribution };
     },
     isLegendFloating: true,
+    rangeFollowsCamera: true,
 };
 
 type State = typeof initialState;
@@ -139,8 +141,14 @@ export const deviationsSlice = createSlice({
         setClosestToCenterFollowPathPoint: (state, action: PayloadAction<State["closestToCenterFollowPathPoint"]>) => {
             state.closestToCenterFollowPathPoint = action.payload;
         },
+        setVisibleTopDownProfile: (state, action: PayloadAction<State["visibleTopDownProfile"]>) => {
+            state.visibleTopDownProfile = action.payload;
+        },
         setIsLegendFloating: (state, action: PayloadAction<State["isLegendFloating"]>) => {
             state.isLegendFloating = action.payload;
+        },
+        setRangeFollowsCamera: (state, action: PayloadAction<State["rangeFollowsCamera"]>) => {
+            state.rangeFollowsCamera = action.payload;
         },
         resetHiddenLegendGroupsForProfile: (state, action: PayloadAction<{ profileId: string }>) => {
             const { profileId } = action.payload;

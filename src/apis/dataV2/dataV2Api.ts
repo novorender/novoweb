@@ -3,7 +3,12 @@ import { minutesToSeconds } from "date-fns";
 
 import { ArcgisWidgetConfig } from "features/arcgis";
 
-import { DeviationDistributionPoint, DeviationDistributionRequest, DeviationProjectConfig } from "./deviationTypes";
+import {
+    DeviationAggregateDistribution,
+    DeviationDistributionPoint,
+    DeviationDistributionRequest,
+    DeviationProjectConfig,
+} from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
 import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
 import { getDataV2DynamicBaseQuery } from "./utils";
@@ -85,7 +90,14 @@ export const dataV2Api = createApi({
                 method: "POST",
                 body: config,
             }),
-            invalidatesTags: (_result, _error, { projectId }) => [{ type: "ProjectProgress", id: projectId }],
+        }),
+        aggregateDeviationDistancesAlongCenterline: builder.query<
+            DeviationAggregateDistribution[],
+            { projectId: string; profileId: string; centerLineId: string; start: number; end: number }
+        >({
+            query: ({ projectId, profileId: deviationId, centerLineId, start, end }) => ({
+                url: `/explorer/${projectId}/deviations/${deviationId}/centerline/${centerLineId}/stepaggregatedistances?start=${start}&end=${end}`,
+            }),
         }),
         getProjectProgress: builder.query<BuildProgressResult, { projectId: string; position?: number }>({
             query: ({ projectId, position }) => ({
@@ -132,6 +144,7 @@ export const {
     useSetDeviationProfilesMutation,
     useCalcDeviationsMutation,
     useCalcDeviationDistributionsMutation,
+    useAggregateDeviationDistancesAlongCenterlineQuery,
     useGetProjectProgressQuery,
     useLazyGetFileDownloadLinkQuery,
     useSearchEpsgQuery,

@@ -93,3 +93,10 @@ export type DeviationDistributionPoint = {
     distance: number;
     count: number;
 };
+
+export type DeviationAggregateDistribution = {
+    profile: number;
+    minDistance: number;
+    avgDistance: number;
+    maxDistance: number;
+};

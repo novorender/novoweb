@@ -71,3 +71,8 @@ export function hslToVec(h: number, s: number, l: number): VecRGB {
     const f = (n: number, k = (n + h / 30) % 12) => l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
     return [f(0), f(8), f(4)];
 }
+
+export function vecRgbaToRgbaString(color: VecRGBA) {
+    const [r, g, b, a] = color;
+    return `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${a ?? 1})`;
+}

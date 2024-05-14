@@ -39,7 +39,9 @@ export const selectRightmost2dDeviationCoordinate = (state: RootState) =>
     state.deviations.rightmost2dDeviationCoordinate;
 export const selectClosestToCenterFollowPathPoint = (state: RootState) =>
     state.deviations.closestToCenterFollowPathPoint;
+export const selectVisibleTopDownProfile = (state: RootState) => state.deviations.visibleTopDownProfile;
 export const selectIsLegendFloating = (state: RootState) => state.deviations.isLegendFloating;
+export const selectRangeFollowsCamera = (state: RootState) => state.deviations.rangeFollowsCamera;
 export const selectHiddenLegendGroups = (state: RootState) => state.deviations.hiddenLegendGroups;
 const selectCurrentHiddenLegendGroups = createSelector(
     [selectSelectedProfileId, selectSelectedSubprofileIndex, selectHiddenLegendGroups],

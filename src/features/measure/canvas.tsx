@@ -305,6 +305,7 @@ export function MeasureCanvas({
                             findClosestPointToScreenCenter(product, window.innerWidth, window.innerHeight)
                         )
                     );
+                    dispatch(deviationsActions.setVisibleTopDownProfile(findVisibleTopDownProfile(product)));
                     return;
                 }
             }
@@ -572,4 +573,21 @@ function findClosestPointToScreenCenter(product: DrawProduct | undefined, screen
     } else {
         return projectPointOnLineSegment2D(vec2.create(), center, closest1, closest2) ?? closest1;
     }
+}
+function findVisibleTopDownProfile(product: DrawProduct | undefined): [number, number] | undefined {
+    if (!product) {
+        return;
+    }
+
+    const obj = product.objects[0];
+    const textNode = obj.parts.find((p) => p.drawType === "text");
+    const texts = textNode?.text?.[0];
+    if (!texts || texts.length < 2 || !textNode.indicesOnScreen || textNode.indicesOnScreen.length < 2) {
+        return;
+    }
+
+    const a = Number(texts[textNode.indicesOnScreen[0]].toString().substring(4));
+    const b = Number(texts[textNode.indicesOnScreen.at(-1)!].toString().substring(4));
+
+    return Number.isFinite(a) && Number.isFinite(b) ? [Math.min(a, b), Math.max(a, b)] : undefined;
 }

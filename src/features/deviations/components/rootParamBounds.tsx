@@ -19,7 +19,7 @@ export function RootParamBounds() {
     const handleChange = (bounds: [number, number]) => {
         dispatch(
             deviationsActions.setSubprofileDeviationDistributions({
-                parameterBounds: bounds,
+                parameterBounds: [Math.floor(bounds[0]), Math.ceil(bounds[1])],
                 points: { status: AsyncStatus.Initial },
             })
         );
