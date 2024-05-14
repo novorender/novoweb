@@ -231,6 +231,7 @@ export function FollowPathCanvas({
             translateInteraction(svg.children.namedItem(`followPlus`), undefined);
             translateInteraction(svg.children.namedItem(`followMinus`), undefined);
             translateInteraction(svg.children.namedItem(`followInfo`), undefined);
+            translateInteraction(svg.children.namedItem(`followClose`), undefined);
         };
         if (!view?.measure || !profileCtx || !canvas || !currentProfileCenter || !currentProfile) {
             removeMarkers();
@@ -252,6 +253,7 @@ export function FollowPathCanvas({
             translateInteraction(svg.children.namedItem(`followPlus`), vec2.fromValues(pt[0] + 50, pt[1]));
             translateInteraction(svg.children.namedItem(`followMinus`), vec2.fromValues(pt[0] - 50, pt[1]));
             translateInteraction(svg.children.namedItem(`followInfo`), vec2.fromValues(pt[0], pt[1] - 55));
+            translateInteraction(svg.children.namedItem(`followClose`), vec2.fromValues(pt[0], pt[1] + 55));
         } else if (view.renderState.clipping.planes.length > 0) {
             const plane = view.renderState.clipping.planes[0].normalOffset;
             const normal = vec3.fromValues(plane[0], plane[1], plane[2]);
@@ -282,6 +284,15 @@ export function FollowPathCanvas({
                         vec2.create(),
                         pt[0],
                         dir[0] > 0 ? vec2.fromValues(-dir[1], dir[0]) : vec2.fromValues(dir[1], -dir[0]),
+                        -45
+                    )
+                );
+                translateInteraction(
+                    svg.children.namedItem(`followClose`),
+                    vec2.scaleAndAdd(
+                        vec2.create(),
+                        pt[0],
+                        dir[0] < 0 ? vec2.fromValues(-dir[1], dir[0]) : vec2.fromValues(dir[1], -dir[0]),
                         -45
                     )
                 );
