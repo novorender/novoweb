@@ -18,7 +18,7 @@ import { useGoToProfile } from "./useGoToProfile";
 
 const markerStyles = () => css`
     cursor: pointer;
-    pointer-events: bounding-box;
+    pointer-events: auto;
     filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
 
     :hover {
