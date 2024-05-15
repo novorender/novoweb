@@ -301,7 +301,7 @@ export function FollowPathCanvas({
                         : vec2.scaleAndAdd(
                               vec2.create(),
                               pt[0],
-                              dir[0] < 0 ? vec2.fromValues(-dir[1], dir[0]) : vec2.fromValues(dir[1], -dir[0]),
+                              dir[0] <= 0 ? vec2.fromValues(-dir[1], dir[0]) : vec2.fromValues(dir[1], -dir[0]),
                               -45
                           )
                 );
