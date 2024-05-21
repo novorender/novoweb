@@ -308,12 +308,29 @@ export function useCanvasEventHandlers({
                         } else if (view.measure && !planePicking) {
                             const dist =
                                 hoverEnt?.connectionPoint && vec3.dist(result.position, hoverEnt.connectionPoint);
+                            const newObjectThreshold =
+                                vec3.dist(result.position, view.renderState.camera.position) / 50;
 
-                            if (!dist || dist > 0.2) {
+                            if (!dist || dist > newObjectThreshold) {
+                                const hoverScale = Math.min(Math.max(newObjectThreshold, 0.1), 2);
+                                const adjustedSettings = {
+                                    edge: measureHoverSettings.edge
+                                        ? measureHoverSettings.edge * hoverScale
+                                        : undefined,
+                                    face: measureHoverSettings.face
+                                        ? measureHoverSettings.face * hoverScale
+                                        : undefined,
+                                    point: measureHoverSettings.point
+                                        ? measureHoverSettings.point * hoverScale
+                                        : undefined,
+                                    segment: measureHoverSettings.segment
+                                        ? measureHoverSettings.segment * hoverScale
+                                        : undefined,
+                                };
                                 hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
                                     result.objectId,
                                     result.position,
-                                    measureHoverSettings
+                                    adjustedSettings
                                 );
                             }
                             vec2.copy(
