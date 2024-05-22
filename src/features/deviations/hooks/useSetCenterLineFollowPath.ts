@@ -42,7 +42,7 @@ export function useSetCenterLineFollowPath() {
 
     const restore = useCallback(() => {
         if (installedFollowPathId.current !== undefined) {
-            dispatch(renderActions.setViewMode(ViewMode.Default));
+            // dispatch(renderActions.setViewMode(ViewMode.Default));
             dispatch(followPathActions.setSelectedPath(undefined));
             dispatch(followPathActions.setSelectedIds([]));
             dispatch(followPathActions.setProfileRange(undefined));

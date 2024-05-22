@@ -112,7 +112,7 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({
                         : {}
                 }
             >
-                {widgetMode ? "Groups" : profile.name}
+                {widgetMode ? (legendGroups.length === 0 && !canDetach ? "" : "Legend") : profile.name}
                 {widgetMode && canDetach ? (
                     <IconButton color="default" onClick={() => dispatch(deviationsActions.setIsLegendFloating(true))}>
                         <OpenInNew />
