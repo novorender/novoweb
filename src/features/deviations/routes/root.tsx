@@ -7,6 +7,7 @@ import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus, hasFinished, ViewMode } from "types/misc";
 
 import { CenterlineMinimap } from "../components/centerlineMinimap";
+import { ColorGradientMap } from "../components/colorGradientMap";
 import { ColorStopList } from "../components/colorStop";
 import { DeviationsSnackbar } from "../components/deviationsSnackbar";
 import { GroupsAndColorsHud } from "../components/groupsAndColorsHud";
@@ -144,9 +145,13 @@ export function Root() {
 
                                 <SubprofileSelect />
 
-                                <RootParamBounds />
+                                <Box mt={1}>
+                                    <RootParamBounds />
+                                </Box>
 
                                 <CenterlineMinimap />
+
+                                <ColorGradientMap />
 
                                 <ViewSwitchSection />
 

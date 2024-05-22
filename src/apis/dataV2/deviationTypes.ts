@@ -100,3 +100,8 @@ export type DeviationAggregateDistribution = {
     avgDistance: number;
     maxDistance: number;
 };
+
+export type PointCountAtDeviation = {
+    deviation: number;
+    count: number;
+};

@@ -8,6 +8,7 @@ import {
     DeviationDistributionPoint,
     DeviationDistributionRequest,
     DeviationProjectConfig,
+    PointCountAtDeviation,
 } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
 import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
@@ -99,6 +100,14 @@ export const dataV2Api = createApi({
                 url: `/explorer/${projectId}/deviations/${deviationId}/centerline/${centerLineId}/stepaggregatedistances?start=${start}&end=${end}`,
             }),
         }),
+        getTotalPointsAtDeviations: builder.query<
+            PointCountAtDeviation[],
+            { projectId: string; profileId: string; centerLineId: string; start: number; end: number }
+        >({
+            query: ({ projectId, profileId: deviationId, centerLineId, start, end }) => ({
+                url: `/explorer/${projectId}/deviations/${deviationId}/centerline/${centerLineId}/totalpoints?start=${start}&end=${end}`,
+            }),
+        }),
         getProjectProgress: builder.query<BuildProgressResult, { projectId: string; position?: number }>({
             query: ({ projectId, position }) => ({
                 url: `/projects/${projectId}/progress`,
@@ -145,6 +154,7 @@ export const {
     useCalcDeviationsMutation,
     useCalcDeviationDistributionsMutation,
     useAggregateDeviationDistancesAlongCenterlineQuery,
+    useGetTotalPointsAtDeviationsQuery,
     useGetProjectProgressQuery,
     useLazyGetFileDownloadLinkQuery,
     useSearchEpsgQuery,
