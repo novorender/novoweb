@@ -23,3 +23,10 @@ export type EpsgSearchResult = {
 };
 
 export type EpsgEntry = { id: string; name: string };
+
+export type ProjectVersion = {
+    id: string;
+    created: string;
+    url?: string;
+    size?: number;
+};

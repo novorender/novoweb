@@ -5,7 +5,7 @@ import { ArcgisWidgetConfig } from "features/arcgis";
 
 import { DeviationProjectConfig } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
-import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
+import { BuildProgressResult, EpsgSearchResult, ProjectInfo, ProjectVersion } from "./projectTypes";
 import { getDataV2DynamicBaseQuery } from "./utils";
 
 export const dataV2Api = createApi({
@@ -45,6 +45,9 @@ export const dataV2Api = createApi({
         }),
         getProject: builder.query<ProjectInfo, { projectId: string }>({
             query: ({ projectId }) => `/projects/${projectId}`,
+        }),
+        getProjectVersions: builder.query<ProjectVersion[], { projectId: string }>({
+            query: ({ projectId }) => `/projects/${projectId}/versions`,
         }),
         getArcgisWidgetConfig: builder.query<ArcgisWidgetConfig, { projectId: string }>({
             query: ({ projectId }) => `/explorer/${projectId}/arcgis/config`,
@@ -117,6 +120,7 @@ export const {
     useSetPropertyTreeFavoritesMutation,
     useLazyGetProjectQuery,
     useGetProjectQuery,
+    useLazyGetProjectVersionsQuery,
     useLazyGetDeviationProfilesQuery,
     useSetDeviationProfilesMutation,
     useCalcDeviationsMutation,

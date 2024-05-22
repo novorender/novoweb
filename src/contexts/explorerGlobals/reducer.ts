@@ -6,6 +6,7 @@ import { createContext, Dispatch } from "react";
 export const initialState = {
     view: undefined as undefined | View,
     scene: undefined as undefined | OctreeSceneConfig,
+    sceneVersion: undefined as undefined | string,
     db: undefined as undefined | ObjectDB,
     canvas: null as null | HTMLCanvasElement,
     size: { width: 0, height: 0 },

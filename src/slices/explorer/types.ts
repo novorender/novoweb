@@ -30,6 +30,7 @@ export type State = {
     sceneType: SceneType;
     userRole: UserRole;
     projectType: ProjectType;
+    projectVersion: string;
     tmZoneForCalc: string | undefined;
     requireConsent: boolean;
     organization: string;

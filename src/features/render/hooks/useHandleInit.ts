@@ -4,8 +4,8 @@ import { getGPUTier } from "detect-gpu";
 import { quat, vec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
-import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
-import { ProjectInfo } from "apis/dataV2/projectTypes";
+import { useLazyGetProjectQuery, useLazyGetProjectVersionsQuery } from "apis/dataV2/dataV2Api";
+import { ProjectInfo, ProjectVersion } from "apis/dataV2/projectTypes";
 import { useAppDispatch } from "app/redux-store-interactions";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 import {
@@ -38,6 +38,7 @@ export function useHandleInit() {
     const dispatch = useAppDispatch();
 
     const [getProject] = useLazyGetProjectQuery();
+    const [getProjectVersions] = useLazyGetProjectVersionsQuery();
 
     const initialized = useRef(false);
 
@@ -66,21 +67,30 @@ export function useHandleInit() {
             const view = await createView(canvas, { deviceProfile });
 
             try {
-                const [{ url: _url, db, ...sceneData }, camera] = await loadScene(sceneId);
+                const [[{ url: _url, db, ...sceneData }, camera], projectV2, projectV2Versions] = await Promise.all([
+                    loadScene(sceneId),
+                    getProject({ projectId: sceneId })
+                        .unwrap()
+                        .catch(() => undefined),
+                    getProjectVersions({ projectId: sceneId })
+                        .unwrap()
+                        .catch(() => []),
+                ]);
                 const url = new URL(_url);
                 const parentSceneId = url.pathname.replaceAll("/", "");
                 url.pathname = "";
-                const octreeSceneConfig = await view.loadScene(
-                    url,
-                    parentSceneId,
-                    "index.json",
-                    new AbortController().signal
-                );
-                const projectV2 = await getProject({ projectId: sceneId })
-                    .unwrap()
-                    .catch(() => undefined);
+
                 const projectIsV2 = Boolean(projectV2);
-                const tmZoneForCalc = await loadTmZoneForCalc(projectV2, sceneData.tmZone);
+                const projectVersion =
+                    new URL(location.href).searchParams.get("version") ??
+                    (projectV2Versions.length > 0 ? projectV2Versions.at(-1)!.id : "index.json");
+
+                addVersionDropdown(projectV2Versions, projectVersion);
+
+                const [octreeSceneConfig, tmZoneForCalc] = await Promise.all([
+                    view.loadScene(url, parentSceneId, projectVersion, new AbortController().signal),
+                    loadTmZoneForCalc(projectV2, sceneData.tmZone),
+                ]);
 
                 const offlineWorkerState =
                     view.offline &&
@@ -107,6 +117,7 @@ export function useHandleInit() {
                 dispatch(
                     renderActions.initScene({
                         projectType: projectIsV2 ? ProjectType.V2 : ProjectType.V1,
+                        projectVersion,
                         tmZoneForCalc,
                         sceneData,
                         sceneConfig: octreeSceneConfig,
@@ -237,6 +248,7 @@ export function useHandleInit() {
         dispatchHighlighted,
         dispatchHighlightCollections,
         getProject,
+        getProjectVersions,
     ]);
 }
 
@@ -320,4 +332,27 @@ async function loadTmZoneForCalc(projectV2: ProjectInfo | undefined, tmZoneV1: s
     } else {
         return tmZoneV1;
     }
+}
+function addVersionDropdown(versions: ProjectVersion[], currentVersion: string) {
+    const div = document.createElement("div");
+    document.body.appendChild(div);
+    div.innerHTML = `
+        <div style="position:absolute; top:0; right:0; margin:1rem">
+            <span style="color:white; margin-right:0.5rem">Version</span>
+            <select onchange="
+                const url = new window.URL(location.href);
+                url.searchParams.set('version', event.target.value);
+                location.href = url.toString();
+            ">
+                ${versions
+                    .map(
+                        (v) =>
+                            `<option value="${v.id}"${v.id === currentVersion ? " selected" : ""}>${new Date(
+                                v.created
+                            ).toLocaleString()}</option>`
+                    )
+                    .join("")}
+            </select>
+        </div>
+    `;
 }
