@@ -249,7 +249,7 @@ export const selectMeasureHoverSettings = createSelector(
             case "surface":
                 return { face: 0.09 };
             default:
-                return { edge: 0.06, segment: 0.25, face: 0.07, point: 0.2 };
+                return { edge: 0.06, segment: 0.25, face: 0.07, point: 0.1 };
         }
     }
 );

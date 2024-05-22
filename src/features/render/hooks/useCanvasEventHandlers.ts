@@ -312,7 +312,7 @@ export function useCanvasEventHandlers({
                                 vec3.dist(result.position, view.renderState.camera.position) / 50;
 
                             if (!dist || dist > newObjectThreshold) {
-                                const hoverScale = Math.min(Math.max(newObjectThreshold, 0.05), 2);
+                                const hoverScale = Math.min(Math.max(newObjectThreshold, 0.03), 2);
                                 const adjustedSettings = {
                                     edge: measureHoverSettings.edge
                                         ? measureHoverSettings.edge * hoverScale
