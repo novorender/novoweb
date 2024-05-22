@@ -68,10 +68,14 @@ export const ditioApi = createApi({
             query: () => `/v4/integration/projects`,
         }),
         getLiveMachines: builder.query<
-            {
-                dumperLiveDataList: Omit<Dumper, "kind" | "scenePosition" | "id">[];
-                loaderLiveDataList: Omit<Loader, "kind" | "scenePosition" | "id">[];
-            },
+            | {
+                  dumperLiveDataList: Omit<Dumper, "kind" | "scenePosition" | "id">[];
+                  loaderLiveDataList: Omit<Loader, "kind" | "scenePosition" | "id">[];
+              }
+            | {
+                  errors: { message: string }[];
+                  message: string;
+              },
             undefined
         >({
             queryFn: async (_args, api) => {

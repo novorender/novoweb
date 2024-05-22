@@ -24,6 +24,7 @@ import {
     selectCurrentCenter,
     selectFollowObject,
     selectProfile,
+    selectSelectedPath,
     selectView2d,
 } from "./followPathSlice";
 import { useFollowPathFromIds } from "./useFollowPathFromIds";
@@ -47,6 +48,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
     const isBlackBg = bgColor && areArraysEqual(bgColor.color, [0, 0, 0, 1]);
     const legendOffset = useRef(160);
     const lastFov = useRef<number>();
+    const followPath = useAppSelector(selectSelectedPath);
     const isActive = viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations;
     const centerLinePt = useAppSelector(selectClosestToCenterFollowPathPoint);
 
@@ -129,7 +131,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                     <FollowPathControls />
                 </div>
 
-                {viewMode === ViewMode.Deviations && isLegendFloating && (
+                {viewMode === ViewMode.Deviations && followPath && isLegendFloating && (
                     <div
                         style={{
                             position: "absolute",
@@ -143,7 +145,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                 )}
             </div>
         );
-    } else if (viewMode === ViewMode.Deviations && centerLinePt && isLegendFloating) {
+    } else if (viewMode === ViewMode.Deviations && followPath && centerLinePt && isLegendFloating) {
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
 
