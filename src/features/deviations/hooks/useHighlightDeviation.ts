@@ -6,7 +6,6 @@ import {
     highlightCollectionsActions,
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
-import { useDispatchHighlighted } from "contexts/highlighted";
 import {
     GroupStatus,
     ObjectGroup,
@@ -18,19 +17,19 @@ import { ObjectVisibility, renderActions, selectDefaultVisibility, selectViewMod
 import { useSceneId } from "hooks/useSceneId";
 import { ViewMode } from "types/misc";
 
-import { selectDeviationLegendGroups, selectSelectedCenterLineFollowPathId, selectSelectedProfile } from "../selectors";
+import { selectAllDeviationGroups, selectSelectedCenterLineFollowPathId, selectSelectedProfile } from "../selectors";
 import { fillGroupIds } from "../utils";
 
 export function useHighlightDeviation() {
-    const legendGroups = useAppSelector(selectDeviationLegendGroups);
+    const legendGroups = useAppSelector(selectAllDeviationGroups);
     const followPathId = useAppSelector(selectSelectedCenterLineFollowPathId);
     const objectGroups = useObjectGroups();
     const dispatch = useAppDispatch();
-    const dispatchHighlighted = useDispatchHighlighted();
     const dispatchObjectGroups = useDispatchObjectGroups();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const deviationType = useAppSelector(selectSelectedProfile)?.deviationType;
-    const active = useAppSelector(selectViewMode) === ViewMode.Deviations;
+    const viewMode = useAppSelector(selectViewMode);
+    const active = viewMode === ViewMode.Deviations;
     const sceneId = useSceneId();
 
     const objectGroupsRef = useRef(objectGroups);
@@ -97,17 +96,7 @@ export function useHighlightDeviation() {
 
             installed.current = true;
         }
-    }, [
-        dispatch,
-        dispatchHighlightCollections,
-        dispatchHighlighted,
-        legendGroups,
-        restore,
-        followPathId,
-        objectGroups,
-        active,
-        sceneId,
-    ]);
+    }, [dispatch, dispatchHighlightCollections, legendGroups, restore, followPathId, objectGroups, active, sceneId]);
 
     // Sync non deviation-colored groups with objectGroups
     useEffect(() => {
