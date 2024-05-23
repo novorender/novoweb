@@ -1,7 +1,7 @@
-import { computeRotation, rotationFromDirection } from "@novorender/api";
+import { computeRotation, rotationFromDirection, SnapTolerance } from "@novorender/api";
 import { SceneData, SceneLoadFail } from "@novorender/data-js-api";
 import { GeoLocation, Internal } from "@novorender/webgl-api";
-import { quat, vec3, vec4 } from "gl-matrix";
+import { quat, ReadonlyVec3, vec3, vec4 } from "gl-matrix";
 
 import { dataApi } from "apis/dataV1";
 import { CustomProperties } from "types/project";
@@ -161,4 +161,20 @@ function getBackgroundColor(color: vec4 | undefined): vec4 {
     }
 
     return color;
+}
+
+export function applyCameraDistanceToMeasureTolerance(
+    position: ReadonlyVec3,
+    cameraPos: ReadonlyVec3,
+    settings: SnapTolerance
+): SnapTolerance {
+    const newObjectThreshold = vec3.dist(position, cameraPos);
+    const hoverScale = Math.min(Math.max(newObjectThreshold, 0.15), 100);
+
+    return {
+        edge: settings.edge ? settings.edge * hoverScale : undefined,
+        face: settings.face ? settings.face * hoverScale : undefined,
+        point: settings.point ? settings.point * hoverScale : undefined,
+        segment: settings.segment ? settings.segment * hoverScale : undefined,
+    };
 }
