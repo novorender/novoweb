@@ -29,6 +29,7 @@ import {
 } from "../renderSlice";
 import { moveSvgCursor } from "../svgUtils";
 import { CameraType, Picker, StampKind, SubtreeStatus } from "../types";
+import { applyCameraDistanceToMeasureTolerance } from "../utils";
 import { useCanvasContextMenuHandler } from "./useCanvasContextMenuHandler";
 
 export const isIpad =
@@ -306,33 +307,16 @@ export function useCanvasEventHandlers({
                         if (outlinePoint) {
                             hoverEnt = pointToHover(outlinePoint, result.objectId);
                         } else if (view.measure && !planePicking) {
-                            const dist =
-                                hoverEnt?.connectionPoint && vec3.dist(result.position, hoverEnt.connectionPoint);
-                            const newObjectThreshold =
-                                vec3.dist(result.position, view.renderState.camera.position) / 50;
-
-                            if (!dist || dist > newObjectThreshold) {
-                                const hoverScale = Math.min(Math.max(newObjectThreshold, 0.03), 2);
-                                const adjustedSettings = {
-                                    edge: measureHoverSettings.edge
-                                        ? measureHoverSettings.edge * hoverScale
-                                        : undefined,
-                                    face: measureHoverSettings.face
-                                        ? measureHoverSettings.face * hoverScale
-                                        : undefined,
-                                    point: measureHoverSettings.point
-                                        ? measureHoverSettings.point * hoverScale
-                                        : undefined,
-                                    segment: measureHoverSettings.segment
-                                        ? measureHoverSettings.segment * hoverScale
-                                        : undefined,
-                                };
-                                hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
-                                    result.objectId,
-                                    result.position,
-                                    adjustedSettings
-                                );
-                            }
+                            const tolerance = applyCameraDistanceToMeasureTolerance(
+                                result.position,
+                                view.renderState.camera.position,
+                                measureHoverSettings
+                            );
+                            hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
+                                result.objectId,
+                                result.position,
+                                tolerance
+                            );
                             vec2.copy(
                                 previous2dSnapPos.current,
                                 vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)

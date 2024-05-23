@@ -43,6 +43,7 @@ import {
     selectViewMode,
 } from "../renderSlice";
 import { CameraType, Picker, StampKind } from "../types";
+import { applyCameraDistanceToMeasureTolerance } from "../utils";
 
 export function useCanvasClickHandler({
     pointerDownStateRef,
@@ -496,11 +497,12 @@ export function useCanvasClickHandler({
                     );
                 } else {
                     dispatch(measureActions.setLoadingBrep(true));
-                    const entity = await view.measure?.core.pickMeasureEntity(
-                        result.objectId,
-                        position,
+                    const tolerance = applyCameraDistanceToMeasureTolerance(
+                        result.position,
+                        view.renderState.camera.position,
                         measurePickSettings
                     );
+                    const entity = await view.measure?.core.pickMeasureEntity(result.objectId, position, tolerance);
                     if (entity?.entity) {
                         dispatch(
                             measureActions.selectEntity({
