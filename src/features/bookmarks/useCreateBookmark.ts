@@ -8,7 +8,7 @@ import { HighlightCollection, useLazyHighlightCollections } from "contexts/highl
 import { useLazyHighlighted } from "contexts/highlighted";
 import { GroupStatus, isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
-import { selectArcgisFeatureServers } from "features/arcgis";
+import { selectArcgisFeatureServers } from "features/arcgis/arcgisSlice";
 import { selectAreas } from "features/area/areaSlice";
 import {
     selectDeviationLegendGroups,
