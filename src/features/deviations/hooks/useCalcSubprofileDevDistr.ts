@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 
-import { useCalcDeviationDistributionsMutation } from "apis/dataV2/dataV2Api";
+import { useLazyGetDeviationDistributionQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useSceneId } from "hooks/useSceneId";
 import { AsyncStatus } from "types/misc";
@@ -8,18 +8,17 @@ import { AsyncStatus } from "types/misc";
 import { deviationsActions } from "../deviationsSlice";
 import {
     selectCurrentSubprofileDeviationDistributions,
-    selectSelectedProfile,
+    selectSelectedProfileId,
     selectSelectedSubprofile,
 } from "../selectors";
-import { sortColorStops } from "../utils";
 
-export function useCalcSubprofileDevDistr() {
+export function useCalcSubprofileDevDistr({ skip = false }: { skip?: boolean } = {}) {
     const projectId = useSceneId();
-    const profile = useAppSelector(selectSelectedProfile);
+    const profileId = useAppSelector(selectSelectedProfileId);
     const subprofile = useAppSelector(selectSelectedSubprofile);
     const distrs = useAppSelector(selectCurrentSubprofileDeviationDistributions);
-    const [calc] = useCalcDeviationDistributionsMutation();
     const dispatch = useAppDispatch();
+    const [calc] = useLazyGetDeviationDistributionQuery();
 
     const parameterBounds = useMemo(() => {
         if (!subprofile?.centerLine) {
@@ -29,16 +28,19 @@ export function useCalcSubprofileDevDistr() {
         return distrs?.parameterBounds ?? subprofile.centerLine?.parameterBounds;
     }, [subprofile, distrs]);
 
+    useEffect(() => {}, []);
+
     useEffect(() => {
         calcDistributions();
 
         async function calcDistributions() {
             if (
+                skip ||
                 !projectId ||
-                !profile ||
+                !profileId ||
                 !subprofile?.centerLine ||
                 !parameterBounds ||
-                (distrs && distrs.points.status !== AsyncStatus.Initial)
+                (distrs && distrs.data.status !== AsyncStatus.Initial)
             ) {
                 return;
             }
@@ -46,29 +48,23 @@ export function useCalcSubprofileDevDistr() {
             dispatch(
                 deviationsActions.setSubprofileDeviationDistributions({
                     parameterBounds,
-                    points: { status: AsyncStatus.Loading },
+                    data: { status: AsyncStatus.Loading },
                 })
             );
 
             try {
                 const result = await calc({
                     projectId,
-                    profileId: profile.id,
-                    config: {
-                        centerLine: subprofile?.centerLine.brepId,
-                        absoluteValues: profile.colors.absoluteValues,
-                        distances: sortColorStops(profile.colors.colorStops.slice(), profile.colors.absoluteValues).map(
-                            (cs) => cs.position
-                        ),
-                        start: parameterBounds[0],
-                        end: parameterBounds[1],
-                    },
+                    profileId: profileId,
+                    centerLineId: subprofile.centerLine.brepId,
+                    start: parameterBounds[0],
+                    end: parameterBounds[1],
                 }).unwrap();
 
                 dispatch(
                     deviationsActions.setSubprofileDeviationDistributions({
                         parameterBounds,
-                        points: { status: AsyncStatus.Success, data: result },
+                        data: { status: AsyncStatus.Success, data: result },
                     })
                 );
             } catch (ex) {
@@ -76,10 +72,10 @@ export function useCalcSubprofileDevDistr() {
                 dispatch(
                     deviationsActions.setSubprofileDeviationDistributions({
                         parameterBounds,
-                        points: { status: AsyncStatus.Error, msg: "Error calculation distributions" },
+                        data: { status: AsyncStatus.Error, msg: "Error calculation distributions" },
                     })
                 );
             }
         }
-    }, [dispatch, distrs, projectId, profile, subprofile, calc, parameterBounds]);
+    }, [dispatch, distrs, projectId, profileId, subprofile, calc, parameterBounds, skip]);
 }

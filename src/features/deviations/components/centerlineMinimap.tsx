@@ -1,5 +1,4 @@
 import { Box, css, styled } from "@mui/material";
-import { skipToken } from "@reduxjs/toolkit/query";
 import { LineSubject } from "@visx/annotation";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { curveMonotoneX } from "@visx/curve";
@@ -10,19 +9,17 @@ import { scaleLinear } from "@visx/scale";
 import { AreaClosed } from "@visx/shape";
 import { useMemo, useState } from "react";
 
-import { useAggregateDeviationDistancesAlongCenterlineQuery } from "apis/dataV2/dataV2Api";
 import { DeviationAggregateDistribution } from "apis/dataV2/deviationTypes";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { followPathActions, selectProfile } from "features/followPath";
 import { useGoToProfile } from "features/followPath/useGoToProfile";
-import { useSceneId } from "hooks/useSceneId";
+import { AsyncStatus } from "types/misc";
 import { vecRgbaToRgbaString } from "utils/color";
 
 import {
     selectCurrentSubprofileDeviationDistributions,
     selectSelectedProfile,
-    selectSelectedProfileId,
     selectSelectedSubprofile,
 } from "../selectors";
 
@@ -34,22 +31,22 @@ export function CenterlineMinimap() {
     );
 }
 
-const margin = { left: 26, top: 10, bottom: 26, right: 0 };
+const margin = { left: 32, top: 10, bottom: 26, right: 0 };
 
 function CenterlineMinimapInner({ width, height }: { width: number; height: number }) {
     const {
         state: { view },
     } = useExplorerGlobals(true);
-    const projectId = useSceneId();
-    const profileId = useAppSelector(selectSelectedProfileId);
     const profile = useAppSelector(selectSelectedProfile);
     const subprofile = useAppSelector(selectSelectedSubprofile);
     const centerLine = subprofile?.centerLine;
-    const centerLineId = centerLine?.brepId;
     const fullParameterBounds = centerLine?.parameterBounds;
     const profilePos = useAppSelector(selectProfile);
     const goToProfile = useGoToProfile();
     const dispatch = useAppDispatch();
+    const distribution = useAppSelector(selectCurrentSubprofileDeviationDistributions);
+    const fullData =
+        distribution?.data.status === AsyncStatus.Success ? distribution?.data.data.aggregatesAlongProfile : undefined;
 
     const [attr, setAttr] = useState("avgDistance" as keyof DeviationAggregateDistribution);
 
@@ -58,18 +55,6 @@ function CenterlineMinimapInner({ width, height }: { width: number; height: numb
     const parameterBounds = useMemo(() => {
         return distributions?.parameterBounds ?? fullParameterBounds;
     }, [distributions, fullParameterBounds]);
-
-    const { data: fullData } = useAggregateDeviationDistancesAlongCenterlineQuery(
-        profileId && centerLineId && fullParameterBounds
-            ? {
-                  projectId,
-                  profileId,
-                  centerLineId,
-                  start: fullParameterBounds[0],
-                  end: fullParameterBounds[1],
-              }
-            : skipToken
-    );
 
     const data = useMemo(() => {
         if (!fullData || !parameterBounds) {

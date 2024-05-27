@@ -12,9 +12,8 @@ import { getTopDownParams, selectDefaultTopDownElevation, selectTopDownSnapToAxi
 import { CameraType, renderActions } from "features/render";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
 
-import { deviationsActions } from "../deviationsSlice";
 import { useIsTopDownOrthoCamera } from "../hooks/useIsTopDownOrthoCamera";
-import { selectRangeFollowsCamera, selectSelectedCenterLineId, selectSelectedProfile } from "../selectors";
+import { selectSelectedCenterLineId, selectSelectedProfile } from "../selectors";
 
 export function ViewSwitchSection() {
     const {
@@ -35,7 +34,6 @@ export function ViewSwitchSection() {
     const [fpObj, setFpObj] = useState<AsyncState<FollowParametricObject | undefined>>({ status: AsyncStatus.Initial });
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
     const snapToNearestAxis = useAppSelector(selectTopDownSnapToAxis) === undefined;
-    const rangeFollowsCamera = useAppSelector(selectRangeFollowsCamera);
 
     useEffect(() => {
         findFpObj();
@@ -147,23 +145,6 @@ export function ViewSwitchSection() {
                     label={<Box>Top-down</Box>}
                 />
             </Box>
-            {isTopDownOrthoCamera && (
-                <Box>
-                    <FormControlLabel
-                        control={
-                            <IosSwitch
-                                size="medium"
-                                color="primary"
-                                checked={rangeFollowsCamera}
-                                onChange={(e) => {
-                                    dispatch(deviationsActions.setRangeFollowsCamera(e.target.checked));
-                                }}
-                            />
-                        }
-                        label={<Box>Range follows camera</Box>}
-                    />
-                </Box>
-            )}
         </>
     );
 }

@@ -1,4 +1,4 @@
-import { ColorConfig, ColorStop, DeviationDistributionPoint, DeviationRunData } from "apis/dataV2/deviationTypes";
+import { ColorConfig, ColorStop, DeviationDistributionResponse, DeviationRunData } from "apis/dataV2/deviationTypes";
 import { GroupStatus } from "contexts/objectGroups";
 import { AsyncState } from "types/misc";
 
@@ -112,5 +112,5 @@ export type ObjectGroupExt = { id: string; name: string; deleted?: boolean };
 
 export type SubprofileDeviationDistribution = {
     parameterBounds: [number, number];
-    points: AsyncState<DeviationDistributionPoint[]>;
+    data: AsyncState<DeviationDistributionResponse>;
 };

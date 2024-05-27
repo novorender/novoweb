@@ -20,7 +20,7 @@ export function RootParamBounds() {
         dispatch(
             deviationsActions.setSubprofileDeviationDistributions({
                 parameterBounds: [Math.floor(bounds[0]), Math.ceil(bounds[1])],
-                points: { status: AsyncStatus.Initial },
+                data: { status: AsyncStatus.Initial },
             })
         );
     };
@@ -29,7 +29,7 @@ export function RootParamBounds() {
         return;
     }
 
-    const isLoading = distributions?.points.status === AsyncStatus.Loading;
+    const isLoading = distributions?.data.status === AsyncStatus.Loading;
 
     return (
         <>

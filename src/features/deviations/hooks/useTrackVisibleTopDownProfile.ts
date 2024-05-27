@@ -23,7 +23,7 @@ export function useTrackVisibleTopDownProfile() {
                 dispatch(
                     deviationsActions.setSubprofileDeviationDistributions({
                         parameterBounds: bounds,
-                        points: { status: AsyncStatus.Initial },
+                        data: { status: AsyncStatus.Initial },
                     })
                 );
             }, 500),

@@ -81,17 +81,9 @@ export type CenterLine = {
     parameterBounds: [number, number];
 };
 
-export type DeviationDistributionRequest = {
-    centerLine: string;
-    absoluteValues: boolean;
-    distances: number[];
-    start: number;
-    end: number;
-};
-
-export type DeviationDistributionPoint = {
-    distance: number;
-    count: number;
+export type DeviationDistributionResponse = {
+    aggregatesAlongProfile: DeviationAggregateDistribution[];
+    pointCountAtDeviation: PointCountAtDeviation[];
 };
 
 export type DeviationAggregateDistribution = {

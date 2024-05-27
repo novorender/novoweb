@@ -1,5 +1,4 @@
-import { Box, css, styled } from "@mui/material";
-import { skipToken } from "@reduxjs/toolkit/query";
+import { Box, css, styled, Typography } from "@mui/material";
 import { LineSubject } from "@visx/annotation";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { Brush } from "@visx/brush";
@@ -13,26 +12,26 @@ import { GridRows } from "@visx/grid";
 import { Group } from "@visx/group";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 import { scaleLinear } from "@visx/scale";
-import { Bar, Line, LinePath } from "@visx/shape";
+import { Line, LinePath } from "@visx/shape";
 import { defaultStyles, TooltipWithBounds, withTooltip } from "@visx/tooltip";
 import { WithTooltipProvidedProps } from "@visx/tooltip/lib/enhancers/withTooltip";
 import { bisector } from "@visx/vendor/d3-array";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useGetTotalPointsAtDeviationsQuery } from "apis/dataV2/dataV2Api";
 import { PointCountAtDeviation } from "apis/dataV2/deviationTypes";
 import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectProfile } from "features/followPath";
-import { useSceneId } from "hooks/useSceneId";
+import { AsyncStatus } from "types/misc";
 import { vecRgbaToRgbaString } from "utils/color";
 
 import {
     selectCurrentSubprofileDeviationDistributions,
     selectSelectedProfile,
     selectSelectedProfileId,
-    selectSelectedSubprofile,
+    selectSelectedSubprofileIndex,
 } from "../selectors";
+import { accountForAbsValues } from "../utils";
 
 export function ColorGradientMap() {
     return (
@@ -42,13 +41,17 @@ export function ColorGradientMap() {
     );
 }
 
-const margin = { left: 26, top: 10, bottom: 0, right: 0 };
-const gradientMargin = { left: 26, top: 0, bottom: 4, right: 0 };
+const margin = { left: 32, top: 10, bottom: 0, right: 0 };
+const gradientMargin = { left: 32, top: 0, bottom: 4, right: 0 };
 const gradientHeight = 24;
 const bisectRange = bisector<PointCountAtDeviation, number>((d) => d.deviation).left;
 const tooltipStyles = {
     ...defaultStyles,
     border: "1px solid white",
+};
+const defaultBrushPosition = {
+    start: { x: undefined as undefined | number },
+    end: { x: undefined as undefined | number },
 };
 
 type Props = { width: number; height: number };
@@ -66,48 +69,62 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
         const {
             state: { view },
         } = useExplorerGlobals(true);
-        const projectId = useSceneId();
         const profileId = useAppSelector(selectSelectedProfileId);
+        const subprofileIndex = useAppSelector(selectSelectedSubprofileIndex);
         const profile = useAppSelector(selectSelectedProfile);
-        const subprofile = useAppSelector(selectSelectedSubprofile);
-        const centerLine = subprofile?.centerLine;
-        const centerLineId = centerLine?.brepId;
-        const fullParameterBounds = centerLine?.parameterBounds;
         const profilePos = useAppSelector(selectProfile);
-
-        const distributions = useAppSelector(selectCurrentSubprofileDeviationDistributions);
+        const distribution = useAppSelector(selectCurrentSubprofileDeviationDistributions);
+        const fullData =
+            distribution?.data.status === AsyncStatus.Success
+                ? distribution?.data.data.pointCountAtDeviation
+                : undefined;
+        const [initialBrushPosition, setInitialBrushPosition] = useState(defaultBrushPosition);
 
         const brushRef = useRef<BaseBrush | null>(null);
-
-        const parameterBounds = useMemo(() => {
-            return distributions?.parameterBounds ?? fullParameterBounds;
-        }, [distributions, fullParameterBounds]);
-
-        const { data: rawData } = useGetTotalPointsAtDeviationsQuery(
-            profileId && centerLineId && fullParameterBounds
-                ? {
-                      projectId,
-                      profileId,
-                      centerLineId,
-                      start: parameterBounds![0],
-                      end: parameterBounds![1],
-                  }
-                : skipToken
-        );
 
         const colorStops = profile?.colors.colorStops;
 
         const data = useMemo(() => {
-            if (!rawData) {
+            if (!fullData || !profile) {
                 return;
             }
 
-            const total = rawData.reduce((acc, n) => acc + n.count, 0);
-            return rawData.map((p) => ({
+            const colorStops = profile.colors.absoluteValues
+                ? accountForAbsValues(profile.colors.colorStops)
+                : profile.colors.colorStops;
+
+            const minDeviation = Math.min(...colorStops.map((cs) => cs.position));
+            const maxDeviation = Math.max(...colorStops.map((cs) => cs.position));
+            const offset = Math.max(0.1, (maxDeviation - minDeviation) * 0.1);
+            const absMin = Number((minDeviation - offset).toFixed(1));
+            const absMax = Number((maxDeviation + offset).toFixed(1));
+
+            const newData: typeof fullData = [];
+            let absMinCount = 0;
+            let absMaxCount = 0;
+            for (const p of fullData) {
+                if (p.deviation <= absMin) {
+                    absMinCount += p.count;
+                } else if (p.deviation >= absMax) {
+                    absMaxCount += p.count;
+                } else {
+                    newData.push(p);
+                }
+            }
+
+            newData.unshift({ count: absMinCount, deviation: absMin });
+            newData.push({ count: absMaxCount, deviation: absMax });
+
+            const total = newData.reduce((acc, n) => acc + n.count, 0);
+            return newData.map((p) => ({
                 deviation: p.deviation,
                 count: (p.count / total) * 100 || 0,
             }));
-        }, [rawData]);
+        }, [fullData, profile]);
+
+        useEffect(() => {
+            setInitialBrushPosition(defaultBrushPosition);
+        }, [profileId, subprofileIndex]);
 
         const scaleX = useMemo(() => {
             return scaleLinear({
@@ -115,13 +132,6 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                 domain: data && data.length ? [data[0].deviation, data.at(-1)!.deviation] : [0, 100],
             });
         }, [data, width]);
-
-        // const scaleX = useMemo(() => {
-        //     return scaleLinear({
-        //         range: [margin.left, width - margin.right],
-        //         domain: colorStops ? [colorStops.at(-1)!.position, colorStops[0].position] : [-1, 1],
-        //     });
-        // }, [colorStops, width]);
 
         const scaleY = useMemo(() => {
             let max = Number.MIN_SAFE_INTEGER;
@@ -172,7 +182,6 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
 
         const handleHideTooltip = useCallback(() => {
             hideTooltip();
-            // view.modifyRenderState({ points: { deviation: { window: [-100, 100] } } });
         }, [hideTooltip]);
 
         const handleTooltip = useCallback(
@@ -185,11 +194,8 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                 const x0 = scaleX.invert(x);
                 const index = bisectRange(data, x0, 1);
                 const d0 = data[index - 1];
-                const d1 = data[index];
                 const d = d0;
-                // if (d1 && d1.deviation) {
-                //     d = x0.valueOf() - getDate(d0).valueOf() > getDate(d1).valueOf() - x0.valueOf() ? d1 : d0;
-                // }
+
                 showTooltip({
                     tooltipData: d,
                     tooltipLeft: x,
@@ -202,25 +208,44 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
         );
 
         const reset = useCallback(() => {
-            view.modifyRenderState({ points: { deviation: { window: [-100, 100] } } });
+            setInitialBrushPosition(defaultBrushPosition);
+            view.modifyRenderState({ points: { deviation: { visibleRange: [-100, 100] } } });
         }, [view]);
 
         const onBrushChange = useCallback(
             (domain: Bounds | null) => {
+                if (!data || data.length === 0) {
+                    return;
+                }
+
                 if (!domain) {
                     reset();
                 } else {
-                    const { x0, x1 } = domain;
-                    view.modifyRenderState({ points: { deviation: { window: [x0, x1] } } });
+                    let { x0, x1 } = domain;
+                    if (Math.abs(x0 - data[0].deviation) < 0.01) {
+                        x0 = -100;
+                    }
+                    if (Math.abs(x1 - data.at(-1)!.deviation) < 0.01) {
+                        x1 = 100;
+                    }
+                    setInitialBrushPosition({
+                        start: { x: brushScaleX(x0) },
+                        end: { x: brushScaleX(x1) },
+                    });
+                    view.modifyRenderState({ points: { deviation: { visibleRange: [x0, x1] } } });
                 }
             },
-            [view, reset]
+            [view, reset, data, brushScaleX]
         );
 
         useEffect(() => reset, [reset]);
 
         if (!data) {
-            return;
+            return (
+                <Typography m={2} color="grey" textAlign="center">
+                    Loading distribution data...
+                </Typography>
+            );
         }
 
         return (
@@ -265,6 +290,7 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                                 gradientMargin.top -
                                 gradientMargin.bottom
                             }
+                            initialBrushPosition={initialBrushPosition}
                             margin={margin}
                             handleSize={8}
                             innerRef={brushRef}

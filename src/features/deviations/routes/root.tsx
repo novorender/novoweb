@@ -6,22 +6,18 @@ import { renderActions } from "features/render";
 import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus, hasFinished, ViewMode } from "types/misc";
 
-import { CenterlineMinimap } from "../components/centerlineMinimap";
-import { ColorGradientMap } from "../components/colorGradientMap";
 import { ColorStopList } from "../components/colorStop";
 import { DeviationsSnackbar } from "../components/deviationsSnackbar";
+import { DistributionSection } from "../components/distributionSection";
 import { GroupsAndColorsHud } from "../components/groupsAndColorsHud";
 import { MixFactorInput } from "../components/mixFactorInput";
-import { RootParamBounds } from "../components/rootParamBounds";
 import { RunLog } from "../components/runLog";
 import { SubprofileSelect } from "../components/subprofileSelect";
 import { ViewSwitchSection } from "../components/viewSwitchSection";
 import { deviationsActions } from "../deviationsSlice";
 import { DeviationCalculationStatus } from "../deviationTypes";
-import { useCalcSubprofileDevDistr } from "../hooks/useCalcSubprofileDevDistr";
 import { useTrackVisibleTopDownProfile } from "../hooks/useTrackVisibleTopDownProfile";
 import {
-    selectCurrentSubprofileDeviationDistributions,
     selectDeviationCalculationStatus,
     selectDeviationProfileList,
     selectDeviationProfiles,
@@ -43,9 +39,7 @@ export function Root() {
     const isSaving = saveStatus.status === AsyncStatus.Loading;
     const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
     const isLegendFloating = useAppSelector(selectIsLegendFloating);
-    const distributions = useAppSelector(selectCurrentSubprofileDeviationDistributions);
 
-    useCalcSubprofileDevDistr();
     useTrackVisibleTopDownProfile();
 
     return (
@@ -135,23 +129,10 @@ export function Root() {
                                             })
                                         );
                                     }}
-                                    distributions={
-                                        distributions?.points.status === AsyncStatus.Success
-                                            ? distributions.points.data
-                                            : undefined
-                                    }
                                     disabled
                                 />
 
                                 <SubprofileSelect />
-
-                                <Box mt={1}>
-                                    <RootParamBounds />
-                                </Box>
-
-                                <CenterlineMinimap />
-
-                                <ColorGradientMap />
 
                                 <ViewSwitchSection />
 
@@ -164,6 +145,8 @@ export function Root() {
                                         />
                                     </Box>
                                 ) : undefined}
+
+                                <DistributionSection />
                             </Box>
                         )}
                     </ScrollBox>

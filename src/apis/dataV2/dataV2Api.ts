@@ -3,13 +3,7 @@ import { minutesToSeconds } from "date-fns";
 
 import { ArcgisWidgetConfig } from "features/arcgis";
 
-import {
-    DeviationAggregateDistribution,
-    DeviationDistributionPoint,
-    DeviationDistributionRequest,
-    DeviationProjectConfig,
-    PointCountAtDeviation,
-} from "./deviationTypes";
+import { DeviationDistributionResponse, DeviationProjectConfig } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
 import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
 import { getDataV2DynamicBaseQuery } from "./utils";
@@ -82,30 +76,12 @@ export const dataV2Api = createApi({
             }),
             invalidatesTags: (_result, _error, { projectId }) => [{ type: "ProjectProgress", id: projectId }],
         }),
-        calcDeviationDistributions: builder.mutation<
-            DeviationDistributionPoint[],
-            { projectId: string; profileId: string; config: DeviationDistributionRequest }
-        >({
-            query: ({ projectId, profileId: deviationId, config }) => ({
-                url: `/explorer/${projectId}/deviations/${deviationId}/calcdistributions`,
-                method: "POST",
-                body: config,
-            }),
-        }),
-        aggregateDeviationDistancesAlongCenterline: builder.query<
-            DeviationAggregateDistribution[],
+        getDeviationDistribution: builder.query<
+            DeviationDistributionResponse,
             { projectId: string; profileId: string; centerLineId: string; start: number; end: number }
         >({
             query: ({ projectId, profileId: deviationId, centerLineId, start, end }) => ({
-                url: `/explorer/${projectId}/deviations/${deviationId}/centerline/${centerLineId}/aggregatedeviationsatprofiles?start=${start}&end=${end}`,
-            }),
-        }),
-        getTotalPointsAtDeviations: builder.query<
-            PointCountAtDeviation[],
-            { projectId: string; profileId: string; centerLineId: string; start: number; end: number }
-        >({
-            query: ({ projectId, profileId: deviationId, centerLineId, start, end }) => ({
-                url: `/explorer/${projectId}/deviations/${deviationId}/centerline/${centerLineId}/pointcountatdeviations?start=${start}&end=${end}`,
+                url: `/explorer/${projectId}/deviations/${deviationId}/centerline/${centerLineId}/distribution?start=${start}&end=${end}`,
             }),
         }),
         getProjectProgress: builder.query<BuildProgressResult, { projectId: string; position?: number }>({
@@ -152,9 +128,7 @@ export const {
     useLazyGetDeviationProfilesQuery,
     useSetDeviationProfilesMutation,
     useCalcDeviationsMutation,
-    useCalcDeviationDistributionsMutation,
-    useAggregateDeviationDistancesAlongCenterlineQuery,
-    useGetTotalPointsAtDeviationsQuery,
+    useLazyGetDeviationDistributionQuery,
     useGetProjectProgressQuery,
     useLazyGetFileDownloadLinkQuery,
     useSearchEpsgQuery,
