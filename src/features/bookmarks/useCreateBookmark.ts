@@ -8,6 +8,7 @@ import { HighlightCollection, useLazyHighlightCollections } from "contexts/highl
 import { useLazyHighlighted } from "contexts/highlighted";
 import { GroupStatus, isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
+import { selectArcgisFeatureServers } from "features/arcgis/arcgisSlice";
 import { selectAreas } from "features/area/areaSlice";
 import {
     selectDeviationLegendGroups,
@@ -43,7 +44,7 @@ import {
     selectViewMode,
 } from "features/render/renderSlice";
 import { SubtreeStatus } from "features/render/types";
-import { ViewMode } from "types/misc";
+import { AsyncStatus, ViewMode } from "types/misc";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -70,6 +71,7 @@ export function useCreateBookmark() {
     const deviationSubprofileIndex = useAppSelector(selectSelectedSubprofileIndex);
     const deviationLegendFloating = useAppSelector(selectIsLegendFloating);
     const deviationLegendGroups = useAppSelector(selectDeviationLegendGroups);
+    const arcgisFeatureServers = useAppSelector(selectArcgisFeatureServers);
 
     const {
         state: { view },
@@ -234,6 +236,18 @@ export function useCreateBookmark() {
                           }
                         : undefined,
                 ...(propertyTree ? { propertyTree } : {}),
+                arcgis:
+                    arcgisFeatureServers.status === AsyncStatus.Success
+                        ? {
+                              featureServers: arcgisFeatureServers.data.map((fs) => ({
+                                  id: fs.id,
+                                  layers: fs.layers.map((layer) => ({
+                                      id: layer.id,
+                                      checked: layer.checked,
+                                  })),
+                              })),
+                          }
+                        : undefined,
             },
         };
     };
