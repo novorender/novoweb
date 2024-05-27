@@ -97,7 +97,7 @@ export const dataV2Api = createApi({
             { projectId: string; profileId: string; centerLineId: string; start: number; end: number }
         >({
             query: ({ projectId, profileId: deviationId, centerLineId, start, end }) => ({
-                url: `/explorer/${projectId}/deviations/${deviationId}/centerline/${centerLineId}/stepaggregatedistances?start=${start}&end=${end}`,
+                url: `/explorer/${projectId}/deviations/${deviationId}/centerline/${centerLineId}/aggregatedeviationsatprofiles?start=${start}&end=${end}`,
             }),
         }),
         getTotalPointsAtDeviations: builder.query<
@@ -105,7 +105,7 @@ export const dataV2Api = createApi({
             { projectId: string; profileId: string; centerLineId: string; start: number; end: number }
         >({
             query: ({ projectId, profileId: deviationId, centerLineId, start, end }) => ({
-                url: `/explorer/${projectId}/deviations/${deviationId}/centerline/${centerLineId}/totalpoints?start=${start}&end=${end}`,
+                url: `/explorer/${projectId}/deviations/${deviationId}/centerline/${centerLineId}/pointcountatdeviations?start=${start}&end=${end}`,
             }),
         }),
         getProjectProgress: builder.query<BuildProgressResult, { projectId: string; position?: number }>({
