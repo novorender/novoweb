@@ -49,10 +49,12 @@ const tooltipStyles = {
     ...defaultStyles,
     border: "1px solid white",
 };
-const defaultBrushPosition = {
-    start: { x: undefined as undefined | number },
-    end: { x: undefined as undefined | number },
-};
+const defaultBrushPosition = undefined as
+    | undefined
+    | {
+          start: { x: undefined | number };
+          end: { x: undefined | number };
+      };
 
 type Props = { width: number; height: number };
 

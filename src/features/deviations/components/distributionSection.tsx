@@ -10,7 +10,7 @@ import {
     styled,
     Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { memo, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { IosSwitch, LinearProgress } from "components";
@@ -24,7 +24,9 @@ import { CenterlineMinimap } from "./centerlineMinimap";
 import { ColorGradientMap } from "./colorGradientMap";
 import { RootParamBounds } from "./rootParamBounds";
 
-export function DistributionSection() {
+export const DistributionSection = memo(DistributionSectionInner);
+
+function DistributionSectionInner() {
     const isTopDownOrthoCamera = useIsTopDownOrthoCamera();
     const [distrExpanded, setDistrExpanded] = useState(false);
     const rangeFollowsCamera = useAppSelector(selectRangeFollowsCamera);
