@@ -16,3 +16,6 @@ tsconfig.tsbuildinfo
 
 npm-debug.log*
 /.vs
+
+# Sentry Config File
+.env.sentry-build-plugin

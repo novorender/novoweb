@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
@@ -247,6 +248,11 @@ export default defineConfig(({ mode }) => {
             svgr({ svgrOptions: { titleProp: true } }),
             ...(ownCerts ? [] : [basicSsl()]),
             VitePWA(pwaOptions),
+            sentryVitePlugin({
+                authToken: process.env.SENTRY_AUTH_TOKEN,
+                org: "novorender",
+                project: "explorer",
+            }),
         ],
         define: { ...env },
         server: {
