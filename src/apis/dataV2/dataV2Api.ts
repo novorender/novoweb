@@ -81,7 +81,7 @@ export const dataV2Api = createApi({
             { projectId: string; profileId: string; centerLineId: string; start: number; end: number }
         >({
             query: ({ projectId, profileId: deviationId, centerLineId, start, end }) => ({
-                url: `/explorer/${projectId}/deviations/${deviationId}/centerline/${centerLineId}/distribution?start=${start}&end=${end}`,
+                url: `/explorer/${projectId}/deviations/${deviationId}/centerlines/${centerLineId}/distribution?start=${start}&end=${end}`,
             }),
         }),
         getProjectProgress: builder.query<BuildProgressResult, { projectId: string; position?: number }>({
