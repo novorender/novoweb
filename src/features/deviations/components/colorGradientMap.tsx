@@ -1,4 +1,4 @@
-import { Box, css, styled, Typography } from "@mui/material";
+import { Box, css, styled } from "@mui/material";
 import { LineSubject } from "@visx/annotation";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { Brush } from "@visx/brush";
@@ -241,11 +241,7 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
         useEffect(() => reset, [reset]);
 
         if (!data) {
-            return (
-                <Typography m={2} color="grey" textAlign="center">
-                    Loading distribution data...
-                </Typography>
-            );
+            return;
         }
 
         return (
