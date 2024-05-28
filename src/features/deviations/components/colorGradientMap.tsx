@@ -211,7 +211,9 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
 
         const reset = useCallback(() => {
             setInitialBrushPosition(defaultBrushPosition);
-            view.modifyRenderState({ points: { deviation: { visibleRange: [-100, 100] } } });
+            view.modifyRenderState({
+                points: { deviation: { visibleRangeStart: undefined, visibleRangeEnd: undefined } },
+            });
         }, [view]);
 
         const onBrushChange = useCallback(
@@ -224,17 +226,17 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                     reset();
                 } else {
                     let { x0, x1 } = domain;
-                    if (Math.abs(x0 - data[0].deviation) < 0.01) {
+                    if (x0 <= data[0].deviation + 0.001) {
                         x0 = -100;
                     }
-                    if (Math.abs(x1 - data.at(-1)!.deviation) < 0.01) {
+                    if (x1 >= data.at(-1)!.deviation - 0.001) {
                         x1 = 100;
                     }
                     setInitialBrushPosition({
                         start: { x: brushScaleX(x0) },
                         end: { x: brushScaleX(x1) },
                     });
-                    view.modifyRenderState({ points: { deviation: { visibleRange: [x0, x1] } } });
+                    view.modifyRenderState({ points: { deviation: { visibleRangeStart: x0, visibleRangeEnd: x1 } } });
                 }
             },
             [view, reset, data, brushScaleX]
