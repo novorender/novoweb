@@ -3,6 +3,7 @@ import { CircularProgress, CssBaseline, Paper, Snackbar, snackbarContentClasses 
 import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import * as Sentry from "@sentry/react";
 import enLocale from "date-fns/locale/en-GB";
 import { useEffect, useRef, useState } from "react";
 import { generatePath, Redirect, Route, Switch, useHistory, useLocation, useParams } from "react-router-dom";
@@ -12,7 +13,7 @@ import { dataApi } from "apis/dataV1";
 import { Loading } from "components";
 import { StorageKey } from "config/storage";
 import { Explorer } from "pages/explorer";
-import { authActions } from "slices/authSlice";
+import { authActions, User } from "slices/authSlice";
 import { explorerActions, selectConfig } from "slices/explorer";
 import { getOAuthState, getUser } from "utils/auth";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
@@ -183,6 +184,7 @@ export function App() {
                         );
                         dispatch(authActions.login({ accessToken: res.access_token, user }));
                         saveToStorage(StorageKey.AccessToken, res.access_token);
+                        setSentryUser(user);
                     }
                 }
             } else {
@@ -234,6 +236,7 @@ export function App() {
 
                             dispatch(authActions.login({ accessToken: res.access_token, user }));
                             saveToStorage(StorageKey.AccessToken, res.access_token);
+                            setSentryUser(user);
                         }
                     }
                 } catch (e) {
@@ -264,6 +267,7 @@ export function App() {
             if (accessToken && user) {
                 dispatch(authActions.login({ accessToken, user }));
                 saveToStorage(StorageKey.AccessToken, accessToken);
+                setSentryUser(user);
             }
             setAuthStatus(Status.Ready);
         }
@@ -353,4 +357,13 @@ function RedirectLegacyLoginUrl() {
     const params = useParams();
 
     return <Redirect to={generatePath(location.pathname.replace("/login", ""), params) + location.search} />;
+}
+
+function setSentryUser(user: User) {
+    Sentry.setUser({
+        id: user.user,
+    });
+    Sentry.setContext("org", {
+        name: user.organization,
+    });
 }

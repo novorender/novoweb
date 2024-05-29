@@ -220,6 +220,7 @@ const serverOptions: ServerOptions = {
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd());
+    const packageVersion = process.env.npm_package_version;
 
     return {
         build: {
@@ -252,6 +253,7 @@ export default defineConfig(({ mode }) => {
                 authToken: process.env.SENTRY_AUTH_TOKEN,
                 org: "novorender",
                 project: "explorer",
+                release: { name: packageVersion },
             }),
         ],
         define: { ...env },

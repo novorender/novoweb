@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef } from "react";
 
-export const useAbortController = () => {
+export const useAbortController = (reason = "aborted by useAbortController") => {
     const abortController = useRef(new AbortController());
 
     const abort = useCallback(() => {
-        abortController.current.abort();
+        abortController.current.abort(reason);
         abortController.current = new AbortController();
-    }, [abortController]);
+    }, [abortController, reason]);
 
     useEffect(() => {
         return () => {
