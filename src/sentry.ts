@@ -13,6 +13,7 @@ Sentry.init({
                 [500, 599],
             ],
         }),
+        Sentry.sessionTimingIntegration(),
     ],
     // Performance Monitoring
     tracesSampleRate: 1.0, //  Capture 100% of the transactions
