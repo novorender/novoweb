@@ -156,7 +156,7 @@ export function Root() {
 
             const cleanedObjectData = {
                 ..._objectData,
-                properties: _objectData.properties.filter(([_prop, value]) => Boolean(value)).slice(0, 100),
+                properties: _objectData.properties.filter(([_prop, value]) => Boolean(value)),
             };
             const parent = navigator.onLine
                 ? await searchFirstObjectAtPath({ db, path: getParentPath(_objectData.path) })
@@ -165,7 +165,7 @@ export function Root() {
             if (parent) {
                 const parentPropertiesObject = createPropertiesObject({
                     ...parent,
-                    properties: parent.properties.filter(([_prop, value]) => Boolean(value)).slice(0, 50),
+                    properties: parent.properties.filter(([_prop, value]) => Boolean(value)),
                 });
                 setObject({ ...createPropertiesObject(cleanedObjectData), parent: parentPropertiesObject });
             } else {
