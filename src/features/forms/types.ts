@@ -7,26 +7,36 @@ export enum FormItemType {
     Dropdown = "dropdown",
     Input = "input",
     Text = "text",
+    File = "file",
 }
 
-export type FormItem = SimpleItem | ItemWithOptions;
+export type FormItem = SimpleItem | ItemWithOptions | FileItem;
 
-type BaseItem = {
+type BaseItem<T extends string[] | (File & { checksum?: string; url?: string })[] | null = string[] | null> = {
     id?: string;
     title: string;
     required: boolean;
-    value?: string[] | null;
+    value?: T;
     relevant?: boolean;
 };
 
-type SimpleItem = BaseItem & {
-    type: Exclude<FormItemType, FormItemType.Dropdown | FormItemType.Checkbox>;
+type SimpleItem = BaseItem<string[] | null> & {
+    type: Exclude<FormItemType, FormItemType.Dropdown | FormItemType.Checkbox | FormItemType.File>;
 };
 
-type ItemWithOptions = BaseItem & {
-    type: Exclude<FormItemType, SimpleItem["type"]>;
+interface ItemWithOptions extends BaseItem<string[] | null> {
+    type: Exclude<FormItemType, FormItemType.Input | FormItemType.Text | FormItemType.File>;
     options: string[];
-};
+}
+
+interface FileItem extends BaseItem<(File & { checksum?: string; url?: string })[]> {
+    type: FormItemType.File;
+    defaultValue?: (File & { checksum?: string; url?: string })[];
+    accept: string;
+    multiple: boolean;
+    readonly: boolean;
+    dirrectory?: boolean;
+}
 
 export type ProjectId = string;
 export type TemplateId = string;
@@ -97,7 +107,18 @@ export type FormField =
           multiple?: boolean;
           options: { label: string; value: string; checked?: boolean }[];
       }
-    | { type: "file"; id?: string; required?: boolean; readonly?: boolean; accept?: string[] };
+    | {
+          type: "file";
+          id?: string;
+          value?: (File & { checksum?: string; url?: string })[];
+          defaultValue?: (File & { checksum?: string; url?: string })[];
+          label?: string;
+          required?: boolean;
+          readonly?: boolean;
+          accept?: string;
+          multiple?: boolean;
+          dirrectory?: boolean;
+      };
 
 export type FormObjectGuid = string;
 
@@ -194,3 +215,5 @@ export type FormTransform = {
     scale?: number;
     updated: boolean;
 };
+
+export type FileTypes = ("Documents" | "Images")[];

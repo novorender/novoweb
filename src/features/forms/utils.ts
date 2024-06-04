@@ -284,6 +284,24 @@ function toFormField(item: FormItem): FormField {
             ...(item.id ? { id: item.id } : {}),
         };
     }
+    if (item.type === FormItemType.File) {
+        // NOTE: Mapping the value is required to serialize it later
+        return {
+            type: "file",
+            label: item.title,
+            accept: item.accept,
+            multiple: item.multiple,
+            readonly: item.readonly,
+            value: item.value?.map((f) => ({
+                lastModified: f.lastModified,
+                name: f.name,
+                size: f.size,
+                type: f.type,
+                checksum: f.checksum,
+            })) as (File & { checksum?: string; url?: string })[],
+            ...(item.id ? { id: item.id } : {}),
+        };
+    }
     throw new Error(`Unknown form item type: ${item.type}`);
 }
 
@@ -338,6 +356,20 @@ function toFormItem(field: FormField): FormItem {
             ...(field.id ? { id: field.id } : {}),
         };
     }
+    if (field.type === "file") {
+        return {
+            type: FormItemType.File,
+            title: field.label ?? "",
+            value: field.value,
+            defaultValue: field.defaultValue,
+            required: field.required ?? false,
+            readonly: field.readonly ?? false,
+            accept: field.accept ?? "",
+            multiple: field.multiple ?? false,
+            dirrectory: field.dirrectory ?? false,
+            ...(field.id ? { id: field.id } : {}),
+        };
+    }
     throw new Error(`Unknown form field type: ${field.type}`);
 }
 
@@ -356,6 +388,8 @@ export function getFormItemTypeDisplayName(type: FormItemType): string {
         case FormItemType.Input:
         case FormItemType.Text:
             return type[0].toUpperCase() + type.slice(1);
+        case FormItemType.File:
+            return "File";
     }
 }
 

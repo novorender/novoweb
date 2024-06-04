@@ -1,6 +1,4 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
-
-import { getDataV2DynamicBaseQuery } from "apis/dataV2/utils";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 import {
     type Form,
@@ -15,7 +13,7 @@ import { calculateFormState } from "./utils";
 
 export const formsApi = createApi({
     reducerPath: "formsApi",
-    baseQuery: getDataV2DynamicBaseQuery("/forms/"),
+    baseQuery: fetchBaseQuery({ baseUrl: "https://forms-fa-prod.azurewebsites.net/api/v1/" }),
     tagTypes: ["Template", "Form", "Object"],
     keepUnusedDataFor: 60 * 5,
     endpoints: (builder) => ({
@@ -200,15 +198,18 @@ export const formsApi = createApi({
             }),
             invalidatesTags: (_result, _error) => [{ type: "Template" as const, id: "ID_LIST" }],
         }),
-        uploadFiles: builder.mutation<void, { projectId: ProjectId; files: FileList }>({
-            query: ({ projectId, files }) => {
+        uploadFiles: builder.mutation<
+            { [key: string]: string },
+            { projectId: ProjectId; files: File[]; template?: boolean }
+        >({
+            query: ({ projectId, files, template = false }) => {
                 const filesData = new FormData();
                 for (const file of files) {
                     filesData.append(file.name, file);
                 }
                 return {
                     body: filesData,
-                    url: `projects/${projectId}/files`,
+                    url: `projects/${projectId}/files?template=${template}`,
                     method: "POST",
                     formData: true,
                 };

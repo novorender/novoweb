@@ -13,8 +13,12 @@ import {
     Radio,
     RadioGroup,
     Select,
+    Typography,
 } from "@mui/material";
 import { type Dispatch, type MouseEvent, type SetStateAction, useState } from "react";
+
+import { ImgModal } from "components";
+import { useToggle } from "hooks/useToggle";
 
 import { type FormItem, FormItemType } from "../../types";
 
@@ -85,13 +89,18 @@ const FormItemHeader = ({ item, toggleRelevant }: { item: FormItem; toggleReleva
 );
 
 export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatch<SetStateAction<FormItem[]>> }) {
+    const [modalOpen, toggleModal] = useToggle();
     const [editing, setEditing] = useState(false);
     const [isRelevant, setIsRelevant] = useState(item.required);
+    const [activeImage, setActiveImage] = useState("");
 
     const handleChange = (value: string) => {
         if (!editing) {
             setEditing(true);
         }
+
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         setItems((state) =>
             state.map((_item) =>
                 _item === item
@@ -108,6 +117,8 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         const relevant = item.required ? true : !isRelevant;
         setIsRelevant(relevant);
         setEditing(relevant);
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         setItems((state) =>
             state.map((_item) =>
                 _item === item
@@ -134,6 +145,32 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
 
     const handleTextFieldBlur = () => {
         setEditing(false);
+    };
+
+    // const handleFileUpload = (event) => {
+    //     const newFiles = Array.from(event.target.files).map((file) => ({
+    //         ...file,
+    //         checksum: calculateChecksum(file),
+    //         url: URL.createObjectURL(file),
+    //     }));
+    //     const updatedValue = [...(item.value || []), ...newFiles];
+    //     handleChange(updatedValue);
+    //     event.target.value = null; // Clear the input field
+    // };
+
+    // const handleRemoveFile = (index) => {
+    //     const updatedValue = [...item.value];
+    //     updatedValue.splice(index, 1);
+    //     handleChange(updatedValue);
+    // };
+
+    // const calculateChecksum = (file) => {
+    //     return `${file.size}-${file.lastModified}`;
+    // };
+
+    const handleThumbnailClick = async (url: string = "") => {
+        setActiveImage(url);
+        toggleModal();
     };
 
     switch (item.type) {
@@ -283,6 +320,71 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                             </Box>
                         ))}
                     </Box>
+                </FormControl>
+            );
+
+        case FormItemType.File:
+            console.log(item);
+            return (
+                <FormControl
+                    // disabled={!item.required && !item.relevant}
+                    component="fieldset"
+                    fullWidth
+                >
+                    {/* <FormItemHeader item={item} toggleRelevant={toggleRelevant} /> */}
+                    <div>
+                        {item.value && item.value.length > 0 ? (
+                            <div>
+                                {item.value.map((file, index) => (
+                                    <div key={index}>
+                                        {file.type.startsWith("image/") ? (
+                                            <Box
+                                                sx={{
+                                                    mb: 1,
+                                                    "& > img": {
+                                                        width: "100%",
+                                                        maxHeight: 150,
+                                                        maxWidth: "60%",
+                                                        objectFit: "cover",
+                                                        cursor: "pointer",
+                                                    },
+                                                }}
+                                            >
+                                                <img
+                                                    onClick={() => handleThumbnailClick(file.url)}
+                                                    src={file.url}
+                                                    alt={file.name}
+                                                    crossOrigin="anonymous"
+                                                />
+                                            </Box>
+                                        ) : file.type === "application/pdf" ? (
+                                            <Box marginY={1}>
+                                                <Link href={file.url} target="_blank" rel="noopener noreferrer">
+                                                    {file.name}
+                                                    <OpenInNew fontSize="small" style={{ marginLeft: "5px" }} />
+                                                </Link>
+                                            </Box>
+                                        ) : (
+                                            <Box marginY={1}>{file.name}</Box>
+                                        )}
+                                        {/* <Button onClick={() => handleRemoveFile(index)}>Remove</Button> */}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <Typography variant="body2">No files uploaded</Typography>
+                        )}
+                        {/* <input
+                            type="file"
+                            multiple={item.multiple}
+                            accept={item.accept}
+                            // directory={item.dirrectory ? "directory" : undefined}
+                            // webkitdirectory={item.dirrectory ? "webkitdirectory" : undefined}
+                            onChange={handleFileUpload}
+                        /> */}
+
+                        <ImgModal src={activeImage ?? ""} open={modalOpen} onClose={() => toggleModal()} anonymous />
+                    </div>
                 </FormControl>
             );
 

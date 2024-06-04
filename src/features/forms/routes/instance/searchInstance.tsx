@@ -131,6 +131,8 @@ export function SearchInstance() {
     }, [dispatchHighlighted, dispatch, currentFormsList, history]);
 
     const handleClearClick = useCallback(() => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         setItems((state) =>
             state.map((item) => ({
                 ...item,
