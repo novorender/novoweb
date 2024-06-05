@@ -330,7 +330,7 @@ export function useCanvasClickHandler({
                         dispatchHighlighted(highlightActions.add([result.objectId]));
                     }
                 } else {
-                    if (alreadySelected) {
+                    if (alreadySelected && result.objectId === mainObject) {
                         dispatch(renderActions.setMainObject(undefined));
                         dispatch(renderActions.setStamp(null));
                         dispatchHighlighted(highlightActions.setIds([]));
@@ -346,7 +346,9 @@ export function useCanvasClickHandler({
                         currentSecondaryHighlightQuery.current = "";
                     } else {
                         dispatch(renderActions.setMainObject(result.objectId));
-                        dispatchHighlighted(highlightActions.setIds([result.objectId]));
+                        if (!alreadySelected) {
+                            dispatchHighlighted(highlightActions.setIds([result.objectId]));
+                        }
 
                         if ((!showPropertiesStamp && !secondaryHighlightProperty) || !db) {
                             return;
