@@ -1,7 +1,6 @@
 import { DeviceProfile, getDeviceProfile, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { getGPUTier } from "detect-gpu";
-import { quat, vec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
 import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
@@ -23,7 +22,7 @@ import { sleep } from "utils/time";
 
 import { renderActions } from "../renderSlice";
 import { ErrorKind } from "../sceneError";
-import { loadScene } from "../utils";
+import { getDefaultCamera, loadScene } from "../utils";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
@@ -66,7 +65,7 @@ export function useHandleInit() {
             const view = await createView(canvas, { deviceProfile });
 
             try {
-                const [{ url: _url, db, ...sceneData }, camera] = await loadScene(sceneId);
+                const [{ url: _url, db, ...sceneData }, sceneCamera] = await loadScene(sceneId);
                 const url = new URL(_url);
                 const parentSceneId = url.pathname.replaceAll("/", "");
                 url.pathname = "";
@@ -90,32 +89,13 @@ export function useHandleInit() {
                     }));
                 view.run();
 
-                while (!view.renderState.scene) {
-                    await sleep(50);
-                }
-
-                if (!camera) {
-                    view.activeController.autoFit(
-                        view.renderState.scene.config.boundingSphere.center,
-                        view.renderState.scene.config.boundingSphere.radius
-                    );
-
-                    // 1sec autofit flight duration
-                    await sleep(1000);
-                }
-
                 dispatch(
                     renderActions.initScene({
                         projectType: projectIsV2 ? ProjectType.V2 : ProjectType.V1,
                         tmZoneForCalc,
                         sceneData,
                         sceneConfig: octreeSceneConfig,
-                        initialCamera: {
-                            kind: camera?.kind ?? view.renderState.camera.kind,
-                            position: vec3.clone(camera?.position ?? view.renderState.camera.position),
-                            rotation: quat.clone(camera?.rotation ?? view.renderState.camera.rotation),
-                            fov: camera?.fov ?? view.renderState.camera.fov,
-                        },
+                        initialCamera: sceneCamera ?? getDefaultCamera(projectV2?.bounds) ?? view.renderState.camera,
                         deviceProfile,
                     })
                 );
