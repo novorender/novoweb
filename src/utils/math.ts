@@ -27,3 +27,7 @@ export function projectPointOnLineSegment2D(
     }
     return vec2.lerp(out, l1, l2, k);
 }
+
+export function radToDeg(radian: number) {
+    return (radian / Math.PI) * 180;
+}

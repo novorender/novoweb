@@ -5,7 +5,7 @@ import {
     RenderStateDynamicObject,
     RGBA,
 } from "@novorender/api";
-import { ReadonlyVec3 } from "gl-matrix";
+import { ReadonlyQuat, ReadonlyVec3 } from "gl-matrix";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -16,7 +16,8 @@ import { useAbortController } from "hooks/useAbortController";
 import { selectConfig } from "slices/explorer";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { useFormsGlobals } from "../formsGlobals";
+import { formsGlobalsActions } from "../formsGlobals";
+import { useDispatchFormsGlobals, useFormsGlobals } from "../formsGlobals/hooks";
 import {
     selectAssets,
     selectCurrentFormsList,
@@ -25,12 +26,15 @@ import {
     selectTemplates,
 } from "../slice";
 import { FormGLtfAsset, LocationTemplate } from "../types";
+import { useFetchAssetList } from "./useFetchAssetList";
 
 type RenderedForm = {
     templateId: string;
     id: string;
     marker: string;
     location: ReadonlyVec3;
+    rotation?: ReadonlyQuat;
+    scale?: number;
 };
 
 function areRenderedFormsEqual(a: RenderedForm, b: RenderedForm) {
@@ -40,11 +44,19 @@ function areRenderedFormsEqual(a: RenderedForm, b: RenderedForm) {
 const MAX_ASSET_COUNT = 100_000;
 const SELECTED_OBJECT_ID_OFFSET = MAX_ASSET_COUNT / 2;
 
+function useTransformDraft() {
+    const formsGlobals = useFormsGlobals();
+    return useMemo(() => formsGlobals.transformDraft, [formsGlobals]);
+}
+
 export function useRenderLocationFormAssets() {
+    useFetchAssetList();
+
     const {
         state: { view },
     } = useExplorerGlobals();
-    const { setState: setFormsGlobals } = useFormsGlobals();
+    const dispatchFormsGlobals = useDispatchFormsGlobals();
+    const transform = useTransformDraft();
     const templates = useAppSelector(selectTemplates);
     const locationForms = useAppSelector(selectLocationForms);
     const assetInfoList = useAppSelector(selectAssets);
@@ -73,12 +85,21 @@ export function useRenderLocationFormAssets() {
             .filter((form) => form.location)
             .map((form) => {
                 const template = templateMap.get(form.templateId)! as LocationTemplate;
-                return {
+                const result = {
                     templateId: template.id,
                     id: form.id,
                     marker: template.marker,
                     location: form.location!,
+                    rotation: form.rotation,
+                    scale: form.scale,
                 };
+
+                if (form.id === selectedFormId && transform) {
+                    result.location = transform.location!;
+                    result.rotation = transform.rotation!;
+                    result.scale = transform.scale!;
+                }
+                return result;
             });
 
         if (areArraysEqual(result, prevRenderedForms.current, areRenderedFormsEqual)) {
@@ -87,7 +108,7 @@ export function useRenderLocationFormAssets() {
             prevRenderedForms.current = result;
             return result;
         }
-    }, [templates, locationForms, active]);
+    }, [templates, locationForms, active, transform, selectedFormId]);
 
     const uniqueMarkers = useMemo(() => {
         const uniqueMarkers = new Set<string>();
@@ -165,7 +186,7 @@ export function useRenderLocationFormAssets() {
             needCleaning.current = false;
 
             view.modifyRenderState({ dynamic: { objects } });
-            setFormsGlobals((s) => ({ ...s, objectIdToFormIdMap: new Map() }));
+            dispatchFormsGlobals(formsGlobalsActions.setObjectIdToFormIdMap(new Map()));
         }
 
         function updateDynamicObjects() {
@@ -212,18 +233,25 @@ export function useRenderLocationFormAssets() {
                 for (const { ref, instances, selectedInstances } of asset) {
                     for (const refInst of ref.instances) {
                         let objectId: number;
+                        const position = form.location;
+                        const rotation = form.rotation;
+                        const scale = (refInst.scale ?? 1) * (form.scale ?? 1);
+
                         if (selectedTemplateId === form.templateId && selectedFormId === form.id) {
                             objectId = ref.baseObjectId! + SELECTED_OBJECT_ID_OFFSET + selectedInstances.length;
                             selectedInstances.push({
                                 ...refInst,
-                                position: form.location,
-                                scale: (refInst.scale ?? 1) * 1.2,
+                                position,
+                                rotation,
+                                scale: scale * 1.2,
                             });
                         } else {
                             objectId = ref.baseObjectId! + instances.length;
                             instances.push({
                                 ...refInst,
-                                position: form.location,
+                                position,
+                                rotation,
+                                scale,
                             });
                         }
 
@@ -274,18 +302,18 @@ export function useRenderLocationFormAssets() {
 
             needCleaning.current = true;
             view.modifyRenderState({ dynamic: { objects } });
-            setFormsGlobals((s) => ({ ...s, objectIdToFormIdMap }));
+            dispatchFormsGlobals(formsGlobalsActions.setObjectIdToFormIdMap(objectIdToFormIdMap));
         }
     }, [
         renderedForms,
         view,
         assetInfoList,
         abortController,
-        setFormsGlobals,
         selectedTemplateId,
         selectedFormId,
         active,
         assetGltfMap,
+        dispatchFormsGlobals,
     ]);
 }
 

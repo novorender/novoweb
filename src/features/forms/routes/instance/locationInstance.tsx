@@ -10,9 +10,11 @@ import {
     useGetLocationFormQuery,
     useUpdateLocationFormMutation,
 } from "features/forms/api";
+import { TransformEditor } from "features/forms/components/transformEditor";
+import { formsGlobalsActions, useDispatchFormsGlobals, useLazyFormsGlobals } from "features/forms/formsGlobals";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { formsActions, selectCurrentFormsList } from "features/forms/slice";
-import { type FormId, type FormItem as FItype, FormItemType, type TemplateId } from "features/forms/types";
+import { type Form, type FormId, type FormItem as FItype, FormItemType, type TemplateId } from "features/forms/types";
 import { toFormFields, toFormItems } from "features/forms/utils";
 import { ObjectVisibility, renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
@@ -27,6 +29,8 @@ export function LocationInstance() {
     const currentFormsList = useAppSelector(selectCurrentFormsList);
     const dispatch = useAppDispatch();
     const flyToForm = useFlyToForm();
+    const dispatchFormsGlobals = useDispatchFormsGlobals();
+    const lazyFormsGlobals = useLazyFormsGlobals();
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);
@@ -42,7 +46,8 @@ export function LocationInstance() {
     useEffect(() => {
         dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
         dispatch(formsActions.setSelectedFormId(formId));
-    }, [dispatch, formId]);
+        dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(undefined));
+    }, [dispatch, formId, dispatchFormsGlobals]);
 
     const [updateForm, { isLoading: isFormUpdating }] = useUpdateLocationFormMutation();
 
@@ -58,6 +63,19 @@ export function LocationInstance() {
     }, [form, formId]);
 
     useEffect(() => {
+        if (form?.location) {
+            dispatchFormsGlobals(
+                formsGlobalsActions.setTransformDraft({
+                    location: form.location,
+                    rotation: form.rotation,
+                    scale: form.scale,
+                    updated: false,
+                })
+            );
+        }
+    }, [form, dispatchFormsGlobals]);
+
+    useEffect(() => {
         willUnmount.current = false;
         return () => {
             willUnmount.current = true;
@@ -67,20 +85,31 @@ export function LocationInstance() {
     useEffect(() => {
         return () => {
             if (willUnmount.current) {
-                if (isUpdated) {
+                // eslint-disable-next-line react-hooks/exhaustive-deps
+                const transformDraft = lazyFormsGlobals.current.transformDraft;
+
+                if (isUpdated || transformDraft?.updated) {
+                    const form: Partial<Form> = {
+                        title: title.trim().length > 0 ? title.trim() : formId,
+                        fields: toFormFields(items),
+                    };
+                    if (transformDraft?.updated) {
+                        form.location = transformDraft.location;
+                        form.rotation = transformDraft.rotation;
+                        form.scale = transformDraft.scale;
+                    }
                     updateForm({
                         projectId: sceneId,
                         templateId,
                         formId,
-                        form: {
-                            title: title.trim().length > 0 ? title.trim() : formId,
-                            fields: toFormFields(items),
-                        },
+                        form,
                     });
                 }
+
+                dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(undefined));
             }
         };
-    }, [sceneId, templateId, formId, isUpdated, items, title, updateForm]);
+    }, [sceneId, templateId, formId, isUpdated, items, title, updateForm, lazyFormsGlobals, dispatchFormsGlobals]);
 
     const handleBack = useCallback(() => {
         if (currentFormsList) {
@@ -193,6 +222,7 @@ export function LocationInstance() {
                         </Fragment>
                     );
                 })}
+                <TransformEditor />
             </ScrollBox>
         </>
     );

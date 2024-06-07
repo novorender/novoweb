@@ -3,20 +3,18 @@ import { useCallback } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 
-import { useFormsGlobals } from "../formsGlobals";
+import { useLazyFormsGlobals } from "../formsGlobals/hooks";
 import { formsActions, selectCurrentFormsList, selectSelectedFormId } from "../slice";
 
 export function useLocationFormAssetClickHandler() {
-    const {
-        state: { objectIdToFormIdMap },
-    } = useFormsGlobals();
+    const lazyFormsGlobals = useLazyFormsGlobals();
     const selectedTemplateId = useAppSelector(selectCurrentFormsList);
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const dispatch = useAppDispatch();
 
     return useCallback(
         (result: PickSampleExt) => {
-            const ids = objectIdToFormIdMap.get(result.objectId);
+            const ids = lazyFormsGlobals.current.objectIdToFormIdMap.get(result.objectId);
 
             if (!ids) {
                 return false;
@@ -32,6 +30,6 @@ export function useLocationFormAssetClickHandler() {
 
             return true;
         },
-        [dispatch, objectIdToFormIdMap, selectedTemplateId, selectedFormId]
+        [dispatch, lazyFormsGlobals, selectedTemplateId, selectedFormId]
     );
 }

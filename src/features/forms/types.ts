@@ -1,4 +1,4 @@
-import { type vec3 } from "gl-matrix";
+import { type quat, type vec3 } from "gl-matrix";
 
 export enum FormItemType {
     Checkbox = "checkbox",
@@ -131,6 +131,8 @@ export type FormRecord = {
     title?: string;
     state: FormState;
     location?: vec3;
+    rotation?: quat;
+    scale?: number;
 };
 
 export type FormInstanceId = string;
@@ -163,6 +165,8 @@ export type Form = {
     readonly: boolean;
     state: FormState;
     location?: vec3;
+    rotation?: quat;
+    scale?: number;
     createdBy?: ChangeStamp;
     modifiedBy?: ChangeStamp[];
 };
@@ -173,4 +177,11 @@ export type FormGLtfAsset = {
     matIconName: string;
     icon: string;
     baseObjectId: number;
+};
+
+export type FormTransform = {
+    location: vec3;
+    rotation?: quat;
+    scale?: number;
+    updated: boolean;
 };
