@@ -18,18 +18,19 @@ import { VecRGB, VecRGBA } from "utils/color";
 import { mergeRecursive } from "utils/misc";
 
 import {
+    type CadCamera,
     CameraSpeedLevel,
-    CameraState,
-    CameraStep,
+    type CameraState,
+    type CameraStep,
     CameraType,
     ObjectVisibility,
     Picker,
-    SavedCameraPositions,
-    SceneConfig,
+    type SavedCameraPositions,
+    type SceneConfig,
     SelectionBasketMode,
-    Stamp,
-    Subtree,
-    Subtrees,
+    type Stamp,
+    type Subtree,
+    type Subtrees,
     SubtreeStatus,
 } from "./types";
 import { getLegacySubtrees, getSubtrees } from "./utils";
@@ -217,23 +218,13 @@ export const initScene = createAction<{
     tmZoneForCalc: string | undefined;
     sceneData: Omit<SceneConfig, "db" | "url">;
     sceneConfig: OctreeSceneConfig;
-    initialCamera: {
-        kind: "pinhole" | "orthographic";
-        position: vec3;
-        rotation: quat;
-        fov: number;
-    };
+    initialCamera: CadCamera;
     deviceProfile: RecursivePartial<State["deviceProfile"]>;
 }>("initScene");
 
 export const resetView = createAction<{
     sceneData: Omit<SceneConfig, "db" | "url">;
-    initialCamera?: {
-        kind: "pinhole" | "orthographic";
-        position: vec3;
-        rotation: quat;
-        fov: number;
-    };
+    initialCamera?: CadCamera;
 }>("resetView");
 
 export const selectBookmark = createAction(
@@ -790,8 +781,6 @@ export const selectCameraSpeedLevels = (state: RootState) => state.render.camera
 export const selectCurrentCameraSpeedLevel = (state: RootState) => state.render.currentCameraSpeedLevel;
 export const selectSavedCameraPositions = (state: RootState) =>
     state.render.savedCameraPositions as SavedCameraPositions;
-export const selectHomeCameraPosition = (state: RootState) =>
-    state.render.savedCameraPositions.positions[0] as CameraStep;
 export const selectSubtrees = (state: RootState) => state.render.subtrees;
 export const selectSelectionBasketMode = (state: RootState) => state.render.selectionBasketMode;
 export const selectSelectionBasketColor = (state: RootState) => state.render.selectionBasketColor;
