@@ -102,9 +102,9 @@ export function useRenderLocationFormAssets() {
                 };
 
                 if (form.templateId === selectedTemplateId && form.id === selectedFormId && transform) {
-                    result.location = transform.location!;
-                    result.rotation = transform.rotation!;
-                    result.scale = transform.scale!;
+                    result.location = transform.location;
+                    result.rotation = transform.rotation;
+                    result.scale = transform.scale;
                 }
                 return result;
             });
@@ -242,7 +242,7 @@ export function useRenderLocationFormAssets() {
                         let objectId: number;
                         const position = form.location;
                         const rotation = form.rotation;
-                        const scale = (refInst.scale ?? 1) * (form.scale ?? 1);
+                        const scale = form.scale ?? 1;
 
                         if (selectedTemplateId === form.templateId && selectedFormId === form.id) {
                             objectId = ref.baseObjectId! + SELECTED_OBJECT_ID_OFFSET + selectedInstances.length;

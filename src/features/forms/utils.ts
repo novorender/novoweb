@@ -5,13 +5,13 @@ import { searchByPatterns } from "utils/search";
 import { sleep } from "utils/time";
 
 import {
-    Form,
+    type Form,
     type FormField,
     type FormItem,
     FormItemType,
     type FormObject,
     type FormObjectGuid,
-    FormState,
+    type FormState,
 } from "./types";
 
 function uniqueByGuid(objects: FormObject[]): FormObject[] {
@@ -390,6 +390,7 @@ function isFormFieldFilled(field: FormField): boolean {
             return typeof field.value === "boolean";
         case "select":
             return (field.value?.length ?? 0) > 0;
+        // TODO(ND) file
         default:
             return false;
     }
