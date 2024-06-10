@@ -4,7 +4,15 @@ import { type HierarcicalObjectReference, type ObjectData, type ObjectId } from 
 import { searchByPatterns } from "utils/search";
 import { sleep } from "utils/time";
 
-import { type FormField, type FormItem, FormItemType, type FormObject, type FormObjectGuid } from "./types";
+import {
+    Form,
+    type FormField,
+    type FormItem,
+    FormItemType,
+    type FormObject,
+    type FormObjectGuid,
+    FormState,
+} from "./types";
 
 function uniqueByGuid(objects: FormObject[]): FormObject[] {
     const guidSet = new Set();
@@ -347,5 +355,57 @@ export function getFormItemTypeDisplayName(type: FormItemType): string {
         case FormItemType.Input:
         case FormItemType.Text:
             return type[0].toUpperCase() + type.slice(1);
+    }
+}
+
+export function calculateFormState(form: Partial<Form>): FormState {
+    let anyFilled = false;
+    let allRequiredFilled = true;
+    form.fields?.forEach((field) => {
+        const isFilled = isFormFieldFilled(field);
+        anyFilled ||= isFilled;
+        if (isFormFieldRequired(field)) {
+            allRequiredFilled &&= isFilled;
+        }
+    });
+
+    if (!anyFilled) {
+        return "new";
+    } else if (allRequiredFilled) {
+        return "finished";
+    } else {
+        return "ongoing";
+    }
+}
+
+function isFormFieldFilled(field: FormField): boolean {
+    switch (field.type) {
+        case "text":
+        case "radioGroup":
+        case "textArea":
+            return Boolean(field.value);
+        case "number":
+            return typeof field.value === "number";
+        case "checkbox":
+            return typeof field.value === "boolean";
+        case "select":
+            return (field.value?.length ?? 0) > 0;
+        default:
+            return false;
+    }
+}
+
+function isFormFieldRequired(field: FormField): boolean {
+    switch (field.type) {
+        case "text":
+        case "radioGroup":
+        case "textArea":
+        case "number":
+        case "checkbox":
+        case "select":
+        case "file":
+            return field.required ?? false;
+        default:
+            return false;
     }
 }

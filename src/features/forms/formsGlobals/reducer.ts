@@ -72,6 +72,7 @@ export function reducer(state: State, action: Actions): State {
                 transformDraft: {
                     ...(state.transformDraft ?? { location: vec3.create(), updated: false }),
                     location: action.value,
+                    updated: true,
                 },
             };
         }

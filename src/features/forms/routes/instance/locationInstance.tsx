@@ -14,7 +14,14 @@ import { TransformEditor } from "features/forms/components/transformEditor";
 import { formsGlobalsActions, useDispatchFormsGlobals, useLazyFormsGlobals } from "features/forms/formsGlobals";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { formsActions, selectCurrentFormsList } from "features/forms/slice";
-import { type Form, type FormId, type FormItem as FItype, FormItemType, type TemplateId } from "features/forms/types";
+import {
+    type Form,
+    type FormId,
+    type FormItem as FItype,
+    FormItemType,
+    FormRecord,
+    type TemplateId,
+} from "features/forms/types";
 import { toFormFields, toFormItems } from "features/forms/utils";
 import { ObjectVisibility, renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
@@ -82,9 +89,17 @@ export function LocationInstance() {
         };
     }, []);
 
+    const shouldUpdateForm = useRef(false);
+    useEffect(() => {
+        shouldUpdateForm.current = false;
+        return () => {
+            shouldUpdateForm.current = true;
+        };
+    }, [templateId, formId]);
+
     useEffect(() => {
         return () => {
-            if (willUnmount.current) {
+            if (shouldUpdateForm.current) {
                 // eslint-disable-next-line react-hooks/exhaustive-deps
                 const transformDraft = lazyFormsGlobals.current.transformDraft;
 
@@ -97,6 +112,17 @@ export function LocationInstance() {
                         form.location = transformDraft.location;
                         form.rotation = transformDraft.rotation;
                         form.scale = transformDraft.scale;
+
+                        // Optimistic update so the form doesn't jump back and forth
+                        dispatch(
+                            formsActions.addLocationForms([
+                                {
+                                    ...(form as FormRecord),
+                                    id: formId,
+                                    templateId,
+                                },
+                            ])
+                        );
                     }
                     updateForm({
                         projectId: sceneId,
@@ -107,9 +133,22 @@ export function LocationInstance() {
                 }
 
                 dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(undefined));
+                shouldUpdateForm.current = false;
+                setIsUpdated(false);
             }
         };
-    }, [sceneId, templateId, formId, isUpdated, items, title, updateForm, lazyFormsGlobals, dispatchFormsGlobals]);
+    }, [
+        sceneId,
+        templateId,
+        formId,
+        isUpdated,
+        items,
+        title,
+        updateForm,
+        lazyFormsGlobals,
+        dispatchFormsGlobals,
+        dispatch,
+    ]);
 
     const handleBack = useCallback(() => {
         if (currentFormsList) {

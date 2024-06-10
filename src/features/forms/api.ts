@@ -11,6 +11,7 @@ import {
     type Template,
     type TemplateId,
 } from "./types";
+import { calculateFormState } from "./utils";
 
 export const formsApi = createApi({
     reducerPath: "formsApi",
@@ -146,13 +147,42 @@ export const formsApi = createApi({
                 },
             }),
             invalidatesTags: (_result, _error, { projectId, templateId, formId }) => [
-                { type: "Template" as const, id: "ID_LIST" },
-                { type: "Template" as const, id: `${projectId}-${templateId}` },
+                // Instead of invalidating - optimistically update state to avoid flickering
+                // { type: "Template" as const, id: `${projectId}-${templateId}` },
                 {
                     type: "Form" as const,
                     id: `${projectId}-${templateId}-${formId}`,
                 },
             ],
+            async onQueryStarted({ projectId, templateId, formId, form }, { dispatch, queryFulfilled }) {
+                const patchResult = dispatch(
+                    formsApi.util.updateQueryData("getTemplate", { projectId, templateId }, (draft) => {
+                        const oldForm = draft.forms?.[formId];
+                        if (oldForm) {
+                            if (form.title) {
+                                oldForm.title = form.title;
+                            }
+                            if (form.location) {
+                                oldForm.location = form.location;
+                            }
+                            if (form.rotation) {
+                                oldForm.rotation = form.rotation;
+                            }
+                            if (form.scale) {
+                                oldForm.scale = form.scale;
+                            }
+                            if (form.fields) {
+                                oldForm.state = calculateFormState(form);
+                            }
+                        }
+                    })
+                );
+                try {
+                    await queryFulfilled;
+                } catch {
+                    patchResult.undo();
+                }
+            },
         }),
         deleteLocationForm: builder.mutation<void, { projectId: ProjectId; templateId: TemplateId; formId: FormId }>({
             query: ({ projectId, templateId, formId }) => ({

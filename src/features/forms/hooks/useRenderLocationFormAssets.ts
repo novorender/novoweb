@@ -38,7 +38,14 @@ type RenderedForm = {
 };
 
 function areRenderedFormsEqual(a: RenderedForm, b: RenderedForm) {
-    return a.templateId === b.templateId && a.id === b.id && a.marker === b.marker && a.location === b.location;
+    return (
+        a.templateId === b.templateId &&
+        a.id === b.id &&
+        a.marker === b.marker &&
+        a.location === b.location &&
+        a.rotation === b.rotation &&
+        a.scale === b.scale
+    );
 }
 
 const MAX_ASSET_COUNT = 100_000;
@@ -243,7 +250,7 @@ export function useRenderLocationFormAssets() {
                                 ...refInst,
                                 position,
                                 rotation,
-                                scale: scale * 1.2,
+                                scale: scale, // * 1.2,
                             });
                         } else {
                             objectId = ref.baseObjectId! + instances.length;
