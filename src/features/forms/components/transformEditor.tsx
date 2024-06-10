@@ -73,7 +73,6 @@ export function TransformEditor() {
             dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(undefined));
             if (isPickingLocationRef.current) {
                 dispatch(renderActions.stopPicker(Picker.FormLocation));
-                dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
             }
         };
     }, [dispatch, dispatchFormsGlobals]);
