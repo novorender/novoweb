@@ -70,7 +70,7 @@ export function reducer(state: State, action: Actions): State {
             return {
                 ...state,
                 transformDraft: {
-                    ...(state.transformDraft ?? { location: vec3.create(), updated: false }),
+                    ...(state.transformDraft ?? { location: vec3.create() }),
                     location: action.value,
                     updated: true,
                 },
