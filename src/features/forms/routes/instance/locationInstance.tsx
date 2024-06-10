@@ -261,7 +261,9 @@ export function LocationInstance() {
                         </Fragment>
                     );
                 })}
-                <TransformEditor />
+                <Box mt={2}>
+                    <TransformEditor />
+                </Box>
             </ScrollBox>
         </>
     );

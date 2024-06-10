@@ -101,7 +101,7 @@ export function useRenderLocationFormAssets() {
                     scale: form.scale,
                 };
 
-                if (form.id === selectedFormId && transform) {
+                if (form.templateId === selectedTemplateId && form.id === selectedFormId && transform) {
                     result.location = transform.location!;
                     result.rotation = transform.rotation!;
                     result.scale = transform.scale!;
@@ -115,7 +115,7 @@ export function useRenderLocationFormAssets() {
             prevRenderedForms.current = result;
             return result;
         }
-    }, [templates, locationForms, active, transform, selectedFormId]);
+    }, [templates, locationForms, active, transform, selectedTemplateId, selectedFormId]);
 
     const uniqueMarkers = useMemo(() => {
         const uniqueMarkers = new Set<string>();
@@ -250,7 +250,7 @@ export function useRenderLocationFormAssets() {
                                 ...refInst,
                                 position,
                                 rotation,
-                                scale: scale, // * 1.2,
+                                scale: scale * 1.2,
                             });
                         } else {
                             objectId = ref.baseObjectId! + instances.length;
