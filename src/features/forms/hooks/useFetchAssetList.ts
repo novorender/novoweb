@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { useAbortController } from "hooks/useAbortController";
 import { selectConfig } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
