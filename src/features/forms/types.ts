@@ -180,6 +180,15 @@ export type FormGLtfAsset = {
 };
 
 export type FormTransform = {
+    // Reason for having templateId/formId here:
+    // When we click another marker - selectedFormId changes straight away, but not transformDraft,
+    // because saving relies on it.
+    // Meanwhile new selected object is rendered with the previous object transform causing flicker.
+    // By attaching transformDraft to particular form we can avoid that flicker.
+    // Another alternative could be to make it a state in locationInstance, but I want to localize
+    // form transformDraft as much as possible because it might update quite rabpidly.
+    templateId: string;
+    formId: string;
     location: vec3;
     rotation?: quat;
     scale?: number;

@@ -44,7 +44,11 @@ export function LocationInstance() {
     const [isUpdated, setIsUpdated] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const { data: form, isLoading: isFormLoading } = useGetLocationFormQuery({
+    const {
+        data: form,
+        currentData: currentForm,
+        isLoading: isFormLoading,
+    } = useGetLocationFormQuery({
         projectId: sceneId,
         templateId,
         formId,
@@ -53,8 +57,7 @@ export function LocationInstance() {
     useEffect(() => {
         dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
         dispatch(formsActions.setSelectedFormId(formId));
-        dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(undefined));
-    }, [dispatch, formId, dispatchFormsGlobals]);
+    }, [dispatch, formId]);
 
     const [updateForm, { isLoading: isFormUpdating }] = useUpdateLocationFormMutation();
 
@@ -70,17 +73,19 @@ export function LocationInstance() {
     }, [form, formId]);
 
     useEffect(() => {
-        if (form?.location) {
+        if (templateId && formId && currentForm?.location) {
             dispatchFormsGlobals(
                 formsGlobalsActions.setTransformDraft({
-                    location: form.location,
-                    rotation: form.rotation,
-                    scale: form.scale,
+                    templateId,
+                    formId,
+                    location: currentForm.location,
+                    rotation: currentForm.rotation,
+                    scale: currentForm.scale,
                     updated: false,
                 })
             );
         }
-    }, [form, dispatchFormsGlobals]);
+    }, [templateId, formId, currentForm, dispatchFormsGlobals]);
 
     useEffect(() => {
         willUnmount.current = false;
@@ -132,7 +137,6 @@ export function LocationInstance() {
                     });
                 }
 
-                dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(undefined));
                 shouldUpdateForm.current = false;
                 setIsUpdated(false);
             }
@@ -149,6 +153,12 @@ export function LocationInstance() {
         dispatchFormsGlobals,
         dispatch,
     ]);
+
+    useEffect(() => {
+        return () => {
+            dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(undefined));
+        };
+    }, [dispatchFormsGlobals]);
 
     const handleBack = useCallback(() => {
         if (currentFormsList) {

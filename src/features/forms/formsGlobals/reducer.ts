@@ -1,4 +1,4 @@
-import { ReadonlyVec3, vec3 } from "gl-matrix";
+import { ReadonlyVec3 } from "gl-matrix";
 import { createContext, Dispatch, MutableRefObject, SetStateAction } from "react";
 
 import { FormTransform } from "../types";
@@ -67,10 +67,14 @@ export function reducer(state: State, action: Actions): State {
             return { ...state, transformDraft: action.value };
         }
         case ActionType.SetTransformDraftLocation: {
+            if (!state.transformDraft) {
+                return state;
+            }
+
             return {
                 ...state,
                 transformDraft: {
-                    ...(state.transformDraft ?? { location: vec3.create() }),
+                    ...state.transformDraft,
                     location: action.value,
                     updated: true,
                 },

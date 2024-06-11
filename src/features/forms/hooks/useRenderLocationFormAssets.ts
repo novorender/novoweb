@@ -101,7 +101,7 @@ export function useRenderLocationFormAssets() {
                     scale: form.scale,
                 };
 
-                if (form.templateId === selectedTemplateId && form.id === selectedFormId && transform) {
+                if (transform && form.templateId === transform.templateId && form.id === transform.formId) {
                     result.location = transform.location;
                     result.rotation = transform.rotation;
                     result.scale = transform.scale;
@@ -115,7 +115,7 @@ export function useRenderLocationFormAssets() {
             prevRenderedForms.current = result;
             return result;
         }
-    }, [templates, locationForms, active, transform, selectedTemplateId, selectedFormId]);
+    }, [templates, locationForms, active, transform]);
 
     const uniqueMarkers = useMemo(() => {
         const uniqueMarkers = new Set<string>();

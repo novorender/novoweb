@@ -22,7 +22,7 @@ import { radToDeg } from "utils/math";
 
 import { formsGlobalsActions } from "../formsGlobals";
 import { useDispatchFormsGlobals, useFormsGlobals } from "../formsGlobals/hooks";
-import { selectSelectedFormId } from "../slice";
+import { selectCurrentFormsList, selectSelectedFormId } from "../slice";
 
 const POSITION_PRECISION = 2;
 const SCALE_PRECISION = 3;
@@ -43,6 +43,7 @@ const marks = [
 ];
 
 export function TransformEditor() {
+    const selectedTemplateId = useAppSelector(selectCurrentFormsList);
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const isPickingLocation = useAppSelector(selectPicker) === Picker.FormLocation;
     const isPickingLocationRef = useRef(isPickingLocation);
@@ -79,10 +80,16 @@ export function TransformEditor() {
 
     const updateTransform = useCallback(
         (update: Partial<typeof transform>) => {
+            if (!selectedTemplateId || !selectedFormId) {
+                return;
+            }
+
             const newTransform = { ...transform, ...update };
             setTransform(newTransform);
             const rotation = computeRotation(newTransform.roll, newTransform.pitch, newTransform.yaw);
             const newTransformDraft = {
+                templateId: selectedTemplateId,
+                formId: selectedFormId,
                 location: vec3.fromValues(newTransform.x, newTransform.y, newTransform.z),
                 rotation,
                 scale: newTransform.scale,
@@ -91,7 +98,7 @@ export function TransformEditor() {
             latestDispatchedTransformDraft.current = newTransformDraft;
             dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(newTransformDraft));
         },
-        [transform, dispatchFormsGlobals]
+        [transform, dispatchFormsGlobals, selectedTemplateId, selectedFormId]
     );
 
     const pickNewLocation = useCallback(() => {
@@ -105,16 +112,22 @@ export function TransformEditor() {
     }, [dispatch, isPickingLocation]);
 
     const handleReset = useCallback(() => {
+        if (!selectedTemplateId || !selectedFormId) {
+            return;
+        }
+
         const transform = originalTransformDraft.current!;
         dispatchFormsGlobals(
             formsGlobalsActions.setTransformDraft({
+                templateId: selectedTemplateId,
+                formId: selectedFormId,
                 location: transform.location,
                 rotation: transform.rotation,
                 scale: transform.scale,
                 updated: false,
             })
         );
-    }, [dispatchFormsGlobals]);
+    }, [dispatchFormsGlobals, selectedTemplateId, selectedFormId]);
 
     return (
         <Accordion>
