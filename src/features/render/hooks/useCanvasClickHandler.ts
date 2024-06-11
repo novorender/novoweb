@@ -239,6 +239,7 @@ export function useCanvasClickHandler({
 
                     let tracePosition: ReadonlyVec3 | undefined = undefined;
 
+                    const plane = planes[0];
                     if (cameraType === CameraType.Orthographic) {
                         tracePosition = view.worldPositionFromPixelPosition(
                             evt.nativeEvent.offsetX,
@@ -247,12 +248,12 @@ export function useCanvasClickHandler({
                     } else if (!result) {
                         return;
                     } else {
-                        const plane = view.renderState.clipping.planes[0].normalOffset;
-                        const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
+                        const { normalOffset } = plane;
+                        const planeDir = vec3.fromValues(normalOffset[0], normalOffset[1], normalOffset[2]);
                         const camPos = view.renderState.camera.position;
                         const lineDir = vec3.sub(vec3.create(), result.position, camPos);
                         vec3.normalize(lineDir, lineDir);
-                        const t = (plane[3] - vec3.dot(planeDir, camPos)) / vec3.dot(planeDir, lineDir);
+                        const t = (normalOffset[3] - vec3.dot(planeDir, camPos)) / vec3.dot(planeDir, lineDir);
                         tracePosition = vec3.scaleAndAdd(vec3.create(), camPos, lineDir, t);
                     }
 
@@ -261,7 +262,10 @@ export function useCanvasClickHandler({
                     }
 
                     dispatch(
-                        clippingOutlineLaserActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset)
+                        clippingOutlineLaserActions.setLaserPlane({
+                            normalOffset: plane.normalOffset,
+                            rotation: plane.rotation ?? 0,
+                        })
                     );
                     const laser = await getOutlineLaser(tracePosition, view);
                     if (laser) {
@@ -439,8 +443,31 @@ export function useCanvasClickHandler({
                 break;
             }
             case Picker.ClippingPlane: {
-                if (!normal || result.sampleType !== "surface") {
+                if (!normal || result.sampleType !== "surface" || !db) {
                     return;
+                }
+
+                let rotation = 0;
+                try {
+                    if (result.objectId) {
+                        const metadata = await (view.data
+                            ? view.data.getObjectMetaData(result.objectId)
+                            : db.getObjectMetdata(result.objectId));
+
+                        if (metadata) {
+                            const rotationProp = metadata.properties.find((p) => p[0] === "Novorender/Rotation")?.[1];
+                            if (rotationProp) {
+                                const rotationQuat = JSON.parse(rotationProp);
+                                rotation = getLocalRotationAroundNormal(rotationQuat, normal);
+                                console.log({
+                                    rotation,
+                                    dir: vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), rotationQuat),
+                                });
+                            }
+                        }
+                    }
+                } catch (ex) {
+                    console.warn("Error getting object rotation", ex);
                 }
 
                 const w = vec3.dot(normal, position);
@@ -450,6 +477,7 @@ export function useCanvasClickHandler({
                     renderActions.addClippingPlane({
                         normalOffset: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
                         baseW: w,
+                        rotation,
                     })
                 );
                 break;
@@ -569,4 +597,22 @@ export function useCanvasClickHandler({
     };
 
     return handleCanvasPick;
+}
+
+function getLocalRotationAroundNormal(quaternion: quat, normal: vec3): number {
+    // Ensure the normal is normalized
+    const normalizedNormal = vec3.normalize(vec3.create(), normal);
+    // Create a vector to represent the rotation axis
+    const rotationAxis = vec3.create();
+    quat.getAxisAngle(rotationAxis, quaternion);
+    // Get the angle between the rotation axis and the normal
+    const angle = vec3.angle(rotationAxis, normalizedNormal);
+    // Create a quaternion representing the rotation around the normal
+    const rotationQuaternion = quat.setAxisAngle(quat.create(), normalizedNormal, angle);
+    // Decompose the object's quaternion into rotation around the normal and the remaining rotation
+    const conjugateRotationQuaternion = quat.conjugate(quat.create(), rotationQuaternion);
+    const localRotationQuaternion = quat.multiply(quat.create(), quaternion, conjugateRotationQuaternion);
+    // Get the angle of the local rotation around the normal
+    const localRotationAngle = 2 * Math.acos(localRotationQuaternion[3]);
+    return localRotationAngle;
 }
