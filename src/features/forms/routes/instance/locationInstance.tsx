@@ -10,9 +10,18 @@ import {
     useGetLocationFormQuery,
     useUpdateLocationFormMutation,
 } from "features/forms/api";
+import { TransformEditor } from "features/forms/components/transformEditor";
+import { formsGlobalsActions, useDispatchFormsGlobals, useLazyFormsGlobals } from "features/forms/formsGlobals";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { formsActions, selectCurrentFormsList } from "features/forms/slice";
-import { type FormId, type FormItem as FItype, FormItemType, type TemplateId } from "features/forms/types";
+import {
+    type Form,
+    type FormId,
+    type FormItem as FItype,
+    FormItemType,
+    FormRecord,
+    type TemplateId,
+} from "features/forms/types";
 import { toFormFields, toFormItems } from "features/forms/utils";
 import { ObjectVisibility, renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
@@ -27,13 +36,19 @@ export function LocationInstance() {
     const currentFormsList = useAppSelector(selectCurrentFormsList);
     const dispatch = useAppDispatch();
     const flyToForm = useFlyToForm();
+    const dispatchFormsGlobals = useDispatchFormsGlobals();
+    const lazyFormsGlobals = useLazyFormsGlobals();
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);
     const [isUpdated, setIsUpdated] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const { data: form, isLoading: isFormLoading } = useGetLocationFormQuery({
+    const {
+        data: form,
+        currentData: currentForm,
+        isLoading: isFormLoading,
+    } = useGetLocationFormQuery({
         projectId: sceneId,
         templateId,
         formId,
@@ -58,29 +73,92 @@ export function LocationInstance() {
     }, [form, formId]);
 
     useEffect(() => {
+        if (templateId && formId && currentForm?.location) {
+            dispatchFormsGlobals(
+                formsGlobalsActions.setTransformDraft({
+                    templateId,
+                    formId,
+                    location: currentForm.location,
+                    rotation: currentForm.rotation,
+                    scale: currentForm.scale,
+                    updated: false,
+                })
+            );
+        }
+    }, [templateId, formId, currentForm, dispatchFormsGlobals]);
+
+    useEffect(() => {
         willUnmount.current = false;
         return () => {
             willUnmount.current = true;
         };
     }, []);
 
+    const shouldUpdateForm = useRef(false);
+    useEffect(() => {
+        shouldUpdateForm.current = false;
+        return () => {
+            shouldUpdateForm.current = true;
+        };
+    }, [templateId, formId]);
+
     useEffect(() => {
         return () => {
-            if (willUnmount.current) {
-                if (isUpdated) {
+            if (shouldUpdateForm.current) {
+                // eslint-disable-next-line react-hooks/exhaustive-deps
+                const transformDraft = lazyFormsGlobals.current.transformDraft;
+
+                if (isUpdated || transformDraft?.updated) {
+                    const form: Partial<Form> = {
+                        title: title.trim().length > 0 ? title.trim() : formId,
+                        fields: toFormFields(items),
+                    };
+                    if (transformDraft?.updated) {
+                        form.location = transformDraft.location;
+                        form.rotation = transformDraft.rotation;
+                        form.scale = transformDraft.scale;
+
+                        // Optimistic update so the form doesn't jump back and forth
+                        dispatch(
+                            formsActions.addLocationForms([
+                                {
+                                    ...(form as FormRecord),
+                                    id: formId,
+                                    templateId,
+                                },
+                            ])
+                        );
+                    }
                     updateForm({
                         projectId: sceneId,
                         templateId,
                         formId,
-                        form: {
-                            title: title.trim().length > 0 ? title.trim() : formId,
-                            fields: toFormFields(items),
-                        },
+                        form,
                     });
                 }
+
+                shouldUpdateForm.current = false;
+                setIsUpdated(false);
             }
         };
-    }, [sceneId, templateId, formId, isUpdated, items, title, updateForm]);
+    }, [
+        sceneId,
+        templateId,
+        formId,
+        isUpdated,
+        items,
+        title,
+        updateForm,
+        lazyFormsGlobals,
+        dispatchFormsGlobals,
+        dispatch,
+    ]);
+
+    useEffect(() => {
+        return () => {
+            dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(undefined));
+        };
+    }, [dispatchFormsGlobals]);
 
     const handleBack = useCallback(() => {
         if (currentFormsList) {
@@ -193,6 +271,9 @@ export function LocationInstance() {
                         </Fragment>
                     );
                 })}
+                <Box mt={2}>
+                    <TransformEditor />
+                </Box>
             </ScrollBox>
         </>
     );
