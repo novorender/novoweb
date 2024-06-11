@@ -242,7 +242,7 @@ export function useRenderLocationFormAssets() {
                         let objectId: number;
                         const position = form.location;
                         const rotation = form.rotation;
-                        const scale = form.scale ?? 1;
+                        const scale = form.scale;
 
                         if (selectedTemplateId === form.templateId && selectedFormId === form.id) {
                             objectId = ref.baseObjectId! + SELECTED_OBJECT_ID_OFFSET + selectedInstances.length;
@@ -250,7 +250,7 @@ export function useRenderLocationFormAssets() {
                                 ...refInst,
                                 position,
                                 rotation,
-                                scale: scale * 1.2,
+                                scale,
                             });
                         } else {
                             objectId = ref.baseObjectId! + instances.length;
