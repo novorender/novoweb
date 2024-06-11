@@ -1,4 +1,5 @@
-import { rotationFromDirection } from "@novorender/api";
+import { ObjectId, rotationFromDirection, View } from "@novorender/api";
+import { ObjectDB } from "@novorender/data-js-api";
 import { mat3, quat, ReadonlyVec3, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, MutableRefObject, useRef } from "react";
 
@@ -27,7 +28,7 @@ import { selectShowPropertiesStamp } from "features/properties/slice";
 import { useAbortController } from "hooks/useAbortController";
 import { ExtendedMeasureEntity, NodeType, ViewMode } from "types/misc";
 import { isRealVec } from "utils/misc";
-import { extractObjectIds } from "utils/objectData";
+import { extractObjectIds, getFilePathFromObjectPath } from "utils/objectData";
 import { searchByPatterns, searchDeepByPatterns } from "utils/search";
 
 import {
@@ -450,20 +451,9 @@ export function useCanvasClickHandler({
                 let rotation = 0;
                 try {
                     if (result.objectId) {
-                        const metadata = await (view.data
-                            ? view.data.getObjectMetaData(result.objectId)
-                            : db.getObjectMetdata(result.objectId));
-
-                        if (metadata) {
-                            const rotationProp = metadata.properties.find((p) => p[0] === "Novorender/Rotation")?.[1];
-                            if (rotationProp) {
-                                const rotationQuat = JSON.parse(rotationProp);
-                                rotation = getLocalRotationAroundNormal(rotationQuat, normal);
-                                console.log({
-                                    rotation,
-                                    dir: vec3.transformQuat(vec3.create(), vec3.fromValues(0, 0, -1), rotationQuat),
-                                });
-                            }
+                        const rotationQuat = await getObjectMetadataRotation(view, db, result.objectId);
+                        if (rotationQuat) {
+                            rotation = getLocalRotationAroundNormal(rotationQuat, normal);
                         }
                     }
                 } catch (ex) {
@@ -615,4 +605,37 @@ function getLocalRotationAroundNormal(quaternion: quat, normal: vec3): number {
     // Get the angle of the local rotation around the normal
     const localRotationAngle = 2 * Math.acos(localRotationQuaternion[3]);
     return localRotationAngle;
+}
+
+async function getObjectMetadataRotation(view: View, db: ObjectDB, objectId: ObjectId): Promise<quat | undefined> {
+    const metadata = await (view.data ? view.data.getObjectMetaData(objectId) : db.getObjectMetdata(objectId));
+
+    const filePath = getFilePathFromObjectPath(metadata.path);
+    if (!filePath) {
+        return;
+    }
+
+    const [descendantName] = metadata.path.substring(filePath.length + 1).split("/", 1);
+    if (!descendantName) {
+        return;
+    }
+
+    const descendantPath = `${filePath}/${descendantName}`;
+
+    const objects = db.search(
+        {
+            descentDepth: 0,
+            parentPath: descendantPath,
+            full: true,
+        },
+        undefined
+    );
+
+    for await (const object of objects) {
+        const fileMetadata = await object.loadMetaData();
+        const rotationProp = fileMetadata.properties.find((p) => p[0] === "Novorender/Rotation")?.[1];
+        if (rotationProp) {
+            return JSON.parse(rotationProp);
+        }
+    }
 }
