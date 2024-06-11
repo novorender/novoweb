@@ -83,9 +83,9 @@ export function TransformEditor() {
             setTransform(newTransform);
             const rotation = computeRotation(newTransform.roll, newTransform.pitch, newTransform.yaw);
             const newTransformDraft = {
-                location: vec3.fromValues(Number(newTransform.x), Number(newTransform.y), Number(newTransform.z)),
+                location: vec3.fromValues(newTransform.x, newTransform.y, newTransform.z),
                 rotation,
-                scale: Number(newTransform.scale),
+                scale: newTransform.scale,
                 updated: true,
             };
             latestDispatchedTransformDraft.current = newTransformDraft;
@@ -140,7 +140,7 @@ export function TransformEditor() {
                         <Stack direction="row" gap={2}>
                             <TextField
                                 value={transform.x}
-                                onChange={(e) => updateTransform({ x: e.target.value })}
+                                onChange={(e) => updateTransform({ x: (e.target as HTMLInputElement).valueAsNumber })}
                                 type="number"
                                 size="small"
                                 label="X"
@@ -148,7 +148,7 @@ export function TransformEditor() {
                             />
                             <TextField
                                 value={transform.y}
-                                onChange={(e) => updateTransform({ y: e.target.value })}
+                                onChange={(e) => updateTransform({ y: (e.target as HTMLInputElement).valueAsNumber })}
                                 type="number"
                                 size="small"
                                 label="Y"
@@ -156,7 +156,7 @@ export function TransformEditor() {
                             />
                             <TextField
                                 value={transform.z}
-                                onChange={(e) => updateTransform({ z: e.target.value })}
+                                onChange={(e) => updateTransform({ z: (e.target as HTMLInputElement).valueAsNumber })}
                                 type="number"
                                 size="small"
                                 label="Z"
@@ -167,7 +167,7 @@ export function TransformEditor() {
                     <TextField
                         sx={{ maxWidth: 173 }}
                         value={transform.scale}
-                        onChange={(e) => updateTransform({ scale: e.target.value })}
+                        onChange={(e) => updateTransform({ scale: (e.target as HTMLInputElement).valueAsNumber })}
                         type="number"
                         inputProps={{ step: "0.1" }}
                         size="small"
@@ -248,7 +248,7 @@ function RotationComponentInput({
             <TextField
                 value={value}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    onChange(event.target.value === "" ? 0 : Number(event.target.value));
+                    onChange(event.target.value === "" ? 0 : event.target.valueAsNumber);
                 }}
                 onBlur={() => {
                     if (value < -180) {
@@ -279,10 +279,10 @@ function toTransformState(
     const { roll, pitch, yaw } = rotation ? decomposeRotation(rotation) : { roll: 0, pitch: 0, yaw: 0 };
 
     return {
-        x: `${(position?.[0] ?? 0).toFixed(POSITION_PRECISION)}`,
-        y: `${(position?.[1] ?? 0).toFixed(POSITION_PRECISION)}`,
-        z: `${(position?.[2] ?? 0).toFixed(POSITION_PRECISION)}`,
-        scale: `${(scale ?? 1).toFixed(SCALE_PRECISION)}`,
+        x: Number(`${(position?.[0] ?? 0).toFixed(POSITION_PRECISION)}`),
+        y: Number(`${(position?.[1] ?? 0).toFixed(POSITION_PRECISION)}`),
+        z: Number(`${(position?.[2] ?? 0).toFixed(POSITION_PRECISION)}`),
+        scale: Number(`${(scale ?? 1).toFixed(SCALE_PRECISION)}`),
         roll: Number(radToDeg(roll).toFixed(3)),
         pitch: Number(radToDeg(pitch).toFixed(3)),
         yaw: Number(radToDeg(yaw).toFixed(3)),
