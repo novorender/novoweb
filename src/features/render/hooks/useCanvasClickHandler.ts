@@ -27,7 +27,7 @@ import { selectShowPropertiesStamp } from "features/properties/slice";
 import { useAbortController } from "hooks/useAbortController";
 import { ExtendedMeasureEntity, NodeType, ViewMode } from "types/misc";
 import { isRealVec } from "utils/misc";
-import { extractObjectIds } from "utils/objectData";
+import { extractObjectIds, getObjectMetadataRotation } from "utils/objectData";
 import { searchByPatterns, searchDeepByPatterns } from "utils/search";
 
 import {
@@ -43,11 +43,7 @@ import {
     selectViewMode,
 } from "../renderSlice";
 import { CameraType, Picker, StampKind } from "../types";
-import {
-    applyCameraDistanceToMeasureTolerance,
-    getLocalRotationAroundNormal,
-    getObjectMetadataRotation,
-} from "../utils";
+import { applyCameraDistanceToMeasureTolerance, getLocalRotationAroundNormal } from "../utils";
 
 export function useCanvasClickHandler({
     pointerDownStateRef,

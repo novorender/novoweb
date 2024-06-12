@@ -32,12 +32,12 @@ import {
 import { pointLineActions, selectLockPointLineElevation } from "features/pointLine";
 import { selectCanvasContextMenuFeatures } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
-import { getFilePathFromObjectPath, getParentPath } from "utils/objectData";
+import { getFilePathFromObjectPath, getObjectMetadataRotation, getParentPath } from "utils/objectData";
 import { getObjectData, searchDeepByPatterns } from "utils/search";
 
 import { renderActions, selectCameraType, selectClippingPlanes, selectStamp } from "../renderSlice";
 import { CameraType, ObjectVisibility, Picker, StampKind } from "../types";
-import { getLocalRotationAroundNormal, getObjectMetadataRotation } from "../utils";
+import { getLocalRotationAroundNormal } from "../utils";
 
 const selectionFeatures = [
     canvasContextMenuConfig.addFileToBasket.key,
