@@ -452,9 +452,7 @@ export function useCanvasClickHandler({
                     if (result.objectId) {
                         const rotationQuat = await getObjectMetadataRotation(view, db, result.objectId);
                         if (rotationQuat) {
-                            const angleOffset =
-                                Math.abs(vec3.dot(normal, vec3.fromValues(1, 0, 0))) > 0.7 ? Math.PI / 2 : 0;
-                            rotation = getLocalRotationAroundNormal(rotationQuat, normal) + angleOffset;
+                            rotation = getLocalRotationAroundNormal(rotationQuat, normal);
                         }
                     }
                 } catch (ex) {
