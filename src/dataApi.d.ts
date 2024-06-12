@@ -172,6 +172,15 @@ declare module "@novorender/data-js-api" {
                 status: "hidden" | "selected";
             }[];
         };
+        arcgis?: {
+            featureServers: {
+                id: string;
+                layers: {
+                    id: number;
+                    checked: boolean;
+                }[];
+            }[];
+        };
     };
 
     interface Bookmark {

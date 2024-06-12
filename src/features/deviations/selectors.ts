@@ -62,7 +62,7 @@ export const selectCurrentSubprofileDeviationDistributions = createSelector(
         return distrs[profileId]?.[spIndex];
     }
 );
-export const selectDeviationLegendGroups = createSelector(
+export const selectAllDeviationGroups = createSelector(
     [selectSelectedProfile, selectSelectedSubprofileIndex, selectSelectedSubprofile, selectCurrentHiddenLegendGroups],
     (profile, spIndex, sp, hiddenGroupIds) => {
         if (!profile || spIndex === undefined || !sp) {
@@ -83,5 +83,15 @@ export const selectDeviationLegendGroups = createSelector(
             ...g,
             status: hiddenGroupIds?.includes(g.id) ? GroupStatus.Hidden : GroupStatus.Selected,
         })) as LegendGroupInfo[];
+    }
+);
+export const selectDeviationLegendGroups = createSelector(
+    [selectSelectedSubprofile, selectAllDeviationGroups],
+    (sp, groups) => {
+        if (!sp || !groups) {
+            return [];
+        }
+
+        return groups.filter((g) => sp.favorites.includes(g.id));
     }
 );

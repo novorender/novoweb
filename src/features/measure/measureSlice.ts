@@ -238,18 +238,25 @@ export const selectMeasure = (state: RootState) =>
     };
 export const selectHoveredMeasureEntity = (state: RootState) => state.measure.hover;
 export const selectMeasureEntities = (state: RootState) => state.measure.selectedEntities as ExtendedMeasureEntity[][];
+
+// Base tolerance for default snap is point=0.015.
+// For particular snap kinds - just multiply point by ~2-3 (???)
+// How we came up with that:
+// 1. Select a point with measure tool
+// 2. Move camera close to this point so you're ~1m away from it
+// 3. Use line measure tool to define your tolerance radius
 export const selectMeasureHoverSettings = createSelector(
     (state: RootState) => state.measure.snapKind,
     (snapKind) => {
         switch (snapKind) {
             case "point":
-                return { point: 0.4 };
+                return { point: 0.03 };
             case "curve":
-                return { edge: 0.35, segment: 0.25 };
+                return { edge: 0.03, segment: 0.02 };
             case "surface":
-                return { face: 0.09 };
+                return { face: 0.03 };
             default:
-                return { edge: 0.06, segment: 0.25, face: 0.07, point: 0.2 };
+                return { edge: 0.008, segment: 0.008, face: 0.008, point: 0.015 };
         }
     }
 );
@@ -258,13 +265,13 @@ export const selectMeasurePickSettings = createSelector(
     (snapKind) => {
         switch (snapKind) {
             case "point":
-                return { point: 0.4 };
+                return { point: 0.03 };
             case "curve":
-                return { edge: 0.25, segment: 0.35 };
+                return { edge: 0.03, segment: 0.02 };
             case "surface":
-                return { face: 0.09 };
+                return { face: 0.03 };
             default:
-                return { edge: 0.032, segment: 0.25, face: 0.08, point: 0.06 };
+                return { edge: 0.008, segment: 0.008, face: 0.008, point: 0.015 };
         }
     }
 );

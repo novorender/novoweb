@@ -82,7 +82,7 @@ export function useHandleOutlineLasers() {
                     const newTracerPosition = vec3.scaleAndAdd(vec3.create(), trace.laserPosition, oldDir, diff);
                     const sp = measureView.draw.toMarkerPoints([newTracerPosition]);
                     if (sp && sp.length > 0 && sp[0]) {
-                        const outlineValues = view.outlineLaser(newTracerPosition, 0);
+                        const outlineValues = view.outlineLaser(newTracerPosition, "clipping", 0);
 
                         if (
                             outlineValues &&

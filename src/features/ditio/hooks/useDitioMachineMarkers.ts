@@ -40,12 +40,12 @@ export function useDitioMachineMarkers() {
     const [markers, setMarkers] = useState(empty);
 
     useEffect(() => {
-        if (!machines || !tmZone || !scene) {
+        if (!machines || "errors" in machines || !tmZone || !scene) {
             return;
         }
 
         const bounds = scene.boundingSphere;
-        const filteredMachines = [...machines.dumperLiveDataList, ...machines.loaderLiveDataList]
+        const filteredMachines = [...(machines.dumperLiveDataList ?? []), ...(machines.loaderLiveDataList ?? [])]
             .filter((machine) => projects.includes(machine.projectId))
             .map((machine) => {
                 const scenePosition = latLon2Tm({

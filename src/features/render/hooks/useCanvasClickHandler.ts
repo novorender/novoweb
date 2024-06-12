@@ -14,8 +14,8 @@ import { highlightActions, useDispatchHighlighted, useHighlighted } from "contex
 import { useArcgisCanvasClickHandler } from "features/arcgis/hooks/useArcgisCanvasHandler";
 import { areaActions } from "features/area";
 import { followPathActions } from "features/followPath";
-import { useCreateLocationForm } from "features/forms/hooks/useCreateLocationForm";
 import { useLocationFormAssetClickHandler } from "features/forms/hooks/useLocationFormAssetClickHandler";
+import { usePlaceLocationForm } from "features/forms/hooks/usePlaceLocationForm";
 import { heightProfileActions } from "features/heightProfile";
 import { manholeActions } from "features/manhole";
 import { measureActions, selectMeasure, selectMeasurePickSettings } from "features/measure";
@@ -43,6 +43,7 @@ import {
     selectViewMode,
 } from "../renderSlice";
 import { CameraType, Picker, StampKind } from "../types";
+import { applyCameraDistanceToMeasureTolerance } from "../utils";
 
 export function useCanvasClickHandler({
     pointerDownStateRef,
@@ -84,7 +85,7 @@ export function useCanvasClickHandler({
     const secondaryHighlightProperty = useAppSelector(selectSecondaryHighlightProperty);
 
     const arcgisCanvasClickHandler = useArcgisCanvasClickHandler();
-    const createLocationForm = useCreateLocationForm();
+    const placeLocationForm = usePlaceLocationForm();
     const locationFormAssetClickHandler = useLocationFormAssetClickHandler();
 
     const handleCanvasPick: MouseEventHandler<HTMLCanvasElement> = async (evt) => {
@@ -283,7 +284,7 @@ export function useCanvasClickHandler({
         switch (picker) {
             case Picker.FormLocation:
                 if (result) {
-                    createLocationForm({ location: position });
+                    placeLocationForm({ location: position });
                     dispatch(renderActions.stopPicker(Picker.FormLocation));
                 }
                 return;
@@ -329,7 +330,7 @@ export function useCanvasClickHandler({
                         dispatchHighlighted(highlightActions.add([result.objectId]));
                     }
                 } else {
-                    if (alreadySelected) {
+                    if (alreadySelected && result.objectId === mainObject) {
                         dispatch(renderActions.setMainObject(undefined));
                         dispatch(renderActions.setStamp(null));
                         dispatchHighlighted(highlightActions.setIds([]));
@@ -345,7 +346,9 @@ export function useCanvasClickHandler({
                         currentSecondaryHighlightQuery.current = "";
                     } else {
                         dispatch(renderActions.setMainObject(result.objectId));
-                        dispatchHighlighted(highlightActions.setIds([result.objectId]));
+                        if (!alreadySelected) {
+                            dispatchHighlighted(highlightActions.setIds([result.objectId]));
+                        }
 
                         if ((!showPropertiesStamp && !secondaryHighlightProperty) || !db) {
                             return;
@@ -496,11 +499,12 @@ export function useCanvasClickHandler({
                     );
                 } else {
                     dispatch(measureActions.setLoadingBrep(true));
-                    const entity = await view.measure?.core.pickMeasureEntity(
-                        result.objectId,
-                        position,
+                    const tolerance = applyCameraDistanceToMeasureTolerance(
+                        result.position,
+                        view.renderState.camera.position,
                         measurePickSettings
                     );
+                    const entity = await view.measure?.core.pickMeasureEntity(result.objectId, position, tolerance);
                     if (entity?.entity) {
                         dispatch(
                             measureActions.selectEntity({

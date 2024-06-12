@@ -324,12 +324,6 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         if (viewModeRef.current !== ViewMode.Deviations) {
             dispatch(renderActions.setViewMode(ViewMode.FollowPath));
         }
-
-        return () => {
-            if (viewModeRef.current === ViewMode.FollowPath) {
-                dispatch(renderActions.setViewMode(ViewMode.Default));
-            }
-        };
     }, [dispatch]);
 
     const { r, g, b } = vecToRgb(deviations.lineColor);

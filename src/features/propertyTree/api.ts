@@ -1,4 +1,5 @@
 import { BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
+import { md5 } from "js-md5";
 
 const characterMap = [
     ['"', "%22"],
@@ -52,7 +53,15 @@ export const propertyTreeApi = createApi({
             { properties: string[] } | { values: string[] },
             { path: string; assetUrl: string }
         >({
-            query: ({ path, assetUrl }) => ({ assetUrl, url: `propcache/${encodePropertyPath(path)}` }),
+            query: ({ path, assetUrl }) => {
+                if (path.length > 128) {
+                    path = md5(path.toLowerCase());
+                } else {
+                    path = encodePropertyPath(path);
+                }
+
+                return { assetUrl, url: `propcache/${path}` };
+            },
             transformResponse: (data: { properties: string[] } | { values: string[] }) =>
                 "values" in data ? { values: data.values.slice(0, 400) } : data,
         }),

@@ -1,7 +1,7 @@
-import { computeRotation, rotationFromDirection } from "@novorender/api";
+import { computeRotation, rotationFromDirection, SnapTolerance } from "@novorender/api";
 import { SceneData, SceneLoadFail } from "@novorender/data-js-api";
 import { GeoLocation, Internal } from "@novorender/webgl-api";
-import { quat, vec3, vec4 } from "gl-matrix";
+import { quat, ReadonlyVec3, vec3, vec4 } from "gl-matrix";
 
 import { dataApi } from "apis/dataV1";
 import { CustomProperties } from "types/project";
@@ -161,4 +161,47 @@ function getBackgroundColor(color: vec4 | undefined): vec4 {
     }
 
     return color;
+}
+
+export function applyCameraDistanceToMeasureTolerance(
+    position: ReadonlyVec3,
+    cameraPos: ReadonlyVec3,
+    settings: SnapTolerance
+): SnapTolerance {
+    const newObjectThreshold = vec3.dist(position, cameraPos);
+    const hoverScale = Math.min(Math.max(newObjectThreshold, 0.15), 100);
+
+    return {
+        edge: settings.edge ? settings.edge * hoverScale : undefined,
+        face: settings.face ? settings.face * hoverScale : undefined,
+        point: settings.point ? settings.point * hoverScale : undefined,
+        segment: settings.segment ? settings.segment * hoverScale : undefined,
+    };
+}
+
+export function getDefaultCamera(boundingBox?: [number, number, number, number]): CadCamera | undefined {
+    if (!boundingBox) {
+        return;
+    }
+
+    const centerX = (boundingBox[0] + boundingBox[2]) / 2;
+    const centerY = (boundingBox[1] + boundingBox[3]) / 2;
+    const width = boundingBox[2] - boundingBox[0];
+    const height = boundingBox[3] - boundingBox[1];
+
+    const fov = 60;
+    const maxDim = Math.max(width, height);
+    const distance = maxDim / (2 * Math.tan((fov * Math.PI) / 360));
+
+    const initPosition = vec3.fromValues(0, 0, distance);
+    const rotation = quat.fromValues(0.25000000000000006, 0.43301270189221935, 0.07945931129894554, 0.8623724356957945);
+    const rotatedPosition = vec3.transformQuat(vec3.create(), initPosition, rotation);
+    const position = vec3.fromValues(rotatedPosition[0] + centerX, rotatedPosition[1] + centerY, rotatedPosition[2]);
+
+    return {
+        kind: "pinhole",
+        position,
+        rotation,
+        fov,
+    };
 }

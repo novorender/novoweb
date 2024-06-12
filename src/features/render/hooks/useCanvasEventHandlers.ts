@@ -29,6 +29,7 @@ import {
 } from "../renderSlice";
 import { moveSvgCursor } from "../svgUtils";
 import { CameraType, Picker, StampKind, SubtreeStatus } from "../types";
+import { applyCameraDistanceToMeasureTolerance } from "../utils";
 import { useCanvasContextMenuHandler } from "./useCanvasContextMenuHandler";
 
 export const isIpad =
@@ -306,16 +307,16 @@ export function useCanvasEventHandlers({
                         if (outlinePoint) {
                             hoverEnt = pointToHover(outlinePoint, result.objectId);
                         } else if (view.measure && !planePicking) {
-                            const dist =
-                                hoverEnt?.connectionPoint && vec3.dist(result.position, hoverEnt.connectionPoint);
-
-                            if (!dist || dist > 0.2) {
-                                hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
-                                    result.objectId,
-                                    result.position,
-                                    measureHoverSettings
-                                );
-                            }
+                            const tolerance = applyCameraDistanceToMeasureTolerance(
+                                result.position,
+                                view.renderState.camera.position,
+                                measureHoverSettings
+                            );
+                            hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
+                                result.objectId,
+                                result.position,
+                                tolerance
+                            );
                             vec2.copy(
                                 previous2dSnapPos.current,
                                 vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)

@@ -129,6 +129,16 @@ const pwaOptions: Partial<VitePWAOptions> = {
                     },
                 },
             },
+            // epsg.io
+            {
+                urlPattern: /^https:\/\/epsg\.io\/\d+\.proj4$/,
+                handler: "NetworkFirst",
+                options: {
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                },
+            },
             // config.json
             {
                 urlPattern: (options) => {

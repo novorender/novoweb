@@ -31,6 +31,7 @@ export function useCalcDeviations() {
                 let success = false;
                 if (isProjectV2) {
                     const serverConfig = uiConfigToServerConfig(await updateObjectIds(sceneId, config, objectGroups));
+                    serverConfig.rebuildRequired = true;
                     await calcDeviations({ projectId: scene.id, config: serverConfig }).unwrap();
 
                     success = true;
