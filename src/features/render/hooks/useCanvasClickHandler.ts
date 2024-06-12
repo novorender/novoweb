@@ -1,5 +1,4 @@
-import { ObjectId, rotationFromDirection, View } from "@novorender/api";
-import { ObjectDB } from "@novorender/data-js-api";
+import { rotationFromDirection } from "@novorender/api";
 import { mat3, quat, ReadonlyVec3, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, MutableRefObject, useRef } from "react";
 
@@ -28,7 +27,7 @@ import { selectShowPropertiesStamp } from "features/properties/slice";
 import { useAbortController } from "hooks/useAbortController";
 import { ExtendedMeasureEntity, NodeType, ViewMode } from "types/misc";
 import { isRealVec } from "utils/misc";
-import { extractObjectIds, getFilePathFromObjectPath } from "utils/objectData";
+import { extractObjectIds } from "utils/objectData";
 import { searchByPatterns, searchDeepByPatterns } from "utils/search";
 
 import {
@@ -44,7 +43,11 @@ import {
     selectViewMode,
 } from "../renderSlice";
 import { CameraType, Picker, StampKind } from "../types";
-import { applyCameraDistanceToMeasureTolerance } from "../utils";
+import {
+    applyCameraDistanceToMeasureTolerance,
+    getLocalRotationAroundNormal,
+    getObjectMetadataRotation,
+} from "../utils";
 
 export function useCanvasClickHandler({
     pointerDownStateRef,
@@ -268,7 +271,7 @@ export function useCanvasClickHandler({
                             rotation: plane.rotation ?? 0,
                         })
                     );
-                    const laser = await getOutlineLaser(tracePosition, view);
+                    const laser = await getOutlineLaser(tracePosition, view, planes[0].rotation ?? 0);
                     if (laser) {
                         dispatch(clippingOutlineLaserActions.addLaser(laser));
                     }
@@ -453,7 +456,9 @@ export function useCanvasClickHandler({
                     if (result.objectId) {
                         const rotationQuat = await getObjectMetadataRotation(view, db, result.objectId);
                         if (rotationQuat) {
-                            rotation = getLocalRotationAroundNormal(rotationQuat, normal);
+                            const angleOffset =
+                                Math.abs(vec3.dot(normal, vec3.fromValues(1, 0, 0))) > 0.7 ? Math.PI / 2 : 0;
+                            rotation = getLocalRotationAroundNormal(rotationQuat, normal) + angleOffset;
                         }
                     }
                 } catch (ex) {
@@ -587,55 +592,4 @@ export function useCanvasClickHandler({
     };
 
     return handleCanvasPick;
-}
-
-function getLocalRotationAroundNormal(quaternion: quat, normal: vec3): number {
-    // Ensure the normal is normalized
-    const normalizedNormal = vec3.normalize(vec3.create(), normal);
-    // Create a vector to represent the rotation axis
-    const rotationAxis = vec3.create();
-    quat.getAxisAngle(rotationAxis, quaternion);
-    // Get the angle between the rotation axis and the normal
-    const angle = vec3.angle(rotationAxis, normalizedNormal);
-    // Create a quaternion representing the rotation around the normal
-    const rotationQuaternion = quat.setAxisAngle(quat.create(), normalizedNormal, angle);
-    // Decompose the object's quaternion into rotation around the normal and the remaining rotation
-    const conjugateRotationQuaternion = quat.conjugate(quat.create(), rotationQuaternion);
-    const localRotationQuaternion = quat.multiply(quat.create(), quaternion, conjugateRotationQuaternion);
-    // Get the angle of the local rotation around the normal
-    const localRotationAngle = 2 * Math.acos(localRotationQuaternion[3]);
-    return localRotationAngle;
-}
-
-async function getObjectMetadataRotation(view: View, db: ObjectDB, objectId: ObjectId): Promise<quat | undefined> {
-    const metadata = await (view.data ? view.data.getObjectMetaData(objectId) : db.getObjectMetdata(objectId));
-
-    const filePath = getFilePathFromObjectPath(metadata.path);
-    if (!filePath) {
-        return;
-    }
-
-    const [descendantName] = metadata.path.substring(filePath.length + 1).split("/", 1);
-    if (!descendantName) {
-        return;
-    }
-
-    const descendantPath = `${filePath}/${descendantName}`;
-
-    const objects = db.search(
-        {
-            descentDepth: 0,
-            parentPath: descendantPath,
-            full: true,
-        },
-        undefined
-    );
-
-    for await (const object of objects) {
-        const fileMetadata = await object.loadMetaData();
-        const rotationProp = fileMetadata.properties.find((p) => p[0] === "Novorender/Rotation")?.[1];
-        if (rotationProp) {
-            return JSON.parse(rotationProp);
-        }
-    }
 }
