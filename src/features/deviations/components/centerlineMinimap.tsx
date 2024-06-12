@@ -2,12 +2,17 @@ import { Box, css, styled } from "@mui/material";
 import { LineSubject } from "@visx/annotation";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { curveMonotoneX } from "@visx/curve";
+import { localPoint } from "@visx/event";
 import { LinearGradient } from "@visx/gradient";
 import { GridRows } from "@visx/grid";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 import { scaleLinear } from "@visx/scale";
 import { AreaClosed } from "@visx/shape";
-import { useMemo, useState } from "react";
+import { Line } from "@visx/shape";
+import { defaultStyles, TooltipWithBounds, withTooltip } from "@visx/tooltip";
+import { WithTooltipProvidedProps } from "@visx/tooltip/lib/enhancers/withTooltip";
+import { bisector } from "@visx/vendor/d3-array";
+import { useCallback, useMemo, useState } from "react";
 
 import { DeviationAggregateDistribution } from "apis/dataV2/deviationTypes";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -31,182 +36,275 @@ export function CenterlineMinimap() {
     );
 }
 
+const bisectRange = bisector<DeviationAggregateDistribution, number>((d) => d.profile).left;
+const tooltipStyles = {
+    ...defaultStyles,
+    border: "1px solid white",
+};
+
 const margin = { left: 32, top: 10, bottom: 26, right: 0 };
 
-function CenterlineMinimapInner({ width, height }: { width: number; height: number }) {
-    const {
-        state: { view },
-    } = useExplorerGlobals(true);
-    const profile = useAppSelector(selectSelectedProfile);
-    const subprofile = useAppSelector(selectSelectedSubprofile);
-    const centerLine = subprofile?.centerLine;
-    const fullParameterBounds = centerLine?.parameterBounds;
-    const profilePos = useAppSelector(selectProfile);
-    const goToProfile = useGoToProfile();
-    const dispatch = useAppDispatch();
-    const distribution = useAppSelector(selectCurrentSubprofileDeviationDistributions);
-    const fullData =
-        distribution?.data.status === AsyncStatus.Success ? distribution?.data.data.aggregatesAlongProfile : undefined;
+type Props = { width: number; height: number };
 
-    const [attr, setAttr] = useState("avgDistance" as keyof DeviationAggregateDistribution);
+const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution>(
+    ({
+        width,
+        height,
+        showTooltip,
+        hideTooltip,
+        tooltipData,
+        tooltipTop = 0,
+        tooltipLeft = 0,
+    }: Props & WithTooltipProvidedProps<DeviationAggregateDistribution>) => {
+        const {
+            state: { view },
+        } = useExplorerGlobals(true);
+        const profile = useAppSelector(selectSelectedProfile);
+        const subprofile = useAppSelector(selectSelectedSubprofile);
+        const centerLine = subprofile?.centerLine;
+        const fullParameterBounds = centerLine?.parameterBounds;
+        const profilePos = useAppSelector(selectProfile);
+        const goToProfile = useGoToProfile();
+        const dispatch = useAppDispatch();
+        const distribution = useAppSelector(selectCurrentSubprofileDeviationDistributions);
+        const fullData =
+            distribution?.data.status === AsyncStatus.Success
+                ? distribution?.data.data.aggregatesAlongProfile
+                : undefined;
 
-    const distributions = useAppSelector(selectCurrentSubprofileDeviationDistributions);
+        const [attr, setAttr] = useState("avgDistance" as keyof DeviationAggregateDistribution);
 
-    const parameterBounds = useMemo(() => {
-        return distributions?.parameterBounds ?? fullParameterBounds;
-    }, [distributions, fullParameterBounds]);
+        const distributions = useAppSelector(selectCurrentSubprofileDeviationDistributions);
 
-    const data = useMemo(() => {
-        if (!fullData || !parameterBounds) {
-            return;
-        }
+        const parameterBounds = useMemo(() => {
+            return distributions?.parameterBounds ?? fullParameterBounds;
+        }, [distributions, fullParameterBounds]);
 
-        return fullData.filter((d) => d.profile >= parameterBounds[0] && d.profile <= parameterBounds[1]);
-    }, [fullData, parameterBounds]);
-
-    const scaleX = useMemo(() => {
-        return scaleLinear({
-            range: [margin.left, width - margin.right],
-            domain: parameterBounds ?? [0, 100],
-        });
-    }, [parameterBounds, width]);
-
-    const scaleY = useMemo(() => {
-        let min = Number.MAX_SAFE_INTEGER;
-        let max = Number.MIN_SAFE_INTEGER;
-        if (data && data.length > 0) {
-            for (const point of data) {
-                const value = point[attr];
-                if (value < min) {
-                    min = value;
-                }
-                if (value > max) {
-                    max = value;
-                }
+        const data = useMemo(() => {
+            if (!fullData || !parameterBounds) {
+                return;
             }
-        } else {
-            min = 0;
-            max = 1;
-        }
 
-        return scaleLinear({
-            range: [height - margin.bottom, margin.top],
-            domain: [Math.min(0, min), Math.max(0, max)],
-        });
-    }, [data, height, attr]);
+            return fullData.filter((d) => d.profile >= parameterBounds[0] && d.profile <= parameterBounds[1]);
+        }, [fullData, parameterBounds]);
 
-    const knots = useMemo(() => {
-        if (!profile) {
-            return [];
-        }
+        const scaleX = useMemo(() => {
+            return scaleLinear({
+                range: [margin.left, width - margin.right],
+                domain: parameterBounds ?? [0, 100],
+            });
+        }, [parameterBounds, width]);
 
-        // const [min, max] = scaleY.domain();
-        // const extent = max - min;
-        const range = scaleY.range();
-        const height = Math.abs(range[1] - range[0]);
-        const opacity = 0.8;
+        const scaleY = useMemo(() => {
+            let min = Number.MAX_SAFE_INTEGER;
+            let max = Number.MIN_SAFE_INTEGER;
+            if (data && data.length > 0) {
+                for (const point of data) {
+                    const value = point[attr];
+                    if (value < min) {
+                        min = value;
+                    }
+                    if (value > max) {
+                        max = value;
+                    }
+                }
+            } else {
+                min = 0;
+                max = 1;
+            }
 
-        const stops = profile.colors.colorStops.map((cs, i) => {
-            const color = vecRgbaToRgbaString(cs.color);
-            const y = scaleY(cs.position);
-            const offset = 100 - ((height - y) / height) * 100;
-            // const offset = ((cs.position - min) / extent) * 100;
-            return <stop key={i} offset={`${offset}%`} stopColor={color} stopOpacity={opacity}></stop>;
-        });
+            return scaleLinear({
+                range: [height - margin.bottom, margin.top],
+                domain: [Math.min(0, min), Math.max(0, max)],
+            });
+        }, [data, height, attr]);
 
-        stops.push(
-            <stop
-                key="-1"
-                offset="100%"
-                stopColor={vecRgbaToRgbaString(profile.colors.colorStops.at(-1)!.color)}
-                stopOpacity={opacity}
-            ></stop>
+        const knots = useMemo(() => {
+            if (!profile) {
+                return [];
+            }
+
+            const range = scaleY.range();
+            const height = Math.abs(range[1] - range[0]);
+            const opacity = 0.8;
+
+            const stops = profile.colors.colorStops.map((cs, i) => {
+                const color = vecRgbaToRgbaString(cs.color);
+                const y = scaleY(cs.position);
+                const offset = 100 - ((height - y) / height) * 100;
+                return <stop key={i} offset={`${offset}%`} stopColor={color} stopOpacity={opacity}></stop>;
+            });
+
+            stops.push(
+                <stop
+                    key="-1"
+                    offset="100%"
+                    stopColor={vecRgbaToRgbaString(profile.colors.colorStops.at(-1)!.color)}
+                    stopOpacity={opacity}
+                ></stop>
+            );
+
+            return stops;
+        }, [profile, scaleY]);
+
+        const handleHideTooltip = useCallback(() => {
+            hideTooltip();
+        }, [hideTooltip]);
+
+        const handleTooltip = useCallback(
+            (event: React.TouchEvent<SVGElement> | React.MouseEvent<SVGElement>) => {
+                if (!data) {
+                    return;
+                }
+
+                const { x } = localPoint(event) || { x: 0 };
+                const x0 = scaleX.invert(x);
+                const index = bisectRange(data, x0, 1);
+                const d0 = data[index - 1];
+                const d = d0;
+
+                showTooltip({
+                    tooltipData: d,
+                    tooltipLeft: x,
+                    tooltipTop: scaleY(d[attr]),
+                });
+            },
+            [showTooltip, scaleY, scaleX, data, attr]
         );
 
-        return stops;
-    }, [profile, scaleY]);
+        if (!data) {
+            return (
+                <Box m={2} textAlign="center" color="grey">
+                    Loading...
+                </Box>
+            );
+        }
 
-    if (!data) {
-        return;
-    }
+        return (
+            <Box position="relative">
+                <svg
+                    width={width}
+                    height={height}
+                    onClick={async (e) => {
+                        if (!centerLine) {
+                            return;
+                        }
 
-    return (
-        <Box position="relative">
-            <svg
-                width={width}
-                height={height}
-                onClick={async (e) => {
-                    if (!centerLine) {
-                        return;
-                    }
+                        const svg = (e.target as SVGElement).closest("svg") as SVGElement;
+                        const bbox = svg.getBoundingClientRect();
+                        const x = e.clientX - bbox.left;
+                        const pos = scaleX.invert(x);
 
-                    const svg = (e.target as SVGElement).closest("svg") as SVGElement;
-                    const bbox = svg.getBoundingClientRect();
-                    const x = e.clientX - bbox.left;
-                    const pos = scaleX.invert(x);
+                        const fpObj = await view.measure?.followPath.followParametricObjects([centerLine.objectId], {
+                            cylinderMeasure: "center",
+                        });
 
-                    const fpObj = await view.measure?.followPath.followParametricObjects([centerLine.objectId], {
-                        cylinderMeasure: "center",
-                    });
+                        if (!fpObj) {
+                            return;
+                        }
 
-                    if (!fpObj) {
-                        return;
-                    }
-
-                    dispatch(followPathActions.setProfile(`${pos}`));
-                    goToProfile({
-                        fpObj,
-                        p: pos,
-                        keepOffset: true,
-                        keepCamera: true,
-                    });
-                }}
-            >
-                <LinearGradient id="area-gradient">{knots}</LinearGradient>
-                <GridRows
-                    scale={scaleY}
-                    left={margin.left}
-                    width={width - margin.left - margin.right}
-                    strokeOpacity={0.5}
-                    numTicks={2}
-                    stroke="#e0e0e0"
-                />
-                <AreaClosed
-                    data={data}
-                    x={(d) => scaleX(d.profile) ?? 0}
-                    y={(d) => scaleY(d[attr]) ?? 0}
-                    yScale={scaleY}
-                    strokeWidth={1}
-                    stroke="url(#area-gradient)"
-                    fill="url(#area-gradient)"
-                    curve={curveMonotoneX}
-                />
-                {profilePos !== undefined ? (
-                    <LineSubject
-                        orientation={"vertical"}
-                        stroke="#D61E5C"
-                        x={scaleX(Number(profilePos))}
-                        min={margin.top}
-                        max={height - margin.bottom}
+                        dispatch(followPathActions.setProfile(`${pos}`));
+                        goToProfile({
+                            fpObj,
+                            p: pos,
+                            keepOffset: true,
+                            keepCamera: true,
+                        });
+                    }}
+                    onMouseMove={handleTooltip}
+                    onMouseLeave={handleHideTooltip}
+                >
+                    <LinearGradient id="area-gradient">{knots}</LinearGradient>
+                    <GridRows
+                        scale={scaleY}
+                        left={margin.left}
+                        width={width - margin.left - margin.right}
+                        strokeOpacity={0.5}
+                        numTicks={2}
+                        stroke="#e0e0e0"
                     />
-                ) : undefined}
-                <AxisBottom top={height - margin.bottom} scale={scaleX} numTicks={4} />
-                <AxisLeft left={margin.left} scale={scaleY} numTicks={2} />
-            </svg>
-            <Box position="absolute" top="0" right="0">
-                <HeaderButton onClick={() => setAttr("minDistance")} active={attr === "minDistance"}>
-                    min
-                </HeaderButton>
-                <HeaderButton onClick={() => setAttr("avgDistance")} active={attr === "avgDistance"}>
-                    avg
-                </HeaderButton>
-                <HeaderButton onClick={() => setAttr("maxDistance")} active={attr === "maxDistance"}>
-                    max
-                </HeaderButton>
+                    <AreaClosed
+                        data={data}
+                        x={(d) => scaleX(d.profile) ?? 0}
+                        y={(d) => scaleY(d[attr]) ?? 0}
+                        yScale={scaleY}
+                        strokeWidth={1}
+                        stroke="url(#area-gradient)"
+                        fill="url(#area-gradient)"
+                        curve={curveMonotoneX}
+                    />
+                    {profilePos !== undefined ? (
+                        <LineSubject
+                            orientation={"vertical"}
+                            stroke="#D61E5C"
+                            x={scaleX(Number(profilePos))}
+                            min={margin.top}
+                            max={height - margin.bottom}
+                        />
+                    ) : undefined}
+                    {tooltipData && (
+                        <g>
+                            <Line
+                                from={{ x: tooltipLeft, y: margin.top }}
+                                to={{ x: tooltipLeft, y: innerHeight + margin.top }}
+                                stroke="#D61E5C"
+                                strokeWidth={2}
+                                pointerEvents="none"
+                                strokeDasharray="5,2"
+                            />
+                            <circle
+                                cx={tooltipLeft}
+                                cy={tooltipTop + 1}
+                                r={4}
+                                fill="black"
+                                fillOpacity={0.1}
+                                stroke="black"
+                                strokeOpacity={0.1}
+                                strokeWidth={2}
+                                pointerEvents="none"
+                            />
+                            <circle
+                                cx={tooltipLeft}
+                                cy={tooltipTop}
+                                r={4}
+                                fill="#D61E5C"
+                                stroke="white"
+                                strokeWidth={2}
+                                pointerEvents="none"
+                            />
+                        </g>
+                    )}
+
+                    <AxisBottom top={height - margin.bottom} scale={scaleX} numTicks={4} />
+                    <AxisLeft left={margin.left} scale={scaleY} numTicks={2} />
+                </svg>
+                {tooltipData && (
+                    <div>
+                        <TooltipWithBounds
+                            key={Math.random()}
+                            top={tooltipTop - 12}
+                            left={tooltipLeft + 12}
+                            style={tooltipStyles}
+                        >
+                            {tooltipData[attr].toFixed(3)} @ {tooltipData.profile.toFixed(2)}m
+                        </TooltipWithBounds>
+                    </div>
+                )}
+                <Box position="absolute" top="0" right="0">
+                    <HeaderButton onClick={() => setAttr("minDistance")} active={attr === "minDistance"}>
+                        min
+                    </HeaderButton>
+                    <HeaderButton onClick={() => setAttr("avgDistance")} active={attr === "avgDistance"}>
+                        avg
+                    </HeaderButton>
+                    <HeaderButton onClick={() => setAttr("maxDistance")} active={attr === "maxDistance"}>
+                        max
+                    </HeaderButton>
+                </Box>
             </Box>
-        </Box>
-    );
-}
+        );
+    }
+);
 
 const HeaderButton = styled("button", {
     shouldForwardProp: (prop) => prop !== "active",

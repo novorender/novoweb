@@ -1,19 +1,9 @@
 import { ExpandMore } from "@mui/icons-material";
-import {
-    Accordion as MuiAccordion,
-    AccordionDetails as MuiAccordionDetails,
-    AccordionSummary as MuiAccordionSummary,
-    Badge,
-    Box,
-    css,
-    FormControlLabel,
-    styled,
-    Typography,
-} from "@mui/material";
+import { accordionSummaryClasses, Badge, Box, css, FormControlLabel, styled, Typography } from "@mui/material";
 import { memo, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { IosSwitch, LinearProgress } from "components";
+import { Accordion, AccordionDetails, AccordionSummary, IosSwitch, LinearProgress } from "components";
 import { AsyncStatus } from "types/misc";
 
 import { deviationsActions } from "../deviationsSlice";
@@ -37,15 +27,15 @@ function DistributionSectionInner() {
     useCalcSubprofileDevDistr({ skip: !distrExpanded });
 
     return (
-        <BetaAccordion expanded={distrExpanded} onChange={(_e, expand) => setDistrExpanded(expand)}>
+        <Accordion expanded={distrExpanded} onChange={(_e, expand) => setDistrExpanded(expand)}>
             <BetaAccordionSummary expandIcon={<ExpandMore />}>
                 <Badge badgeContent="beta" color="info">
-                    <Box mx={1} mb={1} fontWeight="600" fontSize="1.5rem">
+                    <Box mx={1} fontWeight="600" fontSize="1.5rem">
                         Distribution
                     </Box>
                 </Badge>
             </BetaAccordionSummary>
-            <BetaAccordionDetails>
+            <AccordionDetails>
                 {distribution?.data.status === AsyncStatus.Loading ? (
                     <Box position="relative">
                         <LinearProgress />
@@ -56,7 +46,7 @@ function DistributionSectionInner() {
                     </Typography>
                 ) : undefined}
 
-                <Box mt={1}>
+                <Box px={2} pt={1}>
                     {isTopDownOrthoCamera && (
                         <Box>
                             <FormControlLabel
@@ -82,39 +72,15 @@ function DistributionSectionInner() {
                     <Box mt={2}>Point count distribution by deviation</Box>
                     <ColorGradientMap />
                 </Box>
-            </BetaAccordionDetails>
-        </BetaAccordion>
+            </AccordionDetails>
+        </Accordion>
     );
 }
 
-const BetaAccordion = styled(MuiAccordion)(
+const BetaAccordionSummary = styled(AccordionSummary)(
     () => css`
-        box-shadow: none;
-
-        &.Mui-expanded {
-            margin: 0;
+        & .${accordionSummaryClasses.content} {
+            padding-top: 12px;
         }
-
-        &::before {
-            opacity: 0;
-        }
-    `
-);
-
-const BetaAccordionSummary = styled(MuiAccordionSummary)(
-    () => css`
-        padding: 0;
-
-        &,
-        &.Mui-expanded {
-            min-height: 84px;
-        }
-    `
-);
-
-const BetaAccordionDetails = styled(MuiAccordionDetails)(
-    () => css`
-        padding-left: 0;
-        padding-right: 0;
     `
 );

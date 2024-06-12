@@ -126,7 +126,10 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
 
         useEffect(() => {
             setInitialBrushPosition(defaultBrushPosition);
-        }, [profileId, subprofileIndex]);
+            view.modifyRenderState({
+                points: { deviation: { visibleRangeStart: undefined, visibleRangeEnd: undefined } },
+            });
+        }, [profileId, subprofileIndex, view]);
 
         const scaleX = useMemo(() => {
             return scaleLinear({
@@ -203,8 +206,6 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                     tooltipLeft: x,
                     tooltipTop: scaleY(d.count),
                 });
-
-                // view.modifyRenderState({ points: { deviation: { window: [d.deviation - 0.1, d.deviation + 0.1] } } });
             },
             [showTooltip, scaleY, scaleX, data]
         );
@@ -245,7 +246,11 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
         useEffect(() => reset, [reset]);
 
         if (!data) {
-            return;
+            return (
+                <Box m={2} textAlign="center" color="grey">
+                    Loading...
+                </Box>
+            );
         }
 
         return (

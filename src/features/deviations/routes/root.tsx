@@ -112,41 +112,43 @@ export function Root() {
                         )}
 
                         {selectedProfile && (
-                            <Box px={2} pb={2}>
-                                <ColorStopList
-                                    colorStops={selectedProfile.colors!.colorStops}
-                                    absoluteValues={selectedProfile.colors!.absoluteValues}
-                                    onChange={(colorStops) => {
-                                        dispatch(renderActions.setViewMode(ViewMode.Deviations));
-                                        dispatch(
-                                            deviationsActions.setProfile({
-                                                id: selectedProfile!.id,
-                                                profile: {
-                                                    ...selectedProfile,
-                                                    colors: { ...selectedProfile.colors!, colorStops },
-                                                },
-                                                setColorsForAll: !isProjectV2,
-                                            })
-                                        );
-                                    }}
-                                    disabled
-                                />
+                            <Box pb={2}>
+                                <Box px={2}>
+                                    <ColorStopList
+                                        colorStops={selectedProfile.colors!.colorStops}
+                                        absoluteValues={selectedProfile.colors!.absoluteValues}
+                                        onChange={(colorStops) => {
+                                            dispatch(renderActions.setViewMode(ViewMode.Deviations));
+                                            dispatch(
+                                                deviationsActions.setProfile({
+                                                    id: selectedProfile!.id,
+                                                    profile: {
+                                                        ...selectedProfile,
+                                                        colors: { ...selectedProfile.colors!, colorStops },
+                                                    },
+                                                    setColorsForAll: !isProjectV2,
+                                                })
+                                            );
+                                        }}
+                                        disabled
+                                    />
 
-                                <SubprofileSelect />
+                                    <SubprofileSelect />
 
-                                <ViewSwitchSection />
+                                    <ViewSwitchSection />
 
-                                {!isLegendFloating || (selectedSubprofile && !selectedSubprofile.centerLine) ? (
-                                    <Box mt={2}>
-                                        <GroupsAndColorsHud
-                                            widgetMode
-                                            absPos={false}
-                                            canDetach={selectedSubprofile?.centerLine !== undefined}
-                                        />
-                                    </Box>
-                                ) : undefined}
+                                    {!isLegendFloating || (selectedSubprofile && !selectedSubprofile.centerLine) ? (
+                                        <Box mt={2}>
+                                            <GroupsAndColorsHud
+                                                widgetMode
+                                                absPos={false}
+                                                canDetach={selectedSubprofile?.centerLine !== undefined}
+                                            />
+                                        </Box>
+                                    ) : undefined}
+                                </Box>
 
-                                <DistributionSection />
+                                {selectedSubprofile?.centerLine ? <DistributionSection /> : undefined}
                             </Box>
                         )}
                     </ScrollBox>
