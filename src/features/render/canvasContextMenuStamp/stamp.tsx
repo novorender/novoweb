@@ -226,10 +226,16 @@ function Selection() {
                 rotation = getLocalRotationAroundNormal(rotationQuat, normal);
             }
         }
-
+        const normalOffset = vec4.fromValues(normal[0], normal[1], normal[2], w);
+        dispatch(
+            clippingOutlineLaserActions.setLaserPlane({
+                normalOffset,
+                rotation: rotation,
+            })
+        );
         dispatch(
             renderActions.addClippingPlane({
-                normalOffset: vec4.fromValues(normal[0], normal[1], normal[2], w),
+                normalOffset,
                 baseW: w,
                 rotation,
             })
@@ -401,6 +407,7 @@ function Measure() {
             if (cameraType === CameraType.Orthographic) {
                 const pos = view.worldPositionFromPixelPosition(stamp.mouseX, stamp.mouseY);
                 if (pos && plane) {
+                    console.log(laserPlane);
                     const laser = await getOutlineLaser(pos, view, laserPlane?.rotation ?? 0);
                     setLaser(laser ? { laser, plane } : undefined);
                     const outlinePoint = view.selectOutlinePoint(pos, 0.2);
@@ -524,8 +531,6 @@ function Measure() {
         if (!laser) {
             return;
         }
-
-        dispatch(clippingOutlineLaserActions.setLaserPlane({ normalOffset: laser.plane, rotation: 0 }));
         dispatch(clippingOutlineLaserActions.addLaser(laser.laser));
         close();
     };
