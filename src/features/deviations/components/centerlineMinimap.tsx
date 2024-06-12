@@ -12,7 +12,7 @@ import { Line } from "@visx/shape";
 import { defaultStyles, TooltipWithBounds, withTooltip } from "@visx/tooltip";
 import { WithTooltipProvidedProps } from "@visx/tooltip/lib/enhancers/withTooltip";
 import { bisector } from "@visx/vendor/d3-array";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 
 import { DeviationAggregateDistribution } from "apis/dataV2/deviationTypes";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -20,13 +20,15 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { followPathActions, selectProfile } from "features/followPath";
 import { useGoToProfile } from "features/followPath/useGoToProfile";
 import { AsyncStatus } from "types/misc";
-import { vecRgbaToRgbaString } from "utils/color";
 
+import { deviationsActions } from "../deviationsSlice";
 import {
+    selectCenterlineMinimapAttr,
     selectCurrentSubprofileDeviationDistributions,
     selectSelectedProfile,
     selectSelectedSubprofile,
 } from "../selectors";
+import { getColorKnots } from "./utils";
 
 export function CenterlineMinimap() {
     return (
@@ -67,12 +69,11 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
         const goToProfile = useGoToProfile();
         const dispatch = useAppDispatch();
         const distribution = useAppSelector(selectCurrentSubprofileDeviationDistributions);
+        const attr = useAppSelector(selectCenterlineMinimapAttr);
         const fullData =
             distribution?.data.status === AsyncStatus.Success
                 ? distribution?.data.data.aggregatesAlongProfile
                 : undefined;
-
-        const [attr, setAttr] = useState("avgDistance" as keyof DeviationAggregateDistribution);
 
         const distributions = useAppSelector(selectCurrentSubprofileDeviationDistributions);
 
@@ -119,33 +120,7 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
             });
         }, [data, height, attr]);
 
-        const knots = useMemo(() => {
-            if (!profile) {
-                return [];
-            }
-
-            const range = scaleY.range();
-            const height = Math.abs(range[1] - range[0]);
-            const opacity = 0.8;
-
-            const stops = profile.colors.colorStops.map((cs, i) => {
-                const color = vecRgbaToRgbaString(cs.color);
-                const y = scaleY(cs.position);
-                const offset = 100 - ((height - y) / height) * 100;
-                return <stop key={i} offset={`${offset}%`} stopColor={color} stopOpacity={opacity}></stop>;
-            });
-
-            stops.push(
-                <stop
-                    key="-1"
-                    offset="100%"
-                    stopColor={vecRgbaToRgbaString(profile.colors.colorStops.at(-1)!.color)}
-                    stopOpacity={opacity}
-                ></stop>
-            );
-
-            return stops;
-        }, [profile, scaleY]);
+        const knots = useMemo(() => getColorKnots(profile, scaleY), [profile, scaleY]);
 
         const handleHideTooltip = useCallback(() => {
             hideTooltip();
@@ -193,7 +168,7 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                         const svg = (e.target as SVGElement).closest("svg") as SVGElement;
                         const bbox = svg.getBoundingClientRect();
                         const x = e.clientX - bbox.left;
-                        const pos = scaleX.invert(x);
+                        const pos = Math.round(scaleX.invert(x));
 
                         const fpObj = await view.measure?.followPath.followParametricObjects([centerLine.objectId], {
                             cylinderMeasure: "center",
@@ -291,13 +266,22 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                     </div>
                 )}
                 <Box position="absolute" top="0" right="0">
-                    <HeaderButton onClick={() => setAttr("minDistance")} active={attr === "minDistance"}>
+                    <HeaderButton
+                        onClick={() => dispatch(deviationsActions.setCenterlineMinimapAttr("minDistance"))}
+                        active={attr === "minDistance"}
+                    >
                         min
                     </HeaderButton>
-                    <HeaderButton onClick={() => setAttr("avgDistance")} active={attr === "avgDistance"}>
+                    <HeaderButton
+                        onClick={() => dispatch(deviationsActions.setCenterlineMinimapAttr("avgDistance"))}
+                        active={attr === "avgDistance"}
+                    >
                         avg
                     </HeaderButton>
-                    <HeaderButton onClick={() => setAttr("maxDistance")} active={attr === "maxDistance"}>
+                    <HeaderButton
+                        onClick={() => dispatch(deviationsActions.setCenterlineMinimapAttr("maxDistance"))}
+                        active={attr === "maxDistance"}
+                    >
                         max
                     </HeaderButton>
                 </Box>
@@ -313,5 +297,6 @@ const HeaderButton = styled("button", {
         border: 0;
         opacity: 0.7;
         background: ${active ? "grey" : "transparent"};
+        cursor: pointer;
     `
 );

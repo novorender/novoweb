@@ -42,6 +42,7 @@ export const selectClosestToCenterFollowPathPoint = (state: RootState) =>
 export const selectVisibleTopDownProfile = (state: RootState) => state.deviations.visibleTopDownProfile;
 export const selectIsLegendFloating = (state: RootState) => state.deviations.isLegendFloating;
 export const selectRangeFollowsCamera = (state: RootState) => state.deviations.rangeFollowsCamera;
+export const selectCenterlineMinimapAttr = (state: RootState) => state.deviations.centerlineMinimapAttr;
 export const selectHiddenLegendGroups = (state: RootState) => state.deviations.hiddenLegendGroups;
 const selectCurrentHiddenLegendGroups = createSelector(
     [selectSelectedProfileId, selectSelectedSubprofileIndex, selectHiddenLegendGroups],

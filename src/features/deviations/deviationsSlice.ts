@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { ReadonlyVec2 } from "gl-matrix";
 
+import { DeviationAggregateDistribution } from "apis/dataV2/deviationTypes";
 import { resetView, selectBookmark } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 
@@ -34,6 +35,7 @@ const initialState = {
     },
     isLegendFloating: true,
     rangeFollowsCamera: true,
+    centerlineMinimapAttr: "avgDistance" as keyof DeviationAggregateDistribution,
 };
 
 type State = typeof initialState;
@@ -149,6 +151,9 @@ export const deviationsSlice = createSlice({
         },
         setRangeFollowsCamera: (state, action: PayloadAction<State["rangeFollowsCamera"]>) => {
             state.rangeFollowsCamera = action.payload;
+        },
+        setCenterlineMinimapAttr: (state, action: PayloadAction<State["centerlineMinimapAttr"]>) => {
+            state.centerlineMinimapAttr = action.payload;
         },
         resetHiddenLegendGroupsForProfile: (state, action: PayloadAction<{ profileId: string }>) => {
             const { profileId } = action.payload;

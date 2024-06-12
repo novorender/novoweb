@@ -128,6 +128,7 @@ export const {
     useLazyGetDeviationProfilesQuery,
     useSetDeviationProfilesMutation,
     useCalcDeviationsMutation,
+    useGetDeviationDistributionQuery,
     useLazyGetDeviationDistributionQuery,
     useGetProjectProgressQuery,
     useLazyGetFileDownloadLinkQuery,

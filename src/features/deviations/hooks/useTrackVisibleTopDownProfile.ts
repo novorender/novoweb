@@ -16,18 +16,28 @@ export function useTrackVisibleTopDownProfile() {
     const rangeFollowsCamera = useAppSelector(selectRangeFollowsCamera);
     const subprofile = useAppSelector(selectSelectedSubprofile);
     const dispatch = useAppDispatch();
+    const parameterBounds = subprofile?.centerLine?.parameterBounds;
 
     const updateProfile = useMemo(
         () =>
             debounce((bounds: [number, number]) => {
+                if (!parameterBounds) {
+                    return;
+                }
+                let min = Math.max(bounds[0], parameterBounds[0]);
+                let max = Math.min(bounds[1], parameterBounds[1]);
+                if (max < min + 1) {
+                    [min, max] = parameterBounds;
+                }
+
                 dispatch(
                     deviationsActions.setSubprofileDeviationDistributions({
-                        parameterBounds: bounds,
+                        parameterBounds: [min, max],
                         data: { status: AsyncStatus.Initial },
                     })
                 );
             }, 500),
-        [dispatch]
+        [dispatch, parameterBounds]
     );
 
     useEffect(() => {
