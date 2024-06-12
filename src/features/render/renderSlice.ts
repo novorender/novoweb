@@ -78,6 +78,7 @@ const initialState = {
             outline: {
                 enabled: boolean;
             };
+            rotation?: number;
         }[],
     },
     grid: {

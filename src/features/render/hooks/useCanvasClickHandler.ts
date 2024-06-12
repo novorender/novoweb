@@ -43,7 +43,11 @@ import {
     selectViewMode,
 } from "../renderSlice";
 import { CameraType, Picker, StampKind } from "../types";
-import { applyCameraDistanceToMeasureTolerance } from "../utils";
+import {
+    applyCameraDistanceToMeasureTolerance,
+    getLocalRotationAroundNormal,
+    getObjectMetadataRotation,
+} from "../utils";
 
 export function useCanvasClickHandler({
     pointerDownStateRef,
@@ -239,6 +243,7 @@ export function useCanvasClickHandler({
 
                     let tracePosition: ReadonlyVec3 | undefined = undefined;
 
+                    const plane = planes[0];
                     if (cameraType === CameraType.Orthographic) {
                         tracePosition = view.worldPositionFromPixelPosition(
                             evt.nativeEvent.offsetX,
@@ -247,12 +252,12 @@ export function useCanvasClickHandler({
                     } else if (!result) {
                         return;
                     } else {
-                        const plane = view.renderState.clipping.planes[0].normalOffset;
-                        const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
+                        const { normalOffset } = plane;
+                        const planeDir = vec3.fromValues(normalOffset[0], normalOffset[1], normalOffset[2]);
                         const camPos = view.renderState.camera.position;
                         const lineDir = vec3.sub(vec3.create(), result.position, camPos);
                         vec3.normalize(lineDir, lineDir);
-                        const t = (plane[3] - vec3.dot(planeDir, camPos)) / vec3.dot(planeDir, lineDir);
+                        const t = (normalOffset[3] - vec3.dot(planeDir, camPos)) / vec3.dot(planeDir, lineDir);
                         tracePosition = vec3.scaleAndAdd(vec3.create(), camPos, lineDir, t);
                     }
 
@@ -261,9 +266,12 @@ export function useCanvasClickHandler({
                     }
 
                     dispatch(
-                        clippingOutlineLaserActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset)
+                        clippingOutlineLaserActions.setLaserPlane({
+                            normalOffset: plane.normalOffset,
+                            rotation: plane.rotation ?? 0,
+                        })
                     );
-                    const laser = await getOutlineLaser(tracePosition, view);
+                    const laser = await getOutlineLaser(tracePosition, view, planes[0].rotation ?? 0);
                     if (laser) {
                         dispatch(clippingOutlineLaserActions.addLaser(laser));
                     }
@@ -439,8 +447,22 @@ export function useCanvasClickHandler({
                 break;
             }
             case Picker.ClippingPlane: {
-                if (!normal || result.sampleType !== "surface") {
+                if (!normal || result.sampleType !== "surface" || !db) {
                     return;
+                }
+
+                let rotation = 0;
+                try {
+                    if (result.objectId) {
+                        const rotationQuat = await getObjectMetadataRotation(view, db, result.objectId);
+                        if (rotationQuat) {
+                            const angleOffset =
+                                Math.abs(vec3.dot(normal, vec3.fromValues(1, 0, 0))) > 0.7 ? Math.PI / 2 : 0;
+                            rotation = getLocalRotationAroundNormal(rotationQuat, normal) + angleOffset;
+                        }
+                    }
+                } catch (ex) {
+                    console.warn("Error getting object rotation", ex);
                 }
 
                 const w = vec3.dot(normal, position);
@@ -450,6 +472,7 @@ export function useCanvasClickHandler({
                     renderActions.addClippingPlane({
                         normalOffset: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
                         baseW: w,
+                        rotation,
                     })
                 );
                 break;

@@ -1,7 +1,7 @@
 import { segmentPlaneIntersection, View } from "@novorender/api";
 import { ReadonlyVec3 } from "gl-matrix";
 
-export function getOutlineLaser(pickPosition: ReadonlyVec3, view: View | undefined) {
+export function getOutlineLaser(pickPosition: ReadonlyVec3, view: View | undefined, rotation: number) {
     if (view) {
         const sp = view.measure?.draw.toMarkerPoints([pickPosition]);
         if (sp && sp.length > 0 && sp[0]) {
@@ -15,7 +15,7 @@ export function getOutlineLaser(pickPosition: ReadonlyVec3, view: View | undefin
                       )
                     : pickPosition;
             if (laserPosition) {
-                const outlineValues = view.outlineLaser(laserPosition, "clipping", 0);
+                const outlineValues = view.outlineLaser(laserPosition, "clipping", 0, rotation);
                 if (outlineValues) {
                     return {
                         left: outlineValues.left,

@@ -1,10 +1,11 @@
-import { computeRotation, rotationFromDirection, SnapTolerance } from "@novorender/api";
-import { SceneData, SceneLoadFail } from "@novorender/data-js-api";
+import { computeRotation, ObjectId, rotationFromDirection, SnapTolerance, View } from "@novorender/api";
+import { ObjectDB, SceneData, SceneLoadFail } from "@novorender/data-js-api";
 import { GeoLocation, Internal } from "@novorender/webgl-api";
 import { quat, ReadonlyVec3, vec3, vec4 } from "gl-matrix";
 
 import { dataApi } from "apis/dataV1";
 import { CustomProperties } from "types/project";
+import { getFilePathFromObjectPath } from "utils/objectData";
 
 import { CadCamera, SceneConfig, Subtrees, SubtreeStatus } from "./types";
 
@@ -204,4 +205,60 @@ export function getDefaultCamera(boundingBox?: [number, number, number, number])
         rotation,
         fov,
     };
+}
+
+export function getLocalRotationAroundNormal(quaternion: quat, normal: vec3): number {
+    // Create a vector to represent the rotation axis
+    const rotationAxis = vec3.create();
+    quat.getAxisAngle(rotationAxis, quaternion);
+    if (Math.abs(vec3.dot(rotationAxis, normal)) < 0.01) {
+        return 0;
+    }
+    // Get the angle between the rotation axis and the normal
+    const angle = vec3.angle(rotationAxis, normal);
+    // Create a quaternion representing the rotation around the normal
+    const rotationQuaternion = quat.setAxisAngle(quat.create(), normal, angle);
+    // Decompose the object's quaternion into rotation around the normal and the remaining rotation
+    const conjugateRotationQuaternion = quat.conjugate(quat.create(), rotationQuaternion);
+    const localRotationQuaternion = quat.multiply(quat.create(), quaternion, conjugateRotationQuaternion);
+    // Get the angle of the local rotation around the normal
+    const localRotationAngle = 2 * Math.acos(localRotationQuaternion[3]);
+    return localRotationAngle;
+}
+
+export async function getObjectMetadataRotation(
+    view: View,
+    db: ObjectDB,
+    objectId: ObjectId
+): Promise<quat | undefined> {
+    const metadata = await (view.data ? view.data.getObjectMetaData(objectId) : db.getObjectMetdata(objectId));
+
+    const filePath = getFilePathFromObjectPath(metadata.path);
+    if (!filePath) {
+        return;
+    }
+
+    const [descendantName] = metadata.path.substring(filePath.length + 1).split("/", 1);
+    if (!descendantName) {
+        return;
+    }
+
+    const descendantPath = `${filePath}/${descendantName}`;
+
+    const objects = db.search(
+        {
+            descentDepth: 0,
+            parentPath: descendantPath,
+            full: true,
+        },
+        undefined
+    );
+
+    for await (const object of objects) {
+        const fileMetadata = await object.loadMetaData();
+        const rotationProp = fileMetadata.properties.find((p) => p[0] === "Novorender/Rotation")?.[1];
+        if (rotationProp) {
+            return JSON.parse(rotationProp);
+        }
+    }
 }
