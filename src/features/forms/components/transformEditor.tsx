@@ -146,7 +146,7 @@ export function TransformEditor() {
                                         onChange={pickNewLocation}
                                     />
                                 }
-                                label={<Box fontSize={14}>Pick</Box>}
+                                label={<Box fontSize={14}>Move</Box>}
                                 sx={{ ml: 1 }}
                             />
                         </Box>
