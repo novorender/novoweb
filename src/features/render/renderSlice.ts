@@ -516,9 +516,9 @@ export const renderSlice = createSlice({
             }
 
             // corner features
-            state.debugStats.enabled =
-                props.explorerProjectState?.features?.debugStats?.enabled ??
-                (Boolean(props.showStats) || state.debugStats.enabled);
+            state.debugStats.enabled = props.explorerProjectState?.features?.debugStats
+                ? props.explorerProjectState.features.debugStats.enabled || state.debugStats.enabled
+                : Boolean(props.showStats) || state.debugStats.enabled;
             state.navigationCube.enabled =
                 !state.debugStats.enabled &&
                 (props.explorerProjectState?.features?.navigationCube?.enabled ?? Boolean(props.navigationCube));
