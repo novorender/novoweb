@@ -328,7 +328,7 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
 
 function subtreesToHide(
     subtrees: Record<Subtree, SubtreeStatus>
-): NonNullable<CustomProperties["explorerProjectState"]>["renderSettings"]["hide"] {
+): NonNullable<NonNullable<CustomProperties["explorerProjectState"]>["renderSettings"]>["hide"] {
     return {
         terrain: subtrees.terrain === SubtreeStatus.Hidden,
         triangles: subtrees.triangles === SubtreeStatus.Hidden,

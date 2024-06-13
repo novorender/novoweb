@@ -483,11 +483,8 @@ export const renderSlice = createSlice({
             state.deviceProfile = mergeRecursive(state.deviceProfile, deviceProfile);
             state.debugStats.enabled = window.location.search.includes("debug=true");
 
-            if (props.explorerProjectState) {
-                const { points, background, terrain, hide, ...advanced } = props.explorerProjectState.renderSettings;
-                points.size.metric = 0; //Variable that cannot be set on novoweb and have had 2 different default. Forcing to 0;
-                const { debugStats, navigationCube } = props.explorerProjectState.features;
-                const { highlights } = props.explorerProjectState;
+            // camera
+            if (props.explorerProjectState?.camera) {
                 const camera = props.explorerProjectState.camera;
 
                 state.cameraDefaults.pinhole = camera.pinhole;
@@ -495,47 +492,7 @@ export const renderSlice = createSlice({
                     state.cameraDefaults.orthographic,
                     camera.orthographic
                 );
-
-                state.background = mergeRecursive(state.background, {
-                    ...background,
-                    ...(!background.url ? { url: state.background.url, blur: state.background.blur } : {}),
-                });
-                state.points = mergeRecursive(state.points, points);
-                state.subtrees = getSubtrees(hide, sceneConfig.subtrees ?? ["triangles"]);
-                state.terrain = terrain;
-                state.terrain.elevationGradient = settings
-                    ? {
-                          knots: settings.terrain.elevationColors.map((node) => ({
-                              position: node.elevation,
-                              color: node.color,
-                          })),
-                      }
-                    : state.terrain.elevationGradient;
-                state.advanced = mergeRecursive(state.advanced, advanced);
-                state.debugStats.enabled = debugStats.enabled || state.debugStats.enabled;
-                state.navigationCube.enabled = !state.debugStats.enabled && navigationCube.enabled;
-                state.secondaryHighlight.property = highlights.secondary.property;
-            } else if (settings) {
-                // Legacy settings
-
-                // controls
-                if (props.flightFingerMap) {
-                    const { rotate, orbit, pan } = props.flightFingerMap;
-                    state.cameraDefaults.pinhole.controller =
-                        rotate === 1
-                            ? "flight"
-                            : orbit === 1
-                            ? pan === 2
-                                ? "cadRightPan"
-                                : "cadMiddlePan"
-                            : "special";
-                }
-
-                // corner features
-                state.debugStats.enabled = Boolean(props.showStats) || state.debugStats.enabled;
-                state.navigationCube.enabled = !state.debugStats.enabled && Boolean(props.navigationCube);
-
-                // camera
+            } else {
                 state.cameraDefaults.pinhole.clipping.far = Math.max(
                     (sceneData.camera as { far?: number })?.far ?? 0,
                     1000
@@ -556,9 +513,58 @@ export const renderSlice = createSlice({
                           fast: props.cameraSpeedLevels.flight.fast * 33,
                       }
                     : state.cameraDefaults.pinhole.speedLevels;
+            }
 
-                // highlight
-                state.secondaryHighlight.property = props.highlights?.secondary.property ?? "";
+            // corner features
+            state.debugStats.enabled = props.explorerProjectState?.features?.debugStats
+                ? props.explorerProjectState.features.debugStats.enabled || state.debugStats.enabled
+                : Boolean(props.showStats) || state.debugStats.enabled;
+            state.navigationCube.enabled =
+                !state.debugStats.enabled &&
+                (props.explorerProjectState?.features?.navigationCube?.enabled ?? Boolean(props.navigationCube));
+
+            // highlights
+            state.secondaryHighlight.property =
+                props.explorerProjectState?.highlights?.secondary.property ??
+                props.highlights?.secondary.property ??
+                "";
+
+            // render settings
+            if (props.explorerProjectState?.renderSettings) {
+                const { points, background, terrain, hide, ...advanced } = props.explorerProjectState.renderSettings;
+                points.size.metric = 0; //Variable that cannot be set on novoweb and have had 2 different default. Forcing to 0;
+
+                state.background = mergeRecursive(state.background, {
+                    ...background,
+                    ...(!background.url ? { url: state.background.url, blur: state.background.blur } : {}),
+                });
+                state.points = mergeRecursive(state.points, points);
+                state.subtrees = getSubtrees(hide, sceneConfig.subtrees ?? ["triangles"]);
+                state.terrain = terrain;
+                state.terrain.elevationGradient = settings
+                    ? {
+                          knots: settings.terrain.elevationColors.map((node) => ({
+                              position: node.elevation,
+                              color: node.color,
+                          })),
+                      }
+                    : state.terrain.elevationGradient;
+                state.advanced = mergeRecursive(state.advanced, advanced);
+            } else if (settings) {
+                // Legacy settings
+
+                // controls
+                if (props.flightFingerMap) {
+                    const { rotate, orbit, pan } = props.flightFingerMap;
+                    state.cameraDefaults.pinhole.controller =
+                        rotate === 1
+                            ? "flight"
+                            : orbit === 1
+                            ? pan === 2
+                                ? "cadRightPan"
+                                : "cadMiddlePan"
+                            : "special";
+                }
 
                 // background
                 state.background.color = settings.background.color ?? state.background.color;
@@ -629,7 +635,7 @@ export const renderSlice = createSlice({
                 (key) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable
             );
 
-            if (props.explorerProjectState) {
+            if (props.explorerProjectState?.renderSettings) {
                 const { points, background, terrain, hide } = props.explorerProjectState.renderSettings;
 
                 // background
