@@ -9,7 +9,7 @@ import { CustomProperties } from "types/project";
 import { CadCamera, SceneConfig, Subtrees, SubtreeStatus } from "./types";
 
 export function getSubtrees(
-    hidden: NonNullable<CustomProperties["explorerProjectState"]>["renderSettings"]["hide"],
+    hidden: NonNullable<NonNullable<CustomProperties["explorerProjectState"]>["renderSettings"]>["hide"],
     subtrees: string[]
 ): Subtrees {
     return {

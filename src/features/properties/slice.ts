@@ -58,13 +58,11 @@ export const propertiesSlice = createSlice({
         builder.addCase(initScene, (state, action) => {
             const props = action.payload.sceneData.customProperties;
 
-            if (props.explorerProjectState) {
-                state.stampSettings = props.explorerProjectState.features.properties.stamp;
+            if (props.explorerProjectState?.features?.properties?.starred) {
                 state.starred = Object.fromEntries(
                     props.explorerProjectState.features.properties.starred.map((prop) => [prop, true])
                 );
             } else if (props.properties) {
-                state.stampSettings = props.properties.stampSettings;
                 state.starred = Object.fromEntries(
                     props.properties.starred.map((prop: string) => [
                         ["path", "name"].includes(prop) ? capitalize(prop) : prop,
@@ -72,6 +70,11 @@ export const propertiesSlice = createSlice({
                     ])
                 );
             }
+
+            state.stampSettings =
+                props.explorerProjectState?.features?.properties?.stamp ??
+                props.properties?.stampSettings ??
+                state.stampSettings;
 
             state.showStamp = state.stampSettings.enabled;
         });
