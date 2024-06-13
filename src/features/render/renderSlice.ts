@@ -520,7 +520,7 @@ export const renderSlice = createSlice({
                 props.explorerProjectState?.features?.debugStats?.enabled ?? Boolean(props.showStats);
             state.navigationCube.enabled =
                 !state.debugStats.enabled &&
-                (props.explorerProjectState?.features?.debugStats?.enabled ?? Boolean(props.navigationCube));
+                (props.explorerProjectState?.features?.navigationCube?.enabled ?? Boolean(props.navigationCube));
 
             // highlights
             state.secondaryHighlight.property =
