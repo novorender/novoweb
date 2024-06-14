@@ -1,6 +1,7 @@
 import { DuoMeasurementValues } from "@novorender/api";
 import { useCallback, useEffect, useRef } from "react";
 
+import { useLazyGetDeviationDistributionQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -8,15 +9,18 @@ import { followPathActions, selectView2d } from "features/followPath/followPathS
 import { useGoToProfile } from "features/followPath/useGoToProfile";
 import { measureActions } from "features/measure";
 import { renderActions, selectViewMode } from "features/render";
+import { useSceneId } from "hooks/useSceneId";
 import { ViewMode } from "types/misc";
 
-import { selectSelectedCenterLineId, selectSelectedProfile } from "../selectors";
+import { selectSelectedCenterLineId, selectSelectedProfile, selectSelectedProfileId } from "../selectors";
 
 export function useSetCenterLineFollowPath() {
     const {
         state: { view },
     } = useExplorerGlobals();
+    const projectId = useSceneId();
     const dispatch = useAppDispatch();
+    const profileId = useAppSelector(selectSelectedProfileId);
     const selectedProfile = useAppSelector(selectSelectedProfile);
     const selectedCenterLineId = useAppSelector(selectSelectedCenterLineId);
     const centerLine =
@@ -30,15 +34,12 @@ export function useSetCenterLineFollowPath() {
 
     const goToProfile = useGoToProfile();
     const goToProfileRef = useRef(goToProfile);
-    useEffect(() => {
-        goToProfileRef.current = goToProfile;
-    });
+    goToProfileRef.current = goToProfile;
 
     const view2d = useAppSelector(selectView2d);
     const view2dRef = useRef(view2d);
-    useEffect(() => {
-        view2dRef.current = view2d;
-    });
+    view2dRef.current = view2d;
+    const [getDistributions] = useLazyGetDeviationDistributionQuery();
 
     const restore = useCallback(() => {
         if (installedFollowPathId.current !== undefined) {
@@ -46,6 +47,7 @@ export function useSetCenterLineFollowPath() {
             dispatch(followPathActions.setSelectedPath(undefined));
             dispatch(followPathActions.setSelectedIds([]));
             dispatch(followPathActions.setProfileRange(undefined));
+            dispatch(followPathActions.setCurrentCenter(undefined));
             dispatch(measureActions.setSelectedEntities([]));
             dispatchHighlighted(highlightActions.remove([installedFollowPathId.current]));
 
@@ -61,7 +63,7 @@ export function useSetCenterLineFollowPath() {
         setFollowPath();
 
         async function setFollowPath() {
-            if (!followPathId || !centerLine || !view || !active) {
+            if (!profileId || !followPathId || !centerLine || !view || !active) {
                 restore();
                 return;
             }
@@ -73,6 +75,7 @@ export function useSetCenterLineFollowPath() {
             dispatch(followPathActions.setSelectedIds([followPathId]));
             dispatch(followPathActions.setRoadIds(undefined));
             dispatch(followPathActions.setDrawRoadIds(undefined));
+            dispatch(followPathActions.setCurrentCenter(undefined));
             dispatch(
                 followPathActions.setProfileRange({
                     min: centerLine.parameterBounds[0],
@@ -94,26 +97,41 @@ export function useSetCenterLineFollowPath() {
                         const duoMeasure = measure as DuoMeasurementValues;
                         if (duoMeasure.measureInfoB && typeof duoMeasure.measureInfoB.parameter === "number") {
                             // dispatch(followPathActions.setProfile(duoMeasure.measureInfoB.parameter.toFixed(3)));
-                            const pos = Math.max(
-                                centerLine.parameterBounds[0],
-                                Math.min(centerLine.parameterBounds[1], duoMeasure.measureInfoB.parameter)
-                            );
+                            let pos = centerLine.parameterBounds[0];
                             dispatch(followPathActions.setProfile(pos.toFixed(3)));
                             initPos = false;
 
-                            if (view2dRef.current) {
-                                const fpObj = await view.measure?.followPath.followParametricObjects([followPathId], {
-                                    cylinderMeasure: "center",
-                                });
+                            const fpObj = await view.measure?.followPath.followParametricObjects([followPathId], {
+                                cylinderMeasure: "center",
+                            });
 
-                                if (fpObj) {
-                                    goToProfileRef.current({
-                                        fpObj: fpObj,
-                                        p: pos,
-                                        newView2d: true,
-                                        keepOffset: false,
-                                    });
+                            try {
+                                const { aggregatesAlongProfile } = await getDistributions(
+                                    {
+                                        projectId,
+                                        profileId,
+                                        centerLineId: centerLine.brepId,
+                                        start: centerLine.parameterBounds[0],
+                                        end: centerLine.parameterBounds[1],
+                                    },
+                                    true
+                                ).unwrap();
+
+                                if (aggregatesAlongProfile.length > 0) {
+                                    pos = aggregatesAlongProfile[0].profile;
                                 }
+                            } catch (ex) {
+                                console.warn("Error finding non empty profile start", ex);
+                            }
+
+                            if (fpObj) {
+                                goToProfileRef.current({
+                                    fpObj: fpObj,
+                                    p: pos,
+                                    newView2d: view2dRef.current,
+                                    keepOffset: false,
+                                    lookAtP: !view2dRef.current,
+                                });
                             }
                         }
                     } else {
@@ -127,5 +145,16 @@ export function useSetCenterLineFollowPath() {
 
             installedFollowPathId.current = followPathId;
         }
-    }, [view, followPathId, dispatch, dispatchHighlighted, centerLine, restore, active]);
+    }, [
+        view,
+        projectId,
+        profileId,
+        followPathId,
+        dispatch,
+        dispatchHighlighted,
+        centerLine,
+        restore,
+        active,
+        getDistributions,
+    ]);
 }
