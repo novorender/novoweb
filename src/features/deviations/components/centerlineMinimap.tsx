@@ -183,7 +183,6 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                             fpObj,
                             p: pos,
                             keepOffset: true,
-                            keepCamera: true,
                         });
                     }}
                     onMouseMove={handleTooltip}
