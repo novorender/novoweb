@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 
 import { getOutlineLaser } from "./getOutlineLaser";
-import { clippingOutlineLaserActions, selectOutlineLasers } from "./outlineLaserSlice";
+import { clippingOutlineLaserActions, selectOutlineLaserPlane, selectOutlineLasers } from "./outlineLaserSlice";
 
 const markerStyles = ({ theme }: { theme: Theme }) => css`
     cursor: pointer;
@@ -72,9 +72,10 @@ export function ClippingTracerInteractions() {
 
     const dispatch = useAppDispatch();
     const outlineLaser = useAppSelector(selectOutlineLasers);
+    const plane = useAppSelector(selectOutlineLaserPlane);
     const updateTracer = async (idx: number) => {
         const trace = outlineLaser[idx];
-        const newTrace = await getOutlineLaser(trace.laserPosition, view);
+        const newTrace = await getOutlineLaser(trace.laserPosition, view, plane?.rotation ?? 0);
         if (newTrace) {
             if (trace.measurementX === undefined) {
                 newTrace.measurementX = undefined;

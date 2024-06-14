@@ -1,5 +1,5 @@
 export type ExplorerProjectState = {
-    camera: {
+    camera?: {
         pinhole: {
             controller: "flight" | "special" | "cadRightPan" | "cadMiddlePan";
             clipping: {
@@ -30,7 +30,7 @@ export type ExplorerProjectState = {
             touchRotate?: boolean;
         };
     };
-    renderSettings: {
+    renderSettings?: {
         dynamicResolutionScaling: boolean;
         msaa: {
             enabled: boolean;
@@ -97,25 +97,25 @@ export type ExplorerProjectState = {
         };
     };
     features: {
-        widgets: {
+        widgets?: {
             enabled: string[];
         };
-        properties: {
+        properties?: {
             stamp: {
                 enabled: boolean;
             };
             starred: string[];
         };
-        navigationCube: {
+        navigationCube?: {
             enabled: boolean;
         };
-        debugStats: {
+        debugStats?: {
             enabled: boolean;
         };
-        primaryMenu: {
+        primaryMenu?: {
             buttons: string[];
         };
-        contextMenus: {
+        contextMenus?: {
             canvas: {
                 primary: {
                     features: string[];
@@ -123,7 +123,7 @@ export type ExplorerProjectState = {
             };
         };
     };
-    highlights: {
+    highlights?: {
         primary: {
             color: [number, number, number, number];
         };

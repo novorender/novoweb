@@ -51,7 +51,12 @@ export function getMeasurePointsFromTracer(
 const initialState = {
     outlineGroups: [] as OutlineGroup[],
     lasers: [] as OutlineLaser[],
-    laserPlane: undefined as ReadonlyVec4 | undefined,
+    laserPlane: undefined as
+        | {
+              normalOffset: ReadonlyVec4;
+              rotation: number;
+          }
+        | undefined,
 };
 
 type State = typeof initialState;

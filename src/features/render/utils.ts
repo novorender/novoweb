@@ -9,7 +9,7 @@ import { CustomProperties } from "types/project";
 import { CadCamera, SceneConfig, Subtrees, SubtreeStatus } from "./types";
 
 export function getSubtrees(
-    hidden: NonNullable<CustomProperties["explorerProjectState"]>["renderSettings"]["hide"],
+    hidden: NonNullable<NonNullable<CustomProperties["explorerProjectState"]>["renderSettings"]>["hide"],
     subtrees: string[]
 ): Subtrees {
     return {
@@ -204,4 +204,23 @@ export function getDefaultCamera(boundingBox?: [number, number, number, number])
         rotation,
         fov,
     };
+}
+
+export function getLocalRotationAroundNormal(quaternion: quat, normal: vec3): number {
+    // Create a vector to represent the rotation axis
+    const rotationAxis = vec3.create();
+    quat.getAxisAngle(rotationAxis, quaternion);
+    if (Math.abs(vec3.dot(rotationAxis, normal)) < 0.01) {
+        return 0;
+    }
+    // Get the angle between the rotation axis and the normal
+    const angle = vec3.angle(rotationAxis, normal);
+    // Create a quaternion representing the rotation around the normal
+    const rotationQuaternion = quat.setAxisAngle(quat.create(), normal, angle);
+    // Decompose the object's quaternion into rotation around the normal and the remaining rotation
+    const conjugateRotationQuaternion = quat.conjugate(quat.create(), rotationQuaternion);
+    const localRotationQuaternion = quat.multiply(quat.create(), quaternion, conjugateRotationQuaternion);
+    // Get the angle of the local rotation around the normal
+    const localRotationAngle = 2 * Math.acos(localRotationQuaternion[3]);
+    return localRotationAngle;
 }

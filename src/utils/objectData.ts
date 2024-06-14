@@ -1,7 +1,7 @@
-import { View } from "@novorender/api";
+import { ObjectId, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { BoundingSphere, HierarcicalObjectReference, ObjectData } from "@novorender/webgl-api";
-import { vec3 } from "gl-matrix";
+import { quat, vec3 } from "gl-matrix";
 
 import { flip } from "features/render/utils";
 
@@ -42,6 +42,43 @@ export function getFilePathFromObjectPath(objectPath: string): string | null {
     }
 
     return match.path;
+}
+
+export async function getObjectMetadataRotation(
+    view: View,
+    db: ObjectDB,
+    objectId: ObjectId
+): Promise<quat | undefined> {
+    const metadata = await (view.data ? view.data.getObjectMetaData(objectId) : db.getObjectMetdata(objectId));
+
+    const filePath = getFilePathFromObjectPath(metadata.path);
+    if (!filePath) {
+        return;
+    }
+
+    const [descendantName] = metadata.path.substring(filePath.length + 1).split("/", 1);
+    if (!descendantName) {
+        return;
+    }
+
+    const descendantPath = `${filePath}/${descendantName}`;
+
+    const objects = db.search(
+        {
+            descentDepth: 0,
+            parentPath: descendantPath,
+            full: true,
+        },
+        undefined
+    );
+
+    for await (const object of objects) {
+        const fileMetadata = await object.loadMetaData();
+        const rotationProp = fileMetadata.properties.find((p) => p[0] === "Novorender/Rotation")?.[1];
+        if (rotationProp) {
+            return JSON.parse(rotationProp);
+        }
+    }
 }
 
 export function getFileNameFromPath(path: string): string | null {

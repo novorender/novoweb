@@ -23,15 +23,21 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { areaActions } from "features/area";
 import { measureActions, selectMeasureEntities } from "features/measure";
-import { clippingOutlineLaserActions, getOutlineLaser, OutlineLaser } from "features/outlineLaser";
+import {
+    clippingOutlineLaserActions,
+    getOutlineLaser,
+    OutlineLaser,
+    selectOutlineLaserPlane,
+} from "features/outlineLaser";
 import { pointLineActions, selectLockPointLineElevation } from "features/pointLine";
 import { selectCanvasContextMenuFeatures } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
-import { getFilePathFromObjectPath, getParentPath } from "utils/objectData";
+import { getFilePathFromObjectPath, getObjectMetadataRotation, getParentPath } from "utils/objectData";
 import { getObjectData, searchDeepByPatterns } from "utils/search";
 
 import { renderActions, selectCameraType, selectClippingPlanes, selectStamp } from "../renderSlice";
 import { CameraType, ObjectVisibility, Picker, StampKind } from "../types";
+import { getLocalRotationAroundNormal } from "../utils";
 
 const selectionFeatures = [
     canvasContextMenuConfig.addFileToBasket.key,
@@ -206,17 +212,32 @@ function Selection() {
         dispatch(renderActions.removeLoadingHandle(handle));
     };
 
-    const clip = () => {
-        const { position, normal } = stamp.data;
+    const clip = async () => {
+        const { position, normal, object } = stamp.data;
         if (!normal || !position) {
             return;
         }
 
         const w = vec3.dot(normal, position);
+        let rotation = 0;
+        if (object) {
+            const rotationQuat = await getObjectMetadataRotation(view, db, object);
+            if (rotationQuat) {
+                rotation = getLocalRotationAroundNormal(rotationQuat, normal);
+            }
+        }
+        const normalOffset = vec4.fromValues(normal[0], normal[1], normal[2], w);
+        dispatch(
+            clippingOutlineLaserActions.setLaserPlane({
+                normalOffset,
+                rotation: rotation,
+            })
+        );
         dispatch(
             renderActions.addClippingPlane({
-                normalOffset: vec4.fromValues(normal[0], normal[1], normal[2], w),
+                normalOffset,
                 baseW: w,
+                rotation,
             })
         );
 
@@ -342,6 +363,7 @@ function Measure() {
     const [pickPoint, setPickPoint] = useState<vec3 | undefined>();
     const [centerLine, setCenterLine] = useState<CenterLine>();
     const measurements = useAppSelector(selectMeasureEntities);
+    const laserPlane = useAppSelector(selectOutlineLaserPlane);
     const lockElevation = useAppSelector(selectLockPointLineElevation);
 
     const isCrossSection = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
@@ -385,7 +407,8 @@ function Measure() {
             if (cameraType === CameraType.Orthographic) {
                 const pos = view.worldPositionFromPixelPosition(stamp.mouseX, stamp.mouseY);
                 if (pos && plane) {
-                    const laser = await getOutlineLaser(pos, view);
+                    console.log(laserPlane);
+                    const laser = await getOutlineLaser(pos, view, laserPlane?.rotation ?? 0);
                     setLaser(laser ? { laser, plane } : undefined);
                     const outlinePoint = view.selectOutlinePoint(pos, 0.2);
                     if (outlinePoint) {
@@ -400,7 +423,7 @@ function Measure() {
                 if (d > 0) {
                     const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
                     const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
-                    const laser = await getOutlineLaser(pos, view);
+                    const laser = await getOutlineLaser(pos, view, laserPlane?.rotation ?? 0);
                     const outlinePoint = view.selectOutlinePoint(pos, 0.2);
                     setLaser(laser ? { laser, plane } : undefined);
                     if (outlinePoint) {
@@ -411,7 +434,7 @@ function Measure() {
             setPickPoint(pickPoint);
             setStatus(AsyncStatus.Success);
         }
-    }, [stamp, db, view, cameraType, dispatch, isCrossSection]);
+    }, [stamp, db, view, cameraType, dispatch, isCrossSection, laserPlane]);
 
     if (stamp?.kind !== StampKind.CanvasContextMenu) {
         return null;
@@ -508,8 +531,6 @@ function Measure() {
         if (!laser) {
             return;
         }
-
-        dispatch(clippingOutlineLaserActions.setLaserPlane(laser.plane));
         dispatch(clippingOutlineLaserActions.addLaser(laser.laser));
         close();
     };
