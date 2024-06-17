@@ -13,7 +13,7 @@ export type ExtendedBookmark = Bookmark & { access: BookmarkAccess };
 
 const initialState = {
     initStatus: AsyncStatus.Initial,
-    saveStatus: { status: AsyncStatus.Initial } as AsyncState<null>,
+    saveStatus: { status: AsyncStatus.Initial } as AsyncState<null | string>,
     bookmarks: [] as ExtendedBookmark[],
     filters: {
         title: "",
