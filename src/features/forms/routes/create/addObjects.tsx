@@ -13,7 +13,7 @@ import { AsyncState, AsyncStatus } from "types/misc";
 import { uniqueArray } from "utils/misc";
 import { searchDeepByPatterns } from "utils/search";
 
-const MAX_OBJECTS_COUNT = 2000;
+const MAX_OBJECTS_COUNT = 5000;
 
 export function AddObjects({
     onSave,
