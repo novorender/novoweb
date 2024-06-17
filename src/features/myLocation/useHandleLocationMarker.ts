@@ -1,4 +1,4 @@
-import { vec3 } from "gl-matrix";
+import { ReadonlyVec3, vec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -6,7 +6,13 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { latLon2Tm } from "features/render/utils";
 import { selectTmZoneForCalc } from "slices/explorer";
 
-import { LocationStatus, myLocationActions, selectShowLocationMarker } from "./myLocationSlice";
+import {
+    LocationStatus,
+    myLocationActions,
+    selectMyLocationAutocenter,
+    selectShowLocationMarker,
+} from "./myLocationSlice";
+import { useGoToMyLocation } from "./useGoToMyLocation";
 
 export function useHandleLocationMarker() {
     const {
@@ -15,9 +21,23 @@ export function useHandleLocationMarker() {
 
     const tmZone = useAppSelector(selectTmZoneForCalc);
     const showMarker = useAppSelector(selectShowLocationMarker);
+    const autocenter = useAppSelector(selectMyLocationAutocenter);
+    const autocenterRef = useRef(autocenter);
+    autocenterRef.current = autocenter;
     const dispatch = useAppDispatch();
     const watchId = useRef<number>();
     const lastUpdate = useRef(0);
+    const lastAltitude = useRef<number>();
+    const goToMyLocation = useGoToMyLocation();
+    const goToMyLocationRef = useRef(goToMyLocation);
+    goToMyLocationRef.current = goToMyLocation;
+    const lastScenePos = useRef<ReadonlyVec3>();
+
+    useEffect(() => {
+        if (autocenter && lastScenePos.current && goToMyLocationRef.current) {
+            goToMyLocationRef.current(lastScenePos.current);
+        }
+    }, [autocenter]);
 
     useEffect(() => {
         if (showMarker && tmZone) {
@@ -40,12 +60,18 @@ export function useHandleLocationMarker() {
 
                 const now = Date.now();
 
-                if (now - lastUpdate.current < 5000) {
+                if (now - lastUpdate.current < 500) {
                     return;
                 }
 
                 const scenePos = latLon2Tm({ coords: pos.coords, tmZone });
-                scenePos[2] = pos.coords.altitude ?? view.renderState.camera.position[2];
+                if (pos.coords.altitude) {
+                    lastAltitude.current = pos.coords.altitude;
+                } else if (!lastAltitude.current) {
+                    lastAltitude.current = view.renderState.camera.position[2];
+                }
+                scenePos[2] = lastAltitude.current;
+                lastScenePos.current = scenePos;
                 const outOfBounds =
                     vec3.dist(scenePos, scene.boundingSphere.center) >
                     scene.boundingSphere.radius + pos.coords.accuracy * 2;
@@ -59,6 +85,10 @@ export function useHandleLocationMarker() {
                     );
                 } else {
                     dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
+
+                    if (autocenterRef.current) {
+                        goToMyLocation(scenePos);
+                    }
                 }
 
                 lastUpdate.current = now;
@@ -82,11 +112,13 @@ export function useHandleLocationMarker() {
                 navigator.geolocation.clearWatch(watchId.current);
             }
             lastUpdate.current = 0;
+            lastAltitude.current = undefined;
+            lastScenePos.current = undefined;
             dispatch(myLocationActions.setCurrentLocation(undefined));
             dispatch(myLocationActions.setGeolocationPositionCoords(undefined));
             dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
         }
-    }, [showMarker, view, scene, dispatch, tmZone]);
+    }, [showMarker, view, scene, dispatch, tmZone, goToMyLocation]);
 
     useEffect(() => {
         return () => {

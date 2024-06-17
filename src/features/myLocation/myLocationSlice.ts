@@ -12,6 +12,7 @@ export enum LocationStatus {
 const initialState = {
     showMarker: false,
     currentLocation: undefined as undefined | vec3,
+    autocenter: false,
     geolocationPositionCoords: undefined as
         | undefined
         | { accuracy: number; altitude: number | null; longitude: number; latitude: number },
@@ -32,6 +33,9 @@ export const myLocationSlice = createSlice({
         toggleShowMarker: (state, action: PayloadAction<boolean | undefined>) => {
             state.showMarker = action.payload ?? !state.showMarker;
         },
+        toggleAutocenter: (state, action: PayloadAction<boolean>) => {
+            state.autocenter = action.payload;
+        },
         setSatus: (state, action: PayloadAction<State["status"]>) => {
             state.status = action.payload;
         },
@@ -43,6 +47,7 @@ export const myLocationSlice = createSlice({
 
 export const selectCurrentLocation = (state: RootState) => state.myLocation.currentLocation;
 export const selectShowLocationMarker = (state: RootState) => state.myLocation.showMarker;
+export const selectMyLocationAutocenter = (state: RootState) => state.myLocation.autocenter;
 export const selectLocationStatus = (state: RootState) => state.myLocation.status;
 export const selectGeolocationPositionCoords = (state: RootState) => state.myLocation.geolocationPositionCoords;
 
