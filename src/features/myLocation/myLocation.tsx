@@ -48,7 +48,7 @@ export default function MyLocation() {
     const dispatch = useAppDispatch();
 
     const goToPos = () => {
-        if ((showMarker || autocenter) && currentLocation) {
+        if (showMarker && currentLocation) {
             dispatch(
                 renderActions.setCamera({
                     type: cameraType,
