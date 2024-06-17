@@ -33,8 +33,8 @@ export const myLocationSlice = createSlice({
         toggleShowMarker: (state, action: PayloadAction<boolean | undefined>) => {
             state.showMarker = action.payload ?? !state.showMarker;
         },
-        toggleAutocenter: (state, action: PayloadAction<boolean>) => {
-            state.autocenter = action.payload;
+        toggleAutocenter: (state, action: PayloadAction<boolean | undefined>) => {
+            state.autocenter = action.payload ?? !state.autocenter;
         },
         setSatus: (state, action: PayloadAction<State["status"]>) => {
             state.status = action.payload;

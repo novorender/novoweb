@@ -43,7 +43,7 @@ export const MyLocationMarker = forwardRef<{ update: () => void }>(function MyLo
     return (
         <>
             {showMarker && location && status !== LocationStatus.Error && (
-                <g ref={setContainer} id="myLocationPoint" name="myLocationPoint">
+                <g ref={setContainer}>
                     <circle cx="0" cy="0" r="16" fill="#4185f480" />
                     <circle cx="0" cy="0" r="8" fill="#4185f4" stroke="white" strokeWidth="1" />
                 </g>
