@@ -160,7 +160,6 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                 }
             }
         }
-        console.log(centerLinePt, center, pinholeQuadrant.current);
 
         prevCenterLinePt.current = centerLinePt;
 
