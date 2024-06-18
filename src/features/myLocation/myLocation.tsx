@@ -26,6 +26,7 @@ import {
     selectCurrentLocation,
     selectGeolocationPositionCoords,
     selectLocationStatus,
+    selectMyLocationAutocenter,
     selectShowLocationMarker,
 } from "./myLocationSlice";
 
@@ -40,6 +41,7 @@ export default function MyLocation() {
     const tmZone = useAppSelector(selectTmZoneForCalc);
     const currentLocation = useAppSelector(selectCurrentLocation);
     const showMarker = useAppSelector(selectShowLocationMarker);
+    const autocenter = useAppSelector(selectMyLocationAutocenter);
     const geoLocationCoords = useAppSelector(selectGeolocationPositionCoords);
     const status = useAppSelector(selectLocationStatus);
     const cameraType = useAppSelector(selectCameraType);
@@ -122,7 +124,7 @@ export default function MyLocation() {
                                 onClick={goToPos}
                                 color="grey"
                             >
-                                <MyLocationIcon fontSize="small" sx={{ mr: 1 }} /> Go to location
+                                <MyLocationIcon fontSize="small" sx={{ mr: 1 }} /> Go to
                             </Button>
                             <FormControlLabel
                                 disabled={!tmZone}
@@ -132,12 +134,32 @@ export default function MyLocation() {
                                         size="medium"
                                         color="primary"
                                         checked={showMarker}
-                                        onChange={(_e, checked) =>
-                                            dispatch(myLocationActions.toggleShowMarker(checked))
-                                        }
+                                        onChange={(_e, checked) => {
+                                            dispatch(myLocationActions.toggleShowMarker(checked));
+                                            if (!checked) {
+                                                dispatch(myLocationActions.toggleAutocenter(false));
+                                            }
+                                        }}
                                     />
                                 }
-                                label={<Box fontSize={14}>Show marker</Box>}
+                                label={<Box fontSize={14}>Marker</Box>}
+                            />
+                            <FormControlLabel
+                                disabled={!tmZone}
+                                control={
+                                    <IosSwitch
+                                        size="medium"
+                                        color="primary"
+                                        checked={autocenter}
+                                        onChange={(_e, checked) => {
+                                            dispatch(myLocationActions.toggleAutocenter(checked));
+                                            if (checked) {
+                                                dispatch(myLocationActions.toggleShowMarker(true));
+                                            }
+                                        }}
+                                    />
+                                }
+                                label={<Box fontSize={14}>Center</Box>}
                             />
                         </Box>
                     ) : null}
