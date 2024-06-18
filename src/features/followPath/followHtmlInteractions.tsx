@@ -1,6 +1,6 @@
 import { css } from "@emotion/react";
 import { Box, Button, Slider, styled } from "@mui/material";
-import { ReadonlyVec2 } from "gl-matrix";
+import { ReadonlyVec2, vec2 } from "gl-matrix";
 import { forwardRef, memo, SyntheticEvent, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -51,6 +51,8 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
     const followPath = useAppSelector(selectSelectedPath);
     const isActive = viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations;
     const centerLinePt = useAppSelector(selectClosestToCenterFollowPathPoint);
+    const prevCenterLinePt = useRef(centerLinePt);
+    const pinholeQuadrant = useRef([-1, -1]);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -146,16 +148,31 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
             </div>
         );
     } else if (viewMode === ViewMode.Deviations && followPath && centerLinePt && isLegendFloating) {
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2;
+        const center = vec2.fromValues(window.innerWidth / 2, window.innerHeight / 2);
+        const tolerancePx = 20;
+
+        for (const axis of [0, 1]) {
+            const newAxisQuad = centerLinePt[axis] < center[axis] ? -1 : 1;
+            if (newAxisQuad !== pinholeQuadrant.current[axis]) {
+                const withinTolerance = Math.abs(centerLinePt[axis] - center[axis]) < tolerancePx;
+                if (!withinTolerance) {
+                    pinholeQuadrant.current[axis] = newAxisQuad;
+                }
+            }
+        }
+        console.log(centerLinePt, center, pinholeQuadrant.current);
+
+        prevCenterLinePt.current = centerLinePt;
 
         return (
             <LegendAlongCenterLine
                 style={{
-                    left: centerLinePt[0] <= centerX ? `${centerLinePt[0]}px` : undefined,
-                    top: centerLinePt[1] <= centerY ? `${centerLinePt[1]}px` : undefined,
-                    right: centerLinePt[0] > centerX ? `${window.innerWidth - centerLinePt[0]}px` : undefined,
-                    bottom: centerLinePt[1] > centerY ? `${window.innerHeight - centerLinePt[1]}px` : undefined,
+                    ...(pinholeQuadrant.current[0] === -1
+                        ? { left: `${centerLinePt[0]}px` }
+                        : { right: `${window.innerWidth - centerLinePt[0]}px` }),
+                    ...(pinholeQuadrant.current[1] === -1
+                        ? { top: `${centerLinePt[1]}px` }
+                        : { bottom: `${window.innerHeight - centerLinePt[1]}px` }),
                 }}
             >
                 <GroupsAndColorsHud absPos={false} />
