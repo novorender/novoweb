@@ -1,14 +1,12 @@
 import { Box, css, styled } from "@mui/material";
 import { LineSubject } from "@visx/annotation";
 import { AxisBottom, AxisLeft } from "@visx/axis";
-import { curveMonotoneX } from "@visx/curve";
 import { localPoint } from "@visx/event";
 import { LinearGradient } from "@visx/gradient";
 import { GridRows } from "@visx/grid";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
-import { scaleLinear } from "@visx/scale";
-import { AreaClosed } from "@visx/shape";
-import { Line } from "@visx/shape";
+import { scaleBand, scaleLinear } from "@visx/scale";
+import { Bar, Line } from "@visx/shape";
 import { defaultStyles, TooltipWithBounds, withTooltip } from "@visx/tooltip";
 import { WithTooltipProvidedProps } from "@visx/tooltip/lib/enhancers/withTooltip";
 import { bisector } from "@visx/vendor/d3-array";
@@ -44,7 +42,7 @@ const tooltipStyles = {
     border: "1px solid white",
 };
 
-const margin = { left: 32, top: 10, bottom: 26, right: 0 };
+const margin = { left: 44, top: 10, bottom: 26, right: 0 };
 
 type Props = { width: number; height: number };
 
@@ -66,6 +64,7 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
         const centerLine = subprofile?.centerLine;
         const fullParameterBounds = centerLine?.parameterBounds;
         const profilePos = useAppSelector(selectProfile);
+        const profilePosNumber = Number(profilePos);
         const goToProfile = useGoToProfile();
         const dispatch = useAppDispatch();
         const distribution = useAppSelector(selectCurrentSubprofileDeviationDistributions);
@@ -95,6 +94,19 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                 domain: parameterBounds ?? [0, 100],
             });
         }, [parameterBounds, width]);
+
+        const scaleBandX = useMemo(() => {
+            const domain: number[] = [];
+            const bounds = parameterBounds ? [Math.floor(parameterBounds[0]), Math.ceil(parameterBounds[1])] : [0, 100];
+            for (let i = bounds[0]; i <= bounds[1]; i++) {
+                domain.push(i);
+            }
+
+            return scaleBand({
+                range: [margin.left, width - margin.right],
+                domain,
+            });
+        }, [width, parameterBounds]);
 
         const scaleY = useMemo(() => {
             let min = Number.MAX_SAFE_INTEGER;
@@ -135,16 +147,19 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                 const { x } = localPoint(event) || { x: 0 };
                 const x0 = scaleX.invert(x);
                 const index = bisectRange(data, x0, 1);
-                const d0 = data[index - 1];
-                const d = d0;
+                const d = data[index - 1];
+                const barX = scaleBandX(d.profile);
+                if (barX === undefined) {
+                    return;
+                }
 
                 showTooltip({
                     tooltipData: d,
-                    tooltipLeft: x,
+                    tooltipLeft: barX + scaleBandX.bandwidth() / 2,
                     tooltipTop: scaleY(d[attr]),
                 });
             },
-            [showTooltip, scaleY, scaleX, data, attr]
+            [showTooltip, scaleY, scaleX, scaleBandX, data, attr]
         );
 
         if (!data) {
@@ -168,7 +183,7 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                         const svg = (e.target as SVGElement).closest("svg") as SVGElement;
                         const bbox = svg.getBoundingClientRect();
                         const x = e.clientX - bbox.left;
-                        const pos = Math.round(scaleX.invert(x));
+                        const pos = Math.floor(scaleX.invert(x));
 
                         const fpObj = await view.measure?.followPath.followParametricObjects([centerLine.objectId], {
                             cylinderMeasure: "center",
@@ -197,21 +212,47 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                         numTicks={2}
                         stroke="#e0e0e0"
                     />
-                    <AreaClosed
-                        data={data}
-                        x={(d) => scaleX(d.profile) ?? 0}
-                        y={(d) => scaleY(d[attr]) ?? 0}
-                        yScale={scaleY}
-                        strokeWidth={1}
-                        stroke="url(#area-gradient)"
+                    <mask id="bar-mask">
+                        {data
+                            .map((d) => {
+                                const barWidth = scaleBandX.bandwidth();
+                                const y = scaleY(d[attr]);
+                                if (!y) {
+                                    return;
+                                }
+
+                                const barHeight = height - margin.bottom - y;
+                                const barX = scaleBandX(d.profile);
+                                const barY = height - margin.bottom - barHeight;
+                                return (
+                                    <Bar
+                                        key={`bar-${d.profile}`}
+                                        x={barX}
+                                        y={barY}
+                                        width={barWidth}
+                                        height={barHeight}
+                                        fill="white"
+                                    />
+                                );
+                            })
+                            .filter((e) => e)}
+                    </mask>
+                    <Bar
+                        x={margin.left}
+                        y={margin.top}
+                        width={width - margin.right - margin.left}
+                        height={height - margin.bottom - margin.top}
                         fill="url(#area-gradient)"
-                        curve={curveMonotoneX}
+                        mask="url(#bar-mask)"
                     />
-                    {profilePos !== undefined ? (
+                    {!Number.isNaN(profilePosNumber) &&
+                    data.length &&
+                    profilePosNumber >= data[0].profile &&
+                    profilePosNumber < data.at(-1)!.profile ? (
                         <LineSubject
                             orientation={"vertical"}
                             stroke="#D61E5C"
-                            x={scaleX(Number(profilePos))}
+                            x={scaleBandX(profilePosNumber)! + scaleBandX.bandwidth() / 2}
                             min={margin.top}
                             max={height - margin.bottom}
                         />
@@ -250,20 +291,14 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                     )}
 
                     <AxisBottom top={height - margin.bottom} scale={scaleX} numTicks={4} />
+                    <text x={width - margin.right - 50} y={height - margin.bottom - 4} fontSize={10}>
+                        Profile [m]
+                    </text>
                     <AxisLeft left={margin.left} scale={scaleY} numTicks={2} />
+                    <text transform={`translate(10, ${margin.top + 36}) rotate(-90)`} fontSize={10}>
+                        Dev [m]
+                    </text>
                 </svg>
-                {tooltipData && (
-                    <div>
-                        <TooltipWithBounds
-                            key={Math.random()}
-                            top={tooltipTop - 12}
-                            left={tooltipLeft + 12}
-                            style={tooltipStyles}
-                        >
-                            {tooltipData[attr].toFixed(3)} @ {tooltipData.profile.toFixed(2)}m
-                        </TooltipWithBounds>
-                    </div>
-                )}
                 <Box position="absolute" top="0" right="0">
                     <HeaderButton
                         onClick={() => dispatch(deviationsActions.setCenterlineMinimapAttr("minDistance"))}
@@ -284,6 +319,18 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                         max
                     </HeaderButton>
                 </Box>
+                {tooltipData && (
+                    <div>
+                        <TooltipWithBounds
+                            key={Math.random()}
+                            top={tooltipTop - 12}
+                            left={tooltipLeft + 12}
+                            style={tooltipStyles}
+                        >
+                            {tooltipData[attr].toFixed(3)} @ {tooltipData.profile.toFixed(0)}m
+                        </TooltipWithBounds>
+                    </div>
+                )}
             </Box>
         );
     }

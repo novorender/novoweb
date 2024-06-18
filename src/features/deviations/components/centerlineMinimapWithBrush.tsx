@@ -164,9 +164,11 @@ function CenterlineMinimapWithBrushInner({ width, height }: { width: number; hei
                 if (x1 >= max - 1) {
                     x1 = max;
                 }
+                x0 = Math.floor(x0);
+                x1 = Math.ceil(x1);
                 dispatch(
                     deviationsActions.setSubprofileDeviationDistributions({
-                        parameterBounds: [Math.round(x0), Math.round(x1)],
+                        parameterBounds: x0 >= x1 ? fullParameterBounds : [x0, x1],
                         data: { status: AsyncStatus.Initial },
                     })
                 );
