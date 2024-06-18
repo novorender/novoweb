@@ -9,7 +9,7 @@ import { CustomProperties } from "types/project";
 import { CadCamera, SceneConfig, Subtrees, SubtreeStatus } from "./types";
 
 export function getSubtrees(
-    hidden: NonNullable<CustomProperties["explorerProjectState"]>["renderSettings"]["hide"],
+    hidden: NonNullable<NonNullable<CustomProperties["explorerProjectState"]>["renderSettings"]>["hide"],
     subtrees: string[]
 ): Subtrees {
     return {
@@ -177,4 +177,50 @@ export function applyCameraDistanceToMeasureTolerance(
         point: settings.point ? settings.point * hoverScale : undefined,
         segment: settings.segment ? settings.segment * hoverScale : undefined,
     };
+}
+
+export function getDefaultCamera(boundingBox?: [number, number, number, number]): CadCamera | undefined {
+    if (!boundingBox) {
+        return;
+    }
+
+    const centerX = (boundingBox[0] + boundingBox[2]) / 2;
+    const centerY = (boundingBox[1] + boundingBox[3]) / 2;
+    const width = boundingBox[2] - boundingBox[0];
+    const height = boundingBox[3] - boundingBox[1];
+
+    const fov = 60;
+    const maxDim = Math.max(width, height);
+    const distance = maxDim / (2 * Math.tan((fov * Math.PI) / 360));
+
+    const initPosition = vec3.fromValues(0, 0, distance);
+    const rotation = quat.fromValues(0.25000000000000006, 0.43301270189221935, 0.07945931129894554, 0.8623724356957945);
+    const rotatedPosition = vec3.transformQuat(vec3.create(), initPosition, rotation);
+    const position = vec3.fromValues(rotatedPosition[0] + centerX, rotatedPosition[1] + centerY, rotatedPosition[2]);
+
+    return {
+        kind: "pinhole",
+        position,
+        rotation,
+        fov,
+    };
+}
+
+export function getLocalRotationAroundNormal(quaternion: quat, normal: vec3): number {
+    // Create a vector to represent the rotation axis
+    const rotationAxis = vec3.create();
+    quat.getAxisAngle(rotationAxis, quaternion);
+    if (Math.abs(vec3.dot(rotationAxis, normal)) < 0.01) {
+        return 0;
+    }
+    // Get the angle between the rotation axis and the normal
+    const angle = vec3.angle(rotationAxis, normal);
+    // Create a quaternion representing the rotation around the normal
+    const rotationQuaternion = quat.setAxisAngle(quat.create(), normal, angle);
+    // Decompose the object's quaternion into rotation around the normal and the remaining rotation
+    const conjugateRotationQuaternion = quat.conjugate(quat.create(), rotationQuaternion);
+    const localRotationQuaternion = quat.multiply(quat.create(), quaternion, conjugateRotationQuaternion);
+    // Get the angle of the local rotation around the normal
+    const localRotationAngle = 2 * Math.acos(localRotationQuaternion[3]);
+    return localRotationAngle;
 }

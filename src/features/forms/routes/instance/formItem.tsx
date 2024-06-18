@@ -86,14 +86,18 @@ const FormItemHeader = ({ item, toggleRelevant }: { item: FormItem; toggleReleva
 
 export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatch<SetStateAction<FormItem[]>> }) {
     const [editing, setEditing] = useState(false);
+    const [isRelevant, setIsRelevant] = useState(item.required);
 
     const handleChange = (value: string) => {
+        if (!editing) {
+            setEditing(true);
+        }
         setItems((state) =>
             state.map((_item) =>
                 _item === item
                     ? {
                           ...item,
-                          value: [value],
+                          value: value ? [value] : null,
                       }
                     : _item
             )
@@ -101,13 +105,16 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
     };
 
     const toggleRelevant = () => {
+        const relevant = item.required ? true : !isRelevant;
+        setIsRelevant(relevant);
+        setEditing(relevant);
         setItems((state) =>
             state.map((_item) =>
                 _item === item
                     ? {
                           ...item,
-                          relevant: item.required ? true : !item.relevant,
-                          value: null,
+                          relevant,
+                          value: item.value ?? null,
                       }
                     : _item
             )
@@ -115,6 +122,9 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
     };
 
     const handleTextFieldClick = (event: MouseEvent<HTMLDivElement>) => {
+        if (!isRelevant) {
+            return;
+        }
         if (event.target instanceof HTMLAnchorElement || event.target instanceof SVGElement) {
             // Don't turn on editing mode when the link was clicked
             return;
@@ -250,7 +260,12 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                                 maxRows={5}
                                 sx={{ width: 1, pr: 0 }}
                                 id={item.id}
-                                inputRef={(ref) => ref?.focus()}
+                                autoFocus
+                                inputRef={(ref) => {
+                                    if (ref) {
+                                        ref.selectionStart = item.value?.[0].length ?? 0;
+                                    }
+                                }}
                             />
                         )}
                     </Box>

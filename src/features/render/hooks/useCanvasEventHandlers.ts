@@ -358,7 +358,7 @@ export function useCanvasEventHandlers({
                     ? "red"
                     : hoverEnt?.status === "loaded"
                     ? "lightgreen"
-                    : hoverEnt?.entity === undefined || hoverEnt.status === "unknown"
+                    : hoverEnt?.status === "unknown"
                     ? "blue"
                     : "yellow";
 

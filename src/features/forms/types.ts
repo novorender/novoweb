@@ -1,4 +1,4 @@
-import { type vec3 } from "gl-matrix";
+import { type quat, type vec3 } from "gl-matrix";
 
 export enum FormItemType {
     Checkbox = "checkbox",
@@ -131,6 +131,8 @@ export type FormRecord = {
     title?: string;
     state: FormState;
     location?: vec3;
+    rotation?: quat;
+    scale?: number;
 };
 
 export type FormInstanceId = string;
@@ -163,6 +165,8 @@ export type Form = {
     readonly: boolean;
     state: FormState;
     location?: vec3;
+    rotation?: quat;
+    scale?: number;
     createdBy?: ChangeStamp;
     modifiedBy?: ChangeStamp[];
 };
@@ -173,4 +177,20 @@ export type FormGLtfAsset = {
     matIconName: string;
     icon: string;
     baseObjectId: number;
+};
+
+export type FormTransform = {
+    // Reason for having templateId/formId here:
+    // When we click another marker - selectedFormId changes straight away, but not transformDraft,
+    // because saving relies on it.
+    // Meanwhile new selected object is rendered with the previous object transform causing flicker.
+    // By attaching transformDraft to particular form we can avoid that flicker.
+    // Another alternative could be to make it a state in locationInstance, but I want to localize
+    // form transformDraft as much as possible because it might update quite rabpidly.
+    templateId: string;
+    formId: string;
+    location: vec3;
+    rotation?: quat;
+    scale?: number;
+    updated: boolean;
 };
