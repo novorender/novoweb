@@ -35,7 +35,7 @@ export function BookmarksSnackbar() {
             onClose={close}
             message={
                 status === AsyncStatus.Success
-                    ? "Bookmarks successfully saved."
+                    ? saveStatus.data ?? "Bookmarks successfully saved."
                     : saveStatus.msg ?? "An error occurred while saving bookmarks."
             }
             action={

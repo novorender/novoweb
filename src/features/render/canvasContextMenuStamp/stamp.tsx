@@ -32,7 +32,12 @@ import {
 import { pointLineActions, selectLockPointLineElevation } from "features/pointLine";
 import { selectCanvasContextMenuFeatures } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
-import { getFilePathFromObjectPath, getObjectMetadataRotation, getParentPath } from "utils/objectData";
+import {
+    getFileNameFromPath,
+    getFilePathFromObjectPath,
+    getObjectMetadataRotation,
+    getParentPath,
+} from "utils/objectData";
 import { getObjectData, searchDeepByPatterns } from "utils/search";
 
 import { renderActions, selectCameraType, selectClippingPlanes, selectStamp } from "../renderSlice";
@@ -304,42 +309,71 @@ async function getRoadCenterLine({ db, view, id }: { db: ObjectDB; view: View; i
         return;
     }
 
-    if (obj.properties.find(([key]) => key === "Novorender/Path")) {
+    if (obj.properties.find(([key]) => key === "Novorender/Path" || key === "Novorender/PathId")) {
         return view.measure?.core.pickCurveSegment(obj.id);
     }
 
-    const signal = new AbortController().signal;
-    const iterator = db.search({ parentPath: getParentPath(getParentPath(obj.path)), descentDepth: 0 }, signal);
+    const fileName = getFileNameFromPath(obj.path);
+    const isIfc = fileName?.toLowerCase().endsWith(".ifc") ?? false;
+    let cl: HierarcicalObjectReference | undefined;
+    if (isIfc) {
+        // ifc
+        // Currently we expect single center line under a single project
 
-    const res = (await iterator.next()).value as HierarcicalObjectReference | undefined;
-    const clProperty = (await res?.loadMetaData())?.properties.find(([key]) => key.toLowerCase() === "centerline");
+        const parts = obj.path.split("/");
+        const fileIndex = parts.indexOf(fileName!);
+        if (fileIndex === parts.length - 1) {
+            return;
+        }
+        const projectPath = parts.slice(0, fileIndex + 2).join("/");
 
-    if (!clProperty) {
-        return;
+        const signal = new AbortController().signal;
+        const iterator = db.search(
+            {
+                parentPath: projectPath,
+                descentDepth: 1,
+                searchPattern: [{ property: "Novorender/PathId", value: "" }],
+            },
+            signal
+        );
+
+        cl = (await iterator.next()).value as HierarcicalObjectReference | undefined;
+    } else {
+        // landxml
+        const signal = new AbortController().signal;
+        const iterator = db.search({ parentPath: getParentPath(getParentPath(obj.path)), descentDepth: 0 }, signal);
+
+        const res = (await iterator.next()).value as HierarcicalObjectReference | undefined;
+        const clProperty = (await res?.loadMetaData())?.properties.find(([key]) => key.toLowerCase() === "centerline");
+
+        if (!clProperty) {
+            return;
+        }
+
+        const clParentIterator = db.search(
+            {
+                searchPattern: [{ property: "name", value: clProperty[1] }],
+            },
+            signal
+        );
+        const clParent = (await clParentIterator.next()).value as HierarcicalObjectReference | undefined;
+
+        if (!clParent) {
+            return;
+        }
+
+        const clIterator = db.search(
+            {
+                searchPattern: [
+                    { property: "path", value: clParent.path },
+                    { property: "Novorender/Path", value: "" },
+                    { property: "Novorender/PathId", value: "" },
+                ],
+            },
+            signal
+        );
+        cl = (await clIterator.next()).value as HierarcicalObjectReference | undefined;
     }
-
-    const clParentIterator = db.search(
-        {
-            searchPattern: [{ property: "name", value: clProperty[1] }],
-        },
-        signal
-    );
-    const clParent = (await clParentIterator.next()).value as HierarcicalObjectReference | undefined;
-
-    if (!clParent) {
-        return;
-    }
-
-    const clIterator = db.search(
-        {
-            searchPattern: [
-                { property: "path", value: clParent.path },
-                { property: "Novorender/Path", value: "" },
-            ],
-        },
-        signal
-    );
-    const cl = (await clIterator.next()).value as HierarcicalObjectReference | undefined;
 
     if (!cl) {
         return;
