@@ -13,7 +13,8 @@ import {
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { GroupStatus, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
+import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
+import { fillGroupIds } from "features/deviations/utils";
 import { useSceneId } from "hooks/useSceneId";
 import { ProjectType } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
@@ -100,29 +101,35 @@ export function useHandleInit() {
                     })
                 );
 
-                dispatchObjectGroups(
-                    objectGroupsActions.set(
-                        sceneData.objectGroups
-                            .filter((group) => group.id && group.search)
-                            .map((group) => ({
-                                name: group.name,
-                                id: group.id,
-                                grouping: group.grouping ?? "",
-                                color: group.color ?? ([1, 0, 0, 1] as VecRGBA),
-                                opacity: group.opacity ?? 0,
-                                search: group.search ?? [],
-                                includeDescendants: group.includeDescendants ?? true,
-                                status: group.selected
-                                    ? GroupStatus.Selected
-                                    : group.hidden
-                                    ? GroupStatus.Hidden
-                                    : GroupStatus.None,
-                                // NOTE(OLA): Pass IDs as undefined to be loaded when group is activated.
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                ids: group.ids ? new Set(group.ids) : (undefined as any),
-                            }))
-                    )
+                const groups: ObjectGroup[] = sceneData.objectGroups
+                    .filter((group) => group.id && group.search)
+                    .map((group) => ({
+                        name: group.name,
+                        id: group.id,
+                        grouping: group.grouping ?? "",
+                        color: group.color ?? ([1, 0, 0, 1] as VecRGBA),
+                        opacity: group.opacity ?? 0,
+                        search: group.search ?? [],
+                        includeDescendants: group.includeDescendants ?? true,
+                        status: group.selected
+                            ? GroupStatus.Selected
+                            : group.hidden
+                            ? GroupStatus.Hidden
+                            : group.frozen
+                            ? GroupStatus.Frozen
+                            : GroupStatus.None,
+                        // NOTE(OLA): Pass IDs as undefined to be loaded when group is activated.
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        ids: group.ids ? new Set(group.ids) : (undefined as any),
+                    }));
+
+                // Ensure hidden groups are loaded before rendering anything
+                await fillGroupIds(
+                    sceneId,
+                    groups.filter((g) => g.status === GroupStatus.Frozen)
                 );
+
+                dispatchObjectGroups(objectGroupsActions.set(groups));
                 dispatchHighlighted(
                     highlightActions.setColor(sceneData.customProperties.highlights?.primary.color ?? [1, 0, 0, 1])
                 );

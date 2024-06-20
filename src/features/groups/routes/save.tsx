@@ -36,7 +36,8 @@ export function Save({ sceneId }: { sceneId: string }) {
                 .map(({ status, ...grp }) => ({
                     ...grp,
                     selected: status === GroupStatus.Selected,
-                    hidden: [GroupStatus.Hidden, GroupStatus.Frozen].includes(status),
+                    hidden: status === GroupStatus.Hidden,
+                    frozen: status === GroupStatus.Frozen,
                     ids: grp.ids ? Array.from(grp.ids) : undefined,
                 }));
 

@@ -1,4 +1,4 @@
-import { Clear, Edit, MoreVert, Visibility, VisibilityOff } from "@mui/icons-material";
+import { AcUnit, Clear, Edit, MoreVert, Visibility, VisibilityOff, WbSunny } from "@mui/icons-material";
 import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { MouseEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
@@ -51,9 +51,17 @@ export function Collection({ collection, disabled }: { collection: string; disab
     const nestedGroups = objectGroups.filter(
         (group) => group.grouping === collection || group.grouping?.startsWith(`${collection}/`)
     );
-    const allSelected = nestedGroups.every((group) => group.status === GroupStatus.Selected);
-    const allHidden = nestedGroups.every((group) => group.status === GroupStatus.Hidden);
-    const allFullyHidden = nestedGroups.every((group) => group.opacity && group.opacity === 0);
+    const allSelectedOrFrozen = nestedGroups.every(
+        (group) => group.status === GroupStatus.Selected || group.status === GroupStatus.Frozen
+    );
+    const allHiddenOrFrozen = nestedGroups.every(
+        (group) => group.status === GroupStatus.Hidden || group.status === GroupStatus.Frozen
+    );
+    const allFullyHiddenOrFrozen = nestedGroups.every(
+        (group) => (group.opacity && group.opacity === 0) || group.status === GroupStatus.Frozen
+    );
+    const anyFrozen = nestedGroups.some((g) => g.status === GroupStatus.Frozen);
+    const allFrozen = nestedGroups.every((g) => g.status === GroupStatus.Frozen);
 
     return (
         <Accordion
@@ -72,46 +80,56 @@ export function Collection({ collection, disabled }: { collection: string; disab
                     </Box>
                 </Box>
                 <Box flex="0 0 auto">
-                    <StyledCheckbox
-                        name="toggle group highlighting"
-                        aria-label="toggle group highlighting"
-                        sx={{ marginLeft: "auto" }}
-                        size="small"
-                        disabled={disabled}
-                        onChange={() =>
-                            nestedGroups.forEach((group) =>
-                                dispatchObjectGroups(
-                                    objectGroupsActions.update(group.id, {
-                                        status: allSelected ? GroupStatus.None : GroupStatus.Selected,
-                                    })
-                                )
-                            )
-                        }
-                        checked={allSelected}
-                        onClick={(event) => event.stopPropagation()}
-                        onFocus={(event) => event.stopPropagation()}
-                    />
+                    {allFrozen ? undefined : (
+                        <StyledCheckbox
+                            name="toggle group highlighting"
+                            aria-label="toggle group highlighting"
+                            sx={{ marginLeft: "auto" }}
+                            size="small"
+                            disabled={disabled}
+                            onChange={() =>
+                                nestedGroups
+                                    .filter((g) => g.status !== GroupStatus.Frozen)
+                                    .forEach((group) =>
+                                        dispatchObjectGroups(
+                                            objectGroupsActions.update(group.id, {
+                                                status: allSelectedOrFrozen ? GroupStatus.None : GroupStatus.Selected,
+                                            })
+                                        )
+                                    )
+                            }
+                            checked={allFrozen ? false : allSelectedOrFrozen}
+                            onClick={(event) => event.stopPropagation()}
+                            onFocus={(event) => event.stopPropagation()}
+                        />
+                    )}
                 </Box>
                 <Box flex="0 0 auto">
                     <StyledCheckbox
                         name="toggle group visibility"
                         aria-label="toggle group visibility"
                         size="small"
-                        icon={<Visibility />}
+                        icon={allFrozen ? <AcUnit color="disabled" /> : <Visibility />}
                         checkedIcon={
-                            allFullyHidden ? <VisibilityOff color="disabled" /> : <Visibility color="disabled" />
-                        }
-                        disabled={disabled}
-                        onChange={() =>
-                            nestedGroups.forEach((group) =>
-                                dispatchObjectGroups(
-                                    objectGroupsActions.update(group.id, {
-                                        status: allHidden ? GroupStatus.None : GroupStatus.Hidden,
-                                    })
-                                )
+                            allFullyHiddenOrFrozen ? (
+                                <VisibilityOff color="disabled" />
+                            ) : (
+                                <Visibility color="disabled" />
                             )
                         }
-                        checked={allHidden}
+                        disabled={disabled || allFrozen}
+                        onChange={() =>
+                            nestedGroups
+                                .filter((g) => g.status !== GroupStatus.Frozen)
+                                .forEach((group) =>
+                                    dispatchObjectGroups(
+                                        objectGroupsActions.update(group.id, {
+                                            status: allHiddenOrFrozen ? GroupStatus.None : GroupStatus.Hidden,
+                                        })
+                                    )
+                                )
+                        }
+                        checked={allFrozen ? false : allHiddenOrFrozen}
                         onClick={(event) => event.stopPropagation()}
                         onFocus={(event) => event.stopPropagation()}
                     />
@@ -167,6 +185,46 @@ export function Collection({ collection, disabled }: { collection: string; disab
                             <Clear fontSize="small" />
                         </ListItemIcon>
                         <ListItemText>Ungroup</ListItemText>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            nestedGroups
+                                .filter((g) => g.status !== GroupStatus.Frozen)
+                                .forEach((group) => {
+                                    dispatchObjectGroups(
+                                        objectGroupsActions.update(group.id, {
+                                            status: GroupStatus.Frozen,
+                                        })
+                                    );
+                                });
+                            closeMenu();
+                        }}
+                        disabled={allFrozen}
+                    >
+                        <ListItemIcon>
+                            <AcUnit fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Freeze all</ListItemText>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            nestedGroups
+                                .filter((g) => g.status === GroupStatus.Frozen)
+                                .forEach((group) => {
+                                    dispatchObjectGroups(
+                                        objectGroupsActions.update(group.id, {
+                                            status: GroupStatus.None,
+                                        })
+                                    );
+                                });
+                            closeMenu();
+                        }}
+                        disabled={!anyFrozen}
+                    >
+                        <ListItemIcon>
+                            <WbSunny fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Unfreeze all</ListItemText>
                     </MenuItem>
                 </Menu>
             </AccordionSummary>

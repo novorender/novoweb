@@ -13,6 +13,7 @@ import { useHidden } from "contexts/hidden";
 import { useHighlightCollections } from "contexts/highlightCollections";
 import { useHighlighted } from "contexts/highlighted";
 import { GroupStatus, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
+import { ImmutableObjectIdSet } from "contexts/objectGroups/reducer";
 import { useSelectionBasket } from "contexts/selectionBasket";
 import { selectVisibleOutlineGroups } from "features/outlineLaser";
 import { selectPropertyTreeGroups } from "features/propertyTree/slice";
@@ -51,6 +52,8 @@ export function useHandleHighlights() {
     const viewMode = useAppSelector(selectViewMode);
 
     const id = useRef(0);
+    const prevFrozen = useRef<{ idSets: ObjectGroup["ids"][]; ids: Uint32Array }>();
+    const prevHidden = useRef<{ ids: number[]; idSets: ObjectGroup["ids"][]; allIds: Uint32Array }>();
 
     useEffect(() => {
         apply();
@@ -81,7 +84,7 @@ export function useHandleHighlights() {
                 return;
             }
 
-            const { coloredGroups, hiddenGroups, semiTransparent } = groups.reduce(
+            const { coloredGroups, hiddenGroups, frozenGroups, semiTransparent } = groups.reduce(
                 (prev, group, idx) => {
                     switch (group.status) {
                         case GroupStatus.Selected: {
@@ -109,6 +112,10 @@ export function useHandleHighlights() {
                             }
                             break;
                         }
+                        case GroupStatus.Frozen: {
+                            prev.frozenGroups.push(group);
+                            break;
+                        }
                         default:
                             break;
                     }
@@ -120,7 +127,7 @@ export function useHandleHighlights() {
                         [color: string]: { ids: Set<number>; action: RenderStateHighlightGroup["action"]; idx: number };
                     },
                     frozenGroups: [] as ObjectGroup[],
-                    hiddenGroups: [] as { ids: Set<number> }[],
+                    hiddenGroups: [] as { ids: ImmutableObjectIdSet }[],
                     semiTransparent: [] as ObjectGroup[],
                 }
             );
@@ -161,7 +168,38 @@ export function useHandleHighlights() {
                 }
             );
 
-            const allHidden = objectIdSet([hidden, ...hiddenGroups.map((g) => g.ids)]);
+            let allHiddenIds: Uint32Array;
+            if (
+                prevHidden.current &&
+                prevHidden.current.ids === hidden &&
+                areArraysEqual(prevHidden.current.idSets, hiddenGroups, (idSet, g) => idSet === g.ids)
+            ) {
+                allHiddenIds = prevHidden.current.allIds;
+            } else {
+                const idSets = hiddenGroups.map((g) => g.ids);
+                prevHidden.current = undefined;
+                allHiddenIds = objectIdSet([hidden, ...idSets]).toArray();
+                prevHidden.current = {
+                    ids: hidden,
+                    idSets,
+                    allIds: allHiddenIds,
+                };
+            }
+
+            let allFrozenIds: Uint32Array;
+            if (
+                prevFrozen.current &&
+                areArraysEqual(prevFrozen.current.idSets, frozenGroups, (idSet, g) => idSet === g.ids)
+            ) {
+                allFrozenIds = prevFrozen.current.ids;
+            } else {
+                prevFrozen.current = undefined;
+                allFrozenIds = objectIdSet(frozenGroups.map((g) => g.ids)).toArray();
+                prevFrozen.current = {
+                    idSets: frozenGroups.map((g) => g.ids),
+                    ids: allFrozenIds,
+                };
+            }
 
             view.modifyRenderState({
                 highlights: {
@@ -172,8 +210,20 @@ export function useHandleHighlights() {
                                   action: createTransparentHighlight(group.opacity),
                               }))
                             : []),
+                        ...(cameraType === CameraType.Orthographic &&
+                        viewMode !== ViewMode.FollowPath &&
+                        viewMode !== ViewMode.Deviations
+                            ? outlineGroups.map((group) => ({
+                                  objectIds: new Uint32Array(group.ids).sort(),
+                                  outlineColor: group.color,
+                              }))
+                            : []),
                         {
-                            objectIds: allHidden.toArray(),
+                            objectIds: allFrozenIds,
+                            action: "filter",
+                        },
+                        {
+                            objectIds: allHiddenIds,
                             action: "hide",
                         },
                         {
@@ -200,14 +250,6 @@ export function useHandleHighlights() {
                             ).sort(),
                             action: group.action,
                         })),
-                        ...(cameraType === CameraType.Orthographic &&
-                        viewMode !== ViewMode.FollowPath &&
-                        viewMode !== ViewMode.Deviations
-                            ? outlineGroups.map((group) => ({
-                                  objectIds: new Uint32Array(group.ids).sort().filter((f) => !allHidden.has(f)),
-                                  outlineColor: group.color,
-                              }))
-                            : []),
                         {
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose
@@ -305,7 +347,7 @@ async function fillActiveGroupIds(sceneId: string, groups: ObjectGroup[]): Promi
  * @param idSets Array of object ID sets or arrays
  * @returns Sorted combined ID array
  */
-function objectIdSet(idSets: (Set<number> | number[])[]) {
+function objectIdSet(idSets: (ImmutableObjectIdSet | Set<number> | number[])[]) {
     // Find object ID range
     let minId = Number.MAX_SAFE_INTEGER;
     let maxId = 0;
@@ -364,4 +406,8 @@ function objectIdSet(idSets: (Set<number> | number[])[]) {
             toArray: () => new Uint32Array(allIds).sort(),
         };
     }
+}
+
+function areArraysEqual<A, B>(a: A[], b: B[], equal: (a: A, b: B) => boolean) {
+    return a.length === b.length && a.every((e, i) => equal(e, b[i]));
 }
