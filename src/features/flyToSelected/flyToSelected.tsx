@@ -1,16 +1,19 @@
 import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
 import { BoundingSphere } from "@novorender/webgl-api";
-import { vec3 } from "gl-matrix";
+import { vec3, vec4 } from "gl-matrix";
 import { useEffect, useRef, useState } from "react";
 
-import { useAppDispatch } from "app/redux-store-interactions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHighlighted } from "contexts/highlighted";
+import { getCameraDir } from "features/engine2D/utils";
 import { imagesActions } from "features/images";
-import { CameraType, renderActions } from "features/render";
+import { CameraType, renderActions, selectCameraType, selectViewMode } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
+import { ViewMode } from "types/misc";
+import { pointToPlaneDistance } from "utils/math";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
 
 enum Status {
@@ -29,6 +32,8 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
         state: { db, scene, view },
     } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
+    const cameraType = useAppSelector(selectCameraType);
+    const isCrossSection = useAppSelector(selectViewMode) === ViewMode.CrossSection;
 
     const [status, setStatus] = useState(Status.Initial);
 
@@ -42,13 +47,49 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
     }, [highlighted, abort, setStatus]);
 
     const handleClick = async () => {
-        if (!highlighted.length) {
+        if (!highlighted.length || !view) {
             return;
         }
 
-        if (previousBoundingSphere.current) {
-            dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: previousBoundingSphere.current }));
+        const go = (sphere: BoundingSphere) => {
+            if (cameraType === CameraType.Pinhole) {
+                dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: sphere }));
+            } else {
+                const cameraDir = getCameraDir(view.renderState.camera.rotation);
+                let position = sphere.center;
+
+                let radius = sphere.radius;
+                if (isCrossSection && view.renderState.clipping.planes.length > 0) {
+                    // In cross section try to reduce bounding sphere radius based on
+                    // the clipping plane position (use sphere/plane intersection radius)
+                    // because visible object part might be much smaller than the full bounding sphere
+                    const plane = vec4.copy(vec4.create(), view.renderState.clipping.planes[0].normalOffset);
+                    vec4.negate(plane, plane);
+                    plane[3] = -plane[3];
+                    const dist = pointToPlaneDistance(sphere.center, plane);
+                    if (dist > 1e-6 && dist < sphere.radius) {
+                        radius = sphere.radius * Math.cos((dist / sphere.radius) * (Math.PI / 2));
+                    }
+                } else {
+                    position = vec3.scaleAndAdd(vec3.create(), sphere.center, cameraDir, -100);
+                }
+                dispatch(
+                    renderActions.setCamera({
+                        type: CameraType.Orthographic,
+                        goTo: {
+                            position,
+                            rotation: view.renderState.camera.rotation,
+                            fov: radius * 2,
+                            far: view.renderState.camera.far,
+                        },
+                    })
+                );
+            }
             dispatch(imagesActions.setActiveImage(undefined));
+        };
+
+        if (previousBoundingSphere.current) {
+            go(previousBoundingSphere.current);
             return;
         }
 
@@ -66,8 +107,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
 
             if (boundingSphere) {
                 previousBoundingSphere.current = boundingSphere;
-                dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: boundingSphere }));
-                dispatch(imagesActions.setActiveImage(undefined));
+                go(boundingSphere);
             }
         } finally {
             setStatus(Status.Initial);

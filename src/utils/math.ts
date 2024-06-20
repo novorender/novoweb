@@ -1,4 +1,4 @@
-import { ReadonlyVec2, vec2 } from "gl-matrix";
+import { ReadonlyVec2, ReadonlyVec3, ReadonlyVec4, vec2 } from "gl-matrix";
 
 /**
  * Project point on a line segment.
@@ -30,4 +30,10 @@ export function projectPointOnLineSegment2D(
 
 export function radToDeg(radian: number) {
     return (radian / Math.PI) * 180;
+}
+
+export function pointToPlaneDistance(p: ReadonlyVec3, normalOffset: ReadonlyVec4) {
+    const [x0, y0, z0] = p;
+    const [a, b, c, d] = normalOffset;
+    return Math.abs(a * x0 + b * y0 + c * z0 + d) / Math.sqrt(a * a + b * b + c * c);
 }
