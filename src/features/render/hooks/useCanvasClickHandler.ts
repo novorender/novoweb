@@ -247,7 +247,7 @@ export function useCanvasClickHandler({
                         );
                     } else if (!result) {
                         return;
-                    } else {
+                    } else if (cameraType == CameraType.Pinhole) {
                         const { normalOffset } = plane;
                         const planeDir = vec3.fromValues(normalOffset[0], normalOffset[1], normalOffset[2]);
                         const camPos = view.renderState.camera.position;
