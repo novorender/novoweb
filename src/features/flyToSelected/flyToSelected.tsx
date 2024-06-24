@@ -1,6 +1,8 @@
-import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
+import { Box, CircularProgress, SpeedDialActionProps, Tooltip } from "@mui/material";
+import { View } from "@novorender/api";
+import { AABB2 } from "@novorender/api/types/measure/worker/brep";
 import { BoundingSphere } from "@novorender/webgl-api";
-import { vec3, vec4 } from "gl-matrix";
+import { vec2, vec3 } from "gl-matrix";
 import { useEffect, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -13,8 +15,9 @@ import { imagesActions } from "features/images";
 import { CameraType, renderActions, selectCameraType, selectViewMode } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { ViewMode } from "types/misc";
-import { pointToPlaneDistance } from "utils/math";
+import { isRectInsideCircle, pointToPlaneDistance, pointToRectDistance } from "utils/math";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
+import { sleep } from "utils/time";
 
 enum Status {
     Initial,
@@ -40,6 +43,20 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
     const previousBoundingSphere = useRef<BoundingSphere>();
     const [abortController, abort] = useAbortController();
 
+    const [tooltipMessage, setTooltipMessage] = useState("");
+    const tooltipTimeout = useRef<ReturnType<typeof setTimeout>>();
+    const orthoLoadingHandle = useRef(0);
+
+    const showTooltip = (msg: string) => {
+        if (tooltipTimeout.current) {
+            clearTimeout(tooltipTimeout.current);
+        }
+        setTooltipMessage(msg);
+        tooltipTimeout.current = setTimeout(() => {
+            setTooltipMessage("");
+        }, 3000);
+    };
+
     useEffect(() => {
         previousBoundingSphere.current = undefined;
         abort();
@@ -51,39 +68,121 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
             return;
         }
 
-        const go = (sphere: BoundingSphere) => {
-            if (cameraType === CameraType.Pinhole) {
-                dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: sphere }));
+        if (orthoLoadingHandle.current) {
+            dispatch(renderActions.removeLoadingHandle(orthoLoadingHandle.current));
+            orthoLoadingHandle.current = 0;
+        }
+
+        const goToOrtho = async (sphere: BoundingSphere) => {
+            if (view.measure && isCrossSection && view.renderState.clipping.planes.length > 0) {
+                // In crossection we have outline vertices and can focus them without
+                // fetching object metadata.
+                // It's not ideal (crossection gets in the center, not the entire visible part of the object),
+                // but crossection is probably what people would want to focus in crossection mode.
+
+                const plane = view.renderState.clipping.planes[0];
+                const planeToSphereDist = pointToPlaneDistance(sphere.center, plane.normalOffset);
+                if (planeToSphereDist > sphere.radius + view.renderState.camera.far) {
+                    showTooltip("Object is outside the current cross section view");
+                    return;
+                }
+
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+                const screenRect = {
+                    min: vec2.fromValues(0, 0),
+                    max: vec2.fromValues(width, height),
+                };
+
+                const [sphereCenter2d] = view.measure.draw.toMarkerPoints([sphere.center]);
+
+                let visibleRadiusRatio = 0;
+                if (sphereCenter2d) {
+                    const sphereRadius2d = (height / view.renderState.camera.fov) * sphere.radius;
+                    const isSphereCenterInsideScreenRect =
+                        sphereCenter2d[0] >= 0 &&
+                        sphereCenter2d[0] <= width &&
+                        sphereCenter2d[1] >= 0 &&
+                        sphereCenter2d[1] <= height;
+
+                    if (
+                        isSphereCenterInsideScreenRect ||
+                        isRectInsideCircle(screenRect, sphereCenter2d, sphereRadius2d)
+                    ) {
+                        visibleRadiusRatio = 1;
+                    } else {
+                        const sphereToRectDist = pointToRectDistance(sphereCenter2d, screenRect);
+                        visibleRadiusRatio = (sphereRadius2d - sphereToRectDist) / sphereRadius2d;
+                    }
+                }
+
+                let loading = 0;
+                if (visibleRadiusRatio < 0.5) {
+                    orthoLoadingHandle.current = loading = performance.now();
+                    dispatch(renderActions.addLoadingHandle(loading));
+
+                    dispatch(
+                        renderActions.setCamera({
+                            type: CameraType.Orthographic,
+                            goTo: {
+                                position: sphere.center,
+                                rotation: view.renderState.camera.rotation,
+                                fov: sphere.radius * 2,
+                                far: view.renderState.camera.far,
+                            },
+                        })
+                    );
+
+                    // Wait for camera to move and outlines to be generated
+                    await sleep(1000);
+                }
+
+                if (loading) {
+                    if (loading !== orthoLoadingHandle.current) {
+                        return;
+                    } else {
+                        orthoLoadingHandle.current = 0;
+                        dispatch(renderActions.removeLoadingHandle(loading));
+                    }
+                }
+
+                const outline = getSelectedObjectsCrossectionZoomingParams(view, new Set(highlighted));
+                if (outline) {
+                    dispatch(
+                        renderActions.setCamera({
+                            type: CameraType.Orthographic,
+                            goTo: {
+                                position: outline.position,
+                                rotation: view.renderState.camera.rotation,
+                                fov: outline.fov,
+                                far: view.renderState.camera.far,
+                            },
+                        })
+                    );
+                }
             } else {
                 const cameraDir = getCameraDir(view.renderState.camera.rotation);
-                let position = sphere.center;
+                const position = vec3.scaleAndAdd(vec3.create(), sphere.center, cameraDir, -20);
 
-                let radius = sphere.radius;
-                if (isCrossSection && view.renderState.clipping.planes.length > 0) {
-                    // In cross section try to reduce bounding sphere radius based on
-                    // the clipping plane position (use sphere/plane intersection radius)
-                    // because visible object part might be much smaller than the full bounding sphere
-                    const plane = vec4.copy(vec4.create(), view.renderState.clipping.planes[0].normalOffset);
-                    vec4.negate(plane, plane);
-                    plane[3] = -plane[3];
-                    const dist = pointToPlaneDistance(sphere.center, plane);
-                    if (dist > 1e-6 && dist < sphere.radius) {
-                        radius = sphere.radius * Math.cos((dist / sphere.radius) * (Math.PI / 2));
-                    }
-                } else {
-                    position = vec3.scaleAndAdd(vec3.create(), sphere.center, cameraDir, -100);
-                }
                 dispatch(
                     renderActions.setCamera({
                         type: CameraType.Orthographic,
                         goTo: {
                             position,
                             rotation: view.renderState.camera.rotation,
-                            fov: radius * 2,
+                            fov: sphere.radius * 2,
                             far: view.renderState.camera.far,
                         },
                     })
                 );
+            }
+        };
+
+        const go = (sphere: BoundingSphere) => {
+            if (cameraType === CameraType.Pinhole) {
+                dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: sphere }));
+            } else {
+                goToOrtho(sphere);
             }
             dispatch(imagesActions.setActiveImage(undefined));
         };
@@ -127,20 +226,61 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
             onClick={handleClick}
             title={disabled ? undefined : name}
             icon={
-                <Box
-                    width={1}
-                    height={1}
-                    position="relative"
-                    display="inline-flex"
-                    justifyContent="center"
-                    alignItems="center"
-                >
-                    {status === Status.Loading ? (
-                        <CircularProgress thickness={2.5} sx={{ position: "absolute" }} />
-                    ) : null}
-                    <Icon />
-                </Box>
+                <Tooltip open={Boolean(tooltipMessage)} title={tooltipMessage} placement="top">
+                    <Box
+                        width={1}
+                        height={1}
+                        position="relative"
+                        display="inline-flex"
+                        justifyContent="center"
+                        alignItems="center"
+                    >
+                        {status === Status.Loading ? (
+                            <CircularProgress thickness={2.5} sx={{ position: "absolute" }} />
+                        ) : null}
+                        <Icon />
+                    </Box>
+                </Tooltip>
             }
         />
     );
+}
+
+function getSelectedObjectsCrossectionZoomingParams(view: View, objectIds: Set<number>) {
+    if (!view.measure) {
+        return;
+    }
+
+    const box = view.getObjectsOutlinePlaneBoundingRectInWorld("clipping", 0, objectIds);
+    if (!box) {
+        return;
+    }
+
+    const center3d = vec3.lerp(vec3.create(), box.min, box.max, 0.5);
+    const [screenMin, screenMax] = view.measure.draw.toMarkerPoints([box.min, box.max]);
+    if (!screenMin || !screenMax) {
+        return;
+    }
+
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const fovK = getOrthoFovRatioForAABB2(width, height, { min: screenMin, max: screenMax });
+    if (!fovK) {
+        return;
+    }
+
+    return {
+        position: center3d,
+        fov: view.renderState.camera.fov * fovK,
+    };
+}
+
+function getOrthoFovRatioForAABB2(screenWidth: number, screenHeight: number, bbox: AABB2): number {
+    const width = Math.abs(bbox.max[0] - bbox.min[0]);
+    const height = Math.abs(bbox.max[1] - bbox.min[1]);
+    const kHeight = screenHeight / height;
+    const kWidth = screenWidth / width;
+    const k = Math.min(kHeight, kWidth);
+    const padding = 0.2;
+    return (1 / k) * (1 + padding);
 }
