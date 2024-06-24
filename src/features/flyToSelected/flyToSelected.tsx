@@ -112,7 +112,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
                         visibleRadiusRatio = 1;
                     } else {
                         const sphereToRectDist = pointToRectDistance(sphereCenter2d, screenRect);
-                        visibleRadiusRatio = (sphereRadius2d - sphereToRectDist) / sphereRadius2d;
+                        visibleRadiusRatio = Math.max(0, (sphereRadius2d - sphereToRectDist) / sphereRadius2d);
                     }
                 }
 
