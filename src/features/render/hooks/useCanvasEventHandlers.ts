@@ -11,9 +11,11 @@ import {
 } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { store } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectShowTracer } from "features/followPath";
 import { measureActions, selectMeasureHoverSettings } from "features/measure";
+import { myLocationActions, selectMyLocationAutocenter } from "features/myLocation";
 import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
@@ -124,6 +126,12 @@ export function useCanvasEventHandlers({
         }, 100);
     };
 
+    const turnOffLocationAutocenter = () => {
+        if (selectMyLocationAutocenter(store.getState())) {
+            dispatch(myLocationActions.toggleAutocenter(false));
+        }
+    };
+
     const handleDown = async (x: number, y: number, timestamp: number) => {
         pointerDownStateRef.current = {
             timestamp,
@@ -134,6 +142,7 @@ export function useCanvasEventHandlers({
 
     const onWheel = (e: WheelEvent<HTMLCanvasElement>) => {
         if (!e.shiftKey || !clippingPlanes.enabled) {
+            turnOffLocationAutocenter();
             return;
         }
 
@@ -188,6 +197,7 @@ export function useCanvasEventHandlers({
         if (contextMenuTouchState.current && e.touches.length === 1) {
             contextMenuTouchState.current.currentPos[0] = e.touches[0].clientX;
             contextMenuTouchState.current.currentPos[1] = e.touches[0].clientY;
+            turnOffLocationAutocenter();
         }
 
         if (e.touches.length === 4 && clippingPlanes.enabled) {
@@ -277,6 +287,10 @@ export function useCanvasEventHandlers({
                 } as MeasureEntity,
             };
         };
+
+        if (e.buttons !== 0) {
+            turnOffLocationAutocenter();
+        }
 
         if (e.buttons === 0 && cursor === "measure") {
             const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {

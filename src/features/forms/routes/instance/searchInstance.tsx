@@ -1,10 +1,11 @@
 import { ArrowBack, Clear, FlightTakeoff } from "@mui/icons-material";
 import { Box, Button, LinearProgress, Typography, useTheme } from "@mui/material";
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox } from "components";
+import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { selectCurrentFormsList } from "features/forms/slice";
@@ -12,8 +13,8 @@ import { renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useGetSearchFormQuery, useUpdateSearchFormMutation } from "../../api";
-import { type FormId, type FormItem as FItype, FormItemType, type FormObjectGuid } from "../../types";
-import { toFormFields, toFormItems } from "../../utils";
+import { type Form, type FormId, type FormItem as FItype, FormItemType, type FormObjectGuid } from "../../types";
+import { determineHighlightCollection, toFormFields, toFormItems } from "../../utils";
 import { FormItem } from "./formItem";
 
 export function SearchInstance() {
@@ -25,6 +26,7 @@ export function SearchInstance() {
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const { idArr: highlighted } = useHighlighted();
+    const dispatchHighlightCollections = useDispatchHighlightCollections();
     const flyToForm = useFlyToForm();
 
     const willUnmount = useRef(false);
@@ -40,14 +42,18 @@ export function SearchInstance() {
 
     const [updateForm, { isLoading: isFormUpdating }] = useUpdateSearchFormMutation();
 
+    const objectId = useMemo(
+        () => (history.location?.state as { objectId?: number })?.objectId,
+        [history.location.state]
+    );
+
     useEffect(() => {
-        const id = (history.location?.state as { objectId?: number })?.objectId;
-        if (!id || highlighted.includes(+id)) {
+        if (!objectId || highlighted.includes(objectId)) {
             return;
         }
-        dispatchHighlighted(highlightActions.setIds([+id]));
+        dispatchHighlighted(highlightActions.setIds([objectId]));
         didHighlightId.current = true;
-    }, [dispatchHighlighted, highlighted, history.location.state]);
+    }, [dispatchHighlighted, highlighted, objectId]);
 
     useEffect(() => {
         if (form?.fields) {
@@ -73,6 +79,21 @@ export function SearchInstance() {
                         form: {
                             fields: toFormFields(items),
                         },
+                    }).then((res) => {
+                        if ("error" in res) {
+                            console.error(res.error);
+                            return;
+                        }
+                        if (!Number.isInteger(objectId)) {
+                            return;
+                        }
+                        dispatchHighlightCollections(
+                            highlightCollectionsActions.move(
+                                determineHighlightCollection(form as Form),
+                                determineHighlightCollection(res.data),
+                                [objectId!]
+                            )
+                        );
                     });
                 }
                 if (
@@ -85,7 +106,19 @@ export function SearchInstance() {
                 }
             }
         };
-    }, [history.location.pathname, dispatchHighlighted, isUpdated, items, updateForm, sceneId, objectGuid, formId]);
+    }, [
+        history.location.pathname,
+        dispatchHighlighted,
+        isUpdated,
+        items,
+        updateForm,
+        sceneId,
+        objectGuid,
+        formId,
+        form,
+        objectId,
+        dispatchHighlightCollections,
+    ]);
 
     const handleBackClick = useCallback(() => {
         dispatchHighlighted(highlightActions.setIds([]));
