@@ -1,6 +1,7 @@
 import { type ObjectDB } from "@novorender/data-js-api";
 import { type HierarcicalObjectReference, type ObjectData, type ObjectId } from "@novorender/webgl-api";
 
+import { HighlightCollection } from "contexts/highlightCollections";
 import { searchByPatterns } from "utils/search";
 import { sleep } from "utils/time";
 
@@ -409,4 +410,14 @@ function isFormFieldRequired(field: FormField): boolean {
         default:
             return false;
     }
+}
+
+export function determineHighlightCollection(form: Form): HighlightCollection {
+    if (form.state === "ongoing") {
+        return HighlightCollection.FormsOngoing;
+    }
+    if (form.state === "finished") {
+        return HighlightCollection.FormsCompleted;
+    }
+    return HighlightCollection.FormsNew;
 }
