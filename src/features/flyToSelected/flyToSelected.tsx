@@ -2,7 +2,7 @@ import { Box, CircularProgress, SpeedDialActionProps, Tooltip } from "@mui/mater
 import { View } from "@novorender/api";
 import { AABB2 } from "@novorender/api/types/measure/worker/brep";
 import { BoundingSphere } from "@novorender/webgl-api";
-import { vec2, vec3 } from "gl-matrix";
+import { glMatrix, vec2, vec3 } from "gl-matrix";
 import { useEffect, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -24,6 +24,8 @@ enum Status {
     Loading,
 }
 
+const ORTHO_PADDING = 0.2;
+
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
 };
@@ -36,7 +38,8 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
     } = useExplorerGlobals(true);
     const dispatch = useAppDispatch();
     const cameraType = useAppSelector(selectCameraType);
-    const isCrossSection = useAppSelector(selectViewMode) === ViewMode.CrossSection;
+    const viewMode = useAppSelector(selectViewMode);
+    const isCrossSection = [ViewMode.CrossSection, ViewMode.FollowPath, ViewMode.Deviations].includes(viewMode);
 
     const [status, setStatus] = useState(Status.Initial);
 
@@ -46,6 +49,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
     const [tooltipMessage, setTooltipMessage] = useState("");
     const tooltipTimeout = useRef<ReturnType<typeof setTimeout>>();
     const orthoLoadingHandle = useRef(0);
+    const [orthoLoading, setOrthoLoading] = useState(false);
 
     const showTooltip = (msg: string) => {
         if (tooltipTimeout.current) {
@@ -69,17 +73,36 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
         }
 
         if (orthoLoadingHandle.current) {
-            dispatch(renderActions.removeLoadingHandle(orthoLoadingHandle.current));
+            setOrthoLoading(false);
             orthoLoadingHandle.current = 0;
         }
 
-        const goToOrtho = async (sphere: BoundingSphere) => {
-            if (view.measure && isCrossSection && view.renderState.clipping.planes.length > 0) {
-                // In crossection we have outline vertices and can focus them without
-                // fetching object metadata.
-                // It's not ideal (crossection gets in the center, not the entire visible part of the object),
-                // but crossection is probably what people would want to focus in crossection mode.
+        const lookAtSphereInOrtho = (sphere: BoundingSphere) => {
+            const cameraDir = getCameraDir(view.renderState.camera.rotation);
+            const pinholeFov = view.controllers.flight.fov;
+            let dist = Math.max(sphere.radius / Math.tan(glMatrix.toRadian(pinholeFov) / 2), sphere.radius);
+            dist = Math.min(dist, view.renderState.camera.far * 0.9);
+            const position = vec3.scaleAndAdd(vec3.create(), sphere.center, cameraDir, -dist);
 
+            dispatch(
+                renderActions.setCamera({
+                    type: CameraType.Orthographic,
+                    goTo: {
+                        position,
+                        rotation: view.renderState.camera.rotation,
+                        fov: sphere.radius * 2 * (1 + ORTHO_PADDING),
+                        far: view.renderState.camera.far,
+                    },
+                })
+            );
+        };
+
+        const goToOrtho = async (sphere: BoundingSphere) => {
+            if (isCrossSection && view.renderState.clipping.planes.length > 0) {
+                // In cross section bounding sphere might differ from the visible object part a lot,
+                // so we try to focus on the outline instead of bounding sphere instead.
+                // If object far outside the view (based on the bounding sphere) - focus bounding sphere first
+                // and then after 1 second (so outlines are generated) - focus on the outlines.
                 const plane = view.renderState.clipping.planes[0];
                 const planeToSphereDist = pointToPlaneDistance(sphere.center, plane.normalOffset);
                 if (planeToSphereDist > sphere.radius + view.renderState.camera.far) {
@@ -94,7 +117,9 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
                     max: vec2.fromValues(width, height),
                 };
 
-                const [sphereCenter2d] = view.measure.draw.toMarkerPoints([sphere.center]);
+                const [sphereCenter2d] = view.convert
+                    .worldSpaceToViewSpace([sphere.center])
+                    .map((p) => vec2.fromValues(p[0] * width, p[1] * height));
 
                 let visibleRadiusRatio = 0;
                 if (sphereCenter2d) {
@@ -119,19 +144,8 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
                 let loading = 0;
                 if (visibleRadiusRatio < 0.5) {
                     orthoLoadingHandle.current = loading = performance.now();
-                    dispatch(renderActions.addLoadingHandle(loading));
-
-                    dispatch(
-                        renderActions.setCamera({
-                            type: CameraType.Orthographic,
-                            goTo: {
-                                position: sphere.center,
-                                rotation: view.renderState.camera.rotation,
-                                fov: sphere.radius * 2,
-                                far: view.renderState.camera.far,
-                            },
-                        })
-                    );
+                    setOrthoLoading(true);
+                    lookAtSphereInOrtho(sphere);
 
                     // Wait for camera to move and outlines to be generated
                     await sleep(1000);
@@ -142,39 +156,26 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
                         return;
                     } else {
                         orthoLoadingHandle.current = 0;
-                        dispatch(renderActions.removeLoadingHandle(loading));
+                        setOrthoLoading(false);
                     }
                 }
 
-                const outline = getSelectedObjectsCrossectionZoomingParams(view, new Set(highlighted));
-                if (outline) {
+                const zoomingParams = getSelectedObjectsOutlineZoomingParams(view, new Set(highlighted));
+                if (zoomingParams) {
                     dispatch(
                         renderActions.setCamera({
                             type: CameraType.Orthographic,
                             goTo: {
-                                position: outline.position,
+                                position: zoomingParams.position,
                                 rotation: view.renderState.camera.rotation,
-                                fov: outline.fov,
+                                fov: zoomingParams.fov * (1 + ORTHO_PADDING),
                                 far: view.renderState.camera.far,
                             },
                         })
                     );
                 }
             } else {
-                const cameraDir = getCameraDir(view.renderState.camera.rotation);
-                const position = vec3.scaleAndAdd(vec3.create(), sphere.center, cameraDir, -20);
-
-                dispatch(
-                    renderActions.setCamera({
-                        type: CameraType.Orthographic,
-                        goTo: {
-                            position,
-                            rotation: view.renderState.camera.rotation,
-                            fov: sphere.radius * 2,
-                            far: view.renderState.camera.far,
-                        },
-                    })
-                );
+                lookAtSphereInOrtho(sphere);
             }
         };
 
@@ -235,7 +236,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
                         justifyContent="center"
                         alignItems="center"
                     >
-                        {status === Status.Loading ? (
+                        {status === Status.Loading || orthoLoading ? (
                             <CircularProgress thickness={2.5} sx={{ position: "absolute" }} />
                         ) : null}
                         <Icon />
@@ -246,24 +247,20 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
     );
 }
 
-function getSelectedObjectsCrossectionZoomingParams(view: View, objectIds: Set<number>) {
-    if (!view.measure) {
-        return;
-    }
-
+function getSelectedObjectsOutlineZoomingParams(view: View, objectIds: Set<number>) {
     const box = view.getObjectsOutlinePlaneBoundingRectInWorld("clipping", 0, objectIds);
     if (!box) {
         return;
     }
 
-    const center3d = vec3.lerp(vec3.create(), box.min, box.max, 0.5);
-    const [screenMin, screenMax] = view.measure.draw.toMarkerPoints([box.min, box.max]);
-    if (!screenMin || !screenMax) {
-        return;
-    }
-
     const width = window.innerWidth;
     const height = window.innerHeight;
+
+    const center3d = vec3.lerp(vec3.create(), box.min, box.max, 0.5);
+    const [screenMin, screenMax] = view.convert
+        .worldSpaceToViewSpace([box.min, box.max])
+        .map((p) => vec2.fromValues(p[0] * width, p[1] * height));
+
     const fovK = getOrthoFovRatioForAABB2(width, height, { min: screenMin, max: screenMax });
     if (!fovK) {
         return;
@@ -281,6 +278,5 @@ function getOrthoFovRatioForAABB2(screenWidth: number, screenHeight: number, bbo
     const kHeight = screenHeight / height;
     const kWidth = screenWidth / width;
     const k = Math.min(kHeight, kWidth);
-    const padding = 0.2;
-    return (1 / k) * (1 + padding);
+    return 1 / k;
 }
