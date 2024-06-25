@@ -110,7 +110,7 @@ export const formsApi = createApi({
             invalidatesTags: () => [{ type: "Template" as const, id: "ID_LIST" }],
         }),
         updateSearchForm: builder.mutation<
-            void,
+            Form,
             { projectId: ProjectId; formId: FormId; objectGuid: FormObjectGuid; form: Partial<Form> }
         >({
             query: ({ projectId, objectGuid, formId, form }) => ({
@@ -134,7 +134,7 @@ export const formsApi = createApi({
             ],
         }),
         updateLocationForm: builder.mutation<
-            void,
+            Form,
             { projectId: ProjectId; formId: FormId; templateId: TemplateId; form: Partial<Form> }
         >({
             query: ({ projectId, templateId, formId, form }) => ({
