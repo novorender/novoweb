@@ -46,6 +46,7 @@ type Key = keyof State;
 
 enum ActionTypes {
     Add,
+    Move,
     Remove,
     SetIds,
     SetColor,
@@ -57,6 +58,15 @@ function add(collection: Key, ids: ObjectId[]) {
     return {
         type: ActionTypes.Add as const,
         collection,
+        ids,
+    };
+}
+
+function move(fromCollection: Key, toCollection: Key, ids: ObjectId[]) {
+    return {
+        type: ActionTypes.Move as const,
+        fromCollection,
+        toCollection,
         ids,
     };
 }
@@ -99,7 +109,7 @@ function clearAll() {
     };
 }
 
-export const actions = { add, remove, setIds, setColor, set, clearAll };
+export const actions = { add, move, remove, setIds, setColor, set, clearAll };
 
 type Actions = ReturnType<(typeof actions)[keyof typeof actions]>;
 export type DispatchHighlightCollection = Dispatch<Actions>;
@@ -123,6 +133,29 @@ export function reducer(state: State, action: Actions): State {
                 [action.collection]: {
                     ...collection,
                     ids,
+                },
+            };
+        }
+        case ActionTypes.Move: {
+            const fromCollection = state[action.fromCollection];
+
+            action.ids.forEach((id) => {
+                delete fromCollection.ids[id];
+            });
+
+            const toCollection = state[action.toCollection];
+            const ids = { ...toCollection.ids, ...toIdObj(action.ids) };
+
+            return {
+                ...state,
+                [action.fromCollection]: {
+                    ...fromCollection,
+                    idArr: toIdArr(fromCollection.ids),
+                },
+                [action.toCollection]: {
+                    ...toCollection,
+                    ids,
+                    idArr: toIdArr(ids),
                 },
             };
         }
