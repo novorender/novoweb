@@ -327,7 +327,7 @@ export function Root() {
                 {mainObject === undefined && <Box p={1}>Select an object to view properties.</Box>}
                 {mainObject !== undefined && object ? (
                     <>
-                        {propertyLimitMessage ? <Alert severity="warning">{propertyLimitMessage}</Alert> : undefined}
+                        {propertyLimitMessage ? <Alert severity="warning">{propertyLimitMessage}</Alert> : null}
                         <PropertyList
                             object={object}
                             handleChange={handleCheckboxChange}
