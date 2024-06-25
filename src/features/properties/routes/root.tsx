@@ -1,5 +1,6 @@
 import { ArrowDownward, ArrowUpward, ContentCopy, MoreVert, StarOutline, SwapVert } from "@mui/icons-material";
 import {
+    Alert,
     Box,
     Button,
     Checkbox,
@@ -88,6 +89,8 @@ type SearchPattern = {
     exact?: boolean;
 };
 
+const MAX_PROPERTY_COUNT = 200;
+
 export function Root() {
     const {
         state: { db, view },
@@ -105,6 +108,7 @@ export function Root() {
     const [status, setStatus] = useState(Status.Initial);
     const [object, setObject] = useState<PropertiesObject>();
     const [abortController, abort] = useAbortController();
+    const [propertyLimitMessage, setPropertyLimitMessage] = useState("");
 
     const parentObject = object?.parent;
     const [_, parentObjectName] = parentObject?.base.find(([key]) => key === "Name") ?? [];
@@ -145,6 +149,7 @@ export function Root() {
 
         async function getObjectData(id: number) {
             setStatus(Status.Loading);
+            setPropertyLimitMessage("");
 
             const _objectData = await getObjectDataUtil({ db, id, view });
 
@@ -158,19 +163,37 @@ export function Root() {
                 ..._objectData,
                 properties: _objectData.properties.filter(([_prop, value]) => Boolean(value)),
             };
+
+            let newPropertyLimitMessage = "";
+            if (cleanedObjectData.properties.length > MAX_PROPERTY_COUNT) {
+                newPropertyLimitMessage = `Selected object has ${cleanedObjectData.properties.length} properties which is over ${MAX_PROPERTY_COUNT} limit. Not all properties are displayed.`;
+                cleanedObjectData.properties = cleanedObjectData.properties.slice(0, MAX_PROPERTY_COUNT);
+            }
             const parent = navigator.onLine
                 ? await searchFirstObjectAtPath({ db, path: getParentPath(_objectData.path) })
                 : undefined;
 
             if (parent) {
+                let parentProperties = parent.properties.filter(([_prop, value]) => Boolean(value));
+                if (parentProperties.length + cleanedObjectData.properties.length > MAX_PROPERTY_COUNT) {
+                    parentProperties = parentProperties.slice(
+                        0,
+                        Math.max(0, MAX_PROPERTY_COUNT - cleanedObjectData.properties.length)
+                    );
+                    if (!newPropertyLimitMessage) {
+                        newPropertyLimitMessage = `Not all parent properties are displayed because ${MAX_PROPERTY_COUNT} property limit reached.`;
+                    }
+                }
                 const parentPropertiesObject = createPropertiesObject({
                     ...parent,
-                    properties: parent.properties.filter(([_prop, value]) => Boolean(value)),
+                    properties: parentProperties,
                 });
                 setObject({ ...createPropertiesObject(cleanedObjectData), parent: parentPropertiesObject });
             } else {
                 setObject(createPropertiesObject(cleanedObjectData));
             }
+
+            setPropertyLimitMessage(newPropertyLimitMessage);
 
             setStatus(Status.Initial);
         }
@@ -304,6 +327,7 @@ export function Root() {
                 {mainObject === undefined && <Box p={1}>Select an object to view properties.</Box>}
                 {mainObject !== undefined && object ? (
                     <>
+                        {propertyLimitMessage ? <Alert severity="warning">{propertyLimitMessage}</Alert> : undefined}
                         <PropertyList
                             object={object}
                             handleChange={handleCheckboxChange}
