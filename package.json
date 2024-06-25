@@ -48,7 +48,7 @@
         "prettier": "^2.3.2",
         "skott": "^0.33.2",
         "typescript": "^5.1.6",
-        "vite": "^5.0.12",
+        "vite": "^5.0.13",
         "vite-plugin-env-compatible": "^2.0.1",
         "vite-plugin-pwa": "^0.17.4",
         "vite-plugin-svgr": "^4.2.0"
@@ -62,7 +62,7 @@
         "@mui/lab": "^5.0.0-alpha.58",
         "@mui/material": "^5.15.10",
         "@mui/x-date-pickers": "^5.0.10",
-        "@novorender/api": "0.2.5",
+        "@novorender/api": "0.2.4",
         "@novorender/data-js-api": "0.2.26",
         "@novorender/webgl-api": "0.4.59",
         "@reduxjs/toolkit": "^2.0.1",
