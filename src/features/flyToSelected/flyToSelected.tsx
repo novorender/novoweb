@@ -24,6 +24,8 @@ enum Status {
     Loading,
 }
 
+// Padding to add around object when flying to it in orthographic view
+// 0.2 is 20% of bounding sphere diameter (or bounding rect max dimension)
 const ORTHO_PADDING = 0.2;
 
 type Props = SpeedDialActionProps & {
@@ -80,9 +82,9 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
         const lookAtSphereInOrtho = (sphere: BoundingSphere) => {
             const cameraDir = getCameraDir(view.renderState.camera.rotation);
             const pinholeFov = view.controllers.flight.fov;
-            let dist = Math.max(sphere.radius / Math.tan(glMatrix.toRadian(pinholeFov) / 2), sphere.radius);
-            dist = Math.min(dist, view.renderState.camera.far * 0.9);
-            const position = vec3.scaleAndAdd(vec3.create(), sphere.center, cameraDir, -dist);
+            const dist = Math.max(sphere.radius / Math.tan(glMatrix.toRadian(pinholeFov) / 2), sphere.radius);
+            const offset = -Math.min(dist, view.renderState.camera.far * 0.9);
+            const position = vec3.scaleAndAdd(vec3.create(), sphere.center, cameraDir, offset);
 
             dispatch(
                 renderActions.setCamera({
@@ -179,7 +181,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
             }
         };
 
-        const go = (sphere: BoundingSphere) => {
+        const goTo = (sphere: BoundingSphere) => {
             if (cameraType === CameraType.Pinhole) {
                 dispatch(renderActions.setCamera({ type: CameraType.Pinhole, zoomTo: sphere }));
             } else {
@@ -189,7 +191,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
         };
 
         if (previousBoundingSphere.current) {
-            go(previousBoundingSphere.current);
+            goTo(previousBoundingSphere.current);
             return;
         }
 
@@ -207,7 +209,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
 
             if (boundingSphere) {
                 previousBoundingSphere.current = boundingSphere;
-                go(boundingSphere);
+                goTo(boundingSphere);
             }
         } finally {
             setStatus(Status.Initial);
