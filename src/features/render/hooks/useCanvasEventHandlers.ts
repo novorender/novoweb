@@ -359,7 +359,9 @@ export function useCanvasEventHandlers({
                 } else if (picker === Picker.CrossSection) {
                     const position =
                         result?.position ??
-                        view.worldPositionFromPixelPosition(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                        view.convert.screenSpaceToWorldSpace([
+                            vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY),
+                        ])[0];
                     if (crossSectionPoint && position) {
                         dispatch(orthoCamActions.setCrossSectionHover(position as vec3));
                     }

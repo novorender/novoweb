@@ -32,11 +32,10 @@ export function useArcgisCanvasClickHandler() {
         const isTouch = evt.nativeEvent instanceof PointerEvent && evt.nativeEvent.pointerType === "touch";
         const pxSensitivity = isTouch ? 16 : 8;
 
-        const position = view.worldPositionFromPixelPosition(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY);
-        const sensPos = view.worldPositionFromPixelPosition(
-            evt.nativeEvent.offsetX - pxSensitivity,
-            evt.nativeEvent.offsetY
-        );
+        const [position, sensPos] = view.convert.screenSpaceToWorldSpace([
+            vec2.fromValues(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY),
+            vec2.fromValues(evt.nativeEvent.offsetX - pxSensitivity, evt.nativeEvent.offsetY),
+        ]);
         if (!position || !sensPos) {
             return false;
         }

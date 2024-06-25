@@ -11,7 +11,7 @@ import { Box, ListItemIcon, ListItemText, MenuItem, Tab, Tabs, Typography } from
 import { MeasureEntity, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
-import { vec3, vec4 } from "gl-matrix";
+import { vec2, vec3, vec4 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -439,7 +439,7 @@ function Measure() {
 
             const plane = view.renderState.clipping.planes[0]?.normalOffset;
             if (cameraType === CameraType.Orthographic) {
-                const pos = view.worldPositionFromPixelPosition(stamp.mouseX, stamp.mouseY);
+                const [pos] = view.convert.screenSpaceToWorldSpace([vec2.fromValues(stamp.mouseX, stamp.mouseY)]);
                 if (pos && plane) {
                     console.log(laserPlane);
                     const laser = await getOutlineLaser(pos, view, laserPlane?.rotation ?? 0);
