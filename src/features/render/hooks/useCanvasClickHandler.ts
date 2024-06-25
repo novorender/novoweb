@@ -159,7 +159,9 @@ export function useCanvasClickHandler({
                 case Picker.CrossSection: {
                     const position =
                         result?.position ??
-                        view.worldPositionFromPixelPosition(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY);
+                        view.convert.screenSpaceToWorldSpace([
+                            vec2.fromValues(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY),
+                        ])[0];
 
                     if (!position) {
                         return;
@@ -241,10 +243,9 @@ export function useCanvasClickHandler({
 
                     const plane = planes[0];
                     if (cameraType === CameraType.Orthographic) {
-                        tracePosition = view.worldPositionFromPixelPosition(
-                            evt.nativeEvent.offsetX,
-                            evt.nativeEvent.offsetY
-                        );
+                        tracePosition = view.convert.screenSpaceToWorldSpace([
+                            vec2.fromValues(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY),
+                        ])[0];
                     } else if (!result) {
                         return;
                     } else if (cameraType == CameraType.Pinhole) {
