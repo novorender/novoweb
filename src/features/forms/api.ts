@@ -1,4 +1,6 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
+
+import { getDataV2DynamicBaseQuery } from "apis/dataV2/utils";
 
 import {
     type Form,
@@ -13,7 +15,7 @@ import { calculateFormState } from "./utils";
 
 export const formsApi = createApi({
     reducerPath: "formsApi",
-    baseQuery: fetchBaseQuery({ baseUrl: "https://forms-fa-prod.azurewebsites.net/api/v1/" }),
+    baseQuery: getDataV2DynamicBaseQuery("/forms/"),
     tagTypes: ["Template", "Form", "Object"],
     keepUnusedDataFor: 60 * 5,
     endpoints: (builder) => ({
