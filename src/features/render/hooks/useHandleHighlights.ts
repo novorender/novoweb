@@ -177,7 +177,6 @@ export function useHandleHighlights() {
                 allHiddenIds = prevHidden.current.allIds;
             } else {
                 const idSets = hiddenGroups.map((g) => g.ids);
-                prevHidden.current = undefined;
                 allHiddenIds = objectIdSet([hidden, ...idSets]).toArray();
                 prevHidden.current = {
                     ids: hidden,
@@ -193,7 +192,6 @@ export function useHandleHighlights() {
             ) {
                 allFrozenIds = prevFrozen.current.ids;
             } else {
-                prevFrozen.current = undefined;
                 allFrozenIds = objectIdSet(frozenGroups.map((g) => g.ids)).toArray();
                 prevFrozen.current = {
                     idSets: frozenGroups.map((g) => g.ids),

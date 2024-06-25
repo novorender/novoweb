@@ -105,7 +105,7 @@ export function Save({ sceneId }: { sceneId: string }) {
                             size="small"
                             color="primary"
                             checked={saveState}
-                            onChange={() => toggleSaveState()}
+                            onChange={toggleSaveState as () => void}
                             disabled={status === AsyncStatus.Loading}
                         />
                     }

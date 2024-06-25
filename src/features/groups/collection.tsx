@@ -1,6 +1,6 @@
 import { AcUnit, Clear, Edit, MoreVert, Visibility, VisibilityOff, WbSunny } from "@mui/icons-material";
 import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
-import { MouseEvent, useState } from "react";
+import { MouseEvent, useCallback, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -48,8 +48,12 @@ export function Collection({ collection, disabled }: { collection: string; disab
 
     const name = collection.split("/").pop() ?? "";
     const collectionGroups = objectGroups.filter((group) => group.grouping === collection);
-    const nestedGroups = objectGroups.filter(
-        (group) => group.grouping === collection || group.grouping?.startsWith(`${collection}/`)
+    const nestedGroups = useMemo(
+        () =>
+            objectGroups.filter(
+                (group) => group.grouping === collection || group.grouping?.startsWith(`${collection}/`)
+            ),
+        [objectGroups, collection]
     );
     const allSelectedOrFrozen = nestedGroups.every(
         (group) => group.status === GroupStatus.Selected || group.status === GroupStatus.Frozen
@@ -62,6 +66,29 @@ export function Collection({ collection, disabled }: { collection: string; disab
     );
     const anyFrozen = nestedGroups.some((g) => g.status === GroupStatus.Frozen);
     const allFrozen = nestedGroups.every((g) => g.status === GroupStatus.Frozen);
+
+    const updateNonFrozenGroupsStatus = useCallback(
+        (status: GroupStatus) => {
+            nestedGroups
+                .filter((g) => g.status !== GroupStatus.Frozen)
+                .forEach((group) =>
+                    dispatchObjectGroups(
+                        objectGroupsActions.update(group.id, {
+                            status,
+                        })
+                    )
+                );
+        },
+        [dispatchObjectGroups, nestedGroups]
+    );
+
+    const handleToggleGroupSelection = useCallback(() => {
+        updateNonFrozenGroupsStatus(allSelectedOrFrozen ? GroupStatus.None : GroupStatus.Selected);
+    }, [updateNonFrozenGroupsStatus, allSelectedOrFrozen]);
+
+    const handleToggleGroupVisibility = useCallback(() => {
+        updateNonFrozenGroupsStatus(allHiddenOrFrozen ? GroupStatus.None : GroupStatus.Hidden);
+    }, [updateNonFrozenGroupsStatus, allHiddenOrFrozen]);
 
     return (
         <Accordion
@@ -80,25 +107,15 @@ export function Collection({ collection, disabled }: { collection: string; disab
                     </Box>
                 </Box>
                 <Box flex="0 0 auto">
-                    {allFrozen ? undefined : (
+                    {allFrozen ? null : (
                         <StyledCheckbox
                             name="toggle group highlighting"
                             aria-label="toggle group highlighting"
                             sx={{ marginLeft: "auto" }}
                             size="small"
                             disabled={disabled}
-                            onChange={() =>
-                                nestedGroups
-                                    .filter((g) => g.status !== GroupStatus.Frozen)
-                                    .forEach((group) =>
-                                        dispatchObjectGroups(
-                                            objectGroupsActions.update(group.id, {
-                                                status: allSelectedOrFrozen ? GroupStatus.None : GroupStatus.Selected,
-                                            })
-                                        )
-                                    )
-                            }
-                            checked={allFrozen ? false : allSelectedOrFrozen}
+                            onChange={handleToggleGroupSelection}
+                            checked={!allFrozen && allSelectedOrFrozen}
                             onClick={(event) => event.stopPropagation()}
                             onFocus={(event) => event.stopPropagation()}
                         />
@@ -118,18 +135,8 @@ export function Collection({ collection, disabled }: { collection: string; disab
                             )
                         }
                         disabled={disabled || allFrozen}
-                        onChange={() =>
-                            nestedGroups
-                                .filter((g) => g.status !== GroupStatus.Frozen)
-                                .forEach((group) =>
-                                    dispatchObjectGroups(
-                                        objectGroupsActions.update(group.id, {
-                                            status: allHiddenOrFrozen ? GroupStatus.None : GroupStatus.Hidden,
-                                        })
-                                    )
-                                )
-                        }
-                        checked={allFrozen ? false : allHiddenOrFrozen}
+                        onChange={handleToggleGroupVisibility}
+                        checked={!allFrozen && allHiddenOrFrozen}
                         onClick={(event) => event.stopPropagation()}
                         onFocus={(event) => event.stopPropagation()}
                     />
