@@ -123,7 +123,8 @@ export function useHandleInit() {
                         ids: group.ids ? new Set(group.ids) : (undefined as any),
                     }));
 
-                // Ensure hidden groups are loaded before rendering anything
+                // Ensure frozen groups are loaded before rendering anything to not even put them into memory
+                // (some scenes on some devices may crash upon loading because there's too much data)
                 await fillGroupIds(
                     sceneId,
                     groups.filter((g) => g.status === GroupStatus.Frozen)
