@@ -101,7 +101,13 @@ export function Save({ sceneId }: { sceneId: string }) {
             >
                 <FormControlLabel
                     control={
-                        <Checkbox size="small" color="primary" checked={saveState} onChange={() => toggleSaveState()} />
+                        <Checkbox
+                            size="small"
+                            color="primary"
+                            checked={saveState}
+                            onChange={() => toggleSaveState()}
+                            disabled={status === AsyncStatus.Loading}
+                        />
                     }
                     label={
                         <Box mr={0.5} sx={{ userSelect: "none" }}>
