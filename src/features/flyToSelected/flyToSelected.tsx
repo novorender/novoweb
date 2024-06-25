@@ -100,7 +100,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
         const goToOrtho = async (sphere: BoundingSphere) => {
             if (isCrossSection && view.renderState.clipping.planes.length > 0) {
                 // In cross section bounding sphere might differ from the visible object part a lot,
-                // so we try to focus on the outline instead of bounding sphere instead.
+                // so we try to focus on the outline instead of bounding sphere.
                 // If object far outside the view (based on the bounding sphere) - focus bounding sphere first
                 // and then after 1 second (so outlines are generated) - focus on the outlines.
                 const plane = view.renderState.clipping.planes[0];
