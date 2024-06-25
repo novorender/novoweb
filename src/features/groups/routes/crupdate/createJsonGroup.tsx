@@ -127,7 +127,10 @@ export function CreateJsonGroup({
                         <Box mb={3} component="pre" textAlign="center">
                             {"{ "}
                             "searchPattern":{" "}
-                            <Link href={`https://api.novorender.com/docs/v0.4.0/interfaces/SearchPattern.html`}>
+                            <Link
+                                href={`https://docs.novorender.com/legacy/docs/webgl-api/interfaces/NovoRender.SearchPattern`}
+                                target="_blank"
+                            >
                                 SearchPattern
                             </Link>
                             []
