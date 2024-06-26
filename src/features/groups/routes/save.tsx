@@ -36,7 +36,8 @@ export function Save({ sceneId }: { sceneId: string }) {
                 .map(({ status, ...grp }) => ({
                     ...grp,
                     selected: status === GroupStatus.Selected,
-                    hidden: [GroupStatus.Hidden, GroupStatus.Frozen].includes(status),
+                    hidden: status === GroupStatus.Hidden,
+                    frozen: status === GroupStatus.Frozen,
                     ids: grp.ids ? Array.from(grp.ids) : undefined,
                 }));
 
@@ -100,7 +101,13 @@ export function Save({ sceneId }: { sceneId: string }) {
             >
                 <FormControlLabel
                     control={
-                        <Checkbox size="small" color="primary" checked={saveState} onChange={() => toggleSaveState()} />
+                        <Checkbox
+                            size="small"
+                            color="primary"
+                            checked={saveState}
+                            onChange={toggleSaveState as () => void}
+                            disabled={status === AsyncStatus.Loading}
+                        />
                     }
                     label={
                         <Box mr={0.5} sx={{ userSelect: "none" }}>

@@ -245,4 +245,8 @@ declare module "@novorender/data-js-api" {
             color: Vec4;
         };
     }
+
+    interface ObjectGroup {
+        frozen: boolean;
+    }
 }
