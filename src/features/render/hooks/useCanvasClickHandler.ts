@@ -26,9 +26,11 @@ import { pointLineActions } from "features/pointLine";
 import { selectShowPropertiesStamp } from "features/properties/slice";
 import { useAbortController } from "hooks/useAbortController";
 import { ExtendedMeasureEntity, NodeType, ViewMode } from "types/misc";
+import { getPerpendicular } from "utils/math";
 import { isRealVec } from "utils/misc";
 import { extractObjectIds, getObjectMetadataRotation } from "utils/objectData";
 import { searchByPatterns, searchDeepByPatterns } from "utils/search";
+import { sleep } from "utils/time";
 
 import {
     renderActions,
@@ -236,6 +238,45 @@ export function useCanvasClickHandler({
                 }
                 case Picker.OutlineLaser: {
                     if (!view.renderState.clipping.enabled || !view.renderState.clipping.planes.length) {
+                        if (!result) {
+                            return;
+                        }
+                        const { normal, position } = result;
+                        const offsetPos = vec3.scaleAndAdd(vec3.create(), position, normal, 0.001);
+                        const hiddenPlane = vec4.fromValues(
+                            normal[0],
+                            normal[1],
+                            normal[2],
+                            vec3.dot(offsetPos, normal)
+                        );
+                        const perpendicular = getPerpendicular(normal);
+                        const perpendicularPlane = vec4.fromValues(
+                            perpendicular[0],
+                            perpendicular[1],
+                            perpendicular[2],
+                            vec3.dot(perpendicular, offsetPos)
+                        );
+                        view.modifyRenderState({
+                            outlines: {
+                                enabled: true,
+                                hidden: true,
+                                planes: [hiddenPlane, perpendicularPlane],
+                            },
+                        });
+                        await sleep(1000);
+
+                        const laser = await getOutlineLaser(
+                            offsetPos,
+                            view,
+                            "outline",
+                            0,
+                            [hiddenPlane, perpendicularPlane],
+                            1
+                        );
+                        view.modifyRenderState({ outlines: { enabled: false, planes: [] } });
+                        if (laser) {
+                            dispatch(clippingOutlineLaserActions.addLaser(laser));
+                        }
                         return;
                     }
 
@@ -268,7 +309,9 @@ export function useCanvasClickHandler({
                             rotation: plane.rotation ?? 0,
                         })
                     );
-                    const laser = await getOutlineLaser(tracePosition, view, planes[0].rotation ?? 0);
+                    const laser = await getOutlineLaser(tracePosition, view, "clipping", planes[0].rotation ?? 0, [
+                        planes[0].normalOffset,
+                    ]);
                     if (laser) {
                         dispatch(clippingOutlineLaserActions.addLaser(laser));
                     }

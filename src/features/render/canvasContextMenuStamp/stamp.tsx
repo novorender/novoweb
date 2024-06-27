@@ -32,6 +32,7 @@ import {
 import { pointLineActions, selectLockPointLineElevation } from "features/pointLine";
 import { selectCanvasContextMenuFeatures } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
+import { getPerpendicular } from "utils/math";
 import {
     getFileNameFromPath,
     getFilePathFromObjectPath,
@@ -39,6 +40,7 @@ import {
     getParentPath,
 } from "utils/objectData";
 import { getObjectData, searchDeepByPatterns } from "utils/search";
+import { sleep } from "utils/time";
 
 import { renderActions, selectCameraType, selectClippingPlanes, selectStamp } from "../renderSlice";
 import { CameraType, ObjectVisibility, Picker, StampKind } from "../types";
@@ -442,7 +444,7 @@ function Measure() {
                 const [pos] = view.convert.screenSpaceToWorldSpace([vec2.fromValues(stamp.mouseX, stamp.mouseY)]);
                 if (pos && plane) {
                     console.log(laserPlane);
-                    const laser = await getOutlineLaser(pos, view, laserPlane?.rotation ?? 0);
+                    const laser = await getOutlineLaser(pos, view, "clipping", laserPlane?.rotation ?? 0, [plane]);
                     setLaser(laser ? { laser, plane } : undefined);
                     const outlinePoint = view.selectOutlinePoint(pos, 0.2);
                     if (outlinePoint) {
@@ -457,13 +459,43 @@ function Measure() {
                 if (d > 0) {
                     const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
                     const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
-                    const laser = await getOutlineLaser(pos, view, laserPlane?.rotation ?? 0);
+                    const laser = await getOutlineLaser(pos, view, "clipping", laserPlane?.rotation ?? 0, [plane]);
                     const outlinePoint = view.selectOutlinePoint(pos, 0.2);
                     setLaser(laser ? { laser, plane } : undefined);
                     if (outlinePoint) {
                         pickPoint = outlinePoint;
                     }
                 }
+            } else if (stamp.data.position && stamp.data.normal) {
+                const { normal, position } = stamp.data;
+                const offsetPos = vec3.scaleAndAdd(vec3.create(), position, normal, 0.001);
+                const hiddenPlane = vec4.fromValues(normal[0], normal[1], normal[2], vec3.dot(offsetPos, normal));
+                const perpendicular = getPerpendicular(normal);
+                const perpendicularPlane = vec4.fromValues(
+                    perpendicular[0],
+                    perpendicular[1],
+                    perpendicular[2],
+                    vec3.dot(perpendicular, offsetPos)
+                );
+                view.modifyRenderState({
+                    outlines: {
+                        enabled: true,
+                        hidden: true,
+                        planes: [hiddenPlane, perpendicularPlane],
+                    },
+                });
+                await sleep(1000);
+
+                const laser = await getOutlineLaser(
+                    offsetPos,
+                    view,
+                    "outline",
+                    0,
+                    [hiddenPlane, perpendicularPlane],
+                    1
+                );
+                view.modifyRenderState({ outlines: { enabled: false, planes: [] } });
+                setLaser(laser ? { laser, plane: hiddenPlane } : undefined);
             }
             setPickPoint(pickPoint);
             setStatus(AsyncStatus.Success);
