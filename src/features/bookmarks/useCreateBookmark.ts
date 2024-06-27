@@ -223,10 +223,26 @@ export function useCreateBookmark() {
                                           t.down,
                                           t.up
                                       );
-                                      if (measurementX === undefined && measurementY === undefined) {
+                                      const measurementZ = copyTraceMeasurement(
+                                          t.measurementZ,
+                                          t.laserPosition,
+                                          t.zDown,
+                                          t.zUp
+                                      );
+                                      if (
+                                          measurementX === undefined &&
+                                          measurementY === undefined &&
+                                          measurementZ === undefined
+                                      ) {
                                           return undefined;
                                       }
-                                      return { laserPosition: t.laserPosition, measurementX, measurementY };
+                                      return {
+                                          laserPosition: t.laserPosition,
+                                          measurementX,
+                                          measurementY,
+                                          measurementZ,
+                                          laserPlanes: t.laserPlanes,
+                                      };
                                   })
                                   .filter((f) => f !== undefined) as {
                                   laserPosition: ReadonlyVec3;

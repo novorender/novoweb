@@ -25,8 +25,12 @@ export interface OutlineLaser {
     right: ReadonlyVec3[];
     down: ReadonlyVec3[];
     up: ReadonlyVec3[];
+    zDown: ReadonlyVec3[];
+    zUp: ReadonlyVec3[];
     measurementX?: TraceMeasurement;
     measurementY?: TraceMeasurement;
+    measurementZ?: TraceMeasurement;
+    laserPlanes?: ReadonlyVec4[];
 }
 
 export function getMeasurePointsFromTracer(
@@ -130,11 +134,34 @@ export const outlineLaserSlice = createSlice({
                     : (state.lasers[action.payload].measurementY!.endIdx! += 1);
             }
         },
+        incrementLaserZDown: (state, action: PayloadAction<number>) => {
+            if (
+                state.lasers[action.payload].measurementZ &&
+                state.lasers[action.payload].measurementZ!.startIdx !== undefined
+            ) {
+                state.lasers[action.payload].measurementZ!.startIdx === state.lasers[action.payload].zDown.length - 1
+                    ? (state.lasers[action.payload].measurementZ = undefined)
+                    : (state.lasers[action.payload].measurementZ!.startIdx! += 1);
+            }
+        },
+        incrementLaserZUp: (state, action: PayloadAction<number>) => {
+            if (
+                state.lasers[action.payload].measurementZ &&
+                state.lasers[action.payload].measurementZ!.endIdx !== undefined
+            ) {
+                state.lasers[action.payload].measurementZ!.endIdx === state.lasers[action.payload].zUp.length - 1
+                    ? (state.lasers[action.payload].measurementZ = undefined)
+                    : (state.lasers[action.payload].measurementZ!.endIdx! += 1);
+            }
+        },
         removeMeasurementX: (state, action: PayloadAction<number>) => {
             state.lasers[action.payload].measurementX = undefined;
         },
         removeMeasurementY: (state, action: PayloadAction<number>) => {
             state.lasers[action.payload].measurementY = undefined;
+        },
+        removeMeasurementZ: (state, action: PayloadAction<number>) => {
+            state.lasers[action.payload].measurementZ = undefined;
         },
     },
     extraReducers(builder) {
@@ -153,6 +180,8 @@ export const outlineLaserSlice = createSlice({
                     right: [],
                     down: [],
                     up: [],
+                    zDown: [],
+                    zUp: [],
                     measurementX: t.measurementX
                         ? {
                               start: t.measurementX.start,
@@ -165,6 +194,13 @@ export const outlineLaserSlice = createSlice({
                               end: t.measurementY.end,
                           }
                         : undefined,
+                    measurementZ: t.measurementZ
+                        ? {
+                              start: t.measurementZ.start,
+                              end: t.measurementZ.end,
+                          }
+                        : undefined,
+                    laserPlanes: t.laserPlanes,
                 };
             });
         });

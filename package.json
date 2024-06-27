@@ -62,7 +62,7 @@
         "@mui/lab": "^5.0.0-alpha.58",
         "@mui/material": "^5.15.10",
         "@mui/x-date-pickers": "^5.0.10",
-        "@novorender/api": "0.2.5",
+        "@novorender/api": "0.2.8",
         "@novorender/data-js-api": "0.2.26",
         "@novorender/webgl-api": "0.4.59",
         "@reduxjs/toolkit": "^2.0.1",
