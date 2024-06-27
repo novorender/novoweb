@@ -1,5 +1,5 @@
 import { rotationFromDirection } from "@novorender/api";
-import { mat3, quat, ReadonlyVec3, vec2, vec3, vec4 } from "gl-matrix";
+import { mat3, quat, ReadonlyVec3, ReadonlyVec4, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, MutableRefObject, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -20,7 +20,7 @@ import { heightProfileActions } from "features/heightProfile";
 import { manholeActions } from "features/manhole";
 import { measureActions, selectMeasure, selectMeasurePickSettings } from "features/measure";
 import { orthoCamActions, selectCrossSectionClipping, selectCrossSectionPoint } from "features/orthoCam";
-import { clippingOutlineLaserActions } from "features/outlineLaser";
+import { clippingOutlineLaserActions, selectOutlineLaser3d } from "features/outlineLaser";
 import { getOutlineLaser } from "features/outlineLaser";
 import { pointLineActions } from "features/pointLine";
 import { selectShowPropertiesStamp } from "features/properties/slice";
@@ -81,6 +81,7 @@ export function useCanvasClickHandler({
     const viewMode = useAppSelector(selectViewMode);
     const showPropertiesStamp = useAppSelector(selectShowPropertiesStamp);
     const { planes } = useAppSelector(selectClippingPlanes);
+    const laser3d = useAppSelector(selectOutlineLaser3d);
 
     const [secondaryHighlightAbortController, abortSecondaryHighlight] = useAbortController();
     const currentSecondaryHighlightQuery = useRef("");
@@ -249,18 +250,23 @@ export function useCanvasClickHandler({
                             normal[2],
                             vec3.dot(offsetPos, normal)
                         );
-                        const perpendicular = getPerpendicular(normal);
-                        const perpendicularPlane = vec4.fromValues(
-                            perpendicular[0],
-                            perpendicular[1],
-                            perpendicular[2],
-                            vec3.dot(perpendicular, offsetPos)
-                        );
+                        const hiddenPlanes: ReadonlyVec4[] = [hiddenPlane];
+                        if (laser3d && cameraType !== CameraType.Orthographic) {
+                            const perpendicular = getPerpendicular(normal);
+                            hiddenPlanes.push(
+                                vec4.fromValues(
+                                    perpendicular[0],
+                                    perpendicular[1],
+                                    perpendicular[2],
+                                    vec3.dot(perpendicular, offsetPos)
+                                )
+                            );
+                        }
                         view.modifyRenderState({
                             outlines: {
                                 enabled: true,
                                 hidden: true,
-                                planes: [hiddenPlane, perpendicularPlane],
+                                planes: hiddenPlanes,
                             },
                         });
                         await sleep(1000);
@@ -270,8 +276,8 @@ export function useCanvasClickHandler({
                             view,
                             "outline",
                             0,
-                            [hiddenPlane, perpendicularPlane],
-                            1
+                            hiddenPlanes,
+                            laser3d ? 1 : undefined
                         );
                         view.modifyRenderState({ outlines: { enabled: false, planes: [] } });
                         if (laser) {

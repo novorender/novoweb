@@ -54,6 +54,7 @@ export function getMeasurePointsFromTracer(
 
 const initialState = {
     outlineGroups: [] as OutlineGroup[],
+    laser3d: false as boolean,
     lasers: [] as OutlineLaser[],
     laserPlane: undefined as
         | {
@@ -78,6 +79,9 @@ export const outlineLaserSlice = createSlice({
                     ? { ...group, hidden: action.payload.hide === undefined ? !group.hidden : action.payload.hide }
                     : group
             );
+        },
+        setLaser3d: (state, action: PayloadAction<State["laser3d"]>) => {
+            state.laser3d = action.payload;
         },
         setLaserPlane: (state, action: PayloadAction<State["laserPlane"]>) => {
             state.laserPlane = action.payload;
@@ -213,6 +217,7 @@ export const selectVisibleOutlineGroups = createSelector(selectOutlineGroups, (g
 );
 export const selectOutlineLaserPlane = (state: RootState) => state.clippingOutline.laserPlane;
 export const selectOutlineLasers = (state: RootState) => state.clippingOutline.lasers;
+export const selectOutlineLaser3d = (state: RootState) => state.clippingOutline.laser3d;
 
 const { actions, reducer } = outlineLaserSlice;
 export { actions as clippingOutlineLaserActions, reducer as clippingOutlineLaserReducer };

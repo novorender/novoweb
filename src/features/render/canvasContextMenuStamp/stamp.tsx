@@ -11,7 +11,7 @@ import { Box, ListItemIcon, ListItemText, MenuItem, Tab, Tabs, Typography } from
 import { MeasureEntity, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
-import { vec2, vec3, vec4 } from "gl-matrix";
+import { ReadonlyVec4, vec2, vec3, vec4 } from "gl-matrix";
 import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -27,6 +27,7 @@ import {
     clippingOutlineLaserActions,
     getOutlineLaser,
     OutlineLaser,
+    selectOutlineLaser3d,
     selectOutlineLaserPlane,
 } from "features/outlineLaser";
 import { pointLineActions, selectLockPointLineElevation } from "features/pointLine";
@@ -400,6 +401,7 @@ function Measure() {
     const [centerLine, setCenterLine] = useState<CenterLine>();
     const measurements = useAppSelector(selectMeasureEntities);
     const laserPlane = useAppSelector(selectOutlineLaserPlane);
+    const laser3d = useAppSelector(selectOutlineLaser3d);
     const lockElevation = useAppSelector(selectLockPointLineElevation);
 
     const isCrossSection = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
@@ -470,18 +472,23 @@ function Measure() {
                 const { normal, position } = stamp.data;
                 const offsetPos = vec3.scaleAndAdd(vec3.create(), position, normal, 0.001);
                 const hiddenPlane = vec4.fromValues(normal[0], normal[1], normal[2], vec3.dot(offsetPos, normal));
-                const perpendicular = getPerpendicular(normal);
-                const perpendicularPlane = vec4.fromValues(
-                    perpendicular[0],
-                    perpendicular[1],
-                    perpendicular[2],
-                    vec3.dot(perpendicular, offsetPos)
-                );
+                const hiddenPlanes: ReadonlyVec4[] = [hiddenPlane];
+                if (laser3d) {
+                    const perpendicular = getPerpendicular(normal);
+                    hiddenPlanes.push(
+                        vec4.fromValues(
+                            perpendicular[0],
+                            perpendicular[1],
+                            perpendicular[2],
+                            vec3.dot(perpendicular, offsetPos)
+                        )
+                    );
+                }
                 view.modifyRenderState({
                     outlines: {
                         enabled: true,
                         hidden: true,
-                        planes: [hiddenPlane, perpendicularPlane],
+                        planes: hiddenPlanes,
                     },
                 });
                 await sleep(1000);
@@ -491,8 +498,8 @@ function Measure() {
                     view,
                     "outline",
                     0,
-                    [hiddenPlane, perpendicularPlane],
-                    1
+                    hiddenPlanes,
+                    laser3d ? 1 : undefined
                 );
                 view.modifyRenderState({ outlines: { enabled: false, planes: [] } });
                 setLaser(laser ? { laser, plane: hiddenPlane } : undefined);
@@ -500,7 +507,7 @@ function Measure() {
             setPickPoint(pickPoint);
             setStatus(AsyncStatus.Success);
         }
-    }, [stamp, db, view, cameraType, dispatch, isCrossSection, laserPlane]);
+    }, [stamp, db, view, cameraType, dispatch, isCrossSection, laserPlane, laser3d]);
 
     if (stamp?.kind !== StampKind.CanvasContextMenu) {
         return null;
