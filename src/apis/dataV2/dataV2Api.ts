@@ -4,7 +4,7 @@ import { minutesToSeconds } from "date-fns";
 import { ArcgisWidgetConfig } from "features/arcgis";
 
 import { DeviationProjectConfig } from "./deviationTypes";
-import { Omega365Document } from "./omega365Types";
+import { Omega365Configuration, Omega365DynamicDocument, Omega365View } from "./omega365Types";
 import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
 import { getDataV2DynamicBaseQuery } from "./utils";
 
@@ -13,11 +13,32 @@ export const dataV2Api = createApi({
     baseQuery: getDataV2DynamicBaseQuery(),
     tagTypes: ["PropertyTreeFavorites", "ProjectProgress", "Deviation"],
     endpoints: (builder) => ({
-        isOmega365ConfiguredForProject: builder.query<{ configured: boolean }, { projectId: string }>({
-            query: ({ projectId }) => `/explorer/${projectId}/omega365/configured`,
+        getOmega365ProjectConfig: builder.query<Omega365Configuration, { projectId: string }>({
+            query: ({ projectId }) => `/explorer/${projectId}/omega365/configuration`,
         }),
-        getOmega365DocumentLinks: builder.query<Omega365Document[], { projectId: string; objectId: number }>({
-            query: ({ projectId, objectId }) => `/explorer/${projectId}/omega365/documents/${objectId}`,
+        setOmega365ProjectConfig: builder.mutation<void, { projectId: string; config: Omega365Configuration }>({
+            query: ({ projectId, config }) => ({
+                url: `/explorer/${projectId}/omega365/configuration`,
+                method: "PUT",
+                body: config,
+            }),
+        }),
+        previewOmega365ProjectViewConfig: builder.query<
+            Omega365DynamicDocument[],
+            { projectId: string; objectId: number; baseURL: string; view: Omega365View }
+        >({
+            query: ({ projectId, objectId, baseURL, view }) => ({
+                url: `/explorer/${projectId}/omega365/configuration/preview-view`,
+                method: "POST",
+                body: { objectId, baseURL, view },
+            }),
+        }),
+        getOmega365ViewDocumentLinks: builder.query<
+            Omega365DynamicDocument[],
+            { projectId: string; objectId: number; viewId: string }
+        >({
+            query: ({ projectId, objectId, viewId }) =>
+                `/explorer/${projectId}/omega365/views/${viewId}/documents/${objectId}`,
         }),
         getPropertyTreeFavorites: builder.query<string[], { projectId: string }>({
             query: ({ projectId }) => `/explorer/${projectId}/propertytree/favorites`,
@@ -109,8 +130,10 @@ export const dataV2Api = createApi({
 });
 
 export const {
-    useIsOmega365ConfiguredForProjectQuery,
-    useGetOmega365DocumentLinksQuery,
+    useGetOmega365ProjectConfigQuery,
+    useSetOmega365ProjectConfigMutation,
+    useLazyPreviewOmega365ProjectViewConfigQuery,
+    useGetOmega365ViewDocumentLinksQuery,
     useGetArcgisWidgetConfigQuery,
     usePutArcgisWidgetConfigMutation,
     useGetPropertyTreeFavoritesQuery,
