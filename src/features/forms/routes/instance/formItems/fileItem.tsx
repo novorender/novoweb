@@ -1,4 +1,11 @@
-import { Delete, Download, FilePresentOutlined, MoreVert, PictureAsPdfOutlined } from "@mui/icons-material";
+import {
+    AttachFileOutlined,
+    Delete,
+    Download,
+    FilePresentOutlined,
+    MoreVert,
+    PictureAsPdfOutlined,
+} from "@mui/icons-material";
 import {
     Box,
     css,
@@ -24,8 +31,7 @@ export interface FileItemProps {
     isReadonly: boolean;
     activeImage: string;
     isModalOpen: boolean;
-    index: number;
-    removeFile: (index: number) => void;
+    removeFile: () => void;
     openImageModal: (url?: string) => void;
 }
 
@@ -44,7 +50,6 @@ export default function FileItem({
     isReadonly,
     activeImage,
     isModalOpen,
-    index,
     removeFile,
     openImageModal,
 }: FileItemProps) {
@@ -68,7 +73,11 @@ export default function FileItem({
     const isImage = /^image\//.test(file.type);
     const isPdf = /^application\/pdf$/.test(file.type);
     const icon = isImage ? (
-        <Img src={file.url} alt={file.name} crossOrigin="anonymous" />
+        file.url ? (
+            <Img src={file.url} alt={file.name} crossOrigin="anonymous" />
+        ) : (
+            <AttachFileOutlined sx={{ width: 50, height: 50 }} />
+        )
     ) : isPdf ? (
         <PictureAsPdfOutlined sx={{ width: 50, height: 50 }} />
     ) : (
@@ -76,17 +85,15 @@ export default function FileItem({
     );
 
     const handleFileClick = () => {
-        if (isImage) {
+        if (!file.url) {
+            return;
+        } else if (isImage) {
             openImageModal(file.url);
         } else if (isPdf) {
             window.open(file.url, "_blank");
         } else {
             downloadFile(file);
         }
-    };
-
-    const handleRemoveFile = () => {
-        removeFile(index);
     };
 
     return (
@@ -133,7 +140,7 @@ export default function FileItem({
                     sx={{ ml: 1 }}
                     primary={
                         <Tooltip disableInteractive title={file.name}>
-                            <Box>{file.name}</Box>
+                            <span>{file.name}</span>
                         </Tooltip>
                     }
                     primaryTypographyProps={{
@@ -161,7 +168,7 @@ export default function FileItem({
                     <ListItemText primary="Download" />
                 </MenuItem>
                 {!isReadonly && (
-                    <MenuItem onClick={handleRemoveFile}>
+                    <MenuItem onClick={removeFile}>
                         <Delete fontSize="small" />
                         <ListItemText primary="Remove" />
                     </MenuItem>

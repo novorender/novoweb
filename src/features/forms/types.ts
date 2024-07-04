@@ -12,7 +12,11 @@ export enum FormItemType {
 
 export type FormItem = SimpleItem | ItemWithOptions | FileItem;
 
-type BaseItem<T extends string[] | (File & { checksum?: string; url?: string })[] | null = string[] | null> = {
+export type FormFileUploadResponce = { checksum?: string; url?: string };
+
+export type FormsFile = File & FormFileUploadResponce;
+
+type BaseItem<T extends string[] | FormsFile[] | null> = {
     id?: string;
     title: string;
     required: boolean;
@@ -29,9 +33,14 @@ interface ItemWithOptions extends BaseItem<string[] | null> {
     options: string[];
 }
 
-interface FileItem extends BaseItem<(File & { checksum?: string; url?: string })[]> {
+interface ItemWithOptions extends BaseItem<string[] | null> {
+    type: Exclude<FormItemType, FormItemType.Input | FormItemType.Text | FormItemType.File>;
+    options: string[];
+}
+
+export interface FileItem extends BaseItem<FormsFile[]> {
     type: FormItemType.File;
-    defaultValue?: (File & { checksum?: string; url?: string })[];
+    defaultValue?: FormsFile[];
     accept: string;
     multiple: boolean;
     readonly: boolean;
@@ -110,8 +119,8 @@ export type FormField =
     | {
           type: "file";
           id?: string;
-          value?: (File & { checksum?: string; url?: string })[];
-          defaultValue?: (File & { checksum?: string; url?: string })[];
+          value?: FormsFile[];
+          defaultValue?: FormsFile[];
           label?: string;
           required?: boolean;
           readonly?: boolean;

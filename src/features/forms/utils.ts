@@ -12,6 +12,7 @@ import {
     FormItemType,
     type FormObject,
     type FormObjectGuid,
+    type FormsFile,
     type FormState,
 } from "./types";
 
@@ -291,6 +292,7 @@ function toFormField(item: FormItem): FormField {
             label: item.title,
             accept: item.accept,
             multiple: item.multiple,
+            required: item.required,
             readonly: item.readonly,
             value: item.value?.map((f) => ({
                 lastModified: f.lastModified,
@@ -298,7 +300,7 @@ function toFormField(item: FormItem): FormField {
                 size: f.size,
                 type: f.type,
                 checksum: f.checksum,
-            })) as (File & { checksum?: string; url?: string })[],
+            })) as FormsFile[],
             ...(item.id ? { id: item.id } : {}),
         };
     }
@@ -424,8 +426,8 @@ function isFormFieldFilled(field: FormField): boolean {
         case "checkbox":
             return typeof field.value === "boolean";
         case "select":
+        case "file":
             return (field.value?.length ?? 0) > 0;
-        // TODO(ND) file
         default:
             return false;
     }

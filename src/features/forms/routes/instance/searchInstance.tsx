@@ -13,7 +13,14 @@ import { renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useGetSearchFormQuery, useUpdateSearchFormMutation } from "../../api";
-import { type Form, type FormId, type FormItem as FItype, FormItemType, type FormObjectGuid } from "../../types";
+import {
+    type Form,
+    type FormId,
+    type FormItem as FItype,
+    FormItemType,
+    type FormObjectGuid,
+    type FormsFile,
+} from "../../types";
 import { determineHighlightCollection, toFormFields, toFormItems } from "../../utils";
 import { FormItem } from "./formItem";
 
@@ -131,13 +138,18 @@ export function SearchInstance() {
     }, [dispatchHighlighted, dispatch, currentFormsList, history]);
 
     const handleClearClick = useCallback(() => {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         setItems((state) =>
-            state.map((item) => ({
-                ...item,
-                value: item.type !== FormItemType.Text ? null : item.value,
-            }))
+            state.map((item) =>
+                item.type === FormItemType.File
+                    ? {
+                          ...item,
+                          value: item.value as FormsFile[],
+                      }
+                    : {
+                          ...item,
+                          value: item.type !== FormItemType.Text ? null : item.value,
+                      }
+            )
         );
         setIsUpdated(true);
     }, []);

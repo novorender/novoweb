@@ -8,6 +8,7 @@ export function Confirmation({
     onConfirm,
     loading,
     confirmBtnDisabled,
+    headerShadow = true,
     ...boxProps
 }: BoxProps & {
     title: string;
@@ -16,16 +17,19 @@ export function Confirmation({
     onConfirm?: () => void;
     loading?: boolean;
     confirmBtnDisabled?: boolean;
+    headerShadow?: boolean;
 }) {
     const theme = useTheme();
 
     return (
         <>
-            <Box
-                boxShadow={theme.customShadows.widgetHeader}
-                sx={{ height: 5, width: 1, mt: "-5px" }}
-                position="absolute"
-            />
+            {headerShadow && (
+                <Box
+                    boxShadow={theme.customShadows.widgetHeader}
+                    sx={{ height: 5, width: 1, mt: "-5px" }}
+                    position="absolute"
+                />
+            )}
             <Box
                 display="flex"
                 flexDirection="column"
