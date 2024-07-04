@@ -8,6 +8,8 @@ import { areaReducer } from "features/area";
 import { bimCollabApi, bimCollabReducer } from "features/bimCollab";
 import { bimTrackApi, bimTrackReducer } from "features/bimTrack";
 import { bookmarksReducer } from "features/bookmarks";
+import { clashReducer } from "features/clash";
+import { clashApi } from "features/clash/clashApi";
 import { deviationsReducer } from "features/deviations";
 import { ditioApi } from "features/ditio";
 import { ditioReducer } from "features/ditio";
@@ -71,6 +73,8 @@ const rootReducer = combineReducers({
     [dataV2Api.reducerPath]: dataV2Api.reducer,
     arcgis: arcgisSlice.reducer,
     [arcgisApi.reducerPath]: arcgisApi.reducer,
+    [clashApi.reducerPath]: clashApi.reducer,
+    clash: clashReducer,
 });
 
 export const store = configureStore({
@@ -90,7 +94,8 @@ export const store = configureStore({
             .concat(xsiteManageApi.middleware)
             .concat(dataV2Api.middleware)
             .concat(propertyTreeApi.middleware)
-            .concat(arcgisApi.middleware),
+            .concat(arcgisApi.middleware)
+            .concat(clashApi.middleware),
 });
 
 setupListeners(store.dispatch);

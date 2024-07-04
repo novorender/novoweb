@@ -38,6 +38,7 @@ import {
     Visibility,
     VisibilityOff,
 } from "@mui/icons-material";
+import ClashIcon from "icons/ClashIcon";
 
 import Ditio from "media/icons/ditio.svg?react";
 import Jira from "media/icons/jira-software.svg?react";
@@ -442,6 +443,15 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: true,
         offline: false,
+    },
+    clash: {
+        key: "clash",
+        name: "Clash",
+        Icon: ClashIcon,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+        offline: false,
+        tags: [featureTags.review.key],
     },
 } as const;
 
