@@ -163,7 +163,12 @@ export default function FileItem({
                 <MoreVert />
             </IconButton>
             <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClick={stopPropagation} onClose={closeMenu}>
-                <MenuItem onClick={() => downloadFile(file)}>
+                <MenuItem
+                    onClick={() => {
+                        downloadFile(file);
+                        closeMenu();
+                    }}
+                >
                     <Download fontSize="small" />
                     <ListItemText primary="Download" />
                 </MenuItem>

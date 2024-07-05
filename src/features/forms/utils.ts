@@ -300,6 +300,7 @@ function toFormField(item: FormItem): FormField {
                 size: f.size,
                 type: f.type,
                 checksum: f.checksum,
+                url: f.url,
             })) as FormsFile[],
             ...(item.id ? { id: item.id } : {}),
         };
@@ -368,7 +369,7 @@ function toFormItem(field: FormField): FormItem {
             readonly: field.readonly ?? false,
             accept: field.accept ?? "",
             multiple: field.multiple ?? false,
-            dirrectory: field.dirrectory ?? false,
+            directory: field.directory ?? false,
             ...(field.id ? { id: field.id } : {}),
         };
     }

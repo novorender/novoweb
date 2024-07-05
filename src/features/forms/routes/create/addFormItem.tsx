@@ -30,7 +30,7 @@ import { FILE_SIZE_LIMIT } from "features/forms/constants";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 
-import { type FileTypes, type FormFileUploadResponce, type FormItem, FormItemType } from "../../types";
+import { type FileTypes, type FormFileUploadResponse, type FormItem, FormItemType } from "../../types";
 
 const DOC_TYPES = [
     "application/pdf",
@@ -50,7 +50,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
     const [type, setType] = useState(FormItemType.Checkbox);
     const [relevant, toggleRelevant] = useToggle(true);
     const [options, setOptions] = useState<string[]>([]);
-    const [files, setFiles] = useState<(File & FormFileUploadResponce)[]>([]);
+    const [files, setFiles] = useState<(File & FormFileUploadResponse)[]>([]);
     const [fileTypes, setFileTypes] = useState<FileTypes>([]);
     const [multiple, toggleMultiple] = useToggle(true);
     const [readonly, toggleReadonly] = useToggle(false);
@@ -88,8 +88,8 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                 const result = await uploadFiles({ projectId: sceneId, files, template: true });
                 if ("data" in result) {
                     files.forEach((file) => {
-                        file.checksum = (result.data[file.name] as FormFileUploadResponce)?.checksum;
-                        file.url = (result.data[file.name] as FormFileUploadResponce)?.url;
+                        file.checksum = (result.data[file.name] as FormFileUploadResponse)?.checksum;
+                        file.url = (result.data[file.name] as FormFileUploadResponse)?.url;
                     });
                 }
             }
@@ -171,7 +171,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
             <Alert severity={type === FormItemType.File ? "warning" : "info"} sx={{ mt: 1 }}>
                 {type === FormItemType.File
                     ? "This item type is in BETA."
-                    : 'This is an immutable item. It will not be editable or clearable when filling the form. If you require an tem that can be modified, please use the "Input" item instead.'}
+                    : 'This is an immutable item. It will not be editable or clearable when filling the form. If you require an item that can be modified, please use the "Input" item instead.'}
             </Alert>
         );
 

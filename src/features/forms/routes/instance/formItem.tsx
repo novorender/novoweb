@@ -37,7 +37,7 @@ import { useToggle } from "hooks/useToggle";
 
 import {
     type FileItem as FileItemType,
-    type FormFileUploadResponce,
+    type FormFileUploadResponse,
     type FormItem,
     FormItemType,
     type FormsFile,
@@ -99,12 +99,40 @@ function mapLinks(text?: string[] | null) {
 
 const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
 
-const FormItemHeader = ({ item, toggleRelevant }: { item: FormItem; toggleRelevant?: () => void }) => (
+const FormItemMessage = ({ open, message, onClose }: { open: boolean; message: string; onClose: () => void }) => (
+    <Snackbar
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        sx={{
+            width: { xs: "auto", sm: 350 },
+            bottom: { xs: "auto", sm: 24 },
+            top: { xs: 24, sm: "auto" },
+        }}
+        autoHideDuration={2500}
+        open={open}
+        onClose={onClose}
+        message={message}
+        action={
+            <IconButton size="small" aria-label="close" color="inherit" onClick={onClose}>
+                <Close fontSize="small" />
+            </IconButton>
+        }
+    />
+);
+
+const FormItemHeader = ({
+    item,
+    toggleRelevant,
+    hideToggle = false,
+}: {
+    item: FormItem;
+    toggleRelevant?: () => void;
+    hideToggle?: boolean;
+}) => (
     <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
         <FormLabel component="legend" sx={{ fontWeight: 600, color: "text.primary" }}>
             {item.title}
         </FormLabel>
-        {!item.required && typeof toggleRelevant === "function" && (
+        {!hideToggle && !item.required && typeof toggleRelevant === "function" && (
             <IconButton size="small" color={item.relevant ? "secondary" : "primary"} onClick={toggleRelevant}>
                 <NotInterested fontSize="small" />
             </IconButton>
@@ -118,8 +146,8 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
     const [uploadFiles, { isLoading: uploading }] = useUploadFilesMutation();
 
     const [modalOpen, toggleModal] = useToggle();
-    const [fileSizeWarning, toggleFileSizeWarning] = useToggle(false);
-    const [isDeletingFile, setIsDeletingFile] = useState<number | null>(null);
+    const [fileIndexToDelete, setFileIndexToDelete] = useState<number | null>(null);
+    const [infoMessage, setInfoMessage] = useState<string>("");
     const [editing, setEditing] = useState(false);
     const [isRelevant, setIsRelevant] = useState(item.required);
     const [activeImage, setActiveImage] = useState("");
@@ -171,6 +199,8 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         setEditing(false);
     };
 
+    const closeSnackbar = () => setInfoMessage("");
+
     const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>, itemId: string) => {
         const files: FormsFile[] = Array.from(e.target.files ?? []);
         if (files.length === 0) {
@@ -186,7 +216,9 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
             return true;
         });
 
-        toggleFileSizeWarning(showFileSizeWarning);
+        if (showFileSizeWarning) {
+            setInfoMessage(`Some files were not added because they are larger than ${FILE_SIZE_LIMIT} MB.`);
+        }
 
         if (filteredFiles.length === 0) {
             return;
@@ -196,10 +228,12 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         if ("data" in resp) {
             filteredFiles.forEach((file) => {
                 if (resp.data[file.name]) {
-                    file.checksum = (resp.data[file.name] as FormFileUploadResponce)?.checksum;
-                    file.url = (resp.data[file.name] as FormFileUploadResponce)?.url;
+                    file.checksum = (resp.data[file.name] as FormFileUploadResponse)?.checksum;
+                    file.url = (resp.data[file.name] as FormFileUploadResponse)?.url;
                 }
             });
+        } else {
+            setInfoMessage("An error occurred while uploading files. Please try again.");
         }
 
         setItems((state) =>
@@ -220,30 +254,30 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
     };
 
     const handleRemoveFile = useCallback((item: FileItemType, index: number) => {
-        setIsDeletingFile(index);
+        setFileIndexToDelete(index);
     }, []);
 
     const deleteFile = useCallback(
         (e: FormEvent) => {
             e.preventDefault();
-            if (Number.isInteger(isDeletingFile) && item.type === FormItemType.File) {
+            if (Number.isInteger(fileIndexToDelete) && item.type === FormItemType.File) {
                 setItems((state) =>
                     state.map((_item) =>
                         _item.id === item.id
                             ? ({
                                   ..._item,
-                                  value: (_item.value as FormsFile[]).filter((_, index) => index !== isDeletingFile),
+                                  value: (_item.value as FormsFile[]).filter((_, index) => index !== fileIndexToDelete),
                               } as FileItemType)
                             : _item
                     )
                 );
             }
-            setIsDeletingFile(null);
+            setFileIndexToDelete(null);
         },
-        [isDeletingFile, item, setItems]
+        [fileIndexToDelete, item, setItems]
     );
 
-    const openImageModal = async (url: string = "") => {
+    const openImageModal = (url: string = "") => {
         setActiveImage(url);
         toggleModal();
     };
@@ -401,76 +435,64 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         case FormItemType.File:
             return (
                 <FormControl fullWidth>
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
-                    {Number.isInteger(isDeletingFile) ? (
+                    <FormItemHeader
+                        item={item}
+                        toggleRelevant={toggleRelevant}
+                        hideToggle={Number.isInteger(fileIndexToDelete)}
+                    />
+                    {Number.isInteger(fileIndexToDelete) ? (
                         <Confirmation
-                            title={`Delete file "${(item.value as FormsFile[])[isDeletingFile as number].name}"?`}
+                            title={`Delete file "${(item.value as FormsFile[])[fileIndexToDelete as number].name}"?`}
                             confirmBtnText="Delete"
-                            onCancel={() => setIsDeletingFile(null)}
+                            textAlign="center"
+                            onCancel={() => setFileIndexToDelete(null)}
                             component="form"
                             onSubmit={deleteFile}
                             headerShadow={false}
                         />
-                    ) : item.value && !!item.value.length ? (
-                        <StyledFixedSizeList
-                            style={{
-                                paddingLeft: theme.spacing(1),
-                                paddingRight: theme.spacing(1),
-                                marginBottom: theme.spacing(1),
-                            }}
-                            height={item.value.length * 80}
-                            width="100%"
-                            itemSize={80}
-                            overscanCount={3}
-                            itemCount={item.value.length}
-                        >
-                            {({ index, style }) => (
-                                <FileItem
-                                    style={style}
-                                    file={item.value![index]}
-                                    isReadonly={item.readonly || !isRelevant}
-                                    activeImage={activeImage}
-                                    isModalOpen={modalOpen}
-                                    removeFile={() => handleRemoveFile(item, index)}
-                                    openImageModal={openImageModal}
-                                />
-                            )}
-                        </StyledFixedSizeList>
                     ) : (
-                        <Typography variant="body2" my={1}>
-                            No files uploaded.
-                        </Typography>
+                        <>
+                            {item.value && !!item.value.length ? (
+                                <StyledFixedSizeList
+                                    style={{
+                                        paddingLeft: theme.spacing(1),
+                                        paddingRight: theme.spacing(1),
+                                        marginBottom: theme.spacing(1),
+                                    }}
+                                    height={item.value.length * 80}
+                                    width="100%"
+                                    itemSize={80}
+                                    overscanCount={3}
+                                    itemCount={item.value.length}
+                                >
+                                    {({ index, style }) => (
+                                        <FileItem
+                                            style={style}
+                                            file={item.value![index]}
+                                            isReadonly={item.readonly || !isRelevant}
+                                            activeImage={activeImage}
+                                            isModalOpen={modalOpen}
+                                            removeFile={() => handleRemoveFile(item, index)}
+                                            openImageModal={openImageModal}
+                                        />
+                                    )}
+                                </StyledFixedSizeList>
+                            ) : (
+                                <Typography variant="body2" my={1}>
+                                    No files uploaded.
+                                </Typography>
+                            )}
+                            <AddFilesButton
+                                accept={item.accept}
+                                multiple={item.multiple}
+                                onChange={(e) => handleFileUpload(e, item.id!)}
+                                uploading={uploading}
+                                disabled={!isRelevant}
+                            />
+                        </>
                     )}
-                    <AddFilesButton
-                        accept={item.accept}
-                        multiple={item.multiple}
-                        onChange={(e) => handleFileUpload(e, item.id!)}
-                        uploading={uploading}
-                        disabled={!isRelevant}
-                    />
                     <ImgModal src={activeImage ?? ""} open={modalOpen} onClose={() => toggleModal()} anonymous />
-                    <Snackbar
-                        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-                        sx={{
-                            width: { xs: "auto", sm: 350 },
-                            bottom: { xs: "auto", sm: 24 },
-                            top: { xs: 24, sm: "auto" },
-                        }}
-                        autoHideDuration={2500}
-                        open={fileSizeWarning}
-                        onClose={() => toggleFileSizeWarning(false)}
-                        message={`Some files were not added because they are larger than ${FILE_SIZE_LIMIT} MB.`}
-                        action={
-                            <IconButton
-                                size="small"
-                                aria-label="close"
-                                color="inherit"
-                                onClick={() => toggleFileSizeWarning(false)}
-                            >
-                                <Close fontSize="small" />
-                            </IconButton>
-                        }
-                    />
+                    <FormItemMessage open={infoMessage.length > 0} message={infoMessage} onClose={closeSnackbar} />
                 </FormControl>
             );
 

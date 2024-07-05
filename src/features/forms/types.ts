@@ -12,9 +12,9 @@ export enum FormItemType {
 
 export type FormItem = SimpleItem | ItemWithOptions | FileItem;
 
-export type FormFileUploadResponce = { checksum?: string; url?: string };
+export type FormFileUploadResponse = { checksum?: string; url?: string };
 
-export type FormsFile = File & FormFileUploadResponce;
+export type FormsFile = File & FormFileUploadResponse;
 
 type BaseItem<T extends string[] | FormsFile[] | null> = {
     id?: string;
@@ -44,7 +44,7 @@ export interface FileItem extends BaseItem<FormsFile[]> {
     accept: string;
     multiple: boolean;
     readonly: boolean;
-    dirrectory?: boolean;
+    directory?: boolean;
 }
 
 export type ProjectId = string;
@@ -126,7 +126,7 @@ export type FormField =
           readonly?: boolean;
           accept?: string;
           multiple?: boolean;
-          dirrectory?: boolean;
+          directory?: boolean;
       };
 
 export type FormObjectGuid = string;
