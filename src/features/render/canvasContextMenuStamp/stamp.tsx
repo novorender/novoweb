@@ -7,12 +7,12 @@ import {
     Straighten,
     VisibilityOff,
 } from "@mui/icons-material";
-import { Box, ListItemIcon, ListItemText, MenuItem, Tab, Tabs, Typography } from "@mui/material";
+import { Box, CircularProgress, ListItemIcon, ListItemText, MenuItem, Tab, Tabs, Typography } from "@mui/material";
 import { MeasureEntity, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { ReadonlyVec4, vec2, vec3, vec4 } from "gl-matrix";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress } from "components";
@@ -406,108 +406,109 @@ function Measure() {
 
     const isCrossSection = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
 
+    const loadObjectData = useCallback(async () => {
+        if (stamp?.kind !== StampKind.CanvasContextMenu) {
+            console.warn("CanvasContextMenuStamp rendered for the wrong stamp kind");
+            dispatch(renderActions.setStamp(null));
+            return;
+        }
+
+        if (status !== AsyncStatus.Initial) {
+            return;
+        }
+
+        const objectId = stamp.data.object;
+        let pickPoint = stamp.data.position;
+        if (objectId && stamp.data.position) {
+            setStatus(AsyncStatus.Loading);
+            if (!isCrossSection) {
+                const ent = await view.measure?.core
+                    .pickMeasureEntity(objectId, stamp.data.position)
+                    // .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
+                    .then((res) => res.entity)
+                    .catch(() => undefined);
+
+                const pickMeasurePoint = await view.measure?.core
+                    .pickMeasureEntity(objectId, stamp.data.position, { point: 0.4 })
+                    // .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
+                    .then((res) => res.entity)
+                    .catch(() => undefined);
+                if (pickMeasurePoint?.drawKind === "vertex") {
+                    pickPoint = pickMeasurePoint.parameter;
+                }
+                setMeasureEntity(ent);
+            }
+
+            setCenterLine(await getRoadCenterLine({ db, view, id: objectId }));
+        }
+
+        const plane = view.renderState.clipping.planes[0]?.normalOffset;
+        if (cameraType === CameraType.Orthographic) {
+            const [pos] = view.convert.screenSpaceToWorldSpace([vec2.fromValues(stamp.mouseX, stamp.mouseY)]);
+            if (pos && plane) {
+                console.log(laserPlane);
+                const laser = await getOutlineLaser(pos, view, "clipping", laserPlane?.rotation ?? 0, [plane]);
+                setLaser(laser ? { laser, plane } : undefined);
+                const outlinePoint = view.selectOutlinePoint(pos, 0.2);
+                if (outlinePoint) {
+                    pickPoint = outlinePoint;
+                }
+            }
+        } else if (plane && stamp.data.position) {
+            const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
+            const rayDir = vec3.sub(vec3.create(), view.renderState.camera.position, stamp.data.position);
+            vec3.normalize(rayDir, rayDir);
+            const d = vec3.dot(planeDir, rayDir);
+            if (d > 0) {
+                const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
+                const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
+                const laser = await getOutlineLaser(pos, view, "clipping", laserPlane?.rotation ?? 0, [plane]);
+                const outlinePoint = view.selectOutlinePoint(pos, 0.2);
+                setLaser(laser ? { laser, plane } : undefined);
+                if (outlinePoint) {
+                    pickPoint = outlinePoint;
+                }
+            }
+        } else if (stamp.data.position && stamp.data.normal) {
+            const { normal, position } = stamp.data;
+            const offsetPos = vec3.scaleAndAdd(vec3.create(), position, normal, 0.001);
+            const hiddenPlane = vec4.fromValues(normal[0], normal[1], normal[2], vec3.dot(offsetPos, normal));
+            const hiddenPlanes: ReadonlyVec4[] = [hiddenPlane];
+            if (laser3d) {
+                const perpendicular = getPerpendicular(normal);
+                hiddenPlanes.push(
+                    vec4.fromValues(
+                        perpendicular[0],
+                        perpendicular[1],
+                        perpendicular[2],
+                        vec3.dot(perpendicular, offsetPos)
+                    )
+                );
+            }
+            view.modifyRenderState({
+                outlines: {
+                    enabled: true,
+                    hidden: true,
+                    planes: hiddenPlanes,
+                },
+            });
+            await sleep(1000);
+
+            const laser = await getOutlineLaser(offsetPos, view, "outline", 0, hiddenPlanes, laser3d ? 1 : undefined);
+            view.modifyRenderState({ outlines: { enabled: false, planes: [] } });
+            setLaser(laser ? { laser, plane: hiddenPlane } : undefined);
+        }
+        setPickPoint(pickPoint);
+        setStatus(AsyncStatus.Success);
+    }, [stamp, status, view, cameraType, dispatch, isCrossSection, db, laserPlane, laser3d]);
+
     useEffect(() => {
         loadObjectData();
+    }, [loadObjectData]);
 
-        async function loadObjectData() {
-            if (stamp?.kind !== StampKind.CanvasContextMenu) {
-                console.warn("CanvasContextMenuStamp rendered for the wrong stamp kind");
-                dispatch(renderActions.setStamp(null));
-                return;
-            }
-
-            const objectId = stamp.data.object;
-            let pickPoint = stamp.data.position;
-            if (objectId && stamp.data.position) {
-                setStatus(AsyncStatus.Loading);
-                if (!isCrossSection) {
-                    const ent = await view.measure?.core
-                        .pickMeasureEntity(objectId, stamp.data.position)
-                        // .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
-                        .then((res) => res.entity)
-                        .catch(() => undefined);
-
-                    const pickMeasurePoint = await view.measure?.core
-                        .pickMeasureEntity(objectId, stamp.data.position, { point: 0.4 })
-                        // .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
-                        .then((res) => res.entity)
-                        .catch(() => undefined);
-                    if (pickMeasurePoint?.drawKind === "vertex") {
-                        pickPoint = pickMeasurePoint.parameter;
-                    }
-                    setMeasureEntity(ent);
-                }
-
-                setCenterLine(await getRoadCenterLine({ db, view, id: objectId }));
-            }
-
-            const plane = view.renderState.clipping.planes[0]?.normalOffset;
-            if (cameraType === CameraType.Orthographic) {
-                const [pos] = view.convert.screenSpaceToWorldSpace([vec2.fromValues(stamp.mouseX, stamp.mouseY)]);
-                if (pos && plane) {
-                    console.log(laserPlane);
-                    const laser = await getOutlineLaser(pos, view, "clipping", laserPlane?.rotation ?? 0, [plane]);
-                    setLaser(laser ? { laser, plane } : undefined);
-                    const outlinePoint = view.selectOutlinePoint(pos, 0.2);
-                    if (outlinePoint) {
-                        pickPoint = outlinePoint;
-                    }
-                }
-            } else if (plane && stamp.data.position) {
-                const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
-                const rayDir = vec3.sub(vec3.create(), view.renderState.camera.position, stamp.data.position);
-                vec3.normalize(rayDir, rayDir);
-                const d = vec3.dot(planeDir, rayDir);
-                if (d > 0) {
-                    const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
-                    const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
-                    const laser = await getOutlineLaser(pos, view, "clipping", laserPlane?.rotation ?? 0, [plane]);
-                    const outlinePoint = view.selectOutlinePoint(pos, 0.2);
-                    setLaser(laser ? { laser, plane } : undefined);
-                    if (outlinePoint) {
-                        pickPoint = outlinePoint;
-                    }
-                }
-            } else if (stamp.data.position && stamp.data.normal) {
-                const { normal, position } = stamp.data;
-                const offsetPos = vec3.scaleAndAdd(vec3.create(), position, normal, 0.001);
-                const hiddenPlane = vec4.fromValues(normal[0], normal[1], normal[2], vec3.dot(offsetPos, normal));
-                const hiddenPlanes: ReadonlyVec4[] = [hiddenPlane];
-                if (laser3d) {
-                    const perpendicular = getPerpendicular(normal);
-                    hiddenPlanes.push(
-                        vec4.fromValues(
-                            perpendicular[0],
-                            perpendicular[1],
-                            perpendicular[2],
-                            vec3.dot(perpendicular, offsetPos)
-                        )
-                    );
-                }
-                view.modifyRenderState({
-                    outlines: {
-                        enabled: true,
-                        hidden: true,
-                        planes: hiddenPlanes,
-                    },
-                });
-                await sleep(1000);
-
-                const laser = await getOutlineLaser(
-                    offsetPos,
-                    view,
-                    "outline",
-                    0,
-                    hiddenPlanes,
-                    laser3d ? 1 : undefined
-                );
-                view.modifyRenderState({ outlines: { enabled: false, planes: [] } });
-                setLaser(laser ? { laser, plane: hiddenPlane } : undefined);
-            }
-            setPickPoint(pickPoint);
-            setStatus(AsyncStatus.Success);
-        }
-    }, [stamp, db, view, cameraType, dispatch, isCrossSection, laserPlane, laser3d]);
+    useEffect(() => {
+        setStatus(AsyncStatus.Initial);
+    }, [stamp]);
 
     if (stamp?.kind !== StampKind.CanvasContextMenu) {
         return null;
@@ -620,7 +621,6 @@ function Measure() {
 
     return (
         <>
-            {[AsyncStatus.Initial, AsyncStatus.Loading].includes(status) && <LinearProgress sx={{ mt: -1 }} />}
             <Box>
                 {features.includes(config.measure.key) && (
                     <MenuItem onClick={measure} disabled={!measureEntity || measureEntity.drawKind === "vertex"}>
@@ -631,9 +631,13 @@ function Measure() {
                     </MenuItem>
                 )}
                 {features.includes(config.laser.key) && (
-                    <MenuItem onClick={addLaser} disabled={!laser}>
+                    <MenuItem onClick={addLaser} disabled={!laser || status !== AsyncStatus.Success}>
                         <ListItemIcon>
-                            <Height fontSize="small" />
+                            {status !== AsyncStatus.Success ? (
+                                <CircularProgress size={24} />
+                            ) : (
+                                <Height fontSize="small" />
+                            )}
                         </ListItemIcon>
                         <ListItemText>{config.laser.name}</ListItemText>
                     </MenuItem>
