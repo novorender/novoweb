@@ -6,9 +6,10 @@ import { useEffect, useState } from "react";
 export const ImgModal = styled(
     ({
         src,
+        anonymous = false,
         Actions,
         ...props
-    }: Omit<ModalProps, "children"> & { src: string; Actions?: () => JSX.Element | null }) => {
+    }: Omit<ModalProps, "children"> & { src: string; anonymous?: boolean; Actions?: () => JSX.Element | null }) => {
         const [loading, setLoading] = useState(true);
 
         useEffect(() => {
@@ -31,7 +32,12 @@ export const ImgModal = styled(
                             <Close />
                         </IconButton>
                     )}
-                    <img onLoad={() => setLoading(false)} src={src} alt="" />
+                    <img
+                        onLoad={() => setLoading(false)}
+                        src={src}
+                        alt=""
+                        crossOrigin={anonymous ? "anonymous" : undefined}
+                    />
                     {Actions && !loading && (
                         <Box
                             sx={{
