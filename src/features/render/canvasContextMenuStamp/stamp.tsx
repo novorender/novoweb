@@ -471,7 +471,7 @@ function Measure() {
             }
         } else if (stamp.data.position && stamp.data.normal) {
             const { normal, position } = stamp.data;
-            const offsetPos = vec3.scaleAndAdd(vec3.create(), position, normal, 0.001);
+            const offsetPos = vec3.scaleAndAdd(vec3.create(), position, normal, 0.0001);
             const hiddenPlane = vec4.fromValues(normal[0], normal[1], normal[2], vec3.dot(offsetPos, normal));
             const hiddenPlanes: ReadonlyVec4[] = [hiddenPlane];
             if (laser3d) {
@@ -495,8 +495,11 @@ function Measure() {
             await sleep(1000);
 
             const laser = await getOutlineLaser(offsetPos, view, "outline", 0, hiddenPlanes, laser3d ? 1 : undefined);
+            console.log(laser);
             view.modifyRenderState({ outlines: { enabled: false, planes: [] } });
-            setLaser(laser ? { laser, plane: hiddenPlane } : undefined);
+            if (laser) {
+                setLaser({ laser, plane: hiddenPlane });
+            }
         }
         setPickPoint(pickPoint);
         setStatus(AsyncStatus.Success);
