@@ -5,8 +5,7 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { sleep } from "utils/time";
 
-import { OutlineLaser } from ".";
-import { getOutlineLaser } from "./getOutlineLaser";
+import { getOutlineLaser, OutlineLaser } from "./getOutlineLaser";
 import { clippingOutlineLaserActions, selectOutlineLaserPlane, selectOutlineLasers } from "./outlineLaserSlice";
 
 const markerStyles = ({ theme }: { theme: Theme }) => css`

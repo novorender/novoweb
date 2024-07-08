@@ -191,7 +191,7 @@ export default function ClippingOutline() {
                         control={
                             <Switch
                                 name="3 point laser"
-                                checked={laser3d && cameraType === CameraType.Pinhole && planes.length == 0}
+                                checked={laser3d && cameraType === CameraType.Pinhole && planes.length === 0}
                                 color="primary"
                                 onChange={toggleLaser}
                                 disabled={cameraType !== CameraType.Pinhole || planes.length > 0}

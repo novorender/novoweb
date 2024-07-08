@@ -54,7 +54,7 @@ export function getMeasurePointsFromTracer(
 
 const initialState = {
     outlineGroups: [] as OutlineGroup[],
-    laser3d: false as boolean,
+    laser3d: false,
     lasers: [] as OutlineLaser[],
     laserPlane: undefined as
         | {
@@ -159,13 +159,13 @@ export const outlineLaserSlice = createSlice({
             }
         },
         removeMeasurementX: (state, action: PayloadAction<number>) => {
-            state.lasers[action.payload].measurementX = undefined;
+            delete state.lasers[action.payload].measurementX;
         },
         removeMeasurementY: (state, action: PayloadAction<number>) => {
-            state.lasers[action.payload].measurementY = undefined;
+            delete state.lasers[action.payload].measurementY;
         },
         removeMeasurementZ: (state, action: PayloadAction<number>) => {
-            state.lasers[action.payload].measurementZ = undefined;
+            delete state.lasers[action.payload].measurementZ;
         },
     },
     extraReducers(builder) {

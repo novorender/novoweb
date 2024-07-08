@@ -1,5 +1,4 @@
 import { segmentPlaneIntersection, View } from "@novorender/api";
-import { OutlineIntersection } from "@novorender/api/types/web_app/outline_inspect";
 import { ReadonlyVec3, ReadonlyVec4, vec3 } from "gl-matrix";
 
 export function getOutlineLaser(
@@ -33,10 +32,9 @@ export function getOutlineLaser(
                     autoAlign ? "closest" : undefined
                 );
                 if (outlineValues) {
-                    let perpendicularValues: OutlineIntersection | undefined;
-                    if (perpendicularIdx !== undefined) {
-                        perpendicularValues = view.outlineLaser(laserPosition, mode, perpendicularIdx, rotation);
-                    }
+                    const perpendicularValues =
+                        perpendicularIdx !== undefined &&
+                        view.outlineLaser(laserPosition, mode, perpendicularIdx, rotation);
                     return {
                         left: outlineValues.left,
                         right: outlineValues.right,

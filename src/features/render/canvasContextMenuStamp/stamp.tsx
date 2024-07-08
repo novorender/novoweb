@@ -424,13 +424,11 @@ function Measure() {
             if (!isCrossSection) {
                 const ent = await view.measure?.core
                     .pickMeasureEntity(objectId, stamp.data.position)
-                    // .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
                     .then((res) => res.entity)
                     .catch(() => undefined);
 
                 const pickMeasurePoint = await view.measure?.core
                     .pickMeasureEntity(objectId, stamp.data.position, { point: 0.4 })
-                    // .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
                     .then((res) => res.entity)
                     .catch(() => undefined);
                 if (pickMeasurePoint?.drawKind === "vertex") {
@@ -495,7 +493,6 @@ function Measure() {
             await sleep(1000);
 
             const laser = await getOutlineLaser(offsetPos, view, "outline", 0, hiddenPlanes, laser3d ? 1 : undefined);
-            console.log(laser);
             view.modifyRenderState({ outlines: { enabled: false, planes: [] } });
             if (laser) {
                 setLaser({ laser, plane: hiddenPlane });
@@ -510,7 +507,9 @@ function Measure() {
     }, [loadObjectData]);
 
     useEffect(() => {
-        setStatus(AsyncStatus.Initial);
+        if (stamp) {
+            setStatus(AsyncStatus.Initial);
+        }
     }, [stamp]);
 
     if (stamp?.kind !== StampKind.CanvasContextMenu) {
