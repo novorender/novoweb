@@ -1,5 +1,5 @@
 import { AABB2 } from "@novorender/api/types/measure/worker/brep";
-import { ReadonlyVec2, ReadonlyVec3, ReadonlyVec4, vec2 } from "gl-matrix";
+import { ReadonlyVec2, ReadonlyVec3, ReadonlyVec4, vec2, vec3 } from "gl-matrix";
 
 /**
  * Project point on a line segment.
@@ -75,4 +75,16 @@ export function isRectInsideCircle(rect: AABB2, center: ReadonlyVec2, radius: nu
         vec2.fromValues(rect.max[0], rect.min[1]),
         rect.max,
     ].every((p) => vec2.dist(center, p) <= radius);
+}
+
+export function getPerpendicular(normal: ReadonlyVec3) {
+    // Choose a vector that is not parallel to the normal vector
+    let v = vec3.fromValues(0, 0, 1);
+    if (Math.abs(vec3.dot(v, normal)) > 0.98) {
+        v = vec3.fromValues(0, 1, 0);
+    }
+    // Compute a vector that is perpendicular to both normal and v
+    const perpendicularVector = vec3.cross(vec3.create(), normal, v);
+    // Normalize the perpendicular vector
+    return vec3.normalize(perpendicularVector, perpendicularVector);
 }
