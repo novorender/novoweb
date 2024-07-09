@@ -21,13 +21,11 @@ import {
 import { CSSProperties, type MouseEvent, useState } from "react";
 
 import { Tooltip } from "components";
+import { type FormsFile } from "features/forms/types";
 
 export interface FileItemProps {
     style: CSSProperties;
-    file: File & {
-        checksum?: string | undefined;
-        url?: string | undefined;
-    };
+    file: FormsFile;
     isReadonly: boolean;
     activeImage: string;
     isModalOpen: boolean;
@@ -207,12 +205,7 @@ function formatLastModified(timestamp: number): string {
     return date.toLocaleString(window.navigator.language, options);
 }
 
-async function downloadFile(
-    file: File & {
-        checksum?: string | undefined;
-        url?: string | undefined;
-    }
-) {
+async function downloadFile(file: FormsFile) {
     if (file.url) {
         try {
             const resp = await fetch(file.url);

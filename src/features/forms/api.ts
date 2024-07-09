@@ -4,6 +4,7 @@ import { getDataV2DynamicBaseQuery } from "apis/dataV2/utils";
 
 import {
     type Form,
+    type FormFileUploadResponse,
     type FormId,
     type FormInstanceId,
     type FormObjectGuid,
@@ -201,7 +202,7 @@ export const formsApi = createApi({
             invalidatesTags: (_result, _error) => [{ type: "Template" as const, id: "ID_LIST" }],
         }),
         uploadFiles: builder.mutation<
-            { [key: string]: string },
+            { [key: string]: FormFileUploadResponse },
             { projectId: ProjectId; files: File[]; template?: boolean }
         >({
             query: ({ projectId, files, template = false }) => {
