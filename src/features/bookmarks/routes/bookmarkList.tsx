@@ -10,6 +10,7 @@ import { GroupStatus } from "contexts/objectGroups";
 import { selectViewMode } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import { Bookmark } from "../bookmark";
@@ -40,6 +41,7 @@ export function BookmarkList() {
     const bookmarksStatus = useAppSelector(selectBookmarksStatus);
     const filters = useAppSelector(selectBookmarkFilters);
     const dispatch = useAppDispatch();
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
 
     const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
     const [filteredBookmarks, setFilteredBookmarks] = useState(bookmarks);
@@ -64,11 +66,15 @@ export function BookmarkList() {
         dispatch(bookmarksActions.setSaveStatus({ status: AsyncStatus.Loading }));
 
         try {
-            const publicBmks = dataApi.saveBookmarks(
-                sceneId,
-                bookmarks.filter((bm) => bm.access !== BookmarkAccess.Personal).map(({ access: _access, ...bm }) => bm),
-                { personal: false }
-            );
+            const publicBmks = isAdmin
+                ? dataApi.saveBookmarks(
+                      sceneId,
+                      bookmarks
+                          .filter((bm) => bm.access !== BookmarkAccess.Personal)
+                          .map(({ access: _access, ...bm }) => bm),
+                      { personal: false }
+                  )
+                : Promise.resolve(true);
 
             const personalBmks = dataApi.saveBookmarks(
                 sceneId,

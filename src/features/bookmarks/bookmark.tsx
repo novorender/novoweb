@@ -1,4 +1,4 @@
-import { Delete, Edit, MoreVert, Share } from "@mui/icons-material";
+import { Cached, Delete, Edit, MoreVert, Share } from "@mui/icons-material";
 import {
     Box,
     IconButton,
@@ -18,13 +18,19 @@ import { css } from "@mui/styled-engine";
 import { MouseEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { useAppSelector } from "app/redux-store-interactions";
+import { dataApi } from "apis/dataV1";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Tooltip } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
 import { selectHasAdminCapabilities } from "slices/explorer";
+import { AsyncStatus } from "types/misc";
 
-import { BookmarkAccess, ExtendedBookmark } from "./bookmarksSlice";
+import { BookmarkAccess, bookmarksActions, ExtendedBookmark, selectBookmarks } from "./bookmarksSlice";
+import { useCreateBookmark } from "./useCreateBookmark";
 import { useSelectBookmark } from "./useSelectBookmark";
+import { createBookmarkImg } from "./utils";
 
 const Description = styled(Typography)(
     () => css`
@@ -61,10 +67,17 @@ const Img = styled("img")(
 );
 
 export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
+    const {
+        state: { canvas },
+    } = useExplorerGlobals(true);
     const theme = useTheme();
     const history = useHistory();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const selectBookmark = useSelectBookmark();
+    const createBookmark = useCreateBookmark();
+    const dispatch = useAppDispatch();
+    const bookmarks = useAppSelector(selectBookmarks);
+    const sceneId = useSceneId();
 
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const user = useAppSelector(selectUser);
@@ -76,6 +89,37 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
 
     const closeMenu = () => {
         setMenuAnchor(null);
+    };
+
+    const handleUpdate = async () => {
+        const { img, explorerState } = createBookmark(await createBookmarkImg(canvas));
+
+        const newBookmarks = bookmarks.map((bm) => (bm === bookmark ? { ...bm, img, explorerState } : bm));
+
+        try {
+            await dataApi.saveBookmarks(
+                sceneId,
+                newBookmarks.filter((bm) => bm.access === bookmark.access).map(({ access: _access, ...bm }) => bm),
+                { personal: bookmark.access === BookmarkAccess.Personal }
+            );
+            dispatch(bookmarksActions.setBookmarks(newBookmarks));
+            dispatch(
+                bookmarksActions.setSaveStatus({
+                    status: AsyncStatus.Success,
+                    data: "Bookmark updated",
+                })
+            );
+        } catch (e) {
+            console.warn(e);
+            dispatch(
+                bookmarksActions.setSaveStatus({
+                    status: AsyncStatus.Error,
+                    msg: "An error occurred while updating the bookmark.",
+                })
+            );
+        }
+
+        closeMenu();
     };
 
     return (
@@ -171,6 +215,12 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                             <Edit fontSize="small" />
                         </ListItemIcon>
                         <ListItemText>Edit</ListItemText>
+                    </MenuItem>,
+                    <MenuItem key="update" onClick={handleUpdate}>
+                        <ListItemIcon>
+                            <Cached fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Update</ListItemText>
                     </MenuItem>,
                     <MenuItem key="delete" onClick={() => history.push(`delete/${bookmark.id}`)}>
                         <ListItemIcon>

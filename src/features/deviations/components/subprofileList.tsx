@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { ObjectGroup } from "contexts/objectGroups";
 
 import { SubprofileGroup } from "../deviationTypes";
+import { DELETED_DEVIATION_LABEL } from "../utils";
 import { SubprofileGroupErrors } from "../validation";
 
 export function SubprofileList({
@@ -14,6 +15,7 @@ export function SubprofileList({
     objectGroups,
     onClick,
     onDelete,
+    disabled,
 }: {
     subprofiles: SubprofileGroup[];
     errors: SubprofileGroupErrors[];
@@ -21,6 +23,7 @@ export function SubprofileList({
     objectGroups: ObjectGroup[];
     onClick: (sp: SubprofileGroup, index: number) => void;
     onDelete: (sp: SubprofileGroup, index: number) => void;
+    disabled?: boolean;
 }) {
     return (
         <List>
@@ -34,6 +37,7 @@ export function SubprofileList({
                         onDelete={() => onDelete(sp, i)}
                         selected={i === selectedIndex}
                         errors={errors[i]}
+                        disabled={disabled}
                     />
                 );
             })}
@@ -61,16 +65,14 @@ function Item({
     const groups1 = useMemo(
         () =>
             subprofile.groups1.value
-                .map((id) => objectGroups.find((g) => g.id === id)?.name)
-                .filter((e) => e)
+                .map((id) => objectGroups.find((g) => g.id === id)?.name ?? DELETED_DEVIATION_LABEL)
                 .join(", "),
         [objectGroups, subprofile.groups1.value]
     );
     const groups2 = useMemo(
         () =>
             subprofile.groups2.value
-                .map((id) => objectGroups.find((g) => g.id === id)?.name)
-                .filter((e) => e)
+                .map((id) => objectGroups.find((g) => g.id === id)?.name ?? DELETED_DEVIATION_LABEL)
                 .join(", "),
         [objectGroups, subprofile.groups2.value]
     );

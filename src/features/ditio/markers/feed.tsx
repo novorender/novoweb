@@ -1,7 +1,8 @@
 import { css, styled, Theme } from "@mui/material";
-import { SVGProps } from "react";
+import { forwardRef, SVGProps, useCallback, useEffect, useImperativeHandle, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 
 import { useDitioFeedMarkers } from "../hooks/useDitioFeedMarkers";
@@ -52,42 +53,85 @@ const markerStyles = ({ theme, active, hovered }: { theme: Theme; active?: boole
 `;
 
 const PostMarker = styled(
-    (props: SVGProps<SVGGElement>) => (
-        <g {...props}>
+    forwardRef<SVGGElement, SVGProps<SVGGElement>>((props, ref) => (
+        <g {...props} ref={ref}>
             <circle cx="12" cy="12" r="18" />
             <path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4 2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z" />
         </g>
-    ),
+    )),
     { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
 )<{ active?: boolean; hovered?: boolean }>(markerStyles);
 
 const ImgMarker = styled(
-    (props: SVGProps<SVGGElement>) => (
-        <g {...props}>
+    forwardRef<SVGGElement, SVGProps<SVGGElement>>((props, ref) => (
+        <g {...props} ref={ref}>
             <circle cx="12" cy="12" r="18" />
             <g>
                 <circle cx="12" cy="12" r="3.2" />
                 <path d="M9 2 7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" />
             </g>
         </g>
-    ),
+    )),
     { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
 )<{ active?: boolean; hovered?: boolean }>(markerStyles);
 
-export function DitioFeedMarkers() {
+export const DitioFeedMarkers = forwardRef<{ update: () => void }>(function DitioFeedMarkers(_, ref) {
+    const {
+        state: { view },
+    } = useExplorerGlobals();
+
     const dispatch = useAppDispatch();
-    const [postMarkers, imgMarkers] = useDitioFeedMarkers();
     const hoveredEntity = useAppSelector(selectHoveredEntity);
     const activePost = useAppSelector(selectActivePost);
     const activeImg = useAppSelector(selectActiveImg);
+
+    const [postMarkers, imgMarkers] = useDitioFeedMarkers();
     const onWheel = useRedirectWheelEvents();
+
+    const postMarkersRef = useRef<(SVGGElement | null)[]>([]);
+    const imgMarkersRef = useRef<(SVGGElement | null)[]>([]);
+
+    const updatePosts = useCallback(() => {
+        if (!view?.measure || !postMarkersRef.current.length || !postMarkers.length) {
+            return;
+        }
+
+        view.measure.draw.toMarkerPoints(postMarkers.map((marker) => marker.position)).forEach((pos, idx) => {
+            postMarkersRef.current[idx]?.setAttribute(
+                "transform",
+                pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)"
+            );
+        });
+    }, [postMarkers, view]);
+
+    const updateImages = useCallback(() => {
+        if (!view?.measure || !imgMarkersRef.current.length || !imgMarkers.length) {
+            return;
+        }
+
+        view.measure.draw.toMarkerPoints(imgMarkers.map((marker) => marker.position)).forEach((pos, idx) => {
+            imgMarkersRef.current[idx]?.setAttribute(
+                "transform",
+                pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)"
+            );
+        });
+    }, [imgMarkers, view]);
+
+    const update = useCallback(() => {
+        updatePosts();
+        updateImages();
+    }, [updatePosts, updateImages]);
+
+    useImperativeHandle(ref, () => ({ update }), [update]);
+
+    useEffect(() => {
+        update();
+    }, [update]);
 
     return (
         <>
-            {postMarkers.map((marker) => (
+            {postMarkers.map((marker, i) => (
                 <PostMarker
-                    id={`ditioPostMarker-${marker.id}`}
-                    name={`ditioPostMarker-${marker.id}`}
                     key={marker.id}
                     hovered={hoveredEntity?.id === marker.id}
                     active={activePost === marker.id}
@@ -96,13 +140,12 @@ export function DitioFeedMarkers() {
                         dispatch(ditioActions.setActivePost(marker.id));
                     }}
                     onWheel={onWheel}
+                    ref={(el) => (postMarkersRef.current[i] = el)}
                 />
             ))}
 
-            {imgMarkers.map((marker) => (
+            {imgMarkers.map((marker, i) => (
                 <ImgMarker
-                    id={`ditioImgMarker-${marker.id}`}
-                    name={`ditioImgMarker-${marker.id}`}
                     key={marker.id}
                     active={activeImg === marker.src}
                     hovered={hoveredEntity?.id === marker.id}
@@ -110,8 +153,9 @@ export function DitioFeedMarkers() {
                         dispatch(ditioActions.setActiveImg(marker.src));
                     }}
                     onWheel={onWheel}
+                    ref={(el) => (imgMarkersRef.current[i] = el)}
                 />
             ))}
         </>
     );
-}
+});

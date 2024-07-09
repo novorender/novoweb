@@ -1,6 +1,7 @@
-import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { ReadonlyVec2 } from "gl-matrix";
 
-import { type RootState } from "app";
+import { resetView, selectBookmark } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { DeviationCalculationStatus, DeviationForm, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
@@ -14,10 +15,14 @@ const initialState = {
     config: { status: AsyncStatus.Initial } as AsyncState<UiDeviationConfig>,
     deviationForm: undefined as DeviationForm | undefined,
     selectedProfileId: undefined as string | undefined,
+    selectedSubprofileIndex: undefined as number | undefined,
     saveStatus: { status: AsyncStatus.Initial } as AsyncState<string>,
     // Stores pixel position of the rightmost deviation label
     // in follow path 2D view, which is used to position the legend
     rightmost2dDeviationCoordinate: undefined as number | undefined,
+    closestToCenterFollowPathPoint: undefined as ReadonlyVec2 | undefined,
+    hiddenLegendGroups: {} as { [profileId: string]: { [subprofileIndex: number]: string[] } },
+    isLegendFloating: true,
 };
 
 type State = typeof initialState;
@@ -31,6 +36,38 @@ export const deviationsSlice = createSlice({
         },
         setProfiles: (state, action: PayloadAction<State["config"]>) => {
             state.config = action.payload;
+        },
+        // Deviations can be loaded after selected profile ID is set in case of bookmarks.
+        // In this case only update selected profile/subprofile info if they are invalid.
+        initFromProfileIndex: (state, action: PayloadAction<{ index: number }>) => {
+            if (state.config.status !== AsyncStatus.Success) {
+                return;
+            }
+
+            const { profiles } = state.config.data;
+            if (profiles.length === 0) {
+                state.selectedProfileId = undefined;
+                state.selectedSubprofileIndex = undefined;
+            }
+
+            const { index } = action.payload;
+            if (profiles.length > 0) {
+                if (!state.selectedProfileId || !profiles.some((p) => p.id === state.selectedProfileId)) {
+                    if (index >= 0 && index < profiles.length) {
+                        state.selectedProfileId = profiles[index].id;
+                    } else {
+                        state.selectedProfileId = profiles[0].id;
+                    }
+                }
+
+                const profile = state.selectedProfileId && profiles.find((p) => p.id === state.selectedProfileId)!;
+                if (
+                    state.selectedSubprofileIndex === undefined ||
+                    (profile && state.selectedSubprofileIndex >= profile.subprofiles.length)
+                ) {
+                    state.selectedSubprofileIndex = 0;
+                }
+            }
         },
         setProfile: (
             state,
@@ -70,6 +107,19 @@ export const deviationsSlice = createSlice({
         },
         setSelectedProfileId: (state, action: PayloadAction<string | undefined>) => {
             state.selectedProfileId = action.payload;
+            if (state.config.status !== AsyncStatus.Success) {
+                state.selectedSubprofileIndex = undefined;
+                return;
+            }
+
+            if (state.selectedProfileId) {
+                state.selectedSubprofileIndex = 0;
+            } else {
+                state.selectedSubprofileIndex = undefined;
+            }
+        },
+        setSelectedSubprofileIndex: (state, action: PayloadAction<State["selectedSubprofileIndex"]>) => {
+            state.selectedSubprofileIndex = action.payload;
         },
         setSaveStatus: (state, action: PayloadAction<State["saveStatus"]>) => {
             state.saveStatus = action.payload;
@@ -77,28 +127,76 @@ export const deviationsSlice = createSlice({
         setRightmost2dDeviationCoordinate: (state, action: PayloadAction<State["rightmost2dDeviationCoordinate"]>) => {
             state.rightmost2dDeviationCoordinate = action.payload;
         },
+        setClosestToCenterFollowPathPoint: (state, action: PayloadAction<State["closestToCenterFollowPathPoint"]>) => {
+            state.closestToCenterFollowPathPoint = action.payload;
+        },
+        setIsLegendFloating: (state, action: PayloadAction<State["isLegendFloating"]>) => {
+            state.isLegendFloating = action.payload;
+        },
+        resetHiddenLegendGroupsForProfile: (state, action: PayloadAction<{ profileId: string }>) => {
+            const { profileId } = action.payload;
+            if (state.hiddenLegendGroups[profileId]) {
+                state.hiddenLegendGroups[profileId] = {};
+            }
+        },
+        toggleHiddenLegendGroup: (state, action: PayloadAction<{ groupId: string; hidden: boolean }>) => {
+            const profileId = state.selectedProfileId;
+            const subprofileIndex = state.selectedSubprofileIndex;
+            if (!profileId || subprofileIndex === undefined) {
+                return;
+            }
+
+            const { groupId, hidden } = action.payload;
+            let profile = state.hiddenLegendGroups[profileId];
+            if (!profile) {
+                profile = {};
+                state.hiddenLegendGroups[profileId] = profile;
+            }
+            if (!profile[subprofileIndex]) {
+                profile[subprofileIndex] = [];
+            }
+            const alreadyAdded = profile[subprofileIndex].includes(groupId);
+            if (hidden && !alreadyAdded) {
+                profile[subprofileIndex].push(groupId);
+            } else if (!hidden && alreadyAdded) {
+                profile[subprofileIndex] = profile[subprofileIndex].filter((id) => id !== groupId);
+            }
+        },
+    },
+    extraReducers: (builder) => {
+        builder.addCase(selectBookmark, (state, action) => {
+            const { deviations } = action.payload;
+            if (!deviations) {
+                return;
+            }
+
+            if (deviations.isLegendFloating !== undefined) {
+                state.isLegendFloating = deviations.isLegendFloating;
+            }
+            state.hiddenLegendGroups = {};
+            if (deviations.profileId) {
+                state.selectedProfileId = deviations.profileId;
+                if (deviations.subprofileIndex !== undefined) {
+                    state.selectedSubprofileIndex = deviations.subprofileIndex;
+                } else {
+                    state.selectedSubprofileIndex = 0;
+                }
+
+                if (deviations.hiddenGroupIds) {
+                    state.hiddenLegendGroups[state.selectedProfileId] = {
+                        [state.selectedSubprofileIndex]: deviations.hiddenGroupIds,
+                    };
+                }
+                state.deviationForm = undefined;
+                state.rightmost2dDeviationCoordinate = undefined;
+            }
+        });
+        builder.addCase(resetView, (state, _action) => {
+            state.hiddenLegendGroups = {};
+            state.isLegendFloating = true;
+        });
     },
 });
-
-export const selectDeviationProfiles = (state: RootState) => state.deviations.config;
-export const selectDeviationProfileList = createSelector([selectDeviationProfiles], (profiles) => {
-    if (profiles.status !== AsyncStatus.Success) {
-        return [];
-    }
-    return profiles.data.profiles;
-});
-export const selectDeviationCalculationStatus = (state: RootState) => state.deviations.calculationStatus;
-export const selectDeviationForm = (state: RootState) => state.deviations.deviationForm;
-export const selectSelectedProfileId = (state: RootState) => state.deviations.selectedProfileId;
-export const selectSelectedProfile = createSelector(
-    [selectDeviationProfileList, selectSelectedProfileId],
-    (profiles, profileId) => {
-        return profileId ? profiles.find((p) => p.id === profileId) : undefined;
-    }
-);
-export const selectSaveStatus = (state: RootState) => state.deviations.saveStatus;
-export const selectRightmost2dDeviationCoordinate = (state: RootState) =>
-    state.deviations.rightmost2dDeviationCoordinate;
 
 const { actions, reducer } = deviationsSlice;
 export { actions as deviationsActions, reducer as deviationsReducer };

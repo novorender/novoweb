@@ -16,14 +16,14 @@ import {
 } from "@mui/material";
 import { FollowParametricObject } from "@novorender/api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
-import { FormEvent, MouseEvent, SyntheticEvent, useEffect, useState } from "react";
+import { FormEvent, MouseEvent, SyntheticEvent, useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, IosSwitch, ScrollBox, Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ColorPicker } from "features/colorPicker";
-import { renderActions } from "features/render";
+import { renderActions, selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { rgbToVec, vecToRgb } from "utils/color";
 import { uniqueArray } from "utils/misc";
@@ -80,11 +80,24 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const traceVerical = useAppSelector(selectVerticalTracer);
     const deviations = useAppSelector(selectFollowDeviations);
     const goToProfile = useGoToProfile();
+    const viewMode = useAppSelector(selectViewMode);
+    const viewModeRef = useRef(viewMode);
 
     const [profileInput, setProfileInput] = useState(profile);
     const [clipping, setClipping] = useState(_clipping);
 
     const dispatch = useAppDispatch();
+
+    const pathName =
+        paths.status === AsyncStatus.Initial || paths.status === AsyncStatus.Loading
+            ? "..."
+            : paths.status === AsyncStatus.Success
+            ? paths.data.find((p) => p.id === selectedPath)?.name
+            : "[error]";
+
+    useEffect(() => {
+        viewModeRef.current = viewMode;
+    }, [viewMode]);
 
     useEffect(() => setClipping(_clipping), [_clipping]);
 
@@ -308,11 +321,9 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     };
 
     useEffect(() => {
-        dispatch(renderActions.setViewMode(ViewMode.FollowPath));
-
-        return () => {
-            dispatch(renderActions.setViewMode(ViewMode.Default));
-        };
+        if (viewModeRef.current !== ViewMode.Deviations) {
+            dispatch(renderActions.setViewMode(ViewMode.FollowPath));
+        }
     }, [dispatch]);
 
     const { r, g, b } = vecToRgb(deviations.lineColor);
@@ -389,7 +400,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             <Typography sx={{ mb: 0.5 }}>Profile:</Typography>
                             <OutlinedInput
                                 value={profileInput}
-                                inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
+                                inputProps={{ inputMode: "numeric", pattern: "-?[0-9,.]*" }}
                                 onChange={(e) => setProfileInput(e.target.value.replace(",", "."))}
                                 fullWidth
                                 size="small"
@@ -451,6 +462,9 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                     <Divider sx={{ mt: 2, mb: 1 }} />
 
                     <Box display="flex" flexDirection="column" mb={2}>
+                        <Box mb={1}>
+                            Selected centerline: <strong>{pathName}</strong>
+                        </Box>
                         <FormControlLabel
                             control={
                                 <IosSwitch

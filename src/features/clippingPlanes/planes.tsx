@@ -1,4 +1,4 @@
-import { Cameraswitch } from "@mui/icons-material";
+import { Cameraswitch, Delete } from "@mui/icons-material";
 import { Box, Button, Slider } from "@mui/material";
 import { ReadonlyQuat, ReadonlyVec3, vec3, vec4 } from "gl-matrix";
 import { SyntheticEvent, useEffect, useRef, useState } from "react";
@@ -42,7 +42,6 @@ export default function Planes() {
                     },
                 })
             );
-            dispatch(renderActions.setBackground({ color: [0, 0, 0, 1] }));
         }
     };
 
@@ -70,9 +69,15 @@ export default function Planes() {
         plane[3] = -newVal;
         view.modifyRenderState({
             clipping: {
-                planes: planes.map((p, i) =>
-                    i === idx ? { ...selected, outline: { enabled: false }, normalOffset: plane } : p
-                ),
+                planes: planes.map((p, i) => {
+                    if (i === idx) {
+                        return { ...selected, outline: { enabled: false }, normalOffset: plane };
+                    } else if (p.outline?.enabled) {
+                        // Disable all clipping plane outlines while moving slider for better perf
+                        return { ...p, outline: { enabled: false } };
+                    }
+                    return p;
+                }),
             },
         });
         if (cameraType === CameraType.Orthographic) {
@@ -116,7 +121,6 @@ export default function Planes() {
                 goTo: getSnapToPlaneParams({ planeIdx: idx, view }),
             })
         );
-        dispatch(renderActions.setBackground({ color: [0, 0, 0, 1] }));
     };
 
     const handleCameraSwap = (idx: number) => {
@@ -144,13 +148,31 @@ export default function Planes() {
         }
     };
 
+    const handleDeletePlane = (idx: number) => {
+        view.modifyRenderState({
+            outlines: { on: true },
+        });
+        const newPlanes = planes
+            .filter((_, i) => i !== idx)
+            .map((p, i) => (i === 0 ? { ...p, outline: { enabled: true } } : p));
+        setSliders(newPlanes.map((plane) => -plane.normalOffset[3]));
+        dispatch(
+            renderActions.setClippingPlanes({
+                planes: newPlanes,
+            })
+        );
+        if (cameraType === CameraType.Orthographic) {
+            dispatch(renderActions.setClippingInEdit(false));
+        }
+    };
+
     return (
         <>
             {planes.length === sliders.length &&
                 planes.map((plane, idx) => {
                     return (
-                        <Box mb={2} key={idx}>
-                            Plane {idx + 1}:
+                        <Box mb={2} key={idx} display="flex" alignItems="center" gap={1}>
+                            <Box flex="0 0 80px">Plane {idx + 1}</Box>
                             <Slider
                                 min={-plane.baseW - 20}
                                 max={-plane.baseW + 20}
@@ -161,6 +183,9 @@ export default function Planes() {
                             />
                             <Button onClick={() => handleCameraSwap(idx)} color="grey">
                                 <Cameraswitch sx={{ mr: 1 }} />
+                            </Button>
+                            <Button onClick={() => handleDeletePlane(idx)} color="grey">
+                                <Delete sx={{ mr: 1 }} />
                             </Button>
                         </Box>
                     );

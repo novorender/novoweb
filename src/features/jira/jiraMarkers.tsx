@@ -1,13 +1,13 @@
 import { css, styled, Theme } from "@mui/material";
-import { SVGProps } from "react";
+import { forwardRef, SVGProps, useCallback, useEffect, useImperativeHandle, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 
 import { jiraActions, selectJiraActiveIssue, selectJiraHoveredEntity } from "./jiraSlice";
 import { useJiraMarkers } from "./useJiraMarkers";
 
-// TODO(OLA): Share marker styles
 const markerStyles = ({ theme, active, hovered }: { theme: Theme; active?: boolean; hovered?: boolean }) => css`
     cursor: pointer;
     pointer-events: bounding-box;
@@ -72,28 +72,51 @@ const icons = {
 } as { [key: string]: string | undefined };
 
 const IssueMarker = styled(
-    ({ icon, ...props }: SVGProps<SVGGElement> & { icon: string }) => (
-        <g {...props}>
+    forwardRef<SVGGElement, SVGProps<SVGGElement> & { icon: string }>(({ icon, ...props }, ref) => (
+        <g {...props} ref={ref}>
             <circle cx="12" cy="12" r="18" />
             {<path d={icons[icon] ?? icons.announcement}></path>}
         </g>
-    ),
+    )),
     { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
 )<{ active?: boolean; hovered?: boolean; icon?: string }>(markerStyles);
 
-export function JiraMarkers() {
+export const JiraMarkers = forwardRef<{ update: () => void }>(function JiraMarkers(_, ref) {
+    const {
+        state: { view },
+    } = useExplorerGlobals();
+
     const dispatch = useAppDispatch();
     const hoveredEntity = useAppSelector(selectJiraHoveredEntity);
     const activeIssue = useAppSelector(selectJiraActiveIssue);
+
     const markers = useJiraMarkers();
     const onWheel = useRedirectWheelEvents();
+    const containerRef = useRef<(SVGGElement | null)[]>([]);
+
+    const update = useCallback(() => {
+        if (!view?.measure || !containerRef.current.length || !markers.length) {
+            return;
+        }
+
+        view.measure.draw.toMarkerPoints(markers.map((marker) => marker.position)).forEach((pos, idx) => {
+            containerRef.current[idx]?.setAttribute(
+                "transform",
+                pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)"
+            );
+        });
+    }, [markers, view]);
+
+    useImperativeHandle(ref, () => ({ update }), [update]);
+
+    useEffect(() => {
+        update();
+    }, [update]);
 
     return (
         <>
-            {markers.map((marker) => (
+            {markers.map((marker, i) => (
                 <IssueMarker
-                    id={`jiraIssueMarker-${marker.key}`}
-                    name={`jiraIssueMarker-${marker.key}`}
                     key={marker.key}
                     icon={marker.icon}
                     hovered={hoveredEntity === marker.key}
@@ -103,8 +126,9 @@ export function JiraMarkers() {
                         dispatch(jiraActions.setActiveIssue(marker.key));
                     }}
                     onWheel={onWheel}
+                    ref={(el) => (containerRef.current[i] = el)}
                 />
             ))}
         </>
     );
-}
+});

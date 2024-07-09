@@ -1,4 +1,4 @@
-import { OfflineViewState, View } from "@novorender/api";
+import { OfflineErrorCode, OfflineViewState, View } from "@novorender/api";
 import { useCallback, useEffect } from "react";
 
 import { dataApi } from "apis/dataV1";
@@ -95,6 +95,7 @@ export function useHandleOffline() {
             }
 
             const parentSceneId = view.renderState.scene.config.id;
+            let resetAction = true;
 
             switch (action.action) {
                 case "delete": {
@@ -208,6 +209,53 @@ export function useHandleOffline() {
                     );
                     break;
                 }
+                case "estimate": {
+                    const scene =
+                        offlineWorkerState.scenes.get(parentSceneId) ??
+                        (await offlineWorkerState.addScene(parentSceneId));
+
+                    if (!scene) {
+                        break;
+                    }
+
+                    if (
+                        offlineWorkerState.initialStorageEstimate?.quota === undefined ||
+                        offlineWorkerState.initialStorageEstimate?.usage === undefined
+                    ) {
+                        break;
+                    }
+
+                    const availableSize = Math.max(
+                        0,
+                        offlineWorkerState.initialStorageEstimate.quota -
+                            offlineWorkerState.initialStorageEstimate.usage
+                    );
+                    const totalSize = await scene.readManifest(
+                        view.offline!.manifestUrl,
+                        abortController.current.signal
+                    );
+                    const usedSize = await scene.getUsedSize();
+
+                    if (totalSize === undefined) {
+                        break;
+                    }
+
+                    const showWarning = totalSize - usedSize >= availableSize;
+                    if (showWarning) {
+                        dispatch(
+                            offlineActions.setSizeWarning({
+                                totalSize,
+                                usedSize,
+                                availableSize,
+                            })
+                        );
+                    } else {
+                        resetAction = false;
+                        dispatch(offlineActions.setAction({ action: "fullSync" }));
+                    }
+
+                    break;
+                }
                 case "fullSync": {
                     const scene =
                         offlineWorkerState.scenes.get(parentSceneId) ??
@@ -273,7 +321,9 @@ export function useHandleOffline() {
                 }
             }
 
-            dispatch(offlineActions.setAction(undefined));
+            if (resetAction) {
+                dispatch(offlineActions.setAction(undefined));
+            }
         }
     }, [action, dispatch, offlineWorkerState, view, abort, abortController, createLogger, viewerSceneId, user]);
 }
@@ -313,6 +363,14 @@ function useCreateLogger() {
                 },
                 error: (error) => {
                     console.warn(error);
+                    if (error.id === OfflineErrorCode.quotaExceeded) {
+                        dispatch(
+                            offlineActions.updateScene({
+                                id: parentSceneId,
+                                updates: { status: "error", error: "Not enough disk drive space on the device." },
+                            })
+                        );
+                    }
                 },
                 progress: (current, max, operation) => {
                     if (operation === "download") {

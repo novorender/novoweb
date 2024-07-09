@@ -118,7 +118,7 @@ async function loadFeatures(
 
     // Using request instead of queryFeatures because queryFeatures doesn't
     // seem to support signal
-    const fields = ["OBJECTID"];
+    const fields = [definition.objectIdField];
     if (definition.drawingInfo.renderer.type === "uniqueValue") {
         fields.push(definition.drawingInfo.renderer.field1);
     }

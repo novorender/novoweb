@@ -3,7 +3,9 @@ import { SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
+import { renderActions } from "features/render";
 import { explorerActions } from "slices/explorer";
+import { ViewMode } from "types/misc";
 
 import {
     followPathActions,
@@ -16,7 +18,7 @@ import { useGoToProfile } from "./useGoToProfile";
 
 const markerStyles = () => css`
     cursor: pointer;
-    pointer-events: bounding-box;
+    pointer-events: auto;
     filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
 
     :hover {
@@ -35,12 +37,6 @@ const markerStyles = () => css`
         stroke: black;
         fill: white;
     }
-`;
-
-const basicStyle = () => css`
-    cursor: pointer;
-    pointer-events: bounding-box;
-    filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
 `;
 
 const PlusMarker = styled(
@@ -69,12 +65,28 @@ const InfoMarker = styled(
     (props: SVGProps<SVGGElement>) => (
         <g {...props}>
             <rect width="24" height="24" fillOpacity={0} transform={"translate(88 88)"} />
+            <circle r="12" transform={"translate(100 100)"} />
             <path
-                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
-                stroke="black"
-                fill="#FFFFFF"
-                transform={"translate(89 89)"}
+                d="M 12 5 A 1 1 0 0 0 12 7 A 1 1 0 0 0 12 5 M 11 10 H 13 V 17 H 11 Z"
+                transform="translate(88 88)"
             ></path>
+        </g>
+    ),
+    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
+)(markerStyles);
+
+const basicStyle = () => css`
+    cursor: pointer;
+    pointer-events: bounding-box;
+    filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
+`;
+
+const CloseMarker = styled(
+    (props: SVGProps<SVGGElement>) => (
+        <g {...props}>
+            <rect width="24" height="24" fillOpacity={0} transform={"translate(88 88)"} />
+            <circle r="10" fill="red" transform={"translate(100 100)"} />
+            <path d="M96,96 L104,104 M104,96 L96,104" stroke="white" strokeWidth={2}></path>
         </g>
     ),
     { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
@@ -128,7 +140,16 @@ export function FollowInteractions() {
                 id={`followInfo`}
                 name={`followInfo`}
                 onClick={() => {
+                    dispatch(followPathActions.setLastViewedRouterPath("/followIds"));
+                    dispatch(followPathActions.setGoToRouterPath("/followIds"));
                     dispatch(explorerActions.forceOpenWidget(featuresConfig.followPath.key));
+                }}
+            />
+            <CloseMarker
+                id="followClose"
+                name="followClose"
+                onClick={() => {
+                    dispatch(renderActions.setViewMode(ViewMode.Default));
                 }}
             />
         </>

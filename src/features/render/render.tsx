@@ -89,6 +89,7 @@ export function Render3D() {
 
     const [svg, setSvg] = useState<null | SVGSVGElement>(null);
     const [htmlInteractionContainer, setHtmlInteractionContainer] = useState<null | { update: () => void }>(null);
+    const [markersContainer, setMarkersContainer] = useState<null | { update: () => void }>(null);
 
     const engine2dRenderFnRef = useRef<((moved: boolean, idleFrame?: boolean) => void) | undefined>();
     const pointerPosRef = useRef([0, 0] as [x: number, y: number]);
@@ -107,7 +108,7 @@ export function Render3D() {
     useHandleInit();
     useHandleInitialBookmark();
     useHandleUrlSearch();
-    useHandleCameraMoved({ svg, engine2dRenderFnRef, htmlInteractionContainer });
+    useHandleCameraMoved({ engine2dRenderFnRef, containers: [htmlInteractionContainer, markersContainer] });
     useHandleCameraState();
     useHandleCameraSpeed();
     useHandleGrid();
@@ -142,7 +143,7 @@ export function Render3D() {
     });
 
     return (
-        <Box position="relative" width="100dvw" height="100dvh" sx={{ userSelect: "none" }}>
+        <Box position="relative" width="100dvw" height="100dvh" sx={{ userSelect: "none", overflow: "hidden" }}>
             {loadingHandles.length !== 0 && (
                 <Box position={"absolute"} top={0} width={1} display={"flex"} justifyContent={"center"}>
                     <LinearProgress />
@@ -157,7 +158,7 @@ export function Render3D() {
                     <Engine2D pointerPosRef={pointerPosRef} renderFnRef={engine2dRenderFnRef} svg={svg} />
                     <Stamp />
                     <Svg width={size.width} height={size.height} ref={setSvg}>
-                        <Markers />
+                        <Markers ref={setMarkersContainer} />
                         <Engine2DInteractions />
                         <g id="cursor" />
                     </Svg>

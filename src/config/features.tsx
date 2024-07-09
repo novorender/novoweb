@@ -1,6 +1,7 @@
 import {
     AccountTreeRounded,
     Attachment,
+    Ballot,
     BlurOn,
     Cameraswitch,
     Category,
@@ -430,6 +431,14 @@ export const featuresConfig = {
         key: "arcgis",
         name: "ArcGIS",
         Icon: Public,
+        type: FeatureType.Widget,
+        defaultLocked: true,
+        offline: false,
+    },
+    forms: {
+        key: "forms",
+        name: "Forms",
+        Icon: Ballot,
         type: FeatureType.Widget,
         defaultLocked: true,
         offline: false,

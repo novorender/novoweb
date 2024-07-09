@@ -2,11 +2,14 @@ import { DrawableEntity, DrawProduct, MeasureSettings, View } from "@novorender/
 import { ReadonlyVec2, vec2, vec3 } from "gl-matrix";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 
-import { useAppSelector } from "app/redux-store-interactions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Canvas2D } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { deviationsActions } from "features/deviations/deviationsSlice";
 import { CameraState, drawPart, drawProduct, getCameraState, vec3Sum } from "features/engine2D";
+import { selectSelectedPath } from "features/followPath";
 import { ExtendedMeasureEntity } from "types/misc";
+import { projectPointOnLineSegment2D } from "utils/math";
 
 import { MeasureInteractionPositions } from "./measureInteractions";
 import { ActiveAxis, selectMeasure } from "./measureSlice";
@@ -33,6 +36,8 @@ export function MeasureCanvas({
     } = useExplorerGlobals();
     const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
     const [ctx, setCtx] = useState<CanvasRenderingContext2D | null | undefined>(null);
+    const followPath = useAppSelector(selectSelectedPath);
+    const dispatch = useAppDispatch();
 
     const measureSets = useMeasureObjects();
     const measure = useAppSelector(selectMeasure);
@@ -286,6 +291,28 @@ export function MeasureCanvas({
         return true;
     }, [view, canvas, ctx, measure.duoMeasurementValues, measureSets, interactionPositions, measure.activeAxis]);
 
+    const updateClosestToCenterCenterlinePoint = useCallback(() => {
+        if (followPath === undefined) {
+            return;
+        }
+
+        try {
+            const prefix = `${followPath}_`;
+            for (const [key, product] of drawProductCacheRef.current) {
+                if (key.startsWith(prefix)) {
+                    dispatch(
+                        deviationsActions.setClosestToCenterFollowPathPoint(
+                            findClosestPointToScreenCenter(product, window.innerWidth, window.innerHeight)
+                        )
+                    );
+                    return;
+                }
+            }
+        } catch (ex) {
+            console.warn("Error updating closest centerline point to screen center");
+        }
+    }, [dispatch, followPath]);
+
     const draw = useCallback(() => {
         if (ctx && canvas && size && view) {
             const cameraState = getCameraState(view.renderState.camera);
@@ -293,8 +320,9 @@ export function MeasureCanvas({
 
             drawMeasureObjects(drawProductCacheRef.current, ctx, cameraState);
             drawDuoResults(resultsDrawProductCacheRef.current, ctx, cameraState);
+            updateClosestToCenterCenterlinePoint();
         }
-    }, [ctx, canvas, size, view]);
+    }, [ctx, canvas, size, view, updateClosestToCenterCenterlinePoint]);
 
     useEffect(() => {
         update().then((updated) => {
@@ -502,5 +530,46 @@ function drawDuoResults(
                 }
             }
         }
+    }
+}
+
+function findClosestPointToScreenCenter(product: DrawProduct | undefined, screenWidth: number, screenHeight: number) {
+    if (!product) {
+        return;
+    }
+
+    const obj = product.objects[0];
+    const textNode = obj.parts.find((p) => p.drawType === "text");
+    if (!textNode?.vertices2D || textNode.vertices2D.length === 0) {
+        return;
+    }
+
+    const center = vec2.fromValues(screenWidth / 2, screenHeight / 2);
+    let closest1 = vec2.create();
+    let minDistSq1 = Number.MAX_SAFE_INTEGER;
+    let closest2 = vec2.create();
+    let minDistSq2 = Number.MAX_SAFE_INTEGER;
+
+    for (const v of textNode.vertices2D) {
+        const distSq = vec2.sqrDist(v, center);
+        if (distSq < minDistSq1) {
+            if (minDistSq1 < minDistSq2) {
+                minDistSq2 = minDistSq1;
+                closest2 = closest1;
+            }
+            minDistSq1 = distSq;
+            closest1 = v;
+        } else if (distSq < minDistSq2) {
+            minDistSq2 = distSq;
+            closest2 = v;
+        }
+    }
+
+    if (closest1[0] === 0 && closest1[1] === 0) {
+        return;
+    } else if (vec2.equals(closest1, closest2) || (closest2[0] === 0 && closest2[1] === 0)) {
+        return closest1;
+    } else {
+        return projectPointOnLineSegment2D(vec2.create(), center, closest1, closest2) ?? closest1;
     }
 }

@@ -28,15 +28,10 @@ export function useProjectEpsg({ skip }: { skip?: boolean } = {}) {
 
     const tmZone = useAppSelector((state) => selectProjectSettings(state).tmZone);
 
-    let result: string | undefined;
-    if (projectInfoV2) {
-        if (projectInfoV2.epsg) {
-            result = projectInfoV2.epsg;
-        }
+    let result = projectInfoV2?.epsg;
 
-        if (tmZone) {
-            result = projectV1ZoneNameToEpsg(tmZone);
-        }
+    if (tmZone && !result) {
+        result = projectV1ZoneNameToEpsg(tmZone);
     }
 
     return { data: result, error, isFetching };

@@ -7,6 +7,10 @@ import { toIdArr, toIdObj } from "../utils";
 
 export enum HighlightCollection {
     SecondaryHighlight = "secondaryHighlight",
+    SelectedDeviation = "selectedDeviation",
+    FormsNew = "formsNew",
+    FormsOngoing = "formsOngoing",
+    FormsCompleted = "formsCompleted",
 }
 
 export const initialState = {
@@ -15,6 +19,26 @@ export const initialState = {
         idArr: [] as ObjectId[],
         color: [1, 1, 0, 1] as VecRGBA,
     },
+    [HighlightCollection.SelectedDeviation]: {
+        ids: {} as Record<ObjectId, true | undefined>,
+        idArr: [] as ObjectId[],
+        color: [1, 1, 1, 1] as VecRGBA,
+    },
+    [HighlightCollection.FormsNew]: {
+        ids: {} as Record<ObjectId, true | undefined>,
+        idArr: [] as ObjectId[],
+        color: [0.5, 0, 0, 1] as VecRGBA,
+    },
+    [HighlightCollection.FormsOngoing]: {
+        ids: {} as Record<ObjectId, true | undefined>,
+        idArr: [] as ObjectId[],
+        color: [1, 0.75, 0, 1] as VecRGBA,
+    },
+    [HighlightCollection.FormsCompleted]: {
+        ids: {} as Record<ObjectId, true | undefined>,
+        idArr: [] as ObjectId[],
+        color: [0, 0.5, 0, 1] as VecRGBA,
+    },
 };
 
 export type State = typeof initialState;
@@ -22,6 +46,7 @@ type Key = keyof State;
 
 enum ActionTypes {
     Add,
+    Move,
     Remove,
     SetIds,
     SetColor,
@@ -33,6 +58,15 @@ function add(collection: Key, ids: ObjectId[]) {
     return {
         type: ActionTypes.Add as const,
         collection,
+        ids,
+    };
+}
+
+function move(fromCollection: Key, toCollection: Key, ids: ObjectId[]) {
+    return {
+        type: ActionTypes.Move as const,
+        fromCollection,
+        toCollection,
         ids,
     };
 }
@@ -75,7 +109,7 @@ function clearAll() {
     };
 }
 
-export const actions = { add, remove, setIds, setColor, set, clearAll };
+export const actions = { add, move, remove, setIds, setColor, set, clearAll };
 
 type Actions = ReturnType<(typeof actions)[keyof typeof actions]>;
 export type DispatchHighlightCollection = Dispatch<Actions>;
@@ -99,6 +133,29 @@ export function reducer(state: State, action: Actions): State {
                 [action.collection]: {
                     ...collection,
                     ids,
+                },
+            };
+        }
+        case ActionTypes.Move: {
+            const fromCollection = state[action.fromCollection];
+
+            action.ids.forEach((id) => {
+                delete fromCollection.ids[id];
+            });
+
+            const toCollection = state[action.toCollection];
+            const ids = { ...toCollection.ids, ...toIdObj(action.ids) };
+
+            return {
+                ...state,
+                [action.fromCollection]: {
+                    ...fromCollection,
+                    idArr: toIdArr(fromCollection.ids),
+                },
+                [action.toCollection]: {
+                    ...toCollection,
+                    ids,
+                    idArr: toIdArr(ids),
                 },
             };
         }
@@ -155,6 +212,26 @@ export function reducer(state: State, action: Actions): State {
                 ...state,
                 [HighlightCollection.SecondaryHighlight]: {
                     color: state.secondaryHighlight.color,
+                    idArr: [],
+                    ids: {},
+                },
+                [HighlightCollection.SelectedDeviation]: {
+                    color: state.selectedDeviation.color,
+                    idArr: [],
+                    ids: {},
+                },
+                [HighlightCollection.FormsNew]: {
+                    color: state.formsNew.color,
+                    idArr: [],
+                    ids: {},
+                },
+                [HighlightCollection.FormsOngoing]: {
+                    color: state.formsOngoing.color,
+                    idArr: [],
+                    ids: {},
+                },
+                [HighlightCollection.FormsCompleted]: {
+                    color: state.formsCompleted.color,
                     idArr: [],
                     ids: {},
                 },

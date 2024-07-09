@@ -69,6 +69,7 @@ const initialState: State = {
         xsiteManageClientId: import.meta.env.REACT_APP_XSITEMANAGE_CLIENT_ID ?? "",
         novorenderClientId: import.meta.env.REACT_APP_NOVORENDER_CLIENT_ID ?? "",
         novorenderClientSecret: import.meta.env.REACT_APP_NOVORENDER_CLIENT_SECRET ?? "",
+        assetsUrl: import.meta.env.ASSETS_URL ?? "https://novorenderblobs.blob.core.windows.net/assets",
     },
 };
 
@@ -260,25 +261,24 @@ export const explorerSlice = createSlice({
             }
             if (state.userRole !== UserRole.Viewer) {
                 state.enabledWidgets = uniqueArray(
-                    (customProperties.explorerProjectState
-                        ? (customProperties.explorerProjectState.features.widgets.enabled as WidgetKey[])
-                        : getEnabledFeatures(customProperties)
+                    (
+                        (customProperties.explorerProjectState?.features?.widgets?.enabled as WidgetKey[]) ??
+                        getEnabledFeatures(customProperties)
                     )
                         .concat(defaultEnabledAdminWidgets)
                         .concat(defaultEnabledWidgets)
                 );
             } else {
                 state.enabledWidgets = uniqueArray(
-                    (customProperties.explorerProjectState
-                        ? (customProperties.explorerProjectState.features.widgets.enabled as WidgetKey[]).filter(
-                              (key) => featuresConfig[key] && featuresConfig[key].type !== FeatureType.AdminWidget
-                          )
-                        : getEnabledFeatures(customProperties)
+                    (
+                        (customProperties.explorerProjectState?.features?.widgets?.enabled as WidgetKey[])?.filter(
+                            (key) => featuresConfig[key] && featuresConfig[key].type !== FeatureType.AdminWidget
+                        ) ?? getEnabledFeatures(customProperties)
                     ).concat(defaultEnabledWidgets)
                 );
             }
 
-            if (customProperties.explorerProjectState) {
+            if (customProperties.explorerProjectState?.features?.primaryMenu?.buttons) {
                 const [button1, button2, button3, button4, button5] = customProperties.explorerProjectState.features
                     .primaryMenu.buttons as ButtonKey[];
 
@@ -289,12 +289,15 @@ export const explorerSlice = createSlice({
                     button4,
                     button5,
                 };
+            } else {
+                state.primaryMenu = getPrimaryMenu(customProperties) ?? state.primaryMenu;
+            }
 
+            if (customProperties.explorerProjectState?.features?.contextMenus?.canvas.primary.features) {
                 const ctxMenuFeatures = customProperties.explorerProjectState.features.contextMenus.canvas.primary
                     .features as CanvasContextMenuFeatureKey[];
                 state.contextMenu.canvas.features = ctxMenuFeatures;
             } else {
-                state.primaryMenu = getPrimaryMenu(customProperties) ?? state.primaryMenu;
                 state.contextMenu.canvas.features =
                     getCanvasContextMenuFeatures(customProperties) ?? state.contextMenu.canvas.features;
             }

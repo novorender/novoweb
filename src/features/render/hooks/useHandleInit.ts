@@ -1,7 +1,6 @@
 import { DeviceProfile, getDeviceProfile, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { getGPUTier } from "detect-gpu";
-import { quat, vec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
 import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
@@ -14,7 +13,8 @@ import {
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { GroupStatus, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
+import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
+import { fillGroupIds } from "features/deviations/utils";
 import { useSceneId } from "hooks/useSceneId";
 import { ProjectType } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
@@ -23,7 +23,7 @@ import { sleep } from "utils/time";
 
 import { renderActions } from "../renderSlice";
 import { ErrorKind } from "../sceneError";
-import { loadScene } from "../utils";
+import { getDefaultCamera, loadScene } from "../utils";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
@@ -66,7 +66,7 @@ export function useHandleInit() {
             const view = await createView(canvas, { deviceProfile });
 
             try {
-                const [{ url: _url, db, ...sceneData }, camera] = await loadScene(sceneId);
+                const [{ url: _url, db, ...sceneData }, sceneCamera] = await loadScene(sceneId);
                 const url = new URL(_url);
                 const parentSceneId = url.pathname.replaceAll("/", "");
                 url.pathname = "";
@@ -90,59 +90,47 @@ export function useHandleInit() {
                     }));
                 view.run();
 
-                while (!view.renderState.scene) {
-                    await sleep(50);
-                }
-
-                if (!camera) {
-                    view.activeController.autoFit(
-                        view.renderState.scene.config.boundingSphere.center,
-                        view.renderState.scene.config.boundingSphere.radius
-                    );
-
-                    // 1sec autofit flight duration
-                    await sleep(1000);
-                }
-
                 dispatch(
                     renderActions.initScene({
                         projectType: projectIsV2 ? ProjectType.V2 : ProjectType.V1,
                         tmZoneForCalc,
                         sceneData,
                         sceneConfig: octreeSceneConfig,
-                        initialCamera: {
-                            kind: camera?.kind ?? view.renderState.camera.kind,
-                            position: vec3.clone(camera?.position ?? view.renderState.camera.position),
-                            rotation: quat.clone(camera?.rotation ?? view.renderState.camera.rotation),
-                            fov: camera?.fov ?? view.renderState.camera.fov,
-                        },
+                        initialCamera: sceneCamera ?? getDefaultCamera(projectV2?.bounds) ?? view.renderState.camera,
                         deviceProfile,
                     })
                 );
 
-                dispatchObjectGroups(
-                    objectGroupsActions.set(
-                        sceneData.objectGroups
-                            .filter((group) => group.id && group.search)
-                            .map((group) => ({
-                                name: group.name,
-                                id: group.id,
-                                grouping: group.grouping ?? "",
-                                color: group.color ?? ([1, 0, 0, 1] as VecRGBA),
-                                opacity: group.opacity ?? 0,
-                                search: group.search ?? [],
-                                includeDescendants: group.includeDescendants ?? true,
-                                status: group.selected
-                                    ? GroupStatus.Selected
-                                    : group.hidden
-                                    ? GroupStatus.Hidden
-                                    : GroupStatus.None,
-                                // NOTE(OLA): Pass IDs as undefined to be loaded when group is activated.
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                ids: group.ids ? new Set(group.ids) : (undefined as any),
-                            }))
-                    )
+                const groups: ObjectGroup[] = sceneData.objectGroups
+                    .filter((group) => group.id && group.search)
+                    .map((group) => ({
+                        name: group.name,
+                        id: group.id,
+                        grouping: group.grouping ?? "",
+                        color: group.color ?? ([1, 0, 0, 1] as VecRGBA),
+                        opacity: group.opacity ?? 0,
+                        search: group.search ?? [],
+                        includeDescendants: group.includeDescendants ?? true,
+                        status: group.selected
+                            ? GroupStatus.Selected
+                            : group.hidden
+                            ? GroupStatus.Hidden
+                            : group.frozen
+                            ? GroupStatus.Frozen
+                            : GroupStatus.None,
+                        // NOTE(OLA): Pass IDs as undefined to be loaded when group is activated.
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        ids: group.ids ? new Set(group.ids) : (undefined as any),
+                    }));
+
+                // Ensure frozen groups are loaded before rendering anything to not even put them into memory
+                // (some scenes on some devices may crash upon loading because there's too much data)
+                await fillGroupIds(
+                    sceneId,
+                    groups.filter((g) => g.status === GroupStatus.Frozen)
                 );
+
+                dispatchObjectGroups(objectGroupsActions.set(groups));
                 dispatchHighlighted(
                     highlightActions.setColor(sceneData.customProperties.highlights?.primary.color ?? [1, 0, 0, 1])
                 );
@@ -302,7 +290,9 @@ async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?:
     const url = new URL("/novorender/api/", window.location.origin);
 
     const imports = await View.downloadImports({ baseUrl: url });
-    return new View(canvas, deviceProfile, imports);
+    const view = new View(canvas, deviceProfile, imports);
+    view.controllers.flight.input.mouseMoveSensitivity = 4;
+    return view;
 }
 
 async function loadTmZoneForCalc(projectV2: ProjectInfo | undefined, tmZoneV1: string | undefined) {

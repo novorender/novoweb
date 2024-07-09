@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { CameraType, renderActions, selectViewMode } from "features/render";
+import { CameraType, renderActions, selectCameraDefaults, selectViewMode } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { handleImageResponse } from "utils/bcf";
@@ -23,6 +23,7 @@ export function useHandleImages() {
     const viewMode = useAppSelector(selectViewMode);
     const currentPanorama = useRef<{ image: PanoramaImage; obj?: RenderStateDynamicObject }>();
     const [abortController, abort] = useAbortController();
+    const cameraDefaults = useAppSelector(selectCameraDefaults);
 
     useEffect(
         function handleImageChanges() {
@@ -46,7 +47,16 @@ export function useHandleImages() {
             if (!activeImage) {
                 if (viewMode === ViewMode.Panorama) {
                     dispatch(renderActions.setViewMode(ViewMode.Default));
-                    dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
+                    dispatch(
+                        renderActions.setCamera({
+                            type: CameraType.Pinhole,
+                            goTo: {
+                                position: view.renderState.camera.position,
+                                rotation: view.renderState.camera.rotation,
+                                near: cameraDefaults.pinhole.clipping.near,
+                            },
+                        })
+                    );
                 }
                 return;
             }
@@ -92,7 +102,7 @@ export function useHandleImages() {
                 dispatch(
                     renderActions.setCamera({
                         type: CameraType.Pinhole,
-                        goTo: { position: panorama.position, rotation },
+                        goTo: { position: panorama.position, rotation, near: 0.1 },
                     })
                 );
                 currentPanorama.current = { image: panorama };
@@ -134,6 +144,6 @@ export function useHandleImages() {
                 );
             }
         },
-        [activeImage, view, dispatch, abortController, abort, viewMode]
+        [activeImage, view, dispatch, abortController, abort, viewMode, cameraDefaults]
     );
 }

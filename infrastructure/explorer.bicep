@@ -4,6 +4,8 @@ param moduleName string
 var appName = 'explorer'
 var applicationInsightsName = '${moduleName}-ai-${environment}'
 
+var assetStorageAccountName = 'nrassetstorage${environment}' // aka novorenderblobs
+
 var keyVaultName = 'novovault-${environment}'
 var keyVaultResourceGroup = 'common-${environment}'
 
@@ -24,6 +26,7 @@ var appSettings = {
     XSITEMANAGE_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=xsitemanage-client-id)'
     NOVORENDER_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=novorender-client-id)'
     NOVORENDER_CLIENT_SECRET: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=novorender-client-secret)'
+    ASSETS_URL: 'https://${assetStorageAccountName}.blob.${az.environment().suffixes.storage}/assets'
     APPINSIGHTS_INSTRUMENTATIONKEY: appInsights.properties.InstrumentationKey
     APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
     ApplicationInsightsAgent_EXTENSION_VERSION: '~3'

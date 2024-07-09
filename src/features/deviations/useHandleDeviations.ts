@@ -4,13 +4,21 @@ import { useLazyGetDeviationProfilesQuery } from "apis/dataV2/dataV2Api";
 import { ColorStop, DeviationProjectConfig } from "apis/dataV2/deviationTypes";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { renderActions, selectDeviations, selectPoints } from "features/render";
+import { selectLandXmlPaths } from "features/followPath";
+import { useLoadLandXmlPath } from "features/followPath/hooks/useLoadLandXmlPath";
+import { LandXmlPath } from "features/followPath/types";
+import { renderActions, selectDeviations, selectPoints, selectViewMode } from "features/render";
+import { useAbortController } from "hooks/useAbortController";
 import { selectProjectIsV2 } from "slices/explorer";
-import { AsyncStatus } from "types/misc";
+import { AsyncStatus, ViewMode } from "types/misc";
 import { getAssetUrl } from "utils/misc";
 
-import { deviationsActions, selectDeviationProfiles, selectSelectedProfile } from "./deviationsSlice";
+import { deviationsActions } from "./deviationsSlice";
 import { DeviationType, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
+import { useHighlightDeviation } from "./hooks/useHighlightDeviation";
+import { useSetCenterLineFollowPath } from "./hooks/useSetCenterLineFollowPath";
+import { selectDeviationProfiles, selectSelectedProfile, selectSelectedProfileId } from "./selectors";
+import { accountForAbsValues } from "./utils";
 
 const EMPTY_ARRAY: ColorStop[] = [];
 
@@ -21,19 +29,32 @@ export function useHandleDeviations() {
     const isProjectV2 = useAppSelector(selectProjectIsV2);
     const projectId = view?.renderState.scene?.config.id;
     const profiles = useAppSelector(selectDeviationProfiles);
+    const selectedProfileId = useAppSelector(selectSelectedProfileId);
     const dispatch = useAppDispatch();
     const points = useAppSelector(selectPoints);
     const defaultColorStops = points.deviation.colorGradient.knots ?? EMPTY_ARRAY;
     const profile = useAppSelector(selectSelectedProfile);
     const deviation = useAppSelector(selectDeviations);
+    const [abortController] = useAbortController();
+    const active = useAppSelector(selectViewMode) === ViewMode.Deviations;
+    const landXmlPaths = useAppSelector(selectLandXmlPaths);
 
     const [getDeviationProfiles] = useLazyGetDeviationProfilesQuery();
+
+    useLoadLandXmlPath();
+    useSetCenterLineFollowPath();
+    useHighlightDeviation();
 
     useEffect(() => {
         initDeviationProfiles();
 
         async function initDeviationProfiles() {
-            if (!view || !projectId || profiles.status !== AsyncStatus.Initial) {
+            if (
+                !view ||
+                !projectId ||
+                profiles.status !== AsyncStatus.Initial ||
+                landXmlPaths.status !== AsyncStatus.Success
+            ) {
                 return;
             }
 
@@ -42,7 +63,10 @@ export function useHandleDeviations() {
             dispatch(deviationsActions.setProfiles({ status: AsyncStatus.Loading }));
 
             try {
-                const [configV1, configV2] = await Promise.all([
+                // When we run the calculation - saved config is copied to another storage where calculator picks it up, so
+                // savedConfig - the one where we save changes
+                // commitedConfig - the one picked up (and later updated!) by the service
+                const [commitedConfig, savedConfig] = await Promise.all([
                     fetch(url).then((res) => {
                         if (!res.ok) {
                             return;
@@ -57,18 +81,24 @@ export function useHandleDeviations() {
                         : undefined,
                 ]);
 
+                if (commitedConfig && savedConfig) {
+                    // Commited config always has relevant runData
+                    savedConfig.runData = commitedConfig.runData;
+                }
+
                 let config: UiDeviationConfig;
-                if (configV1 && configV2) {
-                    config = configV2;
-                    matchProfileIndexes(configV2, configV1);
-                } else if (configV1) {
-                    config = configToUi(configV1, defaultColorStops);
+                if (commitedConfig && savedConfig) {
+                    config = savedConfig;
+                    matchProfileIndexes(savedConfig, commitedConfig);
+                } else if (commitedConfig) {
+                    config = configToUi(commitedConfig, defaultColorStops);
                     config.profiles.forEach((p, i) => (p.index = i));
-                } else if (configV2) {
-                    config = configV2;
+                } else if (savedConfig) {
+                    config = savedConfig;
                 } else {
                     config = getEmptyDeviationConfig();
                 }
+                config = withCenterLineObjectIds(config, landXmlPaths.data);
 
                 dispatch(
                     deviationsActions.setProfiles({
@@ -77,12 +107,7 @@ export function useHandleDeviations() {
                     })
                 );
 
-                const selectedProfile = config.profiles.find((p) => p.index === points.deviation.index);
-                if (selectedProfile) {
-                    dispatch(deviationsActions.setSelectedProfileId(selectedProfile.id));
-                } else if (config.profiles.length > 0) {
-                    dispatch(deviationsActions.setSelectedProfileId(config.profiles[0].id));
-                }
+                dispatch(deviationsActions.initFromProfileIndex({ index: points.deviation.index }));
             } catch (e) {
                 console.warn(e);
                 dispatch(
@@ -102,25 +127,30 @@ export function useHandleDeviations() {
         defaultColorStops,
         getDeviationProfiles,
         points.deviation.index,
+        abortController,
+        selectedProfileId,
+        landXmlPaths,
     ]);
-
-    const colorStops = profile?.colors!.colorStops;
 
     // Set current deviation and colors
     useEffect(() => {
-        if (profile && colorStops) {
+        if (profile && active) {
+            let colorStops = profile.colors.colorStops.slice();
+            if (profile.colors.absoluteValues) {
+                colorStops = accountForAbsValues(colorStops);
+            }
             dispatch(
                 renderActions.setPoints({
                     deviation: {
                         index: profile.index,
                         colorGradient: {
-                            knots: colorStops.slice(),
+                            knots: colorStops,
                         },
                     },
                 })
             );
         }
-    }, [dispatch, profile, colorStops]);
+    }, [dispatch, profile, active]);
 
     // Promote current deviation to render state
     useEffect(
@@ -129,8 +159,8 @@ export function useHandleDeviations() {
                 return;
             }
 
-            let patchedDeviation = deviation;
-            if (deviation.index === -1) {
+            let patchedDeviation = { ...deviation };
+            if (deviation.index === -1 || !active) {
                 patchedDeviation = {
                     ...deviation,
                     index: 0,
@@ -139,7 +169,7 @@ export function useHandleDeviations() {
             }
             view.modifyRenderState({ points: { deviation: patchedDeviation } });
         },
-        [view, deviation]
+        [view, deviation, active]
     );
 }
 
@@ -148,6 +178,34 @@ function getEmptyDeviationConfig(): UiDeviationConfig {
         version: "1.0",
         rebuildRequired: false,
         profiles: [],
+    };
+}
+
+function withCenterLineObjectIds(config: UiDeviationConfig, landXmlPaths: LandXmlPath[]): UiDeviationConfig {
+    return {
+        ...config,
+        profiles: config.profiles.map((profile) => {
+            if (!profile.subprofiles.some((sp) => sp.centerLine)) {
+                return profile;
+            }
+
+            return {
+                ...profile,
+                subprofiles: profile.subprofiles.map((sp) => {
+                    if (!sp.centerLine) {
+                        return sp;
+                    }
+
+                    return {
+                        ...sp,
+                        centerLine: {
+                            ...sp.centerLine,
+                            objectId: landXmlPaths.find((p) => p.brepId === sp.centerLine!.brepId)?.id ?? 0,
+                        },
+                    };
+                }),
+            };
+        }),
     };
 }
 
@@ -163,51 +221,69 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
         rebuildRequired: config.rebuildRequired,
         runData: config.runData,
         profiles: [
-            ...config.pointToTriangle.groups.map(
-                (g) =>
-                    ({
-                        id: g.id ?? window.crypto.randomUUID(),
-                        name: g.name ?? `Deviation ${profileIndex++}`,
-                        copyFromProfileId: g.copyFromProfileId,
-                        deviationType: DeviationType.PointToTriangle,
-                        index: -1,
-                        favorites: g.favorites ?? [],
-                        subprofiles: g.subprofiles ?? [
-                            {
-                                from: {
-                                    objectIds: g.objectIds,
-                                    groupIds: g.groupIds,
-                                },
-                                to: {
-                                    objectIds: [],
-                                    groupIds: [],
-                                },
+            ...config.pointToTriangle.groups.map((g) =>
+                populateMissingData({
+                    id: g.id ?? window.crypto.randomUUID(),
+                    name: g.name ?? `Deviation ${profileIndex++}`,
+                    copyFromProfileId: g.copyFromProfileId,
+                    deviationType: DeviationType.PointToTriangle,
+                    index: -1,
+                    subprofiles: g.subprofiles ?? [
+                        {
+                            from: {
+                                objectIds: g.objectIds,
+                                groupIds: g.groupIds,
                             },
-                        ],
-                        colors: g.colors ?? defaultColors,
-                        hasFromAndTo: g.subprofiles !== undefined,
-                    } as UiDeviationProfile)
+                            to: {
+                                objectIds: [],
+                                groupIds: [],
+                            },
+                            favorites: g.favorites ?? [],
+                            legendGroups: [],
+                        },
+                    ],
+                    colors: g.colors ?? defaultColors,
+                    hasFromAndTo: g.subprofiles !== undefined,
+                    fromAndToSwapped: false,
+                } as UiDeviationProfile)
             ),
-            ...config.pointToPoint.groups.map(
-                (g) =>
-                    ({
-                        id: g.id ?? window.crypto.randomUUID(),
-                        name: g.name ?? `Deviation ${profileIndex++}`,
-                        copyFromProfileId: g.copyFromProfileId,
-                        deviationType: DeviationType.PointToPoint,
-                        index: -1,
-                        favorites: g.favorites ?? [],
-                        subprofiles: g.subprofiles ?? [
-                            {
-                                from: g.from,
-                                to: g.to,
-                            },
-                        ],
-                        colors: g.colors ?? defaultColors,
-                        hasFromAndTo: true,
-                    } as UiDeviationProfile)
+            ...config.pointToPoint.groups.map((g) =>
+                populateMissingData({
+                    id: g.id ?? window.crypto.randomUUID(),
+                    name: g.name ?? `Deviation ${profileIndex++}`,
+                    copyFromProfileId: g.copyFromProfileId,
+                    deviationType: DeviationType.PointToPoint,
+                    index: -1,
+                    subprofiles: g.subprofiles?.map((sp) => ({
+                        ...sp,
+                        from: g.fromAndToSwapped ? sp.to : sp.from,
+                        to: g.fromAndToSwapped ? sp.from : sp.to,
+                    })) ?? [
+                        {
+                            from: g.fromAndToSwapped ? g.to : g.from,
+                            to: g.fromAndToSwapped ? g.from : g.to,
+                            favorites: g.favorites ?? [],
+                            legendGroups: [],
+                        },
+                    ],
+                    colors: g.colors ?? defaultColors,
+                    hasFromAndTo: true,
+                    fromAndToSwapped: g.fromAndToSwapped,
+                } as UiDeviationProfile)
             ),
         ],
+    };
+}
+
+function populateMissingData(profile: UiDeviationProfile): UiDeviationProfile {
+    return {
+        ...profile,
+        subprofiles: profile.subprofiles.map((sp) => {
+            return {
+                ...sp,
+                favorites: sp.favorites ?? [],
+            };
+        }),
     };
 }
 

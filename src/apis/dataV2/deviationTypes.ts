@@ -14,6 +14,13 @@ export type DeviationRunData = {
     runTime: string;
     rebuilt: boolean;
     version: string;
+    log?: DeviationRunLogEntry[];
+};
+
+export type DeviationRunLogEntry = {
+    severity: "warning";
+    id: string;
+    message: "EMPTY_DEVIATION_GROUPS";
 };
 
 export type DeviationProfileBase = {
@@ -23,6 +30,10 @@ export type DeviationProfileBase = {
     colors?: ColorConfig;
     favorites?: string[];
     subprofiles?: DeviationSubprofile[];
+    // Calculation colors From group for mesh-to-points but To group for points-to-points,
+    // so for points we're going to swap From and To when passing to calculation,
+    // but in UI still show as defined by the user
+    fromAndToSwapped?: boolean;
 };
 
 export type DeviationSubprofile = {
@@ -34,6 +45,7 @@ export type DeviationSubprofile = {
         groupIds: string[];
         objectIds: number[];
     };
+    favorites?: string[];
     centerLine?: CenterLine;
     heightToCeiling?: number;
 };

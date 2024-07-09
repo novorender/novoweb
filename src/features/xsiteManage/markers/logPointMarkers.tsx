@@ -1,7 +1,9 @@
 import { Box, css, styled } from "@mui/material";
-import { SVGProps } from "react";
+import { vec3 } from "gl-matrix";
+import { forwardRef, SVGProps, useCallback, useEffect, useImperativeHandle, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { renderActions, selectStamp, StampKind } from "features/render";
 import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 
@@ -29,18 +31,43 @@ const LogPointMarker = styled(
     `
 );
 
-export function LogPointMarkers() {
+export const LogPointMarkers = forwardRef<{ update: () => void }>(function LogPointMarkers(_, ref) {
+    const {
+        state: { view },
+    } = useExplorerGlobals();
+
     const stamp = useAppSelector(selectStamp);
-    const logPoints = useXsiteManageLogPointMarkers();
     const dispatch = useAppDispatch();
+
+    const logPoints = useXsiteManageLogPointMarkers();
     const onWheel = useRedirectWheelEvents();
+    const containerRef = useRef<(SVGGElement | null)[]>([]);
+
+    const update = useCallback(() => {
+        if (!view?.measure || !containerRef.current.length || !logPoints.length) {
+            return;
+        }
+
+        view.measure.draw
+            .toMarkerPoints(logPoints.map((lpt) => vec3.fromValues(lpt.x, lpt.y, lpt.z)))
+            .forEach((pos, idx) => {
+                containerRef.current[idx]?.setAttribute(
+                    "transform",
+                    pos ? `translate(${pos[0] - 25} ${pos[1] - 20})` : "translate(-100 -100)"
+                );
+            });
+    }, [logPoints, view]);
+
+    useImperativeHandle(ref, () => ({ update }), [update]);
+
+    useEffect(() => {
+        update();
+    }, [update]);
 
     return (
         <>
             {logPoints.map((pt, idx) => (
                 <Box
-                    id={`logPoint-${idx}`}
-                    name={`logPoint-${idx}`}
                     key={idx}
                     component="g"
                     sx={{ cursor: "pointer", pointerEvents: "bounding-box" }}
@@ -78,6 +105,7 @@ export function LogPointMarkers() {
                         dispatch(renderActions.setStamp(null));
                     }}
                     onWheel={onWheel}
+                    ref={(el) => (containerRef.current[idx] = el as SVGGElement | null)}
                 >
                     <LogPointMarker
                         active={stamp?.kind === StampKind.LogPoint && stamp.data.logPoint.sequenceId === pt.sequenceId}
@@ -88,4 +116,4 @@ export function LogPointMarkers() {
             ))}
         </>
     );
-}
+});

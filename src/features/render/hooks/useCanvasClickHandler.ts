@@ -1,5 +1,5 @@
 import { rotationFromDirection } from "@novorender/api";
-import { mat3, quat, ReadonlyVec3, vec2, vec3, vec4 } from "gl-matrix";
+import { mat3, quat, ReadonlyVec3, ReadonlyVec4, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, MutableRefObject, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -14,19 +14,23 @@ import { highlightActions, useDispatchHighlighted, useHighlighted } from "contex
 import { useArcgisCanvasClickHandler } from "features/arcgis/hooks/useArcgisCanvasHandler";
 import { areaActions } from "features/area";
 import { followPathActions } from "features/followPath";
+import { useLocationFormAssetClickHandler } from "features/forms/hooks/useLocationFormAssetClickHandler";
+import { usePlaceLocationForm } from "features/forms/hooks/usePlaceLocationForm";
 import { heightProfileActions } from "features/heightProfile";
 import { manholeActions } from "features/manhole";
 import { measureActions, selectMeasure, selectMeasurePickSettings } from "features/measure";
 import { orthoCamActions, selectCrossSectionClipping, selectCrossSectionPoint } from "features/orthoCam";
-import { clippingOutlineLaserActions } from "features/outlineLaser";
+import { clippingOutlineLaserActions, selectOutlineLaser3d } from "features/outlineLaser";
 import { getOutlineLaser } from "features/outlineLaser";
 import { pointLineActions } from "features/pointLine";
 import { selectShowPropertiesStamp } from "features/properties/slice";
 import { useAbortController } from "hooks/useAbortController";
 import { ExtendedMeasureEntity, NodeType, ViewMode } from "types/misc";
+import { getPerpendicular } from "utils/math";
 import { isRealVec } from "utils/misc";
-import { extractObjectIds } from "utils/objectData";
+import { extractObjectIds, getObjectMetadataRotation } from "utils/objectData";
 import { searchByPatterns, searchDeepByPatterns } from "utils/search";
+import { sleep } from "utils/time";
 
 import {
     renderActions,
@@ -41,6 +45,7 @@ import {
     selectViewMode,
 } from "../renderSlice";
 import { CameraType, Picker, StampKind } from "../types";
+import { applyCameraDistanceToMeasureTolerance, getLocalRotationAroundNormal } from "../utils";
 
 export function useCanvasClickHandler({
     pointerDownStateRef,
@@ -76,16 +81,19 @@ export function useCanvasClickHandler({
     const viewMode = useAppSelector(selectViewMode);
     const showPropertiesStamp = useAppSelector(selectShowPropertiesStamp);
     const { planes } = useAppSelector(selectClippingPlanes);
+    const laser3d = useAppSelector(selectOutlineLaser3d);
 
     const [secondaryHighlightAbortController, abortSecondaryHighlight] = useAbortController();
     const currentSecondaryHighlightQuery = useRef("");
     const secondaryHighlightProperty = useAppSelector(selectSecondaryHighlightProperty);
 
     const arcgisCanvasClickHandler = useArcgisCanvasClickHandler();
+    const placeLocationForm = usePlaceLocationForm();
+    const locationFormAssetClickHandler = useLocationFormAssetClickHandler();
 
     const handleCanvasPick: MouseEventHandler<HTMLCanvasElement> = async (evt) => {
         const pointerDownState = pointerDownStateRef.current;
-        const longPress = pointerDownState && evt.timeStamp - pointerDownState.timestamp >= 300;
+        const longPress = pointerDownState && evt.timeStamp - pointerDownState.timestamp >= 800;
         const drag =
             pointerDownState &&
             vec2.dist([pointerDownState.x, pointerDownState.y], [evt.nativeEvent.offsetX, evt.nativeEvent.offsetY]) >=
@@ -103,7 +111,9 @@ export function useCanvasClickHandler({
         pointerDownStateRef.current = undefined;
         const pickCameraPlane =
             cameraState.type === CameraType.Orthographic &&
-            (viewMode === ViewMode.CrossSection || viewMode === ViewMode.FollowPath);
+            (viewMode === ViewMode.CrossSection ||
+                viewMode === ViewMode.FollowPath ||
+                viewMode === ViewMode.Deviations);
 
         const isTouch = evt.nativeEvent instanceof PointerEvent && evt.nativeEvent.pointerType === "touch";
         const pickOutline = measure.snapKind === "clippingOutline" && picker === Picker.Measurement;
@@ -152,7 +162,9 @@ export function useCanvasClickHandler({
                 case Picker.CrossSection: {
                     const position =
                         result?.position ??
-                        view.worldPositionFromPixelPosition(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY);
+                        view.convert.screenSpaceToWorldSpace([
+                            vec2.fromValues(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY),
+                        ])[0];
 
                     if (!position) {
                         return;
@@ -213,7 +225,6 @@ export function useCanvasClickHandler({
                             gridOrigo: p as vec3,
                         })
                     );
-                    dispatch(renderActions.setBackground({ color: [0, 0, 0, 1] }));
                     const w = vec3.dot(dir, p);
                     dispatch(
                         renderActions.setClippingPlanes({
@@ -228,25 +239,69 @@ export function useCanvasClickHandler({
                 }
                 case Picker.OutlineLaser: {
                     if (!view.renderState.clipping.enabled || !view.renderState.clipping.planes.length) {
+                        if (!result) {
+                            return;
+                        }
+                        const { normal, position } = result;
+                        const offsetPos = vec3.scaleAndAdd(vec3.create(), position, normal, 0.001);
+                        const hiddenPlane = vec4.fromValues(
+                            normal[0],
+                            normal[1],
+                            normal[2],
+                            vec3.dot(offsetPos, normal)
+                        );
+                        const hiddenPlanes: ReadonlyVec4[] = [hiddenPlane];
+                        if (laser3d && cameraType !== CameraType.Orthographic) {
+                            const perpendicular = getPerpendicular(normal);
+                            hiddenPlanes.push(
+                                vec4.fromValues(
+                                    perpendicular[0],
+                                    perpendicular[1],
+                                    perpendicular[2],
+                                    vec3.dot(perpendicular, offsetPos)
+                                )
+                            );
+                        }
+                        view.modifyRenderState({
+                            outlines: {
+                                enabled: true,
+                                hidden: true,
+                                planes: hiddenPlanes,
+                            },
+                        });
+                        await sleep(1000);
+
+                        const laser = await getOutlineLaser(
+                            offsetPos,
+                            view,
+                            "outline",
+                            0,
+                            hiddenPlanes,
+                            laser3d ? 1 : undefined
+                        );
+                        view.modifyRenderState({ outlines: { enabled: false, planes: [] } });
+                        if (laser) {
+                            dispatch(clippingOutlineLaserActions.addLaser(laser));
+                        }
                         return;
                     }
 
                     let tracePosition: ReadonlyVec3 | undefined = undefined;
 
+                    const plane = planes[0];
                     if (cameraType === CameraType.Orthographic) {
-                        tracePosition = view.worldPositionFromPixelPosition(
-                            evt.nativeEvent.offsetX,
-                            evt.nativeEvent.offsetY
-                        );
+                        tracePosition = view.convert.screenSpaceToWorldSpace([
+                            vec2.fromValues(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY),
+                        ])[0];
                     } else if (!result) {
                         return;
-                    } else {
-                        const plane = view.renderState.clipping.planes[0].normalOffset;
-                        const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
+                    } else if (cameraType == CameraType.Pinhole) {
+                        const { normalOffset } = plane;
+                        const planeDir = vec3.fromValues(normalOffset[0], normalOffset[1], normalOffset[2]);
                         const camPos = view.renderState.camera.position;
                         const lineDir = vec3.sub(vec3.create(), result.position, camPos);
                         vec3.normalize(lineDir, lineDir);
-                        const t = (plane[3] - vec3.dot(planeDir, camPos)) / vec3.dot(planeDir, lineDir);
+                        const t = (normalOffset[3] - vec3.dot(planeDir, camPos)) / vec3.dot(planeDir, lineDir);
                         tracePosition = vec3.scaleAndAdd(vec3.create(), camPos, lineDir, t);
                     }
 
@@ -255,9 +310,14 @@ export function useCanvasClickHandler({
                     }
 
                     dispatch(
-                        clippingOutlineLaserActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset)
+                        clippingOutlineLaserActions.setLaserPlane({
+                            normalOffset: plane.normalOffset,
+                            rotation: plane.rotation ?? 0,
+                        })
                     );
-                    const laser = await getOutlineLaser(tracePosition, view);
+                    const laser = await getOutlineLaser(tracePosition, view, "clipping", planes[0].rotation ?? 0, [
+                        planes[0].normalOffset,
+                    ]);
                     if (laser) {
                         dispatch(clippingOutlineLaserActions.addLaser(laser));
                     }
@@ -276,6 +336,12 @@ export function useCanvasClickHandler({
         const position = vec3.clone(result.position);
 
         switch (picker) {
+            case Picker.FormLocation:
+                if (result) {
+                    placeLocationForm({ location: position });
+                    dispatch(renderActions.stopPicker(Picker.FormLocation));
+                }
+                return;
             case Picker.Object: {
                 if (
                     deviation.mixFactor !== 0 &&
@@ -293,6 +359,10 @@ export function useCanvasClickHandler({
                             },
                         })
                     );
+                    return;
+                }
+
+                if (locationFormAssetClickHandler(result)) {
                     return;
                 }
 
@@ -314,7 +384,7 @@ export function useCanvasClickHandler({
                         dispatchHighlighted(highlightActions.add([result.objectId]));
                     }
                 } else {
-                    if (alreadySelected) {
+                    if (alreadySelected && result.objectId === mainObject) {
                         dispatch(renderActions.setMainObject(undefined));
                         dispatch(renderActions.setStamp(null));
                         dispatchHighlighted(highlightActions.setIds([]));
@@ -330,7 +400,9 @@ export function useCanvasClickHandler({
                         currentSecondaryHighlightQuery.current = "";
                     } else {
                         dispatch(renderActions.setMainObject(result.objectId));
-                        dispatchHighlighted(highlightActions.setIds([result.objectId]));
+                        if (!alreadySelected) {
+                            dispatchHighlighted(highlightActions.setIds([result.objectId]));
+                        }
 
                         if ((!showPropertiesStamp && !secondaryHighlightProperty) || !db) {
                             return;
@@ -421,8 +493,20 @@ export function useCanvasClickHandler({
                 break;
             }
             case Picker.ClippingPlane: {
-                if (!normal || result.sampleType !== "surface") {
+                if (!normal || result.sampleType !== "surface" || !db) {
                     return;
+                }
+
+                let rotation = 0;
+                try {
+                    if (result.objectId) {
+                        const rotationQuat = await getObjectMetadataRotation(view, db, result.objectId);
+                        if (rotationQuat) {
+                            rotation = getLocalRotationAroundNormal(rotationQuat, normal);
+                        }
+                    }
+                } catch (ex) {
+                    console.warn("Error getting object rotation", ex);
                 }
 
                 const w = vec3.dot(normal, position);
@@ -432,6 +516,7 @@ export function useCanvasClickHandler({
                     renderActions.addClippingPlane({
                         normalOffset: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
                         baseW: w,
+                        rotation,
                     })
                 );
                 break;
@@ -481,11 +566,12 @@ export function useCanvasClickHandler({
                     );
                 } else {
                     dispatch(measureActions.setLoadingBrep(true));
-                    const entity = await view.measure?.core.pickMeasureEntity(
-                        result.objectId,
-                        position,
+                    const tolerance = applyCameraDistanceToMeasureTolerance(
+                        result.position,
+                        view.renderState.camera.position,
                         measurePickSettings
                     );
+                    const entity = await view.measure?.core.pickMeasureEntity(result.objectId, position, tolerance);
                     if (entity?.entity) {
                         dispatch(
                             measureActions.selectEntity({

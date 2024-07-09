@@ -11,9 +11,11 @@ import {
 } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { store } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectShowTracer } from "features/followPath";
 import { measureActions, selectMeasureHoverSettings } from "features/measure";
+import { myLocationActions, selectMyLocationAutocenter } from "features/myLocation";
 import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
 import { ViewMode } from "types/misc";
 
@@ -29,6 +31,7 @@ import {
 } from "../renderSlice";
 import { moveSvgCursor } from "../svgUtils";
 import { CameraType, Picker, StampKind, SubtreeStatus } from "../types";
+import { applyCameraDistanceToMeasureTolerance } from "../utils";
 import { useCanvasContextMenuHandler } from "./useCanvasContextMenuHandler";
 
 export const isIpad =
@@ -123,6 +126,12 @@ export function useCanvasEventHandlers({
         }, 100);
     };
 
+    const turnOffLocationAutocenter = () => {
+        if (selectMyLocationAutocenter(store.getState())) {
+            dispatch(myLocationActions.toggleAutocenter(false));
+        }
+    };
+
     const handleDown = async (x: number, y: number, timestamp: number) => {
         pointerDownStateRef.current = {
             timestamp,
@@ -133,6 +142,7 @@ export function useCanvasEventHandlers({
 
     const onWheel = (e: WheelEvent<HTMLCanvasElement>) => {
         if (!e.shiftKey || !clippingPlanes.enabled) {
+            turnOffLocationAutocenter();
             return;
         }
 
@@ -187,6 +197,7 @@ export function useCanvasEventHandlers({
         if (contextMenuTouchState.current && e.touches.length === 1) {
             contextMenuTouchState.current.currentPos[0] = e.touches[0].clientX;
             contextMenuTouchState.current.currentPos[1] = e.touches[0].clientY;
+            turnOffLocationAutocenter();
         }
 
         if (e.touches.length === 4 && clippingPlanes.enabled) {
@@ -277,6 +288,10 @@ export function useCanvasEventHandlers({
             };
         };
 
+        if (e.buttons !== 0) {
+            turnOffLocationAutocenter();
+        }
+
         if (e.buttons === 0 && cursor === "measure") {
             const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
                 sampleDiscRadius: 4,
@@ -306,16 +321,16 @@ export function useCanvasEventHandlers({
                         if (outlinePoint) {
                             hoverEnt = pointToHover(outlinePoint, result.objectId);
                         } else if (view.measure && !planePicking) {
-                            const dist =
-                                hoverEnt?.connectionPoint && vec3.dist(result.position, hoverEnt.connectionPoint);
-
-                            if (!dist || dist > 0.2) {
-                                hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
-                                    result.objectId,
-                                    result.position,
-                                    measureHoverSettings
-                                );
-                            }
+                            const tolerance = applyCameraDistanceToMeasureTolerance(
+                                result.position,
+                                view.renderState.camera.position,
+                                measureHoverSettings
+                            );
+                            hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
+                                result.objectId,
+                                result.position,
+                                tolerance
+                            );
                             vec2.copy(
                                 previous2dSnapPos.current,
                                 vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
@@ -344,7 +359,9 @@ export function useCanvasEventHandlers({
                 } else if (picker === Picker.CrossSection) {
                     const position =
                         result?.position ??
-                        view.worldPositionFromPixelPosition(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                        view.convert.screenSpaceToWorldSpace([
+                            vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY),
+                        ])[0];
                     if (crossSectionPoint && position) {
                         dispatch(orthoCamActions.setCrossSectionHover(position as vec3));
                     }
@@ -357,7 +374,7 @@ export function useCanvasEventHandlers({
                     ? "red"
                     : hoverEnt?.status === "loaded"
                     ? "lightgreen"
-                    : hoverEnt?.entity === undefined || hoverEnt.status === "unknown"
+                    : hoverEnt?.status === "unknown"
                     ? "blue"
                     : "yellow";
 
@@ -404,7 +421,7 @@ export function useCanvasEventHandlers({
             !stamp?.pinned &&
             deviation.mixFactor !== 0 &&
             cameraType === CameraType.Orthographic &&
-            [ViewMode.CrossSection, ViewMode.FollowPath].includes(viewMode) &&
+            [ViewMode.CrossSection, ViewMode.FollowPath, ViewMode.Deviations].includes(viewMode) &&
             e.buttons === 0 &&
             subtrees.points === SubtreeStatus.Shown;
         if (setDeviationStamp) {

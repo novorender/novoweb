@@ -53,8 +53,14 @@ REACT_APP_NOVORENDER_CLIENT_SECRET=
 #REACT_APP_DATA_SERVER_URL=https://data-staging.novorender.com/api
 REACT_APP_DATA_SERVER_URL=https://data.novorender.com/api
 
+# Override local data address. Default is https://127.0.0.1:5000/api
+DATA_SERVER_URL_PROXY_TARGET=https://127.0.0.1:5000/api
+
 #REACT_APP_DATA_V2_SERVER_URL=/data-v2
 REACT_APP_DATA_V2_SERVER_URL=https://data-v2.novorender.com
+
+# Override local data-v2 address. Default is http://127.0.0.1:5000
+DATA_V2_SERVER_URL_PROXY_TARGET=http://127.0.0.1:5000
 
 ##### SCENES ######
 

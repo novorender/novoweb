@@ -1,4 +1,6 @@
-import { DeviationProjectConfig, PointToPointGroup, PointToTriangleGroup } from "apis/dataV2/deviationTypes";
+import { dataApi } from "apis/dataV1";
+import { ColorStop, DeviationProjectConfig, PointToPointGroup, PointToTriangleGroup } from "apis/dataV2/deviationTypes";
+import { ObjectGroup } from "contexts/objectGroups";
 
 import { DeviationForm, DeviationType, SubprofileGroup, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
 
@@ -10,12 +12,11 @@ export const EMPTY_PARAMETER_BOUNDS = [0, 0] as [number, number];
 export function newDeviationForm(): DeviationForm {
     return {
         id: NEW_DEVIATION_ID,
+        isCopyingFromProfileId: false,
         copyFromProfileId: { value: undefined },
         name: { value: "" },
         deviationType: { value: DeviationType.PointToTriangle },
         subprofiles: [newDeviationSubprofile()],
-        favorites: { value: [] },
-
         colorSetup: {
             absoluteValues: false,
             colorStops: { value: [] },
@@ -30,6 +31,7 @@ export function newDeviationSubprofile(): SubprofileGroup {
     return {
         groups1: { value: [] },
         groups2: { value: [] },
+        favorites: { value: [] },
         centerLine: {
             enabled: false,
             id: { value: undefined },
@@ -45,16 +47,17 @@ export function newDeviationSubprofile(): SubprofileGroup {
 export function profileToDeviationForm(profile: UiDeviationProfile): DeviationForm {
     return {
         id: profile.id,
+        isCopyingFromProfileId: profile.copyFromProfileId !== undefined,
         copyFromProfileId: { value: profile.copyFromProfileId },
         name: { value: profile.name },
-        favorites: { value: profile.favorites },
         subprofiles: profile.subprofiles.map((sp) => ({
             groups1: { value: sp.from.groupIds },
             groups2: { value: sp.to.groupIds },
+            favorites: { value: sp.favorites },
             centerLine: sp.centerLine
                 ? {
                       enabled: true,
-                      id: { value: undefined },
+                      id: { value: sp.centerLine.objectId },
                       brepId: sp.centerLine.brepId,
                       parameterBounds: { value: sp.centerLine.parameterBounds },
                   }
@@ -96,13 +99,14 @@ export function uiConfigToServerConfig(config: UiDeviationConfig): DeviationProj
             name: p.name,
             copyFromProfileId: p.copyFromProfileId,
             colors: p.colors,
-            favorites: p.favorites,
             subprofiles: p.subprofiles.map((sp) => ({
-                from: sp.from,
-                to: sp.to,
+                from: p.fromAndToSwapped ? sp.to : sp.from,
+                to: p.fromAndToSwapped ? sp.from : sp.to,
                 centerLine: sp.centerLine,
                 heightToCeiling: sp.heightToCeiling,
+                favorites: sp.favorites,
             })),
+            fromAndToSwapped: p.fromAndToSwapped,
         } as PointToPointGroup | PointToTriangleGroup;
     };
 
@@ -120,4 +124,39 @@ export function uiConfigToServerConfig(config: UiDeviationConfig): DeviationProj
         },
         runData: config.runData,
     };
+}
+
+export function colorStopSortFn(a: ColorStop, b: ColorStop) {
+    return b.position - a.position;
+}
+
+export const DELETED_DEVIATION_LABEL = "[deleted]";
+
+export function formatColorStopPos(pos: number, absoluteValues: boolean) {
+    return pos === 0 ? "0" : absoluteValues ? `±${Math.abs(pos)}` : pos > 0 ? `+${pos}` : pos;
+}
+
+export function sortColorStops(colorStops: ColorStop[], absoluteValues: boolean) {
+    return colorStops.sort(absoluteValues ? (a, b) => Math.abs(b.position) - Math.abs(a.position) : colorStopSortFn);
+}
+
+export function accountForAbsValues(colorStops: ColorStop[]) {
+    const absolute = colorStops.map((cs) => ({ ...cs, position: Math.abs(cs.position) }));
+    const negatives = absolute.filter((cs) => cs.position > 0).map((cs) => ({ ...cs, position: -cs.position }));
+    return [...absolute, ...negatives].sort(colorStopSortFn);
+}
+
+export async function fillGroupIds(sceneId: string, groups: ObjectGroup[]): Promise<void> {
+    await Promise.all(
+        groups.map(async (group) => {
+            if (!group.ids) {
+                group.ids = new Set(
+                    await dataApi.getGroupIds(sceneId, group.id).catch(() => {
+                        console.warn("failed to load ids for group - ", group.id);
+                        return [] as number[];
+                    })
+                );
+            }
+        })
+    );
 }

@@ -47,6 +47,7 @@ export enum Picker {
     HeightProfileEntity,
     Manhole,
     OutlineLaser,
+    FormLocation,
 }
 
 export type Subtrees = {

@@ -88,6 +88,58 @@ const pwaOptions: Partial<VitePWAOptions> = {
                     },
                 },
             },
+            // Project info
+            {
+                urlPattern: /^https:\/\/data-v2(-staging)?\.novorender\.com\/projects\/[\w]{32}$/,
+                handler: "NetworkFirst",
+                options: {
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                },
+            },
+            // Deviations
+            {
+                urlPattern: /^https:\/\/novorenderblobs\.blob\.core\.windows\.net\/[\w]{32}\/deviations\.json/,
+                handler: "NetworkFirst",
+                options: {
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                    matchOptions: {
+                        ignoreSearch: true,
+                    },
+                    plugins: [
+                        {
+                            cacheKeyWillBeUsed: async (param) => {
+                                const url = new URL(param.request.url);
+                                url.search = "";
+                                return url.toString();
+                            },
+                        },
+                    ],
+                },
+            },
+            {
+                urlPattern: /^https:\/\/data-v2(-staging)?\.novorender\.com\/explorer\/[\w]{32}\/deviations$/,
+                handler: "NetworkFirst",
+                options: {
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                },
+            },
+            // epsg.io
+            {
+                urlPattern: /^https:\/\/epsg\.io\/\d+\.proj4$/,
+                handler: "NetworkFirst",
+                options: {
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                },
+            },
+            // config.json
             {
                 urlPattern: (options) => {
                     if (!options.sameOrigin) {
@@ -158,10 +210,18 @@ const serverOptions: ServerOptions = {
             rewrite: (path) => path.replace(/^\/omega365/, ""),
             changeOrigin: true,
         },
+        // use REACT_APP_DATA_V2_SERVER_URL=/data-v2 in .env.local to use local version
         "/data-v2": {
-            target: "http://127.0.0.1:5000",
+            target: process.env.DATA_V2_SERVER_URL_PROXY_TARGET ?? "http://127.0.0.1:5000",
             rewrite: (path) => path.replace(/^\/data-v2/, ""),
             changeOrigin: true,
+        },
+        // use REACT_APP_DATA_SERVER_URL=/data-v1 in .env.local to use local version
+        "/data-v1": {
+            target: process.env.DATA_SERVER_URL_PROXY_TARGET ?? "https://127.0.0.1:5000/api",
+            rewrite: (path) => path.replace(/^\/data-v1/, ""),
+            changeOrigin: true,
+            secure: false,
         },
     },
 };

@@ -6,7 +6,8 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation } from "components";
 import { selectProjectIsV2 } from "slices/explorer";
 
-import { deviationsActions, selectDeviationForm, selectSelectedProfile } from "../deviationsSlice";
+import { deviationsActions } from "../deviationsSlice";
+import { selectDeviationForm, selectSelectedProfile } from "../selectors";
 import { updateFormField } from "../validation";
 
 export function CrupdateColorStop() {
@@ -16,6 +17,7 @@ export function CrupdateColorStop() {
     const idx = _idx ? Number(_idx) : undefined;
     const deviationForm = useAppSelector(selectDeviationForm);
     const selectedProfile = useAppSelector(selectSelectedProfile);
+    const absoluteValues = deviationForm?.colorSetup.absoluteValues ?? selectedProfile!.colors.absoluteValues;
     const colorStops = deviationForm?.colorSetup.colorStops.value || selectedProfile!.colors.colorStops;
     const dispatch = useAppDispatch();
 
@@ -26,7 +28,15 @@ export function CrupdateColorStop() {
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
 
-        if (colorStops.some((deviation) => deviation.position === Number(deviationNumber) && deviation !== editing)) {
+        const alreadyExists = absoluteValues
+            ? colorStops.some(
+                  (deviation) =>
+                      Math.abs(Math.abs(deviation.position) - Math.abs(Number(deviationNumber))) < 0.01 &&
+                      deviation !== editing
+              )
+            : colorStops.some((deviation) => deviation.position === Number(deviationNumber) && deviation !== editing);
+
+        if (alreadyExists) {
             setError("A deviation with this value already exists.");
             return;
         }

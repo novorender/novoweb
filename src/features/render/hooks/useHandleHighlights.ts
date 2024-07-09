@@ -13,10 +13,12 @@ import { useHidden } from "contexts/hidden";
 import { useHighlightCollections } from "contexts/highlightCollections";
 import { useHighlighted } from "contexts/highlighted";
 import { GroupStatus, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
+import { ImmutableObjectIdSet } from "contexts/objectGroups/reducer";
 import { useSelectionBasket } from "contexts/selectionBasket";
 import { selectVisibleOutlineGroups } from "features/outlineLaser";
 import { selectPropertyTreeGroups } from "features/propertyTree/slice";
 import { useSceneId } from "hooks/useSceneId";
+import { ViewMode } from "types/misc";
 
 import {
     renderActions,
@@ -25,6 +27,7 @@ import {
     selectMainObject,
     selectSelectionBasketColor,
     selectSelectionBasketMode,
+    selectViewMode,
 } from "../renderSlice";
 import { CameraType, ObjectVisibility, SelectionBasketMode } from "../types";
 
@@ -35,7 +38,7 @@ export function useHandleHighlights() {
     const sceneId = useSceneId();
     const mainObject = useAppSelector(selectMainObject);
     const highlighted = useHighlighted();
-    const secondaryHighlight = useHighlightCollections()["secondaryHighlight"];
+    const { secondaryHighlight, selectedDeviation, formsNew, formsOngoing, formsCompleted } = useHighlightCollections();
     const hidden = useHidden().idArr;
     const groups = useObjectGroups();
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
@@ -46,8 +49,11 @@ export function useHandleHighlights() {
     const outlineGroups = useAppSelector(selectVisibleOutlineGroups);
     const { groups: propertyTreeGroups } = useAppSelector(selectPropertyTreeGroups);
     const cameraType = useAppSelector(selectCameraType);
+    const viewMode = useAppSelector(selectViewMode);
 
     const id = useRef(0);
+    const prevFrozen = useRef<{ idSets: ObjectGroup["ids"][]; ids: Uint32Array }>();
+    const prevHidden = useRef<{ ids: number[]; idSets: ObjectGroup["ids"][]; allIds: Uint32Array }>();
 
     useEffect(() => {
         apply();
@@ -64,7 +70,7 @@ export function useHandleHighlights() {
                             ? createNeutralHighlight()
                             : defaultVisibility === ObjectVisibility.SemiTransparent
                             ? createTransparentHighlight(0.2)
-                            : "filter",
+                            : "hide",
                 },
             });
 
@@ -78,7 +84,7 @@ export function useHandleHighlights() {
                 return;
             }
 
-            const { coloredGroups, hiddenGroups, semiTransparent } = groups.reduce(
+            const { coloredGroups, hiddenGroups, frozenGroups, semiTransparent } = groups.reduce(
                 (prev, group, idx) => {
                     switch (group.status) {
                         case GroupStatus.Selected: {
@@ -106,6 +112,10 @@ export function useHandleHighlights() {
                             }
                             break;
                         }
+                        case GroupStatus.Frozen: {
+                            prev.frozenGroups.push(group);
+                            break;
+                        }
                         default:
                             break;
                     }
@@ -117,7 +127,7 @@ export function useHandleHighlights() {
                         [color: string]: { ids: Set<number>; action: RenderStateHighlightGroup["action"]; idx: number };
                     },
                     frozenGroups: [] as ObjectGroup[],
-                    hiddenGroups: [] as { ids: Set<number> }[],
+                    hiddenGroups: [] as { ids: ImmutableObjectIdSet }[],
                     semiTransparent: [] as ObjectGroup[],
                 }
             );
@@ -158,8 +168,36 @@ export function useHandleHighlights() {
                 }
             );
 
-            const allHidden = new Set<number>(hidden);
-            hiddenGroups.forEach((group) => group.ids.forEach((id) => allHidden.add(id)));
+            let allHiddenIds: Uint32Array;
+            if (
+                prevHidden.current &&
+                prevHidden.current.ids === hidden &&
+                areArraysEqual(prevHidden.current.idSets, hiddenGroups, (idSet, g) => idSet === g.ids)
+            ) {
+                allHiddenIds = prevHidden.current.allIds;
+            } else {
+                const idSets = hiddenGroups.map((g) => g.ids);
+                allHiddenIds = objectIdSet([hidden, ...idSets]).toArray();
+                prevHidden.current = {
+                    ids: hidden,
+                    idSets,
+                    allIds: allHiddenIds,
+                };
+            }
+
+            let allFrozenIds: Uint32Array;
+            if (
+                prevFrozen.current &&
+                areArraysEqual(prevFrozen.current.idSets, frozenGroups, (idSet, g) => idSet === g.ids)
+            ) {
+                allFrozenIds = prevFrozen.current.ids;
+            } else {
+                allFrozenIds = objectIdSet(frozenGroups.map((g) => g.ids)).toArray();
+                prevFrozen.current = {
+                    idSets: frozenGroups.map((g) => g.ids),
+                    ids: allFrozenIds,
+                };
+            }
 
             view.modifyRenderState({
                 highlights: {
@@ -170,8 +208,20 @@ export function useHandleHighlights() {
                                   action: createTransparentHighlight(group.opacity),
                               }))
                             : []),
+                        ...(cameraType === CameraType.Orthographic &&
+                        viewMode !== ViewMode.FollowPath &&
+                        viewMode !== ViewMode.Deviations
+                            ? outlineGroups.map((group) => ({
+                                  objectIds: new Uint32Array(group.ids).sort(),
+                                  outlineColor: group.color,
+                              }))
+                            : []),
                         {
-                            objectIds: new Uint32Array(allHidden).sort(),
+                            objectIds: allFrozenIds,
+                            action: "filter",
+                        },
+                        {
+                            objectIds: allHiddenIds,
                             action: "hide",
                         },
                         {
@@ -198,12 +248,6 @@ export function useHandleHighlights() {
                             ).sort(),
                             action: group.action,
                         })),
-                        ...(cameraType === CameraType.Orthographic
-                            ? outlineGroups.map((group) => ({
-                                  objectIds: new Uint32Array(group.ids).sort().filter((f) => !allHidden.has(f)),
-                                  outlineColor: group.color,
-                              }))
-                            : []),
                         {
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose
@@ -211,6 +255,34 @@ export function useHandleHighlights() {
                                     : basket.idArr.filter((id) => secondaryHighlight.ids[id])
                             ).sort(),
                             action: createColorSetHighlight(secondaryHighlight.color),
+                        },
+                        {
+                            objectIds: new Uint32Array(selectedDeviation.idArr).sort(),
+                            action: createNeutralHighlight(),
+                        },
+                        {
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
+                                    ? formsNew.idArr
+                                    : basket.idArr.filter((id) => formsNew.ids[id])
+                            ).sort(),
+                            action: createColorSetHighlight(formsNew.color),
+                        },
+                        {
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
+                                    ? formsOngoing.idArr
+                                    : basket.idArr.filter((id) => formsOngoing.ids[id])
+                            ).sort(),
+                            action: createColorSetHighlight(formsOngoing.color),
+                        },
+                        {
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
+                                    ? formsCompleted.idArr
+                                    : basket.idArr.filter((id) => formsCompleted.ids[id])
+                            ).sort(),
+                            action: createColorSetHighlight(formsCompleted.color),
                         },
                         {
                             objectIds: new Uint32Array(
@@ -233,6 +305,9 @@ export function useHandleHighlights() {
         sceneId,
         highlighted,
         secondaryHighlight,
+        formsNew,
+        formsOngoing,
+        formsCompleted,
         hidden,
         groups,
         propertyTreeGroups,
@@ -243,6 +318,8 @@ export function useHandleHighlights() {
         basketMode,
         outlineGroups,
         cameraType,
+        selectedDeviation,
+        viewMode,
     ]);
 }
 
@@ -260,4 +337,75 @@ async function fillActiveGroupIds(sceneId: string, groups: ObjectGroup[]): Promi
 
     await Promise.all(proms);
     return;
+}
+
+/**
+ * The idea is to use array (index is object ID) instead of set if ID range is
+ * so array is not too big and pretty close or smaller than total ID count of the underlying sets.
+ * @param idSets Array of object ID sets or arrays
+ * @returns Sorted combined ID array
+ */
+function objectIdSet(idSets: (ImmutableObjectIdSet | Set<number> | number[])[]) {
+    // Find object ID range
+    let minId = Number.MAX_SAFE_INTEGER;
+    let maxId = 0;
+    let count = 0;
+    idSets.forEach((ids) => {
+        ids.forEach((id) => {
+            if (id < minId) {
+                minId = id;
+            }
+            if (id > maxId) {
+                maxId = id;
+            }
+            count++;
+        });
+    });
+
+    const range = maxId - minId;
+
+    // We use single byte array which is going to much more efficient than set
+    // so here we allow array to have 75% of waste space (actually memory profiler shows set mem consumption is a lot larger),
+    // which means if range is 400 and there are only 100 items - still use array
+    const threshold = 0.25;
+
+    if (count >= Math.max(1, range * threshold)) {
+        // Use array
+        const allIds = new Uint8Array(range + 1);
+        let count = 0;
+        idSets.forEach((ids) =>
+            ids.forEach((id) => {
+                if (allIds[id - minId] === 0) {
+                    allIds[id - minId] = 1;
+                    count++;
+                }
+            })
+        );
+        return {
+            has: (id: number) => allIds[id - minId] === 1,
+            toArray: () => {
+                const result = new Uint32Array(count);
+                let j = 0;
+                allIds.forEach((flag, i) => {
+                    if (flag === 1) {
+                        result[j++] = i + minId;
+                    }
+                });
+                return result;
+            },
+        };
+    } else {
+        // Use set
+        const allIds = new Set<number>();
+        idSets.forEach((ids) => ids.forEach((id) => allIds.add(id)));
+
+        return {
+            has: (id: number) => allIds.has(id),
+            toArray: () => new Uint32Array(allIds).sort(),
+        };
+    }
+}
+
+function areArraysEqual<A, B>(a: A[], b: B[], equal: (a: A, b: B) => boolean) {
+    return a.length === b.length && a.every((e, i) => equal(e, b[i]));
 }

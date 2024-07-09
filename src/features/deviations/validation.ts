@@ -1,6 +1,11 @@
+import { ColorStop } from "apis/dataV2/deviationTypes";
+import { ObjectGroup } from "contexts/objectGroups";
+
 import { DeviationForm, FormField } from "./deviationTypes";
 
-export function validateDeviationForm(deviationForm: DeviationForm, otherNames: string[]) {
+export function validateDeviationForm(deviationForm: DeviationForm, otherNames: string[], objectGroups: ObjectGroup[]) {
+    const deletedGroupsMessage = "Some groups were deleted, please unselect them";
+
     return {
         name: makeError({
             error:
@@ -13,17 +18,38 @@ export function validateDeviationForm(deviationForm: DeviationForm, otherNames: 
         }),
         colorStops: makeError({
             error:
-                deviationForm.colorSetup.colorStops.value.length === 0 ? "Define at least one color stop" : undefined,
+                deviationForm.colorSetup.colorStops.value.length === 0
+                    ? "Define at least one color stop"
+                    : deviationForm.colorSetup.absoluteValues &&
+                      !hasUniqueAbsColorStops(deviationForm.colorSetup.colorStops.value)
+                    ? "Color stop absolute values have to be unique when Absolute Values is checked"
+                    : undefined,
             active: deviationForm.colorSetup.colorStops.edited,
         }),
         subprofiles: deviationForm.subprofiles.map((sp) => ({
             groups1: makeError({
-                error: sp.groups1.value.length === 0 ? "Select groups" : undefined,
+                error:
+                    sp.groups1.value.length === 0
+                        ? "Select groups"
+                        : sp.groups1.value.some((id) => !objectGroups.some((g) => g.id === id))
+                        ? deletedGroupsMessage
+                        : undefined,
                 active: sp.groups1.edited,
             }),
             groups2: makeError({
-                error: sp.groups2.value.length === 0 ? "Select groups" : undefined,
+                error:
+                    sp.groups2.value.length === 0
+                        ? "Select groups"
+                        : sp.groups2.value.some((id) => !objectGroups.some((g) => g.id === id))
+                        ? deletedGroupsMessage
+                        : undefined,
                 active: sp.groups2.edited,
+            }),
+            favorites: makeError({
+                error: sp.favorites.value.some((id) => !objectGroups.some((g) => g.id === id))
+                    ? deletedGroupsMessage
+                    : undefined,
+                active: sp.favorites.edited,
             }),
             heightToCeiling: makeError({
                 error:
@@ -36,6 +62,10 @@ export function validateDeviationForm(deviationForm: DeviationForm, otherNames: 
             }),
         })),
     };
+}
+
+function hasUniqueAbsColorStops(colorStops: ColorStop[]) {
+    return new Set(colorStops.map((cs) => Math.abs(cs.position).toFixed(3))).size === colorStops.length;
 }
 
 function makeError({ active, error }: { active: boolean | undefined; error: string | undefined }): FieldError {

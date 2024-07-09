@@ -12,6 +12,7 @@ import { deviationsReducer } from "features/deviations";
 import { ditioApi } from "features/ditio";
 import { ditioReducer } from "features/ditio";
 import { followPathReducer } from "features/followPath";
+import { formsApi, formsReducer } from "features/forms";
 import { groupsReducer } from "features/groups";
 import { heightProfileReducer } from "features/heightProfile";
 import { imagesReduces } from "features/images";
@@ -40,6 +41,8 @@ const rootReducer = combineReducers({
     bookmarks: bookmarksReducer,
     images: imagesReduces,
     followPath: followPathReducer,
+    forms: formsReducer,
+    [formsApi.reducerPath]: formsApi.reducer,
     deviations: deviationsReducer,
     measure: measureReducer,
     area: areaReducer,
@@ -82,6 +85,7 @@ export const store = configureStore({
             .concat(bimCollabApi.middleware)
             .concat(bimTrackApi.middleware)
             .concat(ditioApi.middleware)
+            .concat(formsApi.middleware)
             .concat(jiraApi.middleware)
             .concat(xsiteManageApi.middleware)
             .concat(dataV2Api.middleware)

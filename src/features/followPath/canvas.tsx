@@ -1,11 +1,12 @@
 import { DrawProduct } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
-import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
+import { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Canvas2D } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { deviationsActions } from "features/deviations";
+import { deviationsActions } from "features/deviations/deviationsSlice";
+import { useIsTopDownOrthoCamera } from "features/deviations/hooks/useIsTopDownOrthoCamera";
 import {
     drawLineStrip,
     drawPart,
@@ -17,6 +18,7 @@ import {
     translateInteraction,
 } from "features/engine2D";
 import { CameraType, selectCameraType, selectViewMode } from "features/render";
+import { selectWidgets } from "slices/explorer";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { vecToHex } from "utils/color";
 
@@ -55,6 +57,7 @@ export function FollowPathCanvas({
 
     const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);
+    const isTopDownOrtho = useIsTopDownOrthoCamera();
 
     const roadCrossSection = useCrossSection();
     const roadCrossSectionData = roadCrossSection.status === AsyncStatus.Success ? roadCrossSection.data : undefined;
@@ -73,6 +76,9 @@ export function FollowPathCanvas({
 
     const followDeviations = useAppSelector(selectFollowDeviations);
     const fpObj = useAppSelector(selectFollowObject);
+    const widgets = useAppSelector(selectWidgets);
+
+    const isFollowPathVisible = useMemo(() => widgets.includes("followPath"), [widgets]);
 
     const drawCrossSection = useCallback(() => {
         if (!view?.measure || !ctx || !canvas) {
@@ -81,7 +87,7 @@ export function FollowPathCanvas({
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        if (!roadCrossSectionData || viewMode !== ViewMode.FollowPath) {
+        if (!roadCrossSectionData || !(viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations)) {
             return;
         }
 
@@ -229,6 +235,7 @@ export function FollowPathCanvas({
             translateInteraction(svg.children.namedItem(`followPlus`), undefined);
             translateInteraction(svg.children.namedItem(`followMinus`), undefined);
             translateInteraction(svg.children.namedItem(`followInfo`), undefined);
+            translateInteraction(svg.children.namedItem(`followClose`), undefined);
         };
         if (!view?.measure || !profileCtx || !canvas || !currentProfileCenter || !currentProfile) {
             removeMarkers();
@@ -250,6 +257,10 @@ export function FollowPathCanvas({
             translateInteraction(svg.children.namedItem(`followPlus`), vec2.fromValues(pt[0] + 50, pt[1]));
             translateInteraction(svg.children.namedItem(`followMinus`), vec2.fromValues(pt[0] - 50, pt[1]));
             translateInteraction(svg.children.namedItem(`followInfo`), vec2.fromValues(pt[0], pt[1] - 55));
+            translateInteraction(
+                svg.children.namedItem(`followClose`),
+                isFollowPathVisible ? undefined : vec2.fromValues(pt[0], pt[1] + 55)
+            );
         } else if (view.renderState.clipping.planes.length > 0) {
             const plane = view.renderState.clipping.planes[0].normalOffset;
             const normal = vec3.fromValues(plane[0], plane[1], plane[2]);
@@ -283,6 +294,17 @@ export function FollowPathCanvas({
                         -45
                     )
                 );
+                translateInteraction(
+                    svg.children.namedItem(`followClose`),
+                    isFollowPathVisible
+                        ? undefined
+                        : vec2.scaleAndAdd(
+                              vec2.create(),
+                              pt[0],
+                              dir[0] <= 0 ? vec2.fromValues(-dir[1], dir[0]) : vec2.fromValues(dir[1], -dir[0]),
+                              -45
+                          )
+                );
             } else {
                 removeMarkers();
             }
@@ -294,7 +316,7 @@ export function FollowPathCanvas({
         } else {
             removeMarkers();
         }
-    }, [canvas, currentProfile, currentProfileCenter, profileCtx, view, svg, fpObj]);
+    }, [canvas, currentProfile, currentProfileCenter, profileCtx, view, svg, fpObj, isFollowPathVisible]);
 
     const deviationsDrawId = useRef(0);
     const drawDeviations = useCallback(
@@ -406,17 +428,19 @@ export function FollowPathCanvas({
         drawDeviations,
     ]);
 
-    const canDrawRoad = roadCrossSectionData && viewMode === ViewMode.FollowPath;
+    const isFollowPathOrDeviations = viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations;
+
+    const canDrawRoad = roadCrossSectionData && isFollowPathOrDeviations;
     const canDrawSelectedEntity = drawSelectedEntities && Boolean(selectedEntitiesData?.length);
     const canDrawTracer =
         showTracer &&
         cameraType === CameraType.Orthographic &&
-        viewMode === ViewMode.FollowPath &&
+        isFollowPathOrDeviations &&
         roadCrossSectionData &&
         roadCrossSectionData.length >= 2;
-    const canDrawProfile = viewMode === ViewMode.FollowPath && currentProfileCenter && currentProfile;
+    const canDrawProfile = isFollowPathOrDeviations && currentProfileCenter && currentProfile;
     const canDrawDeviations =
-        viewMode === ViewMode.FollowPath && cameraType == CameraType.Orthographic && currentProfileCenter;
+        isFollowPathOrDeviations && cameraType == CameraType.Orthographic && !isTopDownOrtho && currentProfileCenter;
 
     return (
         <>

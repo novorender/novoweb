@@ -8,7 +8,14 @@ import { HighlightCollection, useLazyHighlightCollections } from "contexts/highl
 import { useLazyHighlighted } from "contexts/highlighted";
 import { GroupStatus, isInternalGroup, useLazyObjectGroups } from "contexts/objectGroups";
 import { useLazySelectionBasket } from "contexts/selectionBasket";
+import { selectArcgisFeatureServers } from "features/arcgis/arcgisSlice";
 import { selectAreas } from "features/area/areaSlice";
+import {
+    selectDeviationLegendGroups,
+    selectIsLegendFloating,
+    selectSelectedProfileId,
+    selectSelectedSubprofileIndex,
+} from "features/deviations/selectors";
 import { selectFollowPath } from "features/followPath/followPathSlice";
 import {
     selectManholeCollisionSettings,
@@ -37,7 +44,7 @@ import {
     selectViewMode,
 } from "features/render/renderSlice";
 import { SubtreeStatus } from "features/render/types";
-import { ViewMode } from "types/misc";
+import { AsyncStatus, ViewMode } from "types/misc";
 
 export function useCreateBookmark() {
     const measurement = useAppSelector(selectMeasure);
@@ -60,6 +67,11 @@ export function useCreateBookmark() {
     const outlineLasers = useAppSelector(selectOutlineLasers);
     const laserPlane = useAppSelector(selectOutlineLaserPlane);
     const propertyTree = useAppSelector(selectPropertyTreeBookmarkState);
+    const deviationProfileId = useAppSelector(selectSelectedProfileId);
+    const deviationSubprofileIndex = useAppSelector(selectSelectedSubprofileIndex);
+    const deviationLegendFloating = useAppSelector(selectIsLegendFloating);
+    const deviationLegendGroups = useAppSelector(selectDeviationLegendGroups);
+    const arcgisFeatureServers = useAppSelector(selectArcgisFeatureServers);
 
     const {
         state: { view },
@@ -116,10 +128,19 @@ export function useCreateBookmark() {
                 terrain: {
                     asBackground: terrain.asBackground,
                 },
-                deviations: {
-                    index: deviations.index,
-                    mixFactor: deviations.mixFactor,
-                },
+                deviations:
+                    viewMode === ViewMode.Deviations && deviationProfileId
+                        ? {
+                              index: deviations.index,
+                              mixFactor: deviations.mixFactor,
+                              profileId: deviationProfileId,
+                              subprofileIndex: deviationSubprofileIndex,
+                              isLegendFloating: deviationLegendFloating,
+                              hiddenGroupIds: deviationLegendGroups
+                                  ?.filter((g) => g.status === GroupStatus.Hidden)
+                                  .map((g) => g.id),
+                          }
+                        : undefined,
                 groups: groups.current
                     .filter((group) => !isInternalGroup(group))
                     .filter((group) => group.status !== GroupStatus.None)
@@ -158,7 +179,7 @@ export function useCreateBookmark() {
                     },
                 },
                 followPath:
-                    viewMode === ViewMode.FollowPath &&
+                    (viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations) &&
                     followPath.currentCenter &&
                     (followPath.selectedIds.length || followPath.selectedPositions.length)
                         ? {
@@ -202,10 +223,26 @@ export function useCreateBookmark() {
                                           t.down,
                                           t.up
                                       );
-                                      if (measurementX === undefined && measurementY === undefined) {
+                                      const measurementZ = copyTraceMeasurement(
+                                          t.measurementZ,
+                                          t.laserPosition,
+                                          t.zDown,
+                                          t.zUp
+                                      );
+                                      if (
+                                          measurementX === undefined &&
+                                          measurementY === undefined &&
+                                          measurementZ === undefined
+                                      ) {
                                           return undefined;
                                       }
-                                      return { laserPosition: t.laserPosition, measurementX, measurementY };
+                                      return {
+                                          laserPosition: t.laserPosition,
+                                          measurementX,
+                                          measurementY,
+                                          measurementZ,
+                                          laserPlanes: t.laserPlanes,
+                                      };
                                   })
                                   .filter((f) => f !== undefined) as {
                                   laserPosition: ReadonlyVec3;
@@ -215,6 +252,18 @@ export function useCreateBookmark() {
                           }
                         : undefined,
                 ...(propertyTree ? { propertyTree } : {}),
+                arcgis:
+                    arcgisFeatureServers.status === AsyncStatus.Success
+                        ? {
+                              featureServers: arcgisFeatureServers.data.map((fs) => ({
+                                  id: fs.id,
+                                  layers: fs.layers.map((layer) => ({
+                                      id: layer.id,
+                                      checked: layer.checked,
+                                  })),
+                              })),
+                          }
+                        : undefined,
             },
         };
     };

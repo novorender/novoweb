@@ -40,10 +40,16 @@ declare module "@novorender/data-js-api" {
         options: {
             addToSelectionBasket: boolean;
         };
-        deviations: {
-            index: number;
-            mixFactor: number;
-        };
+        deviations:
+            | {
+                  index: number; // deprecated in favor of profileId
+                  mixFactor: number;
+                  profileId?: string;
+                  subprofileIndex?: number;
+                  isLegendFloating: boolean;
+                  hiddenGroupIds?: string[];
+              }
+            | undefined;
         subtrees: {
             triangles: boolean;
             lines: boolean;
@@ -154,6 +160,8 @@ declare module "@novorender/data-js-api" {
                       laserPosition: ReadonlyVec3;
                       measurementX?: { start: ReadonlyVec3; end: ReadonlyVec3 };
                       measurementY?: { start: ReadonlyVec3; end: ReadonlyVec3 };
+                      measurementZ?: { start: ReadonlyVec3; end: ReadonlyVec3 };
+                      laserPlanes?: ReadonlyVec4[];
                   }[];
               }
             | undefined;
@@ -164,6 +172,15 @@ declare module "@novorender/data-js-api" {
                 ids: number[];
                 color: [number, number, number, number];
                 status: "hidden" | "selected";
+            }[];
+        };
+        arcgis?: {
+            featureServers: {
+                id: string;
+                layers: {
+                    id: number;
+                    checked: boolean;
+                }[];
             }[];
         };
     };
@@ -229,5 +246,9 @@ declare module "@novorender/data-js-api" {
         background?: {
             color: Vec4;
         };
+    }
+
+    interface ObjectGroup {
+        frozen: boolean;
     }
 }

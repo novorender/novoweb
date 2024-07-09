@@ -36,7 +36,6 @@ export function Issues() {
     const showMarkers = useAppSelector(selectJiraShowMarkers);
     const dispatch = useAppDispatch();
 
-    // todo pagination / load on scroll whatever
     const {
         data: issues,
         isFetching: isFetchingIssues,

@@ -53,16 +53,26 @@ export function useHandleCameraState() {
 
                 dispatch(renderActions.setGrid({ enabled: false }));
             } else {
-                await view.switchCameraController(
-                    "ortho",
-                    state.goTo
-                        ? {
-                              position: vec3.clone(state.goTo.position),
-                              rotation: quat.clone(state.goTo.rotation),
-                              fov: state.goTo.fov,
-                          }
-                        : undefined
-                );
+                if (state.goTo?.flyTime) {
+                    await view.switchCameraController("ortho");
+                    const controller = view.controllers["ortho"];
+                    controller.moveTo(
+                        vec3.clone(state.goTo.position),
+                        state.goTo.flyTime,
+                        quat.clone(state.goTo.rotation)
+                    );
+                } else {
+                    await view.switchCameraController(
+                        "ortho",
+                        state.goTo
+                            ? {
+                                  position: vec3.clone(state.goTo.position),
+                                  rotation: quat.clone(state.goTo.rotation),
+                                  fov: state.goTo.fov,
+                              }
+                            : undefined
+                    );
+                }
 
                 dispatch(orthoCamActions.setIsTopDown(view.isTopDown()));
                 const mat = mat4.fromQuat(mat4.create(), state.goTo?.rotation ?? view.renderState.camera.rotation);

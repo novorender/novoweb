@@ -21,7 +21,7 @@ import { useToggle } from "hooks/useToggle";
 import { selectIsOnline, selectMaximized, selectMinimized } from "slices/explorer";
 import { capitalize, formatFileSizeMetric } from "utils/misc";
 
-import { offlineActions, selectOfflineAction, selectOfflineScenes } from "./offlineSlice";
+import { offlineActions, selectOfflineAction, selectOfflineScenes, selectSizeWarning } from "./offlineSlice";
 
 export default function Offline() {
     const {
@@ -35,6 +35,7 @@ export default function Offline() {
     const action = useAppSelector(selectOfflineAction);
     const currentParentScene = useAppSelector(selectOfflineScenes)[parentSceneId];
     const currentViewerScene = currentParentScene?.viewerScenes.find((scene) => scene.id === viewerSceneId);
+    const sizeWarning = useAppSelector(selectSizeWarning);
 
     return (
         <>
@@ -51,7 +52,10 @@ export default function Offline() {
                         <Typography p={1}>Offline is not available for this scene or device.</Typography>
                     ) : (
                         <ScrollBox p={1} pt={2}>
-                            {!currentParentScene || (!currentViewerScene && currentParentScene.id !== viewerSceneId) ? (
+                            {sizeWarning ? (
+                                <ConfirmSync {...sizeWarning} />
+                            ) : !currentParentScene ||
+                              (!currentViewerScene && currentParentScene.id !== viewerSceneId) ? (
                                 <Pending />
                             ) : (
                                 <>
@@ -63,7 +67,9 @@ export default function Offline() {
                                     {currentParentScene.status === "synchronizing" && (
                                         <Downloading progress={currentParentScene.progress} />
                                     )}
-                                    {currentParentScene.status === "error" && <DownloadError />}
+                                    {currentParentScene.status === "error" && (
+                                        <DownloadError error={currentParentScene.error} />
+                                    )}
                                     {currentParentScene.status === "aborted" && <Interrupted />}
                                     {currentParentScene.status === "invalid format" && <OlderFormat />}
                                 </>
@@ -129,33 +135,41 @@ function Downloading({ progress }: { progress: string }) {
 
 function Interrupted() {
     const action = useAppSelector(selectOfflineAction);
+    const isOnline = useAppSelector(selectIsOnline);
     const dispatch = useAppDispatch();
     return (
         <>
             <Box>Scene download was interrupted.</Box>
-            <Button
-                disabled={action !== undefined}
-                variant="contained"
-                onClick={() => dispatch(offlineActions.setAction({ action: "fullSync" }))}
-            >
-                Resume
-            </Button>
+            <Box display="flex" justifyContent="flex-end" mt={1}>
+                <Button
+                    disabled={action !== undefined || !isOnline}
+                    variant="contained"
+                    onClick={() => dispatch(offlineActions.setAction({ action: "fullSync" }))}
+                >
+                    Resume
+                </Button>
+            </Box>
         </>
     );
 }
 
-function DownloadError() {
+function DownloadError({ error }: { error?: string }) {
     const action = useAppSelector(selectOfflineAction);
+    const isOnline = useAppSelector(selectIsOnline);
     const dispatch = useAppDispatch();
     return (
         <>
-            This scene cannot be downloaded, please contact support. <br />
-            <Button
-                disabled={action !== undefined}
-                onClick={() => dispatch(offlineActions.setAction({ action: "fullSync" }))}
-            >
-                Try again
-            </Button>
+            {error ?? "This scene cannot be downloaded, please contact support."}
+            <br />
+            <Box display="flex" justifyContent="flex-end" mt={1}>
+                <Button
+                    disabled={action !== undefined || !isOnline}
+                    variant="contained"
+                    onClick={() => dispatch(offlineActions.setAction({ action: "fullSync" }))}
+                >
+                    Try again
+                </Button>
+            </Box>
         </>
     );
 }
@@ -183,8 +197,11 @@ function Pending() {
                     <>
                         Estimated available space:{" "}
                         {formatFileSizeMetric(
-                            offlineWorkerState.initialStorageEstimate.quota -
-                                offlineWorkerState.initialStorageEstimate.usage
+                            Math.max(
+                                0,
+                                offlineWorkerState.initialStorageEstimate.quota -
+                                    offlineWorkerState.initialStorageEstimate.usage
+                            )
                         )}
                         <br />
                     </>
@@ -193,7 +210,7 @@ function Pending() {
                 <Button
                     sx={{ my: 2 }}
                     disabled={action !== undefined}
-                    onClick={() => dispatch(offlineActions.setAction({ action: "fullSync" }))}
+                    onClick={() => dispatch(offlineActions.setAction({ action: "estimate" }))}
                 >
                     Full download
                 </Button>
@@ -222,6 +239,51 @@ function Incremental() {
     return (
         <>
             This scene is being incrementally downloaded. <br />
+        </>
+    );
+}
+
+function ConfirmSync({
+    totalSize,
+    usedSize,
+    availableSize,
+}: {
+    totalSize: number;
+    usedSize: number;
+    availableSize: number;
+}) {
+    const dispatch = useAppDispatch();
+    const isOnline = useAppSelector(selectIsOnline);
+    const requiredSize = Math.max(0, totalSize - usedSize);
+
+    return (
+        <>
+            Synchronizing this scene will require {formatFileSizeMetric(requiredSize)}, which is more than the{" "}
+            {formatFileSizeMetric(availableSize)} estimated available storage space.
+            <br />
+            Although estimates are complicated and inaccurate, this process will likely fail.
+            <br />
+            Proceed downloading the scene?
+            <Box display="flex" justifyContent="flex-end" mt={1} gap={1}>
+                <Button
+                    disabled={!isOnline}
+                    variant="contained"
+                    onClick={() => {
+                        dispatch(offlineActions.setSizeWarning(undefined));
+                        dispatch(offlineActions.setAction({ action: "fullSync" }));
+                    }}
+                >
+                    Yes
+                </Button>
+                <Button
+                    disabled={!isOnline}
+                    onClick={() => {
+                        dispatch(offlineActions.setSizeWarning(undefined));
+                    }}
+                >
+                    No
+                </Button>
+            </Box>
         </>
     );
 }
@@ -320,7 +382,7 @@ function AllDownloadedScenes({ synchronizing }: { synchronizing: boolean }) {
                                                             disabled={!isOnline || synchronizing}
                                                             onClick={() =>
                                                                 dispatch(
-                                                                    offlineActions.setAction({ action: "fullSync" })
+                                                                    offlineActions.setAction({ action: "estimate" })
                                                                 )
                                                             }
                                                         >
