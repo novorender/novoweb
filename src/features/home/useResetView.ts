@@ -52,6 +52,8 @@ export function useResetView() {
                                     ? GroupStatus.Selected
                                     : saved.hidden
                                     ? GroupStatus.Hidden
+                                    : saved.frozen
+                                    ? GroupStatus.Frozen
                                     : GroupStatus.None;
                             }
 
