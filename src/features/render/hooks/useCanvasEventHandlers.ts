@@ -23,6 +23,7 @@ import {
     renderActions,
     selectCameraType,
     selectClippingPlanes,
+    selectGeneratedParametricData,
     selectPicker,
     selectPoints,
     selectStamp,
@@ -73,6 +74,7 @@ export function useCanvasEventHandlers({
     const cameraType = useAppSelector(selectCameraType);
     const roadLayerTracerEnabled = useAppSelector(selectShowTracer);
     const viewMode = useAppSelector(selectViewMode);
+    const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
     const dispatch = useAppDispatch();
 
     const hideSvgCursor = () =>
@@ -329,7 +331,8 @@ export function useCanvasEventHandlers({
                             hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
                                 result.objectId,
                                 result.position,
-                                tolerance
+                                tolerance,
+                                allowGeneratedParametric.enabled
                             );
                             vec2.copy(
                                 previous2dSnapPos.current,

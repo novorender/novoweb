@@ -38,7 +38,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
     const enabledCanvasContextMenuFeatures = useAppSelector(selectCanvasContextMenuFeatures);
     const navigationCube = useAppSelector(selectNavigationCube);
     const debugStats = useAppSelector(selectDebugStats);
-    const generatedParametricData = useAppSelector(selectGeneratedParametricData);
+    const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
 
     const toggleWidget = (key: WidgetKey, checked: boolean) => {
         const keys = enabledWidgets.map((w) => w.key);
@@ -87,7 +87,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         sx={{ ml: 0, mb: 1 }}
                         control={
                             <Switch
-                                checked={generatedParametricData.enabled}
+                                checked={allowGeneratedParametric.enabled}
                                 name="generated-parametric-data"
                                 onChange={(_evt, checked) =>
                                     dispatch(renderActions.setGeneratedParametricData({ enabled: checked }))

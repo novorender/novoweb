@@ -38,6 +38,7 @@ import {
     selectCameraType,
     selectClippingPlanes,
     selectDeviations,
+    selectGeneratedParametricData,
     selectMainObject,
     selectPicker,
     selectSecondaryHighlightProperty,
@@ -82,6 +83,7 @@ export function useCanvasClickHandler({
     const showPropertiesStamp = useAppSelector(selectShowPropertiesStamp);
     const { planes } = useAppSelector(selectClippingPlanes);
     const laser3d = useAppSelector(selectOutlineLaser3d);
+    const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
 
     const [secondaryHighlightAbortController, abortSecondaryHighlight] = useAbortController();
     const currentSecondaryHighlightQuery = useRef("");
@@ -571,7 +573,12 @@ export function useCanvasClickHandler({
                         view.renderState.camera.position,
                         measurePickSettings
                     );
-                    const entity = await view.measure?.core.pickMeasureEntity(result.objectId, position, tolerance);
+                    const entity = await view.measure?.core.pickMeasureEntity(
+                        result.objectId,
+                        position,
+                        tolerance,
+                        allowGeneratedParametric.enabled
+                    );
                     if (entity?.entity) {
                         dispatch(
                             measureActions.selectEntity({
