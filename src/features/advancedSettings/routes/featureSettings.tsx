@@ -18,7 +18,7 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import { CanvasContextMenuFeatureKey, canvasContextMenuFeatures } from "config/canvasContextMenu";
 import { ButtonKey, defaultEnabledWidgets, featuresConfig, viewerWidgets, WidgetKey } from "config/features";
-import { renderActions, selectDebugStats, selectNavigationCube } from "features/render";
+import { renderActions, selectDebugStats, selectGeneratedParametricData, selectNavigationCube } from "features/render";
 import {
     explorerActions,
     selectCanvasContextMenuFeatures,
@@ -38,6 +38,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
     const enabledCanvasContextMenuFeatures = useAppSelector(selectCanvasContextMenuFeatures);
     const navigationCube = useAppSelector(selectNavigationCube);
     const debugStats = useAppSelector(selectDebugStats);
+    const generatedParametricData = useAppSelector(selectGeneratedParametricData);
 
     const toggleWidget = (key: WidgetKey, checked: boolean) => {
         const keys = enabledWidgets.map((w) => w.key);
@@ -82,6 +83,23 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                 </Typography>
                 <Divider sx={{ my: 1 }} />
                 <Box p={1} mt={1} display="flex" flexDirection="column">
+                    <FormControlLabel
+                        sx={{ ml: 0, mb: 1 }}
+                        control={
+                            <Switch
+                                checked={generatedParametricData.enabled}
+                                name="generated-parametric-data"
+                                onChange={(_evt, checked) =>
+                                    dispatch(renderActions.setGeneratedParametricData({ enabled: checked }))
+                                }
+                            />
+                        }
+                        label={
+                            <Box ml={1} fontSize={16}>
+                                Generated parametric data
+                            </Box>
+                        }
+                    />
                     <FormControlLabel
                         sx={{ ml: 0, mb: 1 }}
                         control={

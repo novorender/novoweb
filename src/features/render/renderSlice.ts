@@ -210,6 +210,9 @@ const initialState = {
         enabled: false,
     },
     clippingInEdit: false,
+    generatedParametricData: {
+        enabled: false,
+    },
 };
 
 type State = typeof initialState;
@@ -461,6 +464,12 @@ export const renderSlice = createSlice({
         },
         setClippingInEdit: (state, action: PayloadAction<RecursivePartial<State["clippingInEdit"]>>) => {
             state.clippingInEdit = action.payload;
+        },
+        setGeneratedParametricData: (
+            state,
+            action: PayloadAction<RecursivePartial<State["generatedParametricData"]>>
+        ) => {
+            state.generatedParametricData = mergeRecursive(state.generatedParametricData, action.payload);
         },
     },
     extraReducers: (builder) => {
@@ -818,6 +827,7 @@ export const selectNavigationCube = (state: RootState) => state.render.navigatio
 export const selectDebugStats = (state: RootState) => state.render.debugStats;
 export const selectClippingInEdit = (state: RootState) => state.render.clippingInEdit;
 export const selectSceneOrganization = (state: RootState) => state.render.sceneOrganization;
+export const selectGeneratedParametricData = (state: RootState) => state.render.generatedParametricData;
 
 const { reducer } = renderSlice;
 const actions = { ...renderSlice.actions, initScene, resetView, selectBookmark };
