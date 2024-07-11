@@ -213,9 +213,6 @@ const initialState = {
         enabled: false,
     },
     clippingInEdit: false,
-    generatedParametricData: {
-        enabled: false,
-    },
 };
 
 type State = typeof initialState;
