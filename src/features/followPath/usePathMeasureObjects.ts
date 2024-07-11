@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { selectGeneratedParametricData } from "features/render/renderSlice";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { selectFollowCylindersFrom, selectSelectedPositions } from "./followPathSlice";
@@ -20,6 +21,7 @@ export function usePathMeasureObjects() {
 
     const selected = useAppSelector(selectSelectedPositions);
     const followFrom = useAppSelector(selectFollowCylindersFrom);
+    const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
     const dispatch = useAppDispatch();
 
     const [measureObjects, setMeasureObjects] = useState<AsyncState<ExtendedMeasureObject[]>>({
@@ -35,7 +37,7 @@ export function usePathMeasureObjects() {
                 await Promise.all(
                     selected.map((obj) =>
                         view?.measure?.core
-                            .pickMeasureEntity(obj.id, obj.pos)
+                            .pickMeasureEntity(obj.id, obj.pos, undefined, allowGeneratedParametric.enabled)
                             .then((_mObj) => {
                                 const mObj = _mObj.entity as ExtendedMeasureObject;
                                 mObj.pos = obj.pos;
@@ -62,7 +64,7 @@ export function usePathMeasureObjects() {
 
             setMeasureObjects({ status: AsyncStatus.Success, data: mObjects });
         }
-    }, [view, selected, dispatch, followFrom]);
+    }, [view, selected, dispatch, followFrom, allowGeneratedParametric]);
 
     return measureObjects;
 }

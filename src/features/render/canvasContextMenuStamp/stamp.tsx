@@ -43,7 +43,13 @@ import {
 import { getObjectData, searchDeepByPatterns } from "utils/search";
 import { sleep } from "utils/time";
 
-import { renderActions, selectCameraType, selectClippingPlanes, selectStamp } from "../renderSlice";
+import {
+    renderActions,
+    selectCameraType,
+    selectClippingPlanes,
+    selectGeneratedParametricData,
+    selectStamp,
+} from "../renderSlice";
 import { CameraType, ObjectVisibility, Picker, StampKind } from "../types";
 import { getLocalRotationAroundNormal } from "../utils";
 
@@ -403,6 +409,7 @@ function Measure() {
     const laserPlane = useAppSelector(selectOutlineLaserPlane);
     const laser3d = useAppSelector(selectOutlineLaser3d);
     const lockElevation = useAppSelector(selectLockPointLineElevation);
+    const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
 
     const isCrossSection = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
 
@@ -423,12 +430,12 @@ function Measure() {
             setStatus(AsyncStatus.Loading);
             if (!isCrossSection) {
                 const ent = await view.measure?.core
-                    .pickMeasureEntity(objectId, stamp.data.position)
+                    .pickMeasureEntity(objectId, stamp.data.position, undefined, allowGeneratedParametric.enabled)
                     .then((res) => res.entity)
                     .catch(() => undefined);
 
                 const pickMeasurePoint = await view.measure?.core
-                    .pickMeasureEntity(objectId, stamp.data.position, { point: 0.4 })
+                    .pickMeasureEntity(objectId, stamp.data.position, { point: 0.4 }, allowGeneratedParametric.enabled)
                     .then((res) => res.entity)
                     .catch(() => undefined);
                 if (pickMeasurePoint?.drawKind === "vertex") {
@@ -500,7 +507,7 @@ function Measure() {
         }
         setPickPoint(pickPoint);
         setStatus(AsyncStatus.Success);
-    }, [stamp, status, view, cameraType, dispatch, isCrossSection, db, laserPlane, laser3d]);
+    }, [stamp, status, view, cameraType, dispatch, isCrossSection, db, laserPlane, laser3d, allowGeneratedParametric]);
 
     useEffect(() => {
         loadObjectData();
