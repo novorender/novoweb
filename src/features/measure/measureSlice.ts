@@ -256,7 +256,7 @@ export const selectMeasureHoverSettings = createSelector(
             case "surface":
                 return { face: 0.03 };
             default:
-                return { edge: 0.008, segment: 0.008, face: 0.008, point: 0.015 };
+                return { edge: 0.008, segment: 0.008, face: 0.015, point: 0.015 };
         }
     }
 );
@@ -271,7 +271,7 @@ export const selectMeasurePickSettings = createSelector(
             case "surface":
                 return { face: 0.03 };
             default:
-                return { edge: 0.008, segment: 0.008, face: 0.008, point: 0.015 };
+                return { edge: 0.008, segment: 0.008, face: 0.015, point: 0.015 };
         }
     }
 );
