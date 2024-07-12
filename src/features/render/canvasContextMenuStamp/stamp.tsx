@@ -22,7 +22,7 @@ import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { areaActions } from "features/area";
-import { measureActions, selectMeasureEntities } from "features/measure";
+import { measureActions, selectMeasureEntities, selectMeasurePickSettings } from "features/measure";
 import {
     clippingOutlineLaserActions,
     getOutlineLaser,
@@ -51,7 +51,7 @@ import {
     selectStamp,
 } from "../renderSlice";
 import { CameraType, ObjectVisibility, Picker, StampKind } from "../types";
-import { getLocalRotationAroundNormal } from "../utils";
+import { applyCameraDistanceToMeasureTolerance, getLocalRotationAroundNormal } from "../utils";
 
 const selectionFeatures = [
     canvasContextMenuConfig.addFileToBasket.key,
@@ -410,6 +410,7 @@ function Measure() {
     const laser3d = useAppSelector(selectOutlineLaser3d);
     const lockElevation = useAppSelector(selectLockPointLineElevation);
     const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
+    const measurePickSettings = useAppSelector(selectMeasurePickSettings);
 
     const isCrossSection = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
 
@@ -429,8 +430,13 @@ function Measure() {
         if (objectId && stamp.data.position) {
             setStatus(AsyncStatus.Loading);
             if (!isCrossSection) {
+                const tolerance = applyCameraDistanceToMeasureTolerance(
+                    stamp.data.position,
+                    view.renderState.camera.position,
+                    measurePickSettings
+                );
                 const ent = await view.measure?.core
-                    .pickMeasureEntity(objectId, stamp.data.position, undefined, allowGeneratedParametric.enabled)
+                    .pickMeasureEntity(objectId, stamp.data.position, tolerance, allowGeneratedParametric.enabled)
                     .then((res) => res.entity)
                     .catch(() => undefined);
 
@@ -507,7 +513,19 @@ function Measure() {
         }
         setPickPoint(pickPoint);
         setStatus(AsyncStatus.Success);
-    }, [stamp, status, view, cameraType, dispatch, isCrossSection, db, laserPlane, laser3d, allowGeneratedParametric]);
+    }, [
+        stamp,
+        status,
+        view,
+        cameraType,
+        dispatch,
+        isCrossSection,
+        db,
+        laserPlane,
+        laser3d,
+        allowGeneratedParametric,
+        measurePickSettings,
+    ]);
 
     useEffect(() => {
         loadObjectData();
