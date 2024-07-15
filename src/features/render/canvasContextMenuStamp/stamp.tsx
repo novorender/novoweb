@@ -506,7 +506,7 @@ function Measure() {
             await sleep(1000);
 
             const laser = await getOutlineLaser(offsetPos, view, "outline", 0, hiddenPlanes, laser3d ? 1 : undefined);
-            view.modifyRenderState({ outlines: { enabled: false, planes: [] } });
+            view.modifyRenderState({ outlines: { enabled: false, hidden: false, planes: [] } });
             if (laser) {
                 setLaser({ laser, plane: hiddenPlane });
             }
