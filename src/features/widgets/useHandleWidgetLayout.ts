@@ -42,14 +42,6 @@ export function useHandleWidgetLayout() {
                         padWidgetsTop: true,
                     })
                 );
-            } else if (lgNarrow) {
-                dispatch(
-                    explorerActions.setWidgetLayout({
-                        widgets: 2,
-                        sideBySide: true,
-                        padWidgetsTop: false,
-                    })
-                );
             } else if (lg2Narrow) {
                 dispatch(
                     explorerActions.setWidgetLayout({

@@ -38,10 +38,7 @@ function HudNew() {
             <Box
                 sx={{
                     position: "absolute",
-                    left: theme.spacing(theme.customSpacing.hudPadding),
-                    top: theme.spacing(theme.customSpacing.hudPadding),
-                    width: `calc(100% - ${theme.spacing(theme.customSpacing.hudPadding * 2)})`,
-                    height: `calc(100% - ${theme.spacing(theme.customSpacing.hudPadding * 2)})`,
+                    inset: theme.spacing(theme.customSpacing.hudPadding),
                     pointerEvents: "none",
                 }}
             >

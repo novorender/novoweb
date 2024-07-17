@@ -76,9 +76,9 @@ export function PrimaryMenuNew() {
                 <Divider orientation="vertical" variant="middle" flexItem sx={{ mx: 1 }} />
                 <Home newDesign />
                 <CameraSpeed newDesign />
-                <FlyToSelected newDesign />
                 <StepBack newDesign />
                 <StepForwards newDesign />
+                <FlyToSelected newDesign />
                 <OrthoShortcut newDesign />
                 <Divider orientation="vertical" variant="middle" flexItem sx={{ mx: 1 }} />
                 <ViewOnlySelected newDesign />
