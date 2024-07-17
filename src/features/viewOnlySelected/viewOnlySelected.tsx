@@ -1,13 +1,14 @@
-import type { SpeedDialActionProps } from "@mui/material";
+import { type SpeedDialActionProps } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
+import IconButtonExt from "components/iconButtonExt";
 import { featuresConfig } from "config/features";
 import { ObjectVisibility, renderActions, selectDefaultVisibility } from "features/render";
 
 type Props = SpeedDialActionProps;
 
-export function ViewOnlySelected(props: Props) {
+export function ViewOnlySelected({ newDesign, ...props }: Props & { newDesign?: boolean }) {
     const { name, Icon } = featuresConfig["viewOnlySelected"];
     const currentVisibility = useAppSelector(selectDefaultVisibility);
 
@@ -26,14 +27,27 @@ export function ViewOnlySelected(props: Props) {
         }
     };
 
-    return (
-        <SpeedDialAction
-            {...props}
-            data-test="view-only-selected"
-            active={currentVisibility !== ObjectVisibility.Neutral}
-            onClick={handleClick}
-            title={name}
-            icon={<Icon />}
-        />
-    );
+    if (newDesign) {
+        return (
+            <IconButtonExt
+                onClick={handleClick}
+                title={name}
+                active={currentVisibility === ObjectVisibility.Transparent}
+                color={currentVisibility === ObjectVisibility.SemiTransparent ? "primary" : "default"}
+            >
+                <Icon />
+            </IconButtonExt>
+        );
+    } else {
+        return (
+            <SpeedDialAction
+                {...props}
+                data-test="view-only-selected"
+                active={currentVisibility !== ObjectVisibility.Neutral}
+                onClick={handleClick}
+                title={name}
+                icon={<Icon />}
+            />
+        );
+    }
 }

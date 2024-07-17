@@ -13,9 +13,20 @@ import {
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { renderActions } from "features/render";
 import NovorenderIcon from "media/icons/novorender-small.svg?react";
-import { selectIsOnline } from "slices/explorer";
+import { selectIsOnline, selectNewDesign } from "slices/explorer";
 
-export function LogoSpeedDial({
+export function LogoSpeedDial(props: Omit<SpeedDialProps, "ariaLabel"> & { ariaLabel?: string; toggle: () => void }) {
+    const newDesign = useAppSelector(selectNewDesign);
+    if (newDesign) {
+        // We don't show this button in the new design
+        // To avoid updating all the components - just hide it here
+        return null;
+    }
+
+    return <LogoSpeedDialInner {...props} />;
+}
+
+function LogoSpeedDialInner({
     open,
     toggle,
     ariaLabel = "toggle widget menu",

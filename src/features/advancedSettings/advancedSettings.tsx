@@ -189,6 +189,8 @@ export default function AdvancedSettings() {
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
                     widget={{ ...featuresConfig.advancedSettings, name: "Advanced settings" }}
                     disableShadow
                 />

@@ -2,12 +2,14 @@ import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
 import { useState } from "react";
 
 import { SpeedDialAction } from "components";
+import IconButtonExt from "components/iconButtonExt";
 import { featuresConfig } from "config/features";
 
 import { useResetView } from "./useResetView";
 
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
+    newDesign?: boolean;
 };
 
 enum Status {
@@ -17,7 +19,7 @@ enum Status {
 
 const { name, Icon } = featuresConfig["home"];
 
-export function Home({ position, ...speedDialProps }: Props) {
+export function Home({ position, newDesign, ...speedDialProps }: Props) {
     const [status, setStatus] = useState(Status.Initial);
     const disabled = status === Status.Loading;
     const resetView = useResetView();
@@ -27,6 +29,14 @@ export function Home({ position, ...speedDialProps }: Props) {
         await resetView();
         setStatus(Status.Initial);
     };
+
+    if (newDesign) {
+        return (
+            <IconButtonExt onClick={handleClick} title={name} loading={status === Status.Loading} disabled={disabled}>
+                <Icon />
+            </IconButtonExt>
+        );
+    }
 
     return (
         <SpeedDialAction

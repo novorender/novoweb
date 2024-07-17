@@ -1,0 +1,181 @@
+import {
+    accordionClasses,
+    accordionSummaryClasses,
+    Box,
+    css,
+    Grid,
+    IconButton,
+    styled,
+    Typography,
+    useTheme,
+} from "@mui/material";
+import { useHistory, useLocation } from "react-router-dom";
+
+import { useAppSelector } from "app/redux-store-interactions";
+import { Accordion, AccordionDetails, AccordionSummary } from "components";
+import { FeatureGroupKey, featureGroups, featuresConfig, FeatureType, Widget, WidgetKey } from "config/features";
+import { ShareLink } from "features/shareLink";
+import { sorting } from "features/widgetList/sorting";
+import {
+    selectEnabledWidgets,
+    selectFavoriteWidgets,
+    selectIsOnline,
+    selectLockedWidgets,
+    selectWidgets,
+} from "slices/explorer";
+
+import { ScrollBox } from "../../../components/scrollBox";
+import { WidgetMenuButtonWrapper } from "../../../components/widgetMenuButtonWrapper";
+import { groupSorting } from "../sorting";
+
+const sortedFeatureGroups = Object.values(featureGroups).sort((a, b) => {
+    const idxA = groupSorting.indexOf(a.key);
+    const idxB = groupSorting.indexOf(b.key);
+
+    return (idxA === -1 ? groupSorting.length : idxA) - (idxB === -1 ? groupSorting.length : idxB);
+});
+
+export function Root({
+    handleClick,
+    currentWidget,
+}: {
+    currentWidget: WidgetKey | undefined;
+    handleClick: (key: WidgetKey) => () => void;
+}) {
+    const theme = useTheme();
+    const history = useHistory();
+
+    const expandedGroupKey = useLocation<{ group?: FeatureGroupKey }>().state?.group || null;
+
+    const setExpandedGroupKey = (group: FeatureGroupKey | null) => {
+        history.push("/", { group });
+    };
+
+    const enabledWidgets = useAppSelector(selectEnabledWidgets);
+    const lockedWidgets = useAppSelector(selectLockedWidgets);
+    const activeWidgets = useAppSelector(selectWidgets);
+    const favoriteWidgets = useAppSelector(selectFavoriteWidgets);
+    const isOnline = useAppSelector(selectIsOnline);
+
+    const sortAndFilterWidgets = (widgets: Widget[]) =>
+        widgets
+            .filter((widget) => !lockedWidgets.includes(widget.key))
+            .sort((a, b) => {
+                const idxA = sorting.indexOf(a.key);
+                const idxB = sorting.indexOf(b.key);
+
+                return (idxA === -1 ? sorting.length : idxA) - (idxB === -1 ? sorting.length : idxB);
+            });
+
+    const sortedEnabledWidgets = sortAndFilterWidgets(enabledWidgets);
+
+    const widgetGroups = sortedFeatureGroups.map((group) => {
+        return {
+            groupKey: group.key,
+            groupName: group.name,
+            GroupIcon: group.Icon,
+            widgets:
+                group.key === featureGroups.favorites.key
+                    ? sortedEnabledWidgets.filter((w) => favoriteWidgets.includes(w.key))
+                    : sortedEnabledWidgets.filter(
+                          (widget) =>
+                              widget.type === FeatureType.Widget &&
+                              "groups" in widget &&
+                              widget.groups.includes(group.key as never)
+                      ),
+        };
+    });
+
+    return (
+        <>
+            <Box position="relative">
+                <Box
+                    boxShadow={theme.customShadows.widgetHeader}
+                    sx={{ height: 5, width: 1, mt: "-5px" }}
+                    position="absolute"
+                />
+            </Box>
+            <ScrollBox flexGrow={1} py={2}>
+                {widgetGroups.map(({ groupKey, groupName, GroupIcon, widgets }) => {
+                    return (
+                        <GroupAccordion
+                            key={groupKey}
+                            expanded={groupKey === expandedGroupKey}
+                            onChange={(_, newExpanded) => {
+                                setExpandedGroupKey(newExpanded ? (groupKey as FeatureGroupKey) : null);
+                            }}
+                        >
+                            <GroupAccordionSummary>
+                                <GroupIcon />
+                                <Typography sx={{ ml: 1 }}> {groupName}</Typography>
+                            </GroupAccordionSummary>
+                            <AccordionDetails>
+                                {widgets.length === 0 ? (
+                                    <Box textAlign="center" color="grey" m={2}>
+                                        No widgets
+                                    </Box>
+                                ) : (
+                                    <Grid container wrap="wrap" spacing={1} data-test="widget-list">
+                                        {widgets.map(({ Icon, name, key, type, ...widget }) => {
+                                            const activeCurrent = key === currentWidget;
+                                            const activeElsewhere = !activeCurrent && activeWidgets.includes(key);
+                                            const unavailable = !isOnline && "offline" in widget && !widget.offline;
+
+                                            return (
+                                                <Grid sx={{ mb: 1 }} xs={4} item key={type + key}>
+                                                    {key === featuresConfig.shareLink.key ? (
+                                                        <ShareLink />
+                                                    ) : (
+                                                        <WidgetMenuButtonWrapper
+                                                            activeCurrent={activeCurrent}
+                                                            activeElsewhere={activeElsewhere || unavailable}
+                                                            onClick={unavailable ? undefined : handleClick(key)}
+                                                        >
+                                                            <IconButton
+                                                                disabled={activeElsewhere || unavailable}
+                                                                size="large"
+                                                            >
+                                                                <Icon />
+                                                            </IconButton>
+                                                            <Typography textAlign={"center"}>{name}</Typography>
+                                                        </WidgetMenuButtonWrapper>
+                                                    )}
+                                                </Grid>
+                                            );
+                                        })}
+                                    </Grid>
+                                )}
+                            </AccordionDetails>
+                        </GroupAccordion>
+                    );
+                })}
+            </ScrollBox>
+        </>
+    );
+}
+
+const GroupAccordion = styled(Accordion)(
+    () => css`
+        &.${accordionClasses.root} {
+            &.${accordionClasses.expanded} {
+                margin: 0;
+            }
+        }
+    `
+);
+
+const GroupAccordionSummary = styled(AccordionSummary)(
+    () => css`
+        &::after {
+            left: 0;
+            right: 0;
+        }
+
+        &.${accordionSummaryClasses.expanded}, &.${accordionSummaryClasses.disabled} {
+            &::after {
+                border-bottom: none;
+                opacity: 0.2;
+            }
+        }
+    `
+);

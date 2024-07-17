@@ -126,7 +126,12 @@ export default function ClippingOutline() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.outlineLaser} disableShadow={menuOpen}>
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.outlineLaser}
+                    disableShadow={menuOpen}
+                >
                     {!menuOpen && !minimized ? (
                         <>
                             <Box display="flex" justifyContent="space-between" alignItems="center">

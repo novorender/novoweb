@@ -40,7 +40,12 @@ export default function Offline() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.offline} disableShadow={menuOpen} />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.offline}
+                    disableShadow={menuOpen}
+                />
                 {action && (
                     <Box position="relative">
                         <LinearProgress />

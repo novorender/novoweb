@@ -34,7 +34,12 @@ export default function Omega365() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.omega365} disableShadow />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.omega365}
+                    disableShadow
+                />
                 {minimized || menuOpen ? null : isFetching ? (
                     <Box>
                         <LinearProgress />

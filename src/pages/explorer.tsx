@@ -2,6 +2,7 @@ import { SearchPattern } from "@novorender/webgl-api";
 import { ReactNode, useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { CameraStateProvider } from "contexts/cameraState";
 import { ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
 import { HiddenProvider } from "contexts/hidden";
 import { HighlightCollectionsProvider } from "contexts/highlightCollections";
@@ -86,7 +87,9 @@ function ContextProviders({ children }: { children: ReactNode }) {
                     <HiddenProvider>
                         <SelectionBasketProvider>
                             <FormsGlobalsProvider>
-                                <ObjectGroupsProvider>{children}</ObjectGroupsProvider>
+                                <CameraStateProvider>
+                                    <ObjectGroupsProvider>{children}</ObjectGroupsProvider>
+                                </CameraStateProvider>
                             </FormsGlobalsProvider>
                         </SelectionBasketProvider>
                     </HiddenProvider>

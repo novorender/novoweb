@@ -1,4 +1,4 @@
-import type { SpeedDialActionProps } from "@mui/material";
+import { IconButton, type SpeedDialActionProps } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
@@ -8,9 +8,10 @@ import { ViewMode } from "types/misc";
 
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
+    newDesign?: boolean;
 };
 
-export function StepForwards({ position, ...speedDialProps }: Props) {
+export function StepForwards({ position, newDesign, ...speedDialProps }: Props) {
     const { name, Icon } = featuresConfig["stepForwards"];
     const savedCameraPositions = useAppSelector(selectSavedCameraPositions);
     const viewMode = useAppSelector(selectViewMode);
@@ -29,6 +30,15 @@ export function StepForwards({ position, ...speedDialProps }: Props) {
     };
 
     const disabled = !canStepForwards;
+
+    if (newDesign) {
+        return (
+            <IconButton onClick={handleClick} title={name} disabled={disabled}>
+                <Icon />
+            </IconButton>
+        );
+    }
+
     return (
         <SpeedDialAction
             {...speedDialProps}

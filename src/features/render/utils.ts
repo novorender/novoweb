@@ -101,6 +101,10 @@ export function latLon2Tm({ coords, tmZone }: { coords: GeoLocation; tmZone: str
     return flip(dataApi.latLon2tm(coords, tmZone));
 }
 
+export function tmToLatLon({ coords, tmZone }: { coords: ReadonlyVec3; tmZone: string }) {
+    return dataApi.tm2LatLon(coords, tmZone);
+}
+
 export async function loadScene(id: string): Promise<[SceneConfig, CadCamera | undefined]> {
     const res: (SceneData & { version?: string }) | SceneLoadFail = await dataApi.loadScene(id);
     let camera: CadCamera | undefined = undefined;

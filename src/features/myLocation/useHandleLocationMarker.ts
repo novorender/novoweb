@@ -12,7 +12,7 @@ import {
     selectMyLocationAutocenter,
     selectShowLocationMarker,
 } from "./myLocationSlice";
-import { useGoToMyLocation } from "./useGoToMyLocation";
+import { useGoToLocation } from "./useGoToLocation";
 
 export function useHandleLocationMarker() {
     const {
@@ -28,14 +28,14 @@ export function useHandleLocationMarker() {
     const watchId = useRef<number>();
     const lastUpdate = useRef(0);
     const lastAltitude = useRef<number>();
-    const goToMyLocation = useGoToMyLocation();
-    const goToMyLocationRef = useRef(goToMyLocation);
-    goToMyLocationRef.current = goToMyLocation;
+    const goToLocation = useGoToLocation();
+    const goToLocationRef = useRef(goToLocation);
+    goToLocationRef.current = goToLocation;
     const lastScenePos = useRef<ReadonlyVec3>();
 
     useEffect(() => {
-        if (autocenter && lastScenePos.current && goToMyLocationRef.current) {
-            goToMyLocationRef.current(lastScenePos.current);
+        if (autocenter && lastScenePos.current && goToLocationRef.current) {
+            goToLocationRef.current(lastScenePos.current);
         }
     }, [autocenter]);
 
@@ -87,7 +87,7 @@ export function useHandleLocationMarker() {
                     dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
 
                     if (autocenterRef.current) {
-                        goToMyLocation(scenePos);
+                        goToLocation(scenePos);
                     }
                 }
 
@@ -118,7 +118,7 @@ export function useHandleLocationMarker() {
             dispatch(myLocationActions.setGeolocationPositionCoords(undefined));
             dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
         }
-    }, [showMarker, view, scene, dispatch, tmZone, goToMyLocation]);
+    }, [showMarker, view, scene, dispatch, tmZone, goToLocation]);
 
     useEffect(() => {
         return () => {

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
+import IconButtonExt from "components/iconButtonExt";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHighlighted } from "contexts/highlighted";
@@ -32,7 +33,7 @@ type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
 };
 
-export function FlyToSelected({ position, ...speedDialProps }: Props) {
+export function FlyToSelected({ position, newDesign, ...speedDialProps }: Props & { newDesign?: boolean }) {
     const { name, Icon } = featuresConfig.flyToSelected;
     const highlighted = useHighlighted().idArr;
     const {
@@ -217,6 +218,24 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
     };
 
     const disabled = !highlighted.length;
+
+    if (newDesign) {
+        return (
+            <Tooltip open={Boolean(tooltipMessage)} title={tooltipMessage} placement="top">
+                <Box>
+                    <IconButtonExt
+                        onClick={handleClick}
+                        title={disabled ? undefined : name}
+                        disabled={disabled}
+                        loading={status === Status.Loading}
+                    >
+                        <Icon />
+                    </IconButtonExt>
+                </Box>
+            </Tooltip>
+        );
+    }
+
     return (
         <SpeedDialAction
             {...speedDialProps}

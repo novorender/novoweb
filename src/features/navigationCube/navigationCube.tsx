@@ -8,6 +8,7 @@ import { useHighlighted } from "contexts/highlighted";
 import { renderActions, selectCameraType } from "features/render";
 import { isGlSpace } from "features/render/utils";
 import { useAbortController } from "hooks/useAbortController";
+import { selectNewDesign } from "slices/explorer";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
 
 // prettier-ignore
@@ -186,10 +187,13 @@ class Cube {
     }
 }
 
-const CubeContainer = styled("svg", { shouldForwardProp: (prop) => prop !== "loading" })<{ loading?: boolean }>(
-    ({ loading }) => css`
+const CubeContainer = styled("svg", { shouldForwardProp: (prop) => prop !== "loading" && prop !== "newDesign" })<{
+    loading?: boolean;
+    newDesign?: boolean;
+}>(
+    ({ loading, newDesign }) => css`
         position: absolute;
-        top: 30px;
+        top: ${newDesign ? "80px" : "30px"};
         left: 30px;
         overflow: visible;
         pointer-events: none;
@@ -370,6 +374,7 @@ export function NavigationCube() {
     const [loading, setLoading] = useState(false);
     const [abortController, abort] = useAbortController();
     const cameraType = useAppSelector(selectCameraType);
+    const newDesign = useAppSelector(selectNewDesign);
     const dispatch = useAppDispatch();
 
     const highlightedBoundingSphereCenter = useRef<ReadonlyVec3>();
@@ -473,7 +478,7 @@ export function NavigationCube() {
     }, [view]);
 
     return (
-        <CubeContainer loading={loading} height={cubeSize * 2} width={cubeSize * 2}>
+        <CubeContainer loading={loading} newDesign={newDesign} height={cubeSize * 2} width={cubeSize * 2}>
             <defs>
                 <linearGradient id="navigation-cube-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" style={{ stopColor: theme.palette.secondary.dark, stopOpacity: 1 }} />

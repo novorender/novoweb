@@ -98,7 +98,12 @@ export default function PropertyTree() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.propertyTree} disableShadow={menuOpen}>
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.propertyTree}
+                    disableShadow={menuOpen}
+                >
                     {!menuOpen && !minimized && (
                         <Box display={"flex"} justifyContent={"flex-end"}>
                             <Button disabled={!canClear} onClick={clear} color="grey">

@@ -3,6 +3,7 @@ import { mat3, quat, vec3 } from "gl-matrix";
 import { MutableRefObject, useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { cameraStateActions, useDispatchCameraState } from "contexts/cameraState";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { measureActions } from "features/measure";
 import { orthoCamActions, selectCurrentTopDownElevation } from "features/orthoCam";
@@ -28,6 +29,7 @@ export function useHandleCameraMoved({
         state: { view },
     } = useExplorerGlobals();
     const dispatch = useAppDispatch();
+    const dispatchCameraState = useDispatchCameraState();
     const cameraType = useAppSelector(selectCameraType);
     const viewMode = useAppSelector(selectViewMode);
     const editClipping = useAppSelector(selectClippingInEdit);
@@ -62,6 +64,7 @@ export function useHandleCameraMoved({
                 containers.forEach((container) => container && container.update());
                 dispatch(renderActions.setStamp(null));
                 dispatch(measureActions.selectHoverObj(undefined));
+                dispatchCameraState(cameraStateActions.set(view.renderState.camera));
 
                 if (movementTimer.current) {
                     clearTimeout(movementTimer.current);
@@ -150,6 +153,16 @@ export function useHandleCameraMoved({
                 }, 500);
             }
         },
-        [view, dispatch, currentTopDownElevation, cameraType, viewMode, engine2dRenderFnRef, editClipping, containers]
+        [
+            view,
+            dispatch,
+            dispatchCameraState,
+            currentTopDownElevation,
+            cameraType,
+            viewMode,
+            engine2dRenderFnRef,
+            editClipping,
+            containers,
+        ]
     );
 }

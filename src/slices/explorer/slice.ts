@@ -10,6 +10,7 @@ import {
     FeatureType,
     WidgetKey,
 } from "config/features";
+import { newDesignLocalStorageKey } from "features/newDesign/utils";
 import { initScene } from "features/render";
 import { uniqueArray } from "utils/misc";
 
@@ -20,6 +21,7 @@ import {
     getPrimaryMenu,
     getRequireConsent,
     getSceneType,
+    getTakenWidgetSlotCount,
     getUserRole,
 } from "./utils";
 
@@ -34,11 +36,22 @@ const initialState: State = {
     requireConsent: false,
     organization: "",
     widgets: [],
+    favoriteWidgets: [],
+    widgetSlot: {
+        open: false,
+        group: undefined,
+    },
     widgetLayout: {
         widgets: 4,
         sideBySide: true,
+        padWidgetsTop: false,
+    },
+    widgetGroupPanelState: {
+        open: true,
+        expanded: false,
     },
     maximized: [],
+    maximizedHorizontal: [],
     minimized: undefined,
     primaryMenu: {
         button1: featuresConfig.home.key,
@@ -71,6 +84,8 @@ const initialState: State = {
         novorenderClientSecret: import.meta.env.REACT_APP_NOVORENDER_CLIENT_SECRET ?? "",
         assetsUrl: import.meta.env.ASSETS_URL ?? "https://novorenderblobs.blob.core.windows.net/assets",
     },
+    newDesign: localStorage.getItem(newDesignLocalStorageKey) === "false" ? false : true,
+    snackbarMessage: null,
 };
 
 export const explorerSlice = createSlice({
@@ -95,15 +110,23 @@ export const explorerSlice = createSlice({
         setWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
             state.widgets = action.payload;
             state.maximized = state.maximized.filter((widget) => action.payload.includes(widget));
+            state.maximizedHorizontal = state.maximizedHorizontal.filter((widget) => action.payload.includes(widget));
         },
         addWidgetSlot: (state, action: PayloadAction<WidgetKey>) => {
             state.widgets = state.widgets.concat(action.payload);
+            maybeHideWidgetSlot(state);
         },
         replaceWidgetSlot: (state, action: PayloadAction<{ replace: WidgetKey; key: WidgetKey }>) => {
             state.minimized = undefined;
 
             if (state.maximized.includes(action.payload.replace)) {
                 state.maximized = state.maximized.map((key) =>
+                    key === action.payload.replace ? action.payload.key : key
+                );
+            }
+
+            if (state.maximizedHorizontal.includes(action.payload.replace)) {
+                state.maximizedHorizontal = state.maximizedHorizontal.map((key) =>
                     key === action.payload.replace ? action.payload.key : key
                 );
             }
@@ -119,28 +142,61 @@ export const explorerSlice = createSlice({
         },
         removeWidgetSlot: (state, action: PayloadAction<WidgetKey>) => {
             state.minimized = undefined;
-            state.maximized = state.maximized.filter((widget) => widget !== action.payload);
+
+            // better layout change for particular case
+            const widgetIndex = state.widgets.indexOf(action.payload);
+            if (
+                widgetIndex === 0 &&
+                state.widgets.length === 3 &&
+                state.maximizedHorizontal.includes(state.widgets[1])
+            ) {
+                state.widgets[0] = state.widgets[2];
+                state.widgets.splice(2, 1);
+            }
+
             state.widgets = state.widgets.filter((slot) => slot !== action.payload);
+            removeIrrelevantMaximized(state);
 
             if (state.maximized.length !== state.widgets.length) {
                 state.maximized = [];
             }
+            if (state.maximizedHorizontal.length !== state.widgets.length) {
+                state.maximizedHorizontal = [];
+            }
+        },
+        addFavoriteWidget: (state, action: PayloadAction<WidgetKey>) => {
+            const key = action.payload;
+            if (!state.favoriteWidgets.includes(key)) {
+                state.favoriteWidgets.push(key);
+            }
+        },
+        removeFavoriteWidget: (state, action: PayloadAction<WidgetKey>) => {
+            const key = action.payload;
+            state.favoriteWidgets = state.favoriteWidgets.filter((w) => w !== key);
+        },
+        setWidgetSlot: (state, action: PayloadAction<State["widgetSlot"]>) => {
+            state.widgetSlot = action.payload;
+        },
+        setWidgetGroupPanelState: (state, action: PayloadAction<State["widgetGroupPanelState"]>) => {
+            state.widgetGroupPanelState = action.payload;
         },
         forceOpenWidget: (state, action: PayloadAction<WidgetKey>) => {
             const open = state.widgets;
             const maximized = state.maximized;
+            const maximizedHorizontal = state.maximizedHorizontal;
             const layout = state.widgetLayout;
 
             if (open.includes(action.payload)) {
                 return;
             }
 
-            if (open.length + maximized.length < layout.widgets) {
+            if (getTakenWidgetSlotCount(open, maximized, maximizedHorizontal) < layout.widgets) {
                 open.push(action.payload);
                 return;
             }
 
             state.maximized = [];
+            state.maximizedHorizontal = [];
             if (open.length >= layout.widgets) {
                 open.pop();
             }
@@ -181,14 +237,22 @@ export const explorerSlice = createSlice({
             if (state.maximized.includes(action.payload)) {
                 state.maximized = state.maximized.filter((widget) => widget !== action.payload);
 
-                if (state.maximized.length !== state.widgets.length) {
-                    state.maximized = [];
-                }
-
                 return;
             }
 
             state.minimized = undefined;
+            if (state.maximizedHorizontal.includes(action.payload)) {
+                state.widgets = [action.payload];
+                state.maximizedHorizontal = [action.payload];
+                state.maximized = [action.payload];
+
+                return;
+            }
+
+            if (state.maximizedHorizontal.length) {
+                state.widgets = state.widgets.filter((w) => !state.maximizedHorizontal.includes(w));
+                state.maximizedHorizontal = state.maximizedHorizontal.filter((w) => state.widgets.includes(w));
+            }
 
             if (state.maximized.length) {
                 state.widgets = state.widgets.filter(
@@ -196,32 +260,130 @@ export const explorerSlice = createSlice({
                 );
             } else {
                 const idx = state.widgets.indexOf(action.payload);
-                switch (idx) {
-                    case 0:
-                        state.widgets.splice(1, 1);
-                        break;
-                    case 1:
-                        state.widgets.splice(0, 1);
-                        break;
-                    case 2:
-                        state.widgets.splice(3, 1);
-                        break;
-                    case 3:
-                        state.widgets.splice(2, 1);
-                        break;
+                if (state.newDesign) {
+                    // only non maximized widgets at this point
+                    const canShift =
+                        getTakenWidgetSlotCount(state.widgets, state.maximized, state.maximizedHorizontal) <
+                        state.widgetLayout.widgets;
+
+                    switch (idx) {
+                        case 0:
+                            if (!canShift) {
+                                state.widgets.splice(1, 1);
+                            }
+                            break;
+                        case 1:
+                            if (canShift) {
+                                [state.widgets[0], state.widgets[1]] = [state.widgets[1], state.widgets[0]];
+                            } else {
+                                state.widgets.splice(0, 1);
+                            }
+                            break;
+                        case 2:
+                            state.widgets.splice(3, 1);
+                            break;
+                        case 3:
+                            state.widgets.splice(2, 1);
+                            break;
+                    }
+                } else {
+                    switch (idx) {
+                        case 0:
+                            state.widgets.splice(1, 1);
+                            break;
+                        case 1:
+                            state.widgets.splice(0, 1);
+                            break;
+                        case 2:
+                            state.widgets.splice(3, 1);
+                            break;
+                        case 3:
+                            state.widgets.splice(2, 1);
+                            break;
+                    }
                 }
             }
 
             state.maximized.push(action.payload);
+            removeIrrelevantMaximized(state);
+            maybeHideWidgetSlot(state);
+        },
+        toggleMaximizedHorizontal: (state, action: PayloadAction<WidgetKey>) => {
+            if (state.maximizedHorizontal.includes(action.payload)) {
+                state.maximizedHorizontal = state.maximizedHorizontal.filter((widget) => widget !== action.payload);
+
+                return;
+            }
+
+            state.minimized = undefined;
+            if (state.maximized.includes(action.payload)) {
+                state.widgets = [action.payload];
+                state.maximized = [action.payload];
+                state.maximizedHorizontal = [action.payload];
+
+                return;
+            }
+
+            if (state.maximized.length) {
+                state.widgets = state.widgets.filter((w) => !state.maximized.includes(w));
+                state.maximized = state.maximized.filter((w) => state.widgets.includes(w));
+            }
+
+            if (state.maximizedHorizontal.length) {
+                const idx = state.widgets.indexOf(action.payload);
+                if (idx === 2) {
+                    state.widgets.splice(2, 1);
+                    state.widgets.unshift(action.payload);
+                }
+                state.widgets = state.widgets.filter(
+                    (widget) => state.maximizedHorizontal.includes(widget) || widget === action.payload
+                );
+            } else {
+                // only non maximized widgets at this point
+                const idx = state.widgets.indexOf(action.payload);
+                const canShift =
+                    getTakenWidgetSlotCount(state.widgets, state.maximized, state.maximizedHorizontal) <
+                    state.widgetLayout.widgets;
+
+                switch (idx) {
+                    case 0:
+                        if (!canShift) {
+                            state.widgets.splice(2, 1);
+                        }
+                        break;
+                    case 1:
+                        state.widgets.splice(3, 1);
+                        break;
+                    case 2:
+                        if (canShift) {
+                            state.widgets.splice(2, 1);
+                            state.widgets.unshift(action.payload);
+                        } else {
+                            state.widgets[0] = action.payload;
+                            state.widgets.splice(2, 1);
+                        }
+                        break;
+                    case 3:
+                        state.widgets.splice(3, 1);
+                        state.widgets.splice(1, 1, action.payload);
+                        break;
+                }
+            }
+
+            state.maximizedHorizontal.push(action.payload);
+            removeIrrelevantMaximized(state);
+            maybeHideWidgetSlot(state);
         },
         setMinimized: (state, action: PayloadAction<State["minimized"]>) => {
             if (action.payload) {
                 state.maximized = [];
+                state.maximizedHorizontal = [];
             }
             state.minimized = action.payload;
         },
         clearMaximized: (state) => {
             state.maximized = [];
+            state.maximizedHorizontal = [];
         },
         setRequireConsent: (state, action: PayloadAction<State["requireConsent"]>) => {
             state.requireConsent = action.payload;
@@ -240,6 +402,12 @@ export const explorerSlice = createSlice({
         },
         setConfig: (state, action: PayloadAction<State["config"]>) => {
             state.config = { ...state.config, ...action.payload };
+        },
+        setSnackbarMessage: (state, action: PayloadAction<State["snackbarMessage"]>) => {
+            state.snackbarMessage = action.payload;
+        },
+        setNewDesign: (state, action: PayloadAction<State["newDesign"]>) => {
+            state.newDesign = action.payload;
         },
     },
     extraReducers(builder) {
@@ -304,6 +472,21 @@ export const explorerSlice = createSlice({
         });
     },
 });
+
+function removeIrrelevantMaximized(state: State) {
+    state.maximized = state.maximized.filter((w) => state.widgets.includes(w));
+    state.maximizedHorizontal = state.maximizedHorizontal.filter((w) => state.widgets.includes(w));
+}
+
+function maybeHideWidgetSlot(state: State) {
+    if (
+        getTakenWidgetSlotCount(state.widgets, state.maximized, state.maximizedHorizontal) >=
+            state.widgetLayout.widgets &&
+        state.widgetSlot.open
+    ) {
+        state.widgetSlot.open = false;
+    }
+}
 
 const { actions, reducer } = explorerSlice;
 export { actions as explorerActions, reducer as explorerReducer };
