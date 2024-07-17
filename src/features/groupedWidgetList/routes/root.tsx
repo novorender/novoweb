@@ -12,7 +12,9 @@ import {
 import { useHistory, useLocation } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
-import { Accordion, AccordionDetails, AccordionSummary } from "components";
+import { Accordion } from "components/accordion";
+import { AccordionDetails } from "components/accordionDetails";
+import { AccordionSummary } from "components/accordionSummary";
 import { FeatureGroupKey, featureGroups, featuresConfig, FeatureType, Widget, WidgetKey } from "config/features";
 import { ShareLink } from "features/shareLink";
 import { sorting } from "features/widgetList/sorting";
