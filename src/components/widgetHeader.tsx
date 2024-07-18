@@ -179,12 +179,13 @@ function ExpansionButtons({ widgetKey }: { widgetKey: WidgetKey }) {
                     onClick={toggleWidthExpanded}
                     color={widthExpanded ? "primary" : "default"}
                     sx={{ rotate: "90deg" }}
+                    size="small"
                 >
                     <Height />
                 </IconButton>
             )}
             {verticalEnabled && (
-                <IconButton onClick={toggleHeightExpanded} color={heightExpanded ? "primary" : "default"}>
+                <IconButton onClick={toggleHeightExpanded} color={heightExpanded ? "primary" : "default"} size="small">
                     <Height />
                 </IconButton>
             )}
