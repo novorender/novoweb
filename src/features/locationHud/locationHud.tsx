@@ -11,7 +11,7 @@ import { LocationStatus, selectLocationStatus } from "features/myLocation/myLoca
 import { useGoToMyLocation } from "features/myLocation/useGoToMyLocation";
 import { selectIsTopDown } from "features/orthoCam";
 import { CameraType, renderActions, selectCamera, selectNavigationCube } from "features/render";
-import { tmToLatLon } from "features/render/utils";
+import { tm2LatLon } from "features/render/utils";
 import { explorerActions, selectTmZoneForCalc } from "slices/explorer";
 import { formatLength } from "utils/misc";
 
@@ -110,7 +110,7 @@ function CameraCoordinates() {
 
     let content: ReactNode;
     if (tmZone && !showXyz) {
-        const coords = tmToLatLon({ coords: cameraPos, tmZone });
+        const coords = tm2LatLon({ coords: cameraPos, tmZone });
 
         content = (
             <>

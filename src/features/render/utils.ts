@@ -77,6 +77,13 @@ export function flip<T extends number[]>(v: T): T {
     return flipped as T;
 }
 
+export function flipBack<T extends number[]>(v: T): T {
+    const flipped = [...v];
+    flipped[1] = v[2];
+    flipped[2] = -v[1];
+    return flipped as T;
+}
+
 export function flipGLtoCadQuat(b: quat) {
     const ax = 0.7071067811865475;
     const aw = 0.7071067811865475;
@@ -101,8 +108,8 @@ export function latLon2Tm({ coords, tmZone }: { coords: GeoLocation; tmZone: str
     return flip(dataApi.latLon2tm(coords, tmZone));
 }
 
-export function tmToLatLon({ coords, tmZone }: { coords: ReadonlyVec3; tmZone: string }) {
-    return dataApi.tm2LatLon(coords, tmZone);
+export function tm2LatLon({ coords, tmZone }: { coords: ReadonlyVec3; tmZone: string }) {
+    return dataApi.tm2LatLon(flipBack(coords), tmZone);
 }
 
 export async function loadScene(id: string): Promise<[SceneConfig, CadCamera | undefined]> {
