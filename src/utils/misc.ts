@@ -252,7 +252,9 @@ export function formatLength(l: number) {
         return `${l.toFixed(0)} m`;
     } else if (l >= 0.01) {
         return `${(l * 100).toFixed(0)} cm`;
-    } else {
+    } else if (l >= 0.001) {
         return `${(l * 1000).toFixed(0)} mm`;
+    } else {
+        return `${(l * 1000).toFixed(3)} mm`;
     }
 }

@@ -197,8 +197,12 @@ function getNiceScaleMeters(pxPerM: number) {
         roundTo = 1;
     } else if (m >= 0.1) {
         roundTo = 0.1;
-    } else {
+    } else if (m >= 0.01) {
         roundTo = 0.01;
+    } else if (m >= 0.001) {
+        roundTo = 0.001;
+    } else {
+        return m;
     }
     return Math.round(m / roundTo) * roundTo;
 }
