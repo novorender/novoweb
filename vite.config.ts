@@ -317,10 +317,6 @@ export default defineConfig(({ mode }) => {
                     find: "apis",
                     replacement: resolve(__dirname, "src/apis"),
                 },
-                {
-                    find: "icons",
-                    replacement: resolve(__dirname, "src/icons"),
-                },
             ],
         },
     };

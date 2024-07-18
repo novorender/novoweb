@@ -38,8 +38,8 @@ import {
     Visibility,
     VisibilityOff,
 } from "@mui/icons-material";
-import ClashIcon from "icons/ClashIcon";
 
+import ClashIcon from "media/icons/clash.svg?react";
 import Ditio from "media/icons/ditio.svg?react";
 import Jira from "media/icons/jira-software.svg?react";
 import NewformaKonekt from "media/icons/newforma-konekt.svg?react";

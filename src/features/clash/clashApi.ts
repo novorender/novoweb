@@ -1,5 +1,4 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { vec3 } from "gl-matrix";
 
 import { ClashListFile, ClashResultFile } from "./types";
 
@@ -12,15 +11,6 @@ export const clashApi = createApi({
         }),
         getClashList: builder.query<ClashListFile, { assetUrl: string }>({
             query: ({ assetUrl }) => assetUrl,
-            transformResponse: (data: ClashListFile) => {
-                return {
-                    ...data,
-                    clashes: data.clashes.map((clash) => ({
-                        ...clash,
-                        clashPoint: vec3.fromValues(clash.clashPoint[0], clash.clashPoint[1], -clash.clashPoint[2]),
-                    })),
-                };
-            },
         }),
     }),
 });
