@@ -157,12 +157,12 @@ export const explorerSlice = createSlice({
             state.widgets = state.widgets.filter((slot) => slot !== action.payload);
             removeIrrelevantMaximized(state);
 
-            if (state.maximized.length !== state.widgets.length) {
-                state.maximized = [];
-            }
-            if (state.maximizedHorizontal.length !== state.widgets.length) {
-                state.maximizedHorizontal = [];
-            }
+            // if (state.maximized.length !== state.widgets.length) {
+            //     state.maximized = [];
+            // }
+            // if (state.maximizedHorizontal.length !== state.widgets.length) {
+            //     state.maximizedHorizontal = [];
+            // }
         },
         addFavoriteWidget: (state, action: PayloadAction<WidgetKey>) => {
             const key = action.payload;
