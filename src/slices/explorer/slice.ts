@@ -25,6 +25,8 @@ import {
     getUserRole,
 } from "./utils";
 
+const favoriteWidgetsStorageKey = "favoriteWidgets";
+
 const initialState: State = {
     isOnline: navigator.onLine,
     enabledWidgets: defaultEnabledWidgets,
@@ -36,7 +38,8 @@ const initialState: State = {
     requireConsent: false,
     organization: "",
     widgets: [],
-    favoriteWidgets: [],
+    // TODO remove
+    favoriteWidgets: JSON.parse(localStorage.getItem(favoriteWidgetsStorageKey) || "[]"),
     widgetSlot: {
         open: false,
         group: undefined,
@@ -169,10 +172,14 @@ export const explorerSlice = createSlice({
             if (!state.favoriteWidgets.includes(key)) {
                 state.favoriteWidgets.push(key);
             }
+            // TODO remove
+            localStorage.setItem(favoriteWidgetsStorageKey, JSON.stringify(state.favoriteWidgets));
         },
         removeFavoriteWidget: (state, action: PayloadAction<WidgetKey>) => {
             const key = action.payload;
             state.favoriteWidgets = state.favoriteWidgets.filter((w) => w !== key);
+            // TODO remove
+            localStorage.setItem(favoriteWidgetsStorageKey, JSON.stringify(state.favoriteWidgets));
         },
         setWidgetSlot: (state, action: PayloadAction<State["widgetSlot"]>) => {
             state.widgetSlot = action.payload;
