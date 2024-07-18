@@ -14,7 +14,6 @@ import {
     DownloadForOffline,
     FiberSmartRecord,
     FilterAlt,
-    Flag,
     FlightTakeoff,
     Folder,
     GpsFixed,
@@ -42,6 +41,7 @@ import {
     Undo,
     Visibility,
     VisibilityOff,
+    Window,
 } from "@mui/icons-material";
 
 import Ditio from "media/icons/ditio.svg?react";
@@ -112,7 +112,7 @@ export const featureGroups = {
     other: {
         key: "other",
         name: "Other",
-        Icon: Flag,
+        Icon: Window,
         type: FeatureType.Group,
     },
     favorites: {
