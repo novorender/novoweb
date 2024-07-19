@@ -3,11 +3,13 @@ import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui
 import { PropsWithChildren, useEffect, useRef } from "react";
 import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
 import WidgetList from "features/widgetList/widgetList";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
@@ -78,6 +80,8 @@ function WidgetMenu(props: MenuProps) {
     const settingsPaths = ["/*"];
     const accessToken = useAppSelector(selectJiraAccessTokenData);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = (checkPermission(Permission.IntJiraManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
 
     if (!accessToken) {
         return null;
@@ -87,7 +91,7 @@ function WidgetMenu(props: MenuProps) {
         <>
             <Menu {...props}>
                 <LogoutMenuItem onClose={props.onClose} />
-                {isAdmin && (
+                {canManage && (
                     <Route path={settingsPaths} exact>
                         <SettingsMenuItem onClose={props.onClose} />
                     </Route>

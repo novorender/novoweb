@@ -248,6 +248,7 @@ export const explorerSlice = createSlice({
             const { customProperties } = action.payload.sceneData;
 
             state.projectType = action.payload.projectType;
+            state.projectV2Info = action.payload.projectV2Info;
             state.tmZoneForCalc = action.payload.tmZoneForCalc;
             state.sceneType = getSceneType(customProperties);
             state.userRole = getUserRole(customProperties, action.payload.projectV2Info);

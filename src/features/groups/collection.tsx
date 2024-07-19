@@ -3,9 +3,11 @@ import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } fro
 import { MouseEvent, useCallback, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { Group, StyledCheckbox } from "./group";
@@ -17,6 +19,9 @@ export function Collection({ collection, disabled }: { collection: string; disab
     const dispatchObjectGroups = useDispatchObjectGroups();
 
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    // TODO per group permissions?
+    const checkPermission = useCheckProjectPermission();
+    const canManage = (checkPermission(Permission.GroupManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
     const expanded = useAppSelector((state) => selectIsCollectionExpanded(state, collection));
     const dispatch = useAppDispatch();
 
@@ -141,7 +146,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
                         onFocus={(event) => event.stopPropagation()}
                     />
                 </Box>
-                <Box flex="0 0 auto" sx={{ visibility: isAdmin ? "visible" : "hidden" }}>
+                <Box flex="0 0 auto" sx={{ visibility: canManage ? "visible" : "hidden" }}>
                     <IconButton
                         size="small"
                         sx={{ py: 0 }}

@@ -2,9 +2,11 @@ import { Box, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Redirect, useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, ScrollBox } from "components";
 import { StorageKey } from "config/storage";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { selectConfig, selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
@@ -35,6 +37,8 @@ export function Auth() {
     const dispatch = useAppDispatch();
 
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = (checkPermission(Permission.IntJiraManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
     const accessToken = useAppSelector(selectJiraAccessToken);
     const accessTokenStr = useAppSelector(selectJiraAccessTokenData);
     const currentUser = useAppSelector(selectJiraUser);
@@ -137,14 +141,14 @@ export function Auth() {
 
         if (_space) {
             dispatch(jiraActions.setSpace(_space));
-        } else if (isAdmin) {
+        } else if (canManage) {
             history.push("/settings");
         } else if (!config.space) {
             setError(`Jira has not yet been set up for this project.`);
         } else {
             setError(`You do not have access to the ${config?.space} Jira space.`);
         }
-    }, [accessibleResources, history, isAdmin, dispatch, config, space]);
+    }, [accessibleResources, history, canManage, dispatch, config, space]);
 
     useEffect(() => {
         if (!projects || project) {
@@ -155,14 +159,14 @@ export function Auth() {
 
         if (_project) {
             dispatch(jiraActions.setProject(_project));
-        } else if (isAdmin) {
+        } else if (canManage) {
             history.push("/settings");
         } else if (!config.project) {
             setError(`Jira has not yet been set up for this project.`);
         } else {
             setError(`You do not have access to the ${config?.project} Jira project.`);
         }
-    }, [projects, history, isAdmin, dispatch, config, project]);
+    }, [projects, history, canManage, dispatch, config, project]);
 
     useEffect(() => {
         if (!components || component) {
@@ -174,14 +178,14 @@ export function Auth() {
         if (_component) {
             dispatch(jiraActions.setComponent(_component));
             history.push("/issues");
-        } else if (isAdmin) {
+        } else if (canManage) {
             history.push("/settings");
         } else if (!config.component) {
             setError(`Jira has not yet been set up for this project.`);
         } else {
             setError(`You do not have access to the ${config?.component} Jira component.`);
         }
-    }, [components, history, isAdmin, dispatch, config, component]);
+    }, [components, history, canManage, dispatch, config, component]);
 
     useEffect(() => {
         if (error || !(accessibleResourcesError || projectsError || componentsError || userError)) {

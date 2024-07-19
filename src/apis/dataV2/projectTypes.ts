@@ -1,4 +1,4 @@
-import { PermissionKey } from "./permissions";
+import { Permission } from "./permissions";
 
 export type ProjectInfo = {
     id: string;
@@ -7,7 +7,7 @@ export type ProjectInfo = {
     viewCount: number;
     epsg: string;
     bounds: [number, number, number, number];
-    permissions: Set<PermissionKey>;
+    permissions: Permission[];
     created: string;
     modified: string;
 };

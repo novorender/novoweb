@@ -2,10 +2,12 @@ import { Box, Typography } from "@mui/material";
 import { useEffect } from "react";
 import { Redirect, useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { selectConfig, selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus, hasFinished } from "types/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
@@ -21,6 +23,9 @@ export function Auth() {
     const explorerConfig = useAppSelector(selectConfig);
     const config = useAppSelector(selectBimTrackConfig);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage =
+        (checkPermission(Permission.IntBimTrackManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
 
     const [getToken] = useLazyGetTokenQuery();
     const [refreshToken] = useLazyRefreshTokenQuery();
@@ -113,7 +118,7 @@ export function Auth() {
     ) : accessToken.status === AsyncStatus.Error ? (
         <ErrorMsg>{accessToken.msg}</ErrorMsg>
     ) : !(config.project && config.server) ? (
-        isAdmin ? (
+        canManage ? (
             <Redirect to="/settings" />
         ) : (
             <ErrorMsg>{`${featuresConfig.bimTrack.name} has not yet been set up for this project.`}</ErrorMsg>

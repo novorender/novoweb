@@ -4,10 +4,12 @@ import { MouseEvent, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { GroupStatus } from "contexts/objectGroups";
 import { selectViewMode } from "features/render";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
 import { selectHasAdminCapabilities } from "slices/explorer";
@@ -37,11 +39,15 @@ export function BookmarkList() {
     const viewMode = useAppSelector(selectViewMode);
     const saveStatus = useAppSelector(selectSaveStatus);
     const user = useAppSelector(selectUser);
+    // TODO bookmark response should include :manage permission for each bookmark or request it separately?
     const bookmarks = useAppSelector(selectBookmarks);
     const bookmarksStatus = useAppSelector(selectBookmarksStatus);
     const filters = useAppSelector(selectBookmarkFilters);
     const dispatch = useAppDispatch();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage =
+        (checkPermission(Permission.BookmarkManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
 
     const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
     const [filteredBookmarks, setFilteredBookmarks] = useState(bookmarks);
@@ -66,7 +72,7 @@ export function BookmarkList() {
         dispatch(bookmarksActions.setSaveStatus({ status: AsyncStatus.Loading }));
 
         try {
-            const publicBmks = isAdmin
+            const publicBmks = canManage
                 ? dataApi.saveBookmarks(
                       sceneId,
                       bookmarks

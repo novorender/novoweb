@@ -3,6 +3,7 @@ import { Box, Button, LinearProgress, useTheme } from "@mui/material";
 import { type FormEvent, Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation, Divider, ScrollBox, TextField } from "components";
 import {
@@ -24,7 +25,9 @@ import {
 } from "features/forms/types";
 import { toFormFields, toFormItems } from "features/forms/utils";
 import { ObjectVisibility, renderActions } from "features/render";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
+import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { FormItem } from "./formItem";
 
@@ -38,6 +41,11 @@ export function LocationInstance() {
     const flyToForm = useFlyToForm();
     const dispatchFormsGlobals = useDispatchFormsGlobals();
     const lazyFormsGlobals = useLazyFormsGlobals();
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = (checkPermission(Permission.FormsManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canDelete = checkPermission(Permission.FormsDelete) ?? canManage;
+    const canEdit = checkPermission(Permission.FormsFill) ?? canManage;
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);
@@ -256,11 +264,11 @@ export function LocationInstance() {
                             <FlightTakeoff sx={{ mr: 1 }} />
                             Fly to
                         </Button>
-                        <Button color="grey" onClick={handleClearClick}>
+                        <Button color="grey" onClick={handleClearClick} disabled={!canEdit}>
                             <Clear sx={{ mr: 1 }} />
                             Clear
                         </Button>
-                        <Button color="grey" onClick={() => setIsDeleting(true)}>
+                        <Button color="grey" onClick={() => setIsDeleting(true)} disabled={!canDelete}>
                             <Delete fontSize="small" sx={{ mr: 1 }} />
                             Delete
                         </Button>
@@ -274,7 +282,13 @@ export function LocationInstance() {
             )}
             <ScrollBox p={1} pt={2} pb={3}>
                 <Box my={2}>
-                    <TextField label="Form name" value={title} onChange={handleTitleChange} fullWidth />
+                    <TextField
+                        label="Form name"
+                        value={title}
+                        onChange={handleTitleChange}
+                        fullWidth
+                        disabled={!canEdit}
+                    />
                 </Box>
                 {items?.map((item, idx, array) => {
                     return (
@@ -285,6 +299,7 @@ export function LocationInstance() {
                                     setItems(itm);
                                     setIsUpdated(true);
                                 }}
+                                disabled={!canEdit}
                             />
                             {idx !== array.length - 1 ? <Divider sx={{ mt: 1, mb: 2 }} /> : null}
                         </Fragment>

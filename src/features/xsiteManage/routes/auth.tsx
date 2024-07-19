@@ -2,10 +2,12 @@ import { Box, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Redirect, useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { selectConfig, selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
@@ -25,6 +27,9 @@ export function Auth() {
     const dispatch = useAppDispatch();
 
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage =
+        (checkPermission(Permission.IntXsiteManageManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
     const accessToken = useAppSelector(selectXsiteManageAccessToken);
     const site = useAppSelector(selectXsiteManageSite);
     const config = useAppSelector(selectXsiteManageConfig);
@@ -125,14 +130,14 @@ export function Auth() {
 
         if (_site) {
             dispatch(xsiteManageActions.setSite(_site));
-        } else if (isAdmin) {
+        } else if (canManage) {
             history.push("/settings");
         } else if (!config.siteId) {
             setError(`${featuresConfig.xsiteManage.name} has not yet been set up for this project.`);
         } else {
             setError(`You do not have access to the ${config.siteId} ${featuresConfig.xsiteManage.name} site.`);
         }
-    }, [sites, history, isAdmin, dispatch, config, site]);
+    }, [sites, history, canManage, dispatch, config, site]);
 
     return site ? (
         <Redirect to="/machines" />

@@ -19,9 +19,11 @@ import { MouseEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
 import { selectHasAdminCapabilities } from "slices/explorer";
@@ -80,6 +82,9 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
     const sceneId = useSceneId();
 
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage =
+        (checkPermission(Permission.BookmarkManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
     const user = useAppSelector(selectUser);
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
@@ -149,7 +154,7 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                                 {bookmark.name}
                             </Typography>
                         </Tooltip>
-                        {isAdmin ||
+                        {canManage ||
                         (bookmark.access === BookmarkAccess.Personal && user) ||
                         bookmark.access === BookmarkAccess.Public ? (
                             <IconButton
@@ -193,7 +198,7 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                         <ListItemText>Share</ListItemText>
                     </MenuItem>
                 )}
-                {(isAdmin || (bookmark.access === BookmarkAccess.Personal && user)) && [
+                {(canManage || (bookmark.access === BookmarkAccess.Personal && user)) && [
                     <MenuItem
                         key="edit"
                         onClick={async () => {

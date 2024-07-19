@@ -2,10 +2,12 @@ import { Settings } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { matchPath, MemoryRouter, Route, Switch, useHistory, useLocation } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
@@ -49,8 +51,11 @@ function WidgetMenu(props: MenuProps) {
     const history = useHistory();
     const location = useLocation();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    // TODO widget:properties:manage?
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.SceneManage) ?? isAdmin;
 
-    if (!isAdmin) {
+    if (!canManage) {
         return null;
     }
 

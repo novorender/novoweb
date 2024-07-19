@@ -28,6 +28,7 @@ import {
     useState,
 } from "react";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
@@ -43,6 +44,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectMainObject } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { selectHasAdminCapabilities } from "slices/explorer";
 import { NodeType } from "types/misc";
 import {
@@ -487,6 +489,9 @@ function PropertyItem({
 }) {
     const isUrl = value.startsWith("http");
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    // TODO properties:manage?
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.SceneManage) ?? isAdmin;
     const starred = useAppSelector(selectStarredProperties);
     const stampSettings = useAppSelector(selectPropertiesStampSettings);
     const dispatch = useAppDispatch();
@@ -568,7 +573,7 @@ function PropertyItem({
                         id={id}
                         MenuListProps={{ sx: { maxWidth: "100%" } }}
                     >
-                        {isAdmin && stampSettings.enabled && (
+                        {canManage && stampSettings.enabled && (
                             <MenuItem
                                 onClick={() => {
                                     if (isStarred) {

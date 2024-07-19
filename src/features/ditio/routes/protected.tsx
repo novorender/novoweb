@@ -3,9 +3,11 @@ import { Box, CircularProgress, FormHelperText, Typography } from "@mui/material
 import { FormEventHandler, PropsWithChildren, useState } from "react";
 
 import { dataApi } from "apis/dataV1";
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { selectAccessToken, selectUser } from "slices/authSlice";
 import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
@@ -20,6 +22,9 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
     const token = useAppSelector(selectDitioAccessToken);
     const nrToken = useAppSelector(selectAccessToken);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage =
+        (checkPermission(Permission.IntDitioManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
     const user = useAppSelector(selectUser);
 
     if (token.status === AsyncStatus.Success) {
@@ -30,7 +35,7 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
                 <LinearProgress />
             </Box>
         );
-    } else if (!isAdmin) {
+    } else if (!canManage) {
         return (
             <>
                 <Box

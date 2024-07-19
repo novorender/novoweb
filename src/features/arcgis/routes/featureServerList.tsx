@@ -44,6 +44,10 @@ export function FeatureServerList() {
     const dispatch = useAppDispatch();
     const history = useHistory();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    // TODO int:arcgis:manage permission
+    // const checkPermission = useCheckProjectPermission();
+    // const canManage = (checkPermission(Permission.IntArcgisManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = isAdmin;
     const epsg = useProjectEpsg({ skip: featureServers.status !== AsyncStatus.Success });
     const isCameraSetCorrectly = useIsCameraSetCorrectly();
 
@@ -126,7 +130,7 @@ export function FeatureServerList() {
                         variant="outlined"
                         color="primary"
                         onClick={() => history.push("/edit")}
-                        disabled={!isAdmin}
+                        disabled={!canManage}
                     >
                         Add
                     </Button>
@@ -154,7 +158,7 @@ export function FeatureServerList() {
                                     onCheckLayer={handleLayerCheck}
                                     flyToFeatureServer={handleFlyToFeatureServer}
                                     flyToLayer={handleFlyToLayer}
-                                    isAdmin={isAdmin}
+                                    canManage={canManage}
                                 />
                             );
                         })}
@@ -172,7 +176,7 @@ function FeatureServerItem({
     onCheckLayer,
     flyToFeatureServer,
     flyToLayer,
-    isAdmin,
+    canManage,
 }: {
     defaultExpanded: boolean;
     featureServer: FeatureServer;
@@ -180,7 +184,7 @@ function FeatureServerItem({
     onCheckLayer: (featureServerId: string, layerId: number, checked: boolean) => void;
     flyToFeatureServer: (featureServer: FeatureServer) => void;
     flyToLayer: (layer: Layer) => void;
-    isAdmin: boolean;
+    canManage: boolean;
 }) {
     const history = useHistory();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -279,13 +283,13 @@ function FeatureServerItem({
                             </Link>
                         </ListItemText>
                     </MenuItem>
-                    <MenuItem onClick={() => history.push("/edit", { id: featureServer.id })} disabled={!isAdmin}>
+                    <MenuItem onClick={() => history.push("/edit", { id: featureServer.id })} disabled={!canManage}>
                         <ListItemIcon>
                             <Edit fontSize="small" />
                         </ListItemIcon>
                         <ListItemText>Edit</ListItemText>
                     </MenuItem>
-                    <MenuItem onClick={() => history.push("/remove", { id: featureServer.id })} disabled={!isAdmin}>
+                    <MenuItem onClick={() => history.push("/remove", { id: featureServer.id })} disabled={!canManage}>
                         <ListItemIcon>
                             <Clear fontSize="small" />
                         </ListItemIcon>
@@ -304,7 +308,7 @@ function FeatureServerItem({
                                 layer={layer}
                                 onCheckLayer={onCheckLayer}
                                 flyToLayer={flyToLayer}
-                                isAdmin={isAdmin}
+                                canManage={canManage}
                             />
                         ))}
                     </List>
@@ -319,13 +323,13 @@ function LayerItem({
     layer,
     onCheckLayer,
     flyToLayer,
-    isAdmin,
+    canManage,
 }: {
     featureServer: FeatureServer;
     layer: Layer;
     onCheckLayer: (featureServerId: string, layerId: number, checked: boolean) => void;
     flyToLayer: (layer: Layer) => void;
-    isAdmin: boolean;
+    canManage: boolean;
 }) {
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const history = useHistory();
@@ -430,7 +434,7 @@ function LayerItem({
                             onClick={() =>
                                 history.push("/layerFilter", { featureServerId: featureServer.id, layerId: layer.id })
                             }
-                            disabled={!isAdmin}
+                            disabled={!canManage}
                         >
                             <ListItemIcon>
                                 <FilterList fontSize="small" />

@@ -2,9 +2,11 @@ import { Autocomplete, Box, Button, Checkbox, FormControlLabel, useTheme } from 
 import { FormEventHandler, useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useToggle } from "hooks/useToggle";
 import { selectHasAdminCapabilities } from "slices/explorer";
 
@@ -21,6 +23,10 @@ export function Crupdate() {
     const bmToEdit = bookmarks.find((bm) => bm.id === id);
 
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage =
+        (checkPermission(Permission.BookmarkManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+
     const dispatch = useAppDispatch();
     const {
         state: { view, canvas },
@@ -191,7 +197,7 @@ export function Crupdate() {
                             label={<Box mr={0.5}>Add selected to selection basket</Box>}
                         />
                     </Box>
-                    {isAdmin ? (
+                    {canManage ? (
                         <FormControlLabel
                             sx={{ mb: 2 }}
                             control={<Checkbox color="primary" checked={!personal} onChange={() => togglePersonal()} />}

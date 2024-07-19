@@ -3,14 +3,17 @@ import { Box, Button, List, Typography, useTheme } from "@mui/material";
 import { type FormEvent, type MouseEvent, useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation, Divider, LinearProgress, ScrollBox } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { TemplateFilterMenu } from "features/forms/templateFilterMenu";
 import { ObjectVisibility, renderActions } from "features/render";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
+import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { useDeleteAllFormsMutation, useListTemplatesQuery } from "../../api";
 import { formsActions } from "../../slice";
@@ -26,6 +29,10 @@ export function Templates() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const user = useAppSelector(selectUser);
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = (checkPermission(Permission.FormsManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canDelete = checkPermission(Permission.FormsDelete) ?? canManage;
 
     const [deleteAllForms, { isLoading: isAllFormsDeleting }] = useDeleteAllFormsMutation();
 
@@ -95,7 +102,7 @@ export function Templates() {
                     </Box>
                     <Box display="flex" justifyContent="space-between">
                         <Box display="flex">
-                            <Button color="grey" onClick={handleAddFormClick} disabled={!user}>
+                            <Button color="grey" onClick={handleAddFormClick} disabled={!canManage || !user}>
                                 <AddCircle sx={{ mr: 1 }} />
                                 Add form
                             </Button>
@@ -115,7 +122,7 @@ export function Templates() {
                             <Button
                                 color="grey"
                                 onClick={() => setIsDeleting(true)}
-                                disabled={!user || isLoading || !templateIds.length || !!error}
+                                disabled={!canDelete || !user || isLoading || !templateIds.length || !!error}
                             >
                                 <Delete fontSize="small" sx={{ mr: 1 }} />
                                 Delete all forms

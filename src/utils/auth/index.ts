@@ -1,4 +1,5 @@
 import { dataApi } from "apis/dataV1";
+import { Permission } from "apis/dataV2/permissions";
 import { WidgetKey } from "config/features";
 import { User } from "slices/authSlice";
 import { base64UrlEncode, generateRandomString, sha256 } from "utils/misc";
@@ -103,4 +104,15 @@ export function createOAuthStateString(state: OAuthState): string {
     sessionStorage.setItem(id, stateStr);
 
     return id;
+}
+
+/**
+ * @param permissions user permissions
+ * @param permission permission to check
+ * @returns `true` if user has access to the given permission or any of its parent permissions up the hierarchy.
+ *           E.g. when checking for `int:ditio:manage` - check if has any of `int`, `int:ditio`, `int:ditio:manage`
+ */
+export function checkPermission(permissions: Set<Permission>, permission: Permission) {
+    const parts = permission.split(":");
+    return parts.some((_, i) => permissions.has(parts.slice(0, i + 1).join(":") as Permission));
 }

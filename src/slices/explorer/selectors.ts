@@ -1,8 +1,9 @@
 import { createSelector } from "@reduxjs/toolkit";
 
-import { PermissionKey } from "apis/dataV2/permissions";
+import { Permission } from "apis/dataV2/permissions";
 import { type RootState } from "app";
 import { featuresConfig, Widget } from "config/features";
+import { checkPermission } from "utils/auth";
 
 import { ProjectType, SceneType, UrlSearchQuery, UserRole } from "./types";
 
@@ -37,11 +38,11 @@ export const selectEnabledWidgets = createSelector(
     [selectEnabledWidgetsWithoutPermissionCheck, selectProjectV2Info],
     (widgets, projectInfo) => {
         if (projectInfo) {
-            const can = (key: PermissionKey) => projectInfo.permissions.has(key);
-
-            const canManageScene = can("scene:manage");
-            const hasWidgetAccess = can("widget");
-            const hasIntAccess = can("int");
+            const permissionSet = new Set(projectInfo.permissions);
+            const can = (p: Permission) => checkPermission(permissionSet, p);
+            if (can(Permission.SceneManage)) {
+                return widgets;
+            }
 
             return widgets.filter((w) => {
                 switch (w.key) {
@@ -51,19 +52,19 @@ export const selectEnabledWidgets = createSelector(
                     case "jira":
                     case "omegaPims365":
                     case "xsiteManage":
-                        return hasIntAccess || can(`int:${w.key}`) || can(`int:${w.key}:use`);
+                        return can(`int:${w.key}:use` as Permission);
                     case "bookmarks":
-                        return can("bookmark") || can("bookmark:read");
+                        return can(Permission.BookmarkRead);
                     case "groups":
-                        return can("group") || can("group:read");
+                        return can(Permission.GroupRead);
                     case "forms":
-                        return can("forms") || can("forms:view");
+                        return can(Permission.FormsView);
                     case "deviations":
-                        return can("deviation") || can("deviation:read");
+                        return can(Permission.DeviationRead);
                     case "advancedSettings":
-                        return canManageScene;
+                        return can(Permission.SceneManage);
                     default:
-                        return hasWidgetAccess || can(`widget:${w.key}` as PermissionKey);
+                        return can(`widget:${w.key}` as Permission);
                 }
             });
         }

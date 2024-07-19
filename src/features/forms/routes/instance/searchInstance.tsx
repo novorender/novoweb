@@ -3,6 +3,7 @@ import { Box, Button, LinearProgress, Typography, useTheme } from "@mui/material
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
@@ -10,7 +11,9 @@ import { highlightActions, useDispatchHighlighted, useHighlighted } from "contex
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { selectCurrentFormsList } from "features/forms/slice";
 import { renderActions } from "features/render";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
+import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { useGetSearchFormQuery, useUpdateSearchFormMutation } from "../../api";
 import { type Form, type FormId, type FormItem as FItype, FormItemType, type FormObjectGuid } from "../../types";
@@ -28,6 +31,10 @@ export function SearchInstance() {
     const { idArr: highlighted } = useHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const flyToForm = useFlyToForm();
+    const checkPermission = useCheckProjectPermission();
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const canManage = (checkPermission(Permission.FormsManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canEdit = checkPermission(Permission.FormsFill) ?? canManage;
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);
@@ -185,7 +192,7 @@ export function SearchInstance() {
                                     <FlightTakeoff sx={{ mr: 1 }} />
                                     Fly to
                                 </Button>
-                                <Button color="grey" onClick={handleClearClick}>
+                                <Button color="grey" onClick={handleClearClick} disabled={!canEdit}>
                                     <Clear sx={{ mr: 1 }} />
                                     Clear
                                 </Button>
@@ -213,6 +220,7 @@ export function SearchInstance() {
                                     setItems(itm);
                                     setIsUpdated(true);
                                 }}
+                                disabled={!canEdit}
                             />
                             {idx !== array.length - 1 ? <Divider sx={{ mt: 1, mb: 2 }} /> : null}
                         </Fragment>

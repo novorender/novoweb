@@ -1,84 +1,84 @@
-export type PermissionKey =
-    | "access"
-    | "access:assignments:manage"
-    | "access:assignments:view"
-    | "access:permissions:manage"
-    | "access:permissions:view"
-    | "access:roles:manage"
-    | "access:roles:view"
-    | "bookmark"
-    | "bookmark:manage"
-    | "bookmark:read"
-    | "context"
-    | "context:addFileToBasket"
-    | "context:area"
-    | "context:clip"
-    | "context:hide"
-    | "context:hideLayer"
-    | "context:laser"
-    | "context:measure"
-    | "context:pickPoint"
-    | "context:pointLine"
-    | "deviation"
-    | "deviation:read"
-    | "deviation:write"
-    | "featuretoggle:authorization2"
-    | "file"
-    | "file:download"
-    | "file:list"
-    | "file:manage"
-    | "file:pipeline"
-    | "forms"
-    | "forms:delete"
-    | "forms:fill"
-    | "forms:manage"
-    | "forms:view"
-    | "group"
-    | "group:manage"
-    | "group:read"
-    | "int"
-    | "int:bimcollab"
-    | "int:bimcollab:manage"
-    | "int:bimcollab:use"
-    | "int:bimTrack"
-    | "int:bimTrack:manage"
-    | "int:bimTrack:use"
-    | "int:ditio"
-    | "int:ditio:manage"
-    | "int:ditio:use"
-    | "int:jira"
-    | "int:jira:manage"
-    | "int:jira:use"
-    | "int:omegaPims365"
-    | "int:omegaPims365:manage"
-    | "int:omegaPims365:use"
-    | "int:xsiteManage"
-    | "int:xsiteManage:manage"
-    | "int:xsiteManage:use"
-    | "org"
-    | "org:manage"
-    | "org:projects:create"
-    | "org:projects:manage"
-    | "scene"
-    | "scene:manage"
-    | "scene:view"
-    | "widget"
-    | "widget:area"
-    | "widget:clippingPlanes"
-    | "widget:followPath"
-    | "widget:heightProfile"
-    | "widget:images"
-    | "widget:manhole"
-    | "widget:measure"
-    | "widget:modelTree"
-    | "widget:myLocation"
-    | "widget:offline"
-    | "widget:orthoCam"
-    | "widget:outlineLaser"
-    | "widget:pointLine"
-    | "widget:properties"
-    | "widget:propertyTree"
-    | "widget:rangeSearch"
-    | "widget:search"
-    | "widget:selectionBasket"
-    | "widget:shareLink";
+export enum Permission {
+    Access = "access",
+    AccessAssignmentsManage = "access:assignments:manage",
+    AccessAssignmentsView = "access:assignments:view",
+    AccessPermissionsManage = "access:permissions:manage",
+    AccessPermissionsView = "access:permissions:view",
+    AccessRolesManage = "access:roles:manage",
+    AccessRolesView = "access:roles:view",
+    Bookmark = "bookmark",
+    BookmarkManage = "bookmark:manage",
+    BookmarkRead = "bookmark:read",
+    Context = "context",
+    ContextAddFileToBasket = "context:addFileToBasket",
+    ContextArea = "context:area",
+    ContextClip = "context:clip",
+    ContextHide = "context:hide",
+    ContextHideLayer = "context:hideLayer",
+    ContextLaser = "context:laser",
+    ContextMeasure = "context:measure",
+    ContextPickPoint = "context:pickPoint",
+    ContextPointLine = "context:pointLine",
+    Deviation = "deviation",
+    DeviationRead = "deviation:read",
+    DeviationWrite = "deviation:write",
+    File = "file",
+    FileDownload = "file:download",
+    FileList = "file:list",
+    FileManage = "file:manage",
+    FilePipeline = "file:pipeline",
+    Forms = "forms",
+    FormsDelete = "forms:delete",
+    FormsFill = "forms:fill",
+    FormsManage = "forms:manage",
+    FormsView = "forms:view",
+    Group = "group",
+    GroupManage = "group:manage",
+    GroupRead = "group:read",
+    Int = "int",
+    IntBimcollab = "int:bimcollab",
+    IntBimcollabManage = "int:bimcollab:manage",
+    IntBimcollabUse = "int:bimcollab:use",
+    IntBimTrack = "int:bimTrack",
+    IntBimTrackManage = "int:bimTrack:manage",
+    IntBimTrackUse = "int:bimTrack:use",
+    IntDitio = "int:ditio",
+    IntDitioManage = "int:ditio:manage",
+    IntDitioUse = "int:ditio:use",
+    IntJira = "int:jira",
+    IntJiraManage = "int:jira:manage",
+    IntJiraUse = "int:jira:use",
+    IntOmegaPims365 = "int:omegaPims365",
+    IntOmegaPims365Manage = "int:omegaPims365:manage",
+    IntOmegaPims365Use = "int:omegaPims365:use",
+    IntXsiteManage = "int:xsiteManage",
+    IntXsiteManageManage = "int:xsiteManage:manage",
+    IntXsiteManageUse = "int:xsiteManage:use",
+    Org = "org",
+    OrgManage = "org:manage",
+    OrgProjectsCreate = "org:projects:create",
+    OrgProjectsManage = "org:projects:manage",
+    Scene = "scene",
+    SceneManage = "scene:manage",
+    SceneView = "scene:view",
+    Widget = "widget",
+    WidgetArea = "widget:area",
+    WidgetClippingPlanes = "widget:clippingPlanes",
+    WidgetFollowPath = "widget:followPath",
+    WidgetHeightProfile = "widget:heightProfile",
+    WidgetImages = "widget:images",
+    WidgetManhole = "widget:manhole",
+    WidgetMeasure = "widget:measure",
+    WidgetModelTree = "widget:modelTree",
+    WidgetMyLocation = "widget:myLocation",
+    WidgetOffline = "widget:offline",
+    WidgetOrthoCam = "widget:orthoCam",
+    WidgetOutlineLaser = "widget:outlineLaser",
+    WidgetPointLine = "widget:pointLine",
+    WidgetProperties = "widget:properties",
+    WidgetPropertyTree = "widget:propertyTree",
+    WidgetRangeSearch = "widget:rangeSearch",
+    WidgetSearch = "widget:search",
+    WidgetSelectionBasket = "widget:selectionBasket",
+    WidgetShareLink = "widget:shareLink",
+}

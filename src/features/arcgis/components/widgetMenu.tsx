@@ -8,8 +8,12 @@ import { selectHasAdminCapabilities } from "slices/explorer";
 export function WidgetMenu(props: MenuProps) {
     const history = useHistory();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    // TODO int:arcgis:manage permission
+    // const checkPermission = useCheckProjectPermission();
+    // const canManage = (checkPermission(Permission.IntArcgisManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = isAdmin;
 
-    if (!isAdmin) {
+    if (!canManage) {
         return null;
     }
 
