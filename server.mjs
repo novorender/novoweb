@@ -65,7 +65,6 @@ app.use(
     })
 );
 
-// NOTE(OLA): Omega sends invalid headers which crashes http-proxy-middleware on nodejs version > 18.16.0
 app.use("/omega365", async (req, res) => {
     try {
         const url = new URL("https://nyeveier.pims365.no" + req.originalUrl.replace(/^\/omega365/, ""));

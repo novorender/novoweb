@@ -30,7 +30,7 @@ var appSettings = {
     APPINSIGHTS_INSTRUMENTATIONKEY: appInsights.properties.InstrumentationKey
     APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
     ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
-    WEBSITE_NODE_DEFAULT_VERSION: '~18'
+    WEBSITE_NODE_DEFAULT_VERSION: '~20'
     // WEBSITE_RUN_FROM_PACKAGE: 1
 }
 
