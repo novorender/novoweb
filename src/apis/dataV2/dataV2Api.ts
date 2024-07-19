@@ -3,10 +3,12 @@ import { minutesToSeconds } from "date-fns";
 
 import { ArcgisWidgetConfig } from "features/arcgis";
 
+import { AuthScope, Permission } from "./authTypes";
 import { DeviationProjectConfig } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
+import { PermissionKey } from "./permissions";
 import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
-import { getDataV2DynamicBaseQuery } from "./utils";
+import { authScopeToString, getDataV2DynamicBaseQuery } from "./utils";
 
 export const dataV2Api = createApi({
     reducerPath: "dataV2",
@@ -45,6 +47,10 @@ export const dataV2Api = createApi({
         }),
         getProject: builder.query<ProjectInfo, { projectId: string }>({
             query: ({ projectId }) => `/projects/${projectId}`,
+            transformResponse: (data: Omit<ProjectInfo, "permissions"> & { permissions: PermissionKey[] }) => ({
+                ...data,
+                permissions: new Set(data.permissions),
+            }),
         }),
         getArcgisWidgetConfig: builder.query<ArcgisWidgetConfig, { projectId: string }>({
             query: ({ projectId }) => `/explorer/${projectId}/arcgis/config`,
@@ -105,6 +111,21 @@ export const dataV2Api = createApi({
                 body: query,
             }),
         }),
+        getFlatPermissions: builder.query<Permission[], void>({
+            query: () => "/permissions/flat",
+        }),
+        checkPermissions: builder.query<
+            Set<PermissionKey>,
+            { scope: string | AuthScope; permissionIds: PermissionKey[] }
+        >({
+            query: ({ scope, permissionIds }) => ({
+                url: "/roles/check-permissions",
+                method: "POST",
+                body: { scope: typeof scope === "string" ? scope : authScopeToString(scope), permissionIds },
+            }),
+            transformResponse: (data: boolean[], _meta, { permissionIds }) =>
+                new Set<PermissionKey>(permissionIds.filter((_p, idx) => data[idx])),
+        }),
     }),
 });
 
@@ -123,4 +144,7 @@ export const {
     useGetProjectProgressQuery,
     useLazyGetFileDownloadLinkQuery,
     useSearchEpsgQuery,
+    useLazyGetFlatPermissionsQuery,
+    useCheckPermissionsQuery,
+    useLazyCheckPermissionsQuery,
 } = dataV2Api;

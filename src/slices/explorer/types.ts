@@ -1,5 +1,6 @@
 import { SearchPattern } from "@novorender/webgl-api";
 
+import { ProjectInfo } from "apis/dataV2/projectTypes";
 import { CanvasContextMenuFeatureKey } from "config/canvasContextMenu";
 import { ButtonKey, WidgetKey } from "config/features";
 import { DeepMutable } from "types/misc";
@@ -30,6 +31,7 @@ export type State = {
     sceneType: SceneType;
     userRole: UserRole;
     projectType: ProjectType;
+    projectV2Info: ProjectInfo | null;
     tmZoneForCalc: string | undefined;
     requireConsent: boolean;
     organization: string;

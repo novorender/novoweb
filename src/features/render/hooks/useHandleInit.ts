@@ -93,6 +93,7 @@ export function useHandleInit() {
                 dispatch(
                     renderActions.initScene({
                         projectType: projectIsV2 ? ProjectType.V2 : ProjectType.V1,
+                        projectV2Info: projectV2 ?? null,
                         tmZoneForCalc,
                         sceneData,
                         sceneConfig: octreeSceneConfig,

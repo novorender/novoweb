@@ -30,6 +30,7 @@ const initialState: State = {
     sceneType: SceneType.Viewer,
     userRole: UserRole.Viewer,
     projectType: ProjectType.V1,
+    projectV2Info: null,
     tmZoneForCalc: undefined as string | undefined, // for project v1 - tmZone, for project v2 - proj4 def from epsg.io
     requireConsent: false,
     organization: "",
@@ -249,7 +250,7 @@ export const explorerSlice = createSlice({
             state.projectType = action.payload.projectType;
             state.tmZoneForCalc = action.payload.tmZoneForCalc;
             state.sceneType = getSceneType(customProperties);
-            state.userRole = getUserRole(customProperties);
+            state.userRole = getUserRole(customProperties, action.payload.projectV2Info);
             state.requireConsent = getRequireConsent(customProperties);
 
             state.lockedWidgets = state.lockedWidgets.filter(

@@ -1,3 +1,4 @@
+import { ProjectInfo } from "apis/dataV2/projectTypes";
 import { CanvasContextMenuFeatureKey } from "config/canvasContextMenu";
 import { defaultEnabledWidgets, featuresConfig, WidgetKey } from "config/features";
 import { uniqueArray } from "utils/misc";
@@ -62,11 +63,14 @@ export function getRequireConsent(customProperties: unknown): boolean {
     return false;
 }
 
-export function getUserRole(customProperties: unknown): UserRole {
-    const role =
+export function getUserRole(customProperties: unknown, projectV2Info: ProjectInfo | null): UserRole {
+    let role =
         customProperties && typeof customProperties === "object" && "role" in customProperties
             ? (customProperties as { role: string }).role
             : "administrator";
+    if (role !== "owner" && projectV2Info) {
+        role = projectV2Info.permissions.has("scene:manage") ? "administrator" : "viewer";
+    }
     return role === "owner" ? UserRole.Owner : role === "administrator" ? UserRole.Admin : UserRole.Viewer;
 }
 

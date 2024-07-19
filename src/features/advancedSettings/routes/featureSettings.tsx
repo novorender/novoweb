@@ -22,7 +22,7 @@ import { renderActions, selectDebugStats, selectGeneratedParametricData, selectN
 import {
     explorerActions,
     selectCanvasContextMenuFeatures,
-    selectEnabledWidgets,
+    selectEnabledWidgetsWithoutPermissionCheck,
     selectLockedWidgets,
     selectPrimaryMenu,
 } from "slices/explorer";
@@ -32,7 +32,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
     const theme = useTheme();
 
     const dispatch = useAppDispatch();
-    const enabledWidgets = useAppSelector(selectEnabledWidgets);
+    const enabledWidgets = useAppSelector(selectEnabledWidgetsWithoutPermissionCheck);
     const lockedWidgets = useAppSelector(selectLockedWidgets);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
     const enabledCanvasContextMenuFeatures = useAppSelector(selectCanvasContextMenuFeatures);
