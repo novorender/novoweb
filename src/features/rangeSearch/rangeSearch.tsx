@@ -1,4 +1,4 @@
-import { Box, Button, FormControl, FormControlLabel, TextFieldProps } from "@mui/material";
+import { Box, Button, FormControl, FormControlLabel } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
 import { format, isValid, parse } from "date-fns";
@@ -147,20 +147,21 @@ export default function RangeSearch() {
                                                 value={
                                                     min ? parse(String(min), rangeSearchDateFormat, new Date()) : null
                                                 }
-                                                onChange={(newDate: Date | null, keyboardInput) =>
+                                                onChange={(newDate: Date | null) =>
                                                     setMin(
-                                                        newDate
-                                                            ? isValid(newDate)
-                                                                ? format(newDate, rangeSearchDateFormat)
-                                                                : keyboardInput ?? ""
+                                                        newDate && isValid(newDate)
+                                                            ? format(newDate, rangeSearchDateFormat)
                                                             : ""
                                                     )
                                                 }
-                                                inputFormat={rangeSearchDateFormat}
-                                                disableMaskedInput={true}
-                                                renderInput={(params: TextFieldProps) => (
-                                                    <TextField {...params} size="small" />
-                                                )}
+                                                format={rangeSearchDateFormat}
+                                                slotProps={{
+                                                    textField: {
+                                                        size: "small",
+                                                        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+                                                            setMin(e.target.value),
+                                                    },
+                                                }}
                                             />
                                         </FormControl>
                                         <FormControl size="small" sx={{ width: 1 }}>
@@ -169,20 +170,21 @@ export default function RangeSearch() {
                                                 value={
                                                     max ? parse(String(max), rangeSearchDateFormat, new Date()) : null
                                                 }
-                                                onChange={(newDate: Date | null, keyboardInput) =>
+                                                onChange={(newDate: Date | null) =>
                                                     setMax(
-                                                        newDate
-                                                            ? isValid(newDate)
-                                                                ? format(newDate, rangeSearchDateFormat)
-                                                                : keyboardInput ?? ""
+                                                        newDate && isValid(newDate)
+                                                            ? format(newDate, rangeSearchDateFormat)
                                                             : ""
                                                     )
                                                 }
-                                                inputFormat={rangeSearchDateFormat}
-                                                disableMaskedInput={true}
-                                                renderInput={(params: TextFieldProps) => (
-                                                    <TextField {...params} size="small" />
-                                                )}
+                                                format={rangeSearchDateFormat}
+                                                slotProps={{
+                                                    textField: {
+                                                        size: "small",
+                                                        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+                                                            setMax(e.target.value),
+                                                    },
+                                                }}
                                             />
                                         </FormControl>
                                     </>

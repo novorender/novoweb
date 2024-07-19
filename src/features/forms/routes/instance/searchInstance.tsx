@@ -13,14 +13,7 @@ import { renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
 
 import { useGetSearchFormQuery, useUpdateSearchFormMutation } from "../../api";
-import {
-    type Form,
-    type FormId,
-    type FormItem as FItype,
-    FormItemType,
-    type FormObjectGuid,
-    type FormsFile,
-} from "../../types";
+import { type Form, type FormId, type FormItem as FItype, FormItemType, type FormObjectGuid } from "../../types";
 import { determineHighlightCollection, toFormFields, toFormItems } from "../../utils";
 import { FormItem } from "./formItem";
 
@@ -139,17 +132,29 @@ export function SearchInstance() {
 
     const handleClearClick = useCallback(() => {
         setItems((state) =>
-            state.map((item) =>
-                item.type === FormItemType.File
-                    ? {
-                          ...item,
-                          value: item.value as FormsFile[],
-                      }
-                    : {
-                          ...item,
-                          value: item.type !== FormItemType.Text ? null : item.value,
-                      }
-            )
+            state.map((item): FItype => {
+                switch (item.type) {
+                    case FormItemType.File:
+                        return {
+                            ...item,
+                            value: [],
+                        };
+                    case FormItemType.Text:
+                        return item;
+                    case FormItemType.Date:
+                    case FormItemType.Time:
+                    case FormItemType.DateTime:
+                        return {
+                            ...item,
+                            value: undefined,
+                        };
+                    default:
+                        return {
+                            ...item,
+                            value: null,
+                        };
+                }
+            })
         );
         setIsUpdated(true);
     }, []);

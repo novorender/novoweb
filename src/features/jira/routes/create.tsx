@@ -12,7 +12,6 @@ import {
     Select,
     Snackbar,
     TextField,
-    TextFieldProps,
     useTheme,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
@@ -679,15 +678,14 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                                         : "",
                                                 }));
                                             }}
-                                            renderInput={(params: TextFieldProps) => (
-                                                <TextField
-                                                    {...params}
-                                                    id="jiraDueDate"
-                                                    variant={"outlined"}
-                                                    size="small"
-                                                    required={duedate.required && !duedate.defaultValue}
-                                                />
-                                            )}
+                                            slotProps={{
+                                                textField: {
+                                                    id: "jiraDueDate",
+                                                    variant: "outlined",
+                                                    size: "small",
+                                                    required: duedate.required && !duedate.defaultValue,
+                                                },
+                                            }}
                                         />
                                     </FormControl>
                                 )}
