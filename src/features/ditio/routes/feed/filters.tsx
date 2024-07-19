@@ -1,12 +1,12 @@
 import { ArrowBack } from "@mui/icons-material";
-import { Box, Button, FormControl, FormControlLabel, TextFieldProps, useTheme } from "@mui/material";
+import { Box, Button, FormControl, FormControlLabel, useTheme } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { isValid, set } from "date-fns";
 import { FormEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, ScrollBox, Switch as SwitchInput, TextField } from "components";
+import { Divider, ScrollBox, Switch as SwitchInput } from "components";
 
 import { ditioActions, FilterType, initialFilters, selectFilters } from "../../slice";
 
@@ -112,7 +112,11 @@ export function Filters() {
                 <FormControl size="small" sx={{ width: 1, mb: 2 }}>
                     <DatePicker
                         label="Date from"
-                        value={filters[FilterType.DateFrom] || null}
+                        value={
+                            isValid(new Date(filters[FilterType.DateFrom]))
+                                ? new Date(filters[FilterType.DateFrom])
+                                : null
+                        }
                         onChange={(newDate: Date | null) =>
                             setFilters((state) => ({
                                 ...state,
@@ -123,14 +127,20 @@ export function Filters() {
                                     : "",
                             }))
                         }
-                        renderInput={(params: TextFieldProps) => <TextField {...params} size="small" />}
+                        slotProps={{
+                            textField: {
+                                size: "small",
+                            },
+                        }}
                     />
                 </FormControl>
 
                 <FormControl size="small" sx={{ width: 1, mb: 2 }}>
                     <DatePicker
                         label="Date to"
-                        value={filters[FilterType.DateTo] || null}
+                        value={
+                            isValid(new Date(filters[FilterType.DateTo])) ? new Date(filters[FilterType.DateTo]) : null
+                        }
                         onChange={(newDate: Date | null) =>
                             setFilters((state) => ({
                                 ...state,
@@ -141,7 +151,11 @@ export function Filters() {
                                     : "",
                             }))
                         }
-                        renderInput={(params: TextFieldProps) => <TextField {...params} size="small" />}
+                        slotProps={{
+                            textField: {
+                                size: "small",
+                            },
+                        }}
                     />
                 </FormControl>
 

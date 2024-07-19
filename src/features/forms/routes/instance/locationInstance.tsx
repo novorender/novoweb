@@ -20,7 +20,6 @@ import {
     type FormItem as FItype,
     FormItemType,
     type FormRecord,
-    type FormsFile,
     type TemplateId,
 } from "features/forms/types";
 import { toFormFields, toFormItems } from "features/forms/utils";
@@ -172,17 +171,29 @@ export function LocationInstance() {
 
     const handleClearClick = useCallback(() => {
         setItems((state) =>
-            state.map((item) =>
-                item.type === FormItemType.File
-                    ? {
-                          ...item,
-                          value: item.value as FormsFile[],
-                      }
-                    : {
-                          ...item,
-                          value: item.type !== FormItemType.Text ? null : item.value,
-                      }
-            )
+            state.map((item) => {
+                switch (item.type) {
+                    case FormItemType.File:
+                        return {
+                            ...item,
+                            value: [],
+                        };
+                    case FormItemType.Text:
+                        return item;
+                    case FormItemType.Date:
+                    case FormItemType.Time:
+                    case FormItemType.DateTime:
+                        return {
+                            ...item,
+                            value: undefined,
+                        };
+                    default:
+                        return {
+                            ...item,
+                            value: null,
+                        };
+                }
+            })
         );
         setIsUpdated(true);
     }, []);
