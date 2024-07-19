@@ -17,6 +17,7 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
+import { DatePicker, DateTimePicker, TimePicker } from "@mui/x-date-pickers";
 import {
     ChangeEvent,
     type Dispatch,
@@ -36,6 +37,7 @@ import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 
 import {
+    DateTimeItem,
     type FileItem as FileItemType,
     type FormFileUploadResponse,
     type FormItem,
@@ -152,19 +154,35 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
     const [isRelevant, setIsRelevant] = useState(item.required);
     const [activeImage, setActiveImage] = useState("");
 
-    const handleChange = (value: string) => {
+    const handleChange = (value: string | string[] | Date | null | FormsFile[]) => {
         if (!editing) {
             setEditing(true);
         }
         setItems((state) =>
-            state.map((_item) =>
-                (_item as Exclude<FormItem, FileItemType>) === item
-                    ? {
-                          ...item,
-                          value: value ? [value] : null,
-                      }
-                    : _item
-            )
+            state.map((_item) => {
+                if (_item === item) {
+                    switch (item.type) {
+                        case FormItemType.Date:
+                        case FormItemType.Time:
+                        case FormItemType.DateTime:
+                            return {
+                                ...item,
+                                value: value as Date | null,
+                            } as DateTimeItem;
+                        case FormItemType.File:
+                            return {
+                                ...item,
+                                value: value as FormsFile[],
+                            };
+                        default:
+                            return {
+                                ...item,
+                                value: Array.isArray(value) ? value : value ? [value as string] : null,
+                            } as FormItem;
+                    }
+                }
+                return _item;
+            })
         );
     };
 
@@ -429,6 +447,45 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                             </Box>
                         ))}
                     </Box>
+                </FormControl>
+            );
+
+        case FormItemType.Date:
+            return (
+                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <DatePicker
+                        value={item.value}
+                        onChange={handleChange}
+                        disabled={!item.required && !item.relevant}
+                        slotProps={{ textField: { size: "small", fullWidth: true } }}
+                    />
+                </FormControl>
+            );
+
+        case FormItemType.Time:
+            return (
+                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <TimePicker
+                        value={item.value}
+                        onChange={handleChange}
+                        disabled={!item.required && !item.relevant}
+                        slotProps={{ textField: { size: "small", fullWidth: true } }}
+                    />
+                </FormControl>
+            );
+
+        case FormItemType.DateTime:
+            return (
+                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <DateTimePicker
+                        value={item.value}
+                        onChange={handleChange}
+                        disabled={!item.required && !item.relevant}
+                        slotProps={{ textField: { size: "small", fullWidth: true } }}
+                    />
                 </FormControl>
             );
 

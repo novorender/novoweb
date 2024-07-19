@@ -20,6 +20,7 @@ import {
     Snackbar,
     Typography,
 } from "@mui/material";
+import { DatePicker, DateTimePicker, TimePicker } from "@mui/x-date-pickers";
 import { ChangeEvent, type FormEventHandler, useCallback, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -42,6 +43,8 @@ const DOC_TYPES = [
     "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 ];
 
+const today = new Date();
+
 export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
     const sceneId = useSceneId();
     const history = useHistory();
@@ -52,6 +55,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
     const [options, setOptions] = useState<string[]>([]);
     const [files, setFiles] = useState<(File & FormFileUploadResponse)[]>([]);
     const [fileTypes, setFileTypes] = useState<FileTypes>([]);
+    const [dateTime, setDateTime] = useState<Date | null>(null);
     const [multiple, toggleMultiple] = useToggle(true);
     const [readonly, toggleReadonly] = useToggle(false);
     const [fileSizeWarning, toggleFileSizeWarning] = useToggle(false);
@@ -69,7 +73,14 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
     const canSave = useMemo(
         () =>
             title.trim() &&
-            ([FormItemType.Input, FormItemType.YesNo, FormItemType.TrafficLight].includes(type) ||
+            ([
+                FormItemType.Input,
+                FormItemType.YesNo,
+                FormItemType.TrafficLight,
+                FormItemType.Date,
+                FormItemType.Time,
+                FormItemType.DateTime,
+            ].includes(type) ||
                 ([FormItemType.Checkbox, FormItemType.Dropdown].includes(type) && options.length) ||
                 (type === FormItemType.Text && value.trim().length) ||
                 (type === FormItemType.File && (!readonly || files.length))),
@@ -98,7 +109,14 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                 id: window.crypto.randomUUID(),
                 title,
                 type,
-                value: type === FormItemType.Text ? [value] : type === FormItemType.File ? files : undefined,
+                value:
+                    type === FormItemType.Text
+                        ? [value]
+                        : type === FormItemType.File
+                        ? files
+                        : [FormItemType.Date, FormItemType.Time, FormItemType.DateTime].includes(type) && dateTime
+                        ? dateTime
+                        : undefined,
                 required: type !== FormItemType.Text && relevant,
                 ...(type === FormItemType.Checkbox || type === FormItemType.Dropdown ? { options } : {}),
                 ...(type === FormItemType.File && { accept, multiple, readonly }),
@@ -113,6 +131,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
             title,
             type,
             value,
+            dateTime,
             relevant,
             options,
             accept,
@@ -200,14 +219,23 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                 <FormLabel sx={{ fontWeight: 600, color: "text.primary", mb: 1 }} id="form-item-type">
                     Type
                 </FormLabel>
-                <Select id="form-item-type" value={type} onChange={(e) => setType(e.target.value as FormItemType)}>
+                <Select
+                    id="form-item-type"
+                    value={type}
+                    onChange={(e) => setType(e.target.value as FormItemType)}
+                    size="small"
+                    fullWidth
+                >
                     <MenuItem value={FormItemType.Checkbox}>Checkbox</MenuItem>
-                    <MenuItem value={FormItemType.YesNo}>Yes/No</MenuItem>
-                    <MenuItem value={FormItemType.TrafficLight}>Traffic light</MenuItem>
+                    <MenuItem value={FormItemType.Date}>Date</MenuItem>
+                    <MenuItem value={FormItemType.DateTime}>Date and time</MenuItem>
                     <MenuItem value={FormItemType.Dropdown}>Dropdown</MenuItem>
+                    <MenuItem value={FormItemType.File}>File</MenuItem>
                     <MenuItem value={FormItemType.Input}>Input</MenuItem>
                     <MenuItem value={FormItemType.Text}>Text or URL</MenuItem>
-                    <MenuItem value={FormItemType.File}>File</MenuItem>
+                    <MenuItem value={FormItemType.Time}>Time</MenuItem>
+                    <MenuItem value={FormItemType.TrafficLight}>Traffic light</MenuItem>
+                    <MenuItem value={FormItemType.YesNo}>Yes/No</MenuItem>
                 </Select>
                 {renderAlert(type)}
             </FormControl>
@@ -311,6 +339,62 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                             </ListItem>
                         ))}
                     </List>
+                </>
+            )}
+            {[FormItemType.Date, FormItemType.Time, FormItemType.DateTime].includes(type) && (
+                <>
+                    <Divider />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={!!dateTime}
+                                onChange={(e) => setDateTime(e.target.checked ? today : null)}
+                            />
+                        }
+                        label="Set default value"
+                    />
+                    {dateTime && (
+                        <>
+                            {type === FormItemType.Date && (
+                                <DatePicker
+                                    value={dateTime}
+                                    minDate={today}
+                                    onChange={setDateTime}
+                                    slotProps={{
+                                        textField: {
+                                            size: "small",
+                                            fullWidth: true,
+                                        },
+                                    }}
+                                />
+                            )}
+                            {type === FormItemType.Time && (
+                                <TimePicker
+                                    value={dateTime}
+                                    onChange={setDateTime}
+                                    slotProps={{
+                                        textField: {
+                                            size: "small",
+                                            fullWidth: true,
+                                        },
+                                    }}
+                                />
+                            )}
+                            {type === FormItemType.DateTime && (
+                                <DateTimePicker
+                                    value={dateTime}
+                                    minDate={today}
+                                    onChange={setDateTime}
+                                    slotProps={{
+                                        textField: {
+                                            size: "small",
+                                            fullWidth: true,
+                                        },
+                                    }}
+                                />
+                            )}
+                        </>
+                    )}
                 </>
             )}
             <Snackbar
