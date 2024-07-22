@@ -3,7 +3,8 @@ import { ObjectDB } from "@novorender/data-js-api";
 import { getGPUTier } from "detect-gpu";
 import { useEffect, useRef } from "react";
 
-import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
+import { useLazyCheckPermissionsQuery, useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
+import { Permission } from "apis/dataV2/permissions";
 import { ProjectInfo } from "apis/dataV2/projectTypes";
 import { useAppDispatch } from "app/redux-store-interactions";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
@@ -38,6 +39,7 @@ export function useHandleInit() {
     const dispatch = useAppDispatch();
 
     const [getProject] = useLazyGetProjectQuery();
+    const [checkPermissions] = useLazyCheckPermissionsQuery();
 
     const initialized = useRef(false);
 
@@ -80,7 +82,15 @@ export function useHandleInit() {
                     .unwrap()
                     .catch(() => undefined);
                 const projectIsV2 = Boolean(projectV2);
-                const tmZoneForCalc = await loadTmZoneForCalc(projectV2, sceneData.tmZone);
+                const [tmZoneForCalc, permissions] = await Promise.all([
+                    loadTmZoneForCalc(projectV2, sceneData.tmZone),
+                    projectV2
+                        ? checkPermissions({
+                              scope: { organizationId: sceneData.organization, projectId: sceneId },
+                              permissionIds: Object.values(Permission),
+                          }).unwrap()
+                        : [],
+                ]);
 
                 const offlineWorkerState =
                     view.offline &&
@@ -93,7 +103,8 @@ export function useHandleInit() {
                 dispatch(
                     renderActions.initScene({
                         projectType: projectIsV2 ? ProjectType.V2 : ProjectType.V1,
-                        projectV2Info: projectV2 ?? null,
+                        // TODO do we need it? Or project permissions are reliable?
+                        projectV2Info: projectV2 ? { ...projectV2, permissions } : null,
                         tmZoneForCalc,
                         sceneData,
                         sceneConfig: octreeSceneConfig,
@@ -226,6 +237,7 @@ export function useHandleInit() {
         dispatchHighlighted,
         dispatchHighlightCollections,
         getProject,
+        checkPermissions,
     ]);
 }
 

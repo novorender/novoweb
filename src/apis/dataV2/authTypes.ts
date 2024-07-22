@@ -1,10 +1,10 @@
-export type Permission = {
+export type PermissionInfo = {
     id: string;
     name: string;
     description: string;
     isRootOnly: boolean;
     isReadOnlyPermission: boolean;
-    children?: Permission[];
+    children?: PermissionInfo[];
 };
 
 export type AuthScope = {

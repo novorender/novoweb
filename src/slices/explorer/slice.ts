@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
+import { Permission } from "apis/dataV2/permissions";
 import { CanvasContextMenuFeatureKey, defaultCanvasContextMenuFeatures } from "config/canvasContextMenu";
 import {
     ButtonKey,
@@ -241,6 +242,11 @@ export const explorerSlice = createSlice({
         },
         setConfig: (state, action: PayloadAction<State["config"]>) => {
             state.config = { ...state.config, ...action.payload };
+        },
+        setProjectPermissions: (state, action: PayloadAction<Permission[]>) => {
+            if (state.projectV2Info) {
+                state.projectV2Info.permissions = action.payload;
+            }
         },
     },
     extraReducers(builder) {

@@ -3,9 +3,10 @@ import { minutesToSeconds } from "date-fns";
 
 import { ArcgisWidgetConfig } from "features/arcgis";
 
-import { AuthScope, Permission } from "./authTypes";
+import { AuthScope, PermissionInfo } from "./authTypes";
 import { DeviationProjectConfig } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
+import { Permission } from "./permissions";
 import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
 import { authScopeToString, getDataV2DynamicBaseQuery } from "./utils";
 
@@ -106,17 +107,17 @@ export const dataV2Api = createApi({
                 body: query,
             }),
         }),
-        getFlatPermissions: builder.query<Permission[], void>({
+        getFlatPermissions: builder.query<PermissionInfo[], void>({
             query: () => "/permissions/flat",
         }),
-        checkPermissions: builder.query<Set<Permission>, { scope: string | AuthScope; permissionIds: Permission[] }>({
+        checkPermissions: builder.query<Permission[], { scope: string | AuthScope; permissionIds: Permission[] }>({
             query: ({ scope, permissionIds }) => ({
                 url: "/roles/check-permissions",
                 method: "POST",
                 body: { scope: typeof scope === "string" ? scope : authScopeToString(scope), permissionIds },
             }),
             transformResponse: (data: boolean[], _meta, { permissionIds }) =>
-                new Set<Permission>(permissionIds.filter((_p, idx) => data[idx])),
+                permissionIds.filter((_p, idx) => data[idx]),
         }),
     }),
 });

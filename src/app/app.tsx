@@ -11,6 +11,7 @@ import { useRegisterSW } from "virtual:pwa-register/react";
 import { dataApi } from "apis/dataV1";
 import { Loading } from "components";
 import { StorageKey } from "config/storage";
+import { useRefreshProjectPermissions } from "hooks/useRefreshProjectPermissions";
 import { Explorer } from "pages/explorer";
 import { authActions } from "slices/authSlice";
 import { explorerActions, selectConfig } from "slices/explorer";
@@ -93,6 +94,8 @@ export function App() {
             history.replace(`/${state.sceneId}${window.location.search}`);
         }
     }, [history]);
+
+    useRefreshProjectPermissions();
 
     useEffect(() => {
         const handleOnline = () => dispatch(explorerActions.toggleIsOnline(true));

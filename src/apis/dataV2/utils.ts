@@ -50,7 +50,7 @@ export function authScopeToString(scope: AuthScope) {
     return (
         "/" +
         [
-            scope.organizationId ? `org/${scope.organizationId}` : null,
+            scope.organizationId ? `org/${scope.organizationId.toLowerCase()}` : null,
             scope.projectId ? `project/${scope.projectId}` : null,
             scope.resourceId && scope.resourceType ? `${scope.resourceType}/${scope.resourceId}` : null,
         ]
