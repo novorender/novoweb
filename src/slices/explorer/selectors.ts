@@ -2,7 +2,7 @@ import { createSelector } from "@reduxjs/toolkit";
 
 import { Permission } from "apis/dataV2/permissions";
 import { type RootState } from "app";
-import { featuresConfig, Widget } from "config/features";
+import { defaultEnabledWidgets, featuresConfig, Widget } from "config/features";
 import { checkPermission } from "utils/auth";
 
 import { ProjectType, SceneType, UrlSearchQuery, UserRole } from "./types";
@@ -45,6 +45,10 @@ export const selectEnabledWidgets = createSelector(
             }
 
             return widgets.filter((w) => {
+                if (defaultEnabledWidgets.includes(w.key)) {
+                    return true;
+                }
+
                 switch (w.key) {
                     case "bimcollab":
                     case "bimTrack":
