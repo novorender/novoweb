@@ -26,9 +26,11 @@ import { vec3 } from "gl-matrix";
 import { useCallback, useState } from "react";
 import { useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary, ScrollBox } from "components";
 import { CameraType, renderActions } from "features/render";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
@@ -44,10 +46,10 @@ export function FeatureServerList() {
     const dispatch = useAppDispatch();
     const history = useHistory();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.SceneManage) ?? isAdmin;
     // TODO int:arcgis:manage permission
-    // const checkPermission = useCheckProjectPermission();
     // const canManage = (checkPermission(Permission.IntArcgisManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
-    const canManage = isAdmin;
     const epsg = useProjectEpsg({ skip: featureServers.status !== AsyncStatus.Success });
     const isCameraSetCorrectly = useIsCameraSetCorrectly();
 
