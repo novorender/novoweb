@@ -8,7 +8,6 @@ import {
     MenuItem,
     OutlinedInput,
     Select,
-    TextFieldProps,
     useTheme,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
@@ -17,7 +16,7 @@ import { FormEventHandler, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, ScrollBox, TextField } from "components";
+import { Divider, ScrollBox } from "components";
 import { rangeSearchDateFormat } from "config/app";
 
 import { imagesActions, selectImageFilter } from "../imagesSlice";
@@ -93,18 +92,16 @@ export function Filter() {
                         <DatePicker
                             label="Date from"
                             value={dateFrom ? parse(String(dateFrom), rangeSearchDateFormat, new Date()) : null}
-                            onChange={(newDate: Date | null, keyboardInput) =>
-                                setDateFrom(
-                                    newDate
-                                        ? isValid(newDate)
-                                            ? format(newDate, rangeSearchDateFormat)
-                                            : keyboardInput ?? ""
-                                        : ""
-                                )
+                            onChange={(newDate: Date | null) =>
+                                setDateFrom(newDate && isValid(newDate) ? format(newDate, rangeSearchDateFormat) : "")
                             }
-                            inputFormat={rangeSearchDateFormat}
-                            disableMaskedInput={true}
-                            renderInput={(params: TextFieldProps) => <TextField {...params} size="medium" />}
+                            format={rangeSearchDateFormat}
+                            slotProps={{
+                                textField: {
+                                    size: "medium",
+                                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setDateFrom(e.target.value),
+                                },
+                            }}
                         />
                     </FormControl>
                 </Box>
@@ -113,18 +110,16 @@ export function Filter() {
                         <DatePicker
                             label="Date to"
                             value={dateTo ? parse(String(dateTo), rangeSearchDateFormat, new Date()) : null}
-                            onChange={(newDate: Date | null, keyboardInput) =>
-                                setDateTo(
-                                    newDate
-                                        ? isValid(newDate)
-                                            ? format(newDate, rangeSearchDateFormat)
-                                            : keyboardInput ?? ""
-                                        : ""
-                                )
+                            onChange={(newDate: Date | null) =>
+                                setDateTo(newDate && isValid(newDate) ? format(newDate, rangeSearchDateFormat) : "")
                             }
-                            inputFormat={rangeSearchDateFormat}
-                            disableMaskedInput={true}
-                            renderInput={(params: TextFieldProps) => <TextField {...params} size="medium" />}
+                            format={rangeSearchDateFormat}
+                            slotProps={{
+                                textField: {
+                                    size: "medium",
+                                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setDateTo(e.target.value),
+                                },
+                            }}
                         />
                     </FormControl>
                 </Box>

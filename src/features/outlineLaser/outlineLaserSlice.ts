@@ -25,8 +25,12 @@ export interface OutlineLaser {
     right: ReadonlyVec3[];
     down: ReadonlyVec3[];
     up: ReadonlyVec3[];
+    zDown: ReadonlyVec3[];
+    zUp: ReadonlyVec3[];
     measurementX?: TraceMeasurement;
     measurementY?: TraceMeasurement;
+    measurementZ?: TraceMeasurement;
+    laserPlanes?: ReadonlyVec4[];
 }
 
 export function getMeasurePointsFromTracer(
@@ -50,6 +54,7 @@ export function getMeasurePointsFromTracer(
 
 const initialState = {
     outlineGroups: [] as OutlineGroup[],
+    laser3d: false,
     lasers: [] as OutlineLaser[],
     laserPlane: undefined as
         | {
@@ -74,6 +79,9 @@ export const outlineLaserSlice = createSlice({
                     ? { ...group, hidden: action.payload.hide === undefined ? !group.hidden : action.payload.hide }
                     : group
             );
+        },
+        setLaser3d: (state, action: PayloadAction<State["laser3d"]>) => {
+            state.laser3d = action.payload;
         },
         setLaserPlane: (state, action: PayloadAction<State["laserPlane"]>) => {
             state.laserPlane = action.payload;
@@ -130,11 +138,34 @@ export const outlineLaserSlice = createSlice({
                     : (state.lasers[action.payload].measurementY!.endIdx! += 1);
             }
         },
+        incrementLaserZDown: (state, action: PayloadAction<number>) => {
+            if (
+                state.lasers[action.payload].measurementZ &&
+                state.lasers[action.payload].measurementZ!.startIdx !== undefined
+            ) {
+                state.lasers[action.payload].measurementZ!.startIdx === state.lasers[action.payload].zDown.length - 1
+                    ? (state.lasers[action.payload].measurementZ = undefined)
+                    : (state.lasers[action.payload].measurementZ!.startIdx! += 1);
+            }
+        },
+        incrementLaserZUp: (state, action: PayloadAction<number>) => {
+            if (
+                state.lasers[action.payload].measurementZ &&
+                state.lasers[action.payload].measurementZ!.endIdx !== undefined
+            ) {
+                state.lasers[action.payload].measurementZ!.endIdx === state.lasers[action.payload].zUp.length - 1
+                    ? (state.lasers[action.payload].measurementZ = undefined)
+                    : (state.lasers[action.payload].measurementZ!.endIdx! += 1);
+            }
+        },
         removeMeasurementX: (state, action: PayloadAction<number>) => {
-            state.lasers[action.payload].measurementX = undefined;
+            delete state.lasers[action.payload].measurementX;
         },
         removeMeasurementY: (state, action: PayloadAction<number>) => {
-            state.lasers[action.payload].measurementY = undefined;
+            delete state.lasers[action.payload].measurementY;
+        },
+        removeMeasurementZ: (state, action: PayloadAction<number>) => {
+            delete state.lasers[action.payload].measurementZ;
         },
     },
     extraReducers(builder) {
@@ -153,6 +184,8 @@ export const outlineLaserSlice = createSlice({
                     right: [],
                     down: [],
                     up: [],
+                    zDown: [],
+                    zUp: [],
                     measurementX: t.measurementX
                         ? {
                               start: t.measurementX.start,
@@ -165,6 +198,13 @@ export const outlineLaserSlice = createSlice({
                               end: t.measurementY.end,
                           }
                         : undefined,
+                    measurementZ: t.measurementZ
+                        ? {
+                              start: t.measurementZ.start,
+                              end: t.measurementZ.end,
+                          }
+                        : undefined,
+                    laserPlanes: t.laserPlanes,
                 };
             });
         });
@@ -177,6 +217,7 @@ export const selectVisibleOutlineGroups = createSelector(selectOutlineGroups, (g
 );
 export const selectOutlineLaserPlane = (state: RootState) => state.clippingOutline.laserPlane;
 export const selectOutlineLasers = (state: RootState) => state.clippingOutline.lasers;
+export const selectOutlineLaser3d = (state: RootState) => state.clippingOutline.laser3d;
 
 const { actions, reducer } = outlineLaserSlice;
 export { actions as clippingOutlineLaserActions, reducer as clippingOutlineLaserReducer };

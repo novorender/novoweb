@@ -10,11 +10,14 @@ export enum GroupStatus {
     Frozen = "frozen",
 }
 
+export type ImmutableObjectIdSet = Omit<Set<number>, "add" | "clear" | "delete">;
+
 export interface ObjectGroup {
     id: string;
     name: string;
     grouping: string;
-    ids: Set<number>;
+    // We rely on ids immutability for quick checks when setting highlights
+    ids: ImmutableObjectIdSet;
     color: VecRGB | VecRGBA;
     status: GroupStatus;
     opacity: number;

@@ -203,6 +203,9 @@ const initialState = {
         renderResolution: 1,
         framerateTarget: 30,
     },
+    generatedParametricData: {
+        enabled: false,
+    },
     navigationCube: {
         enabled: false,
     },
@@ -462,6 +465,12 @@ export const renderSlice = createSlice({
         setClippingInEdit: (state, action: PayloadAction<RecursivePartial<State["clippingInEdit"]>>) => {
             state.clippingInEdit = action.payload;
         },
+        setGeneratedParametricData: (
+            state,
+            action: PayloadAction<RecursivePartial<State["generatedParametricData"]>>
+        ) => {
+            state.generatedParametricData = mergeRecursive(state.generatedParametricData, action.payload);
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(initScene, (state, action) => {
@@ -528,6 +537,12 @@ export const renderSlice = createSlice({
                 props.explorerProjectState?.highlights?.secondary.property ??
                 props.highlights?.secondary.property ??
                 "";
+
+            // generated parametric data
+            state.generatedParametricData.enabled = props.explorerProjectState?.features?.generatedParametricData
+                ? props.explorerProjectState.features.generatedParametricData.enabled ||
+                  state.generatedParametricData.enabled
+                : Boolean(props.generatedParametricData) || state.generatedParametricData.enabled;
 
             // render settings
             if (props.explorerProjectState?.renderSettings) {
@@ -818,6 +833,7 @@ export const selectNavigationCube = (state: RootState) => state.render.navigatio
 export const selectDebugStats = (state: RootState) => state.render.debugStats;
 export const selectClippingInEdit = (state: RootState) => state.render.clippingInEdit;
 export const selectSceneOrganization = (state: RootState) => state.render.sceneOrganization;
+export const selectGeneratedParametricData = (state: RootState) => state.render.generatedParametricData;
 
 const { reducer } = renderSlice;
 const actions = { ...renderSlice.actions, initScene, resetView, selectBookmark };

@@ -18,6 +18,7 @@ import {
     selectBackground,
     selectCameraDefaults,
     selectDebugStats,
+    selectGeneratedParametricData,
     selectNavigationCube,
     selectPoints,
     selectProjectSettings,
@@ -86,6 +87,7 @@ export default function AdvancedSettings() {
     const secondaryHighlightColor = useHighlightCollections()[HighlightCollection.SecondaryHighlight].color;
     const debugStats = useAppSelector(selectDebugStats);
     const navigationCube = useAppSelector(selectNavigationCube);
+    const generatedParametricData = useAppSelector(selectGeneratedParametricData);
 
     const save = async () => {
         setStatus(Status.Saving);
@@ -110,8 +112,9 @@ export default function AdvancedSettings() {
                     },
                     properties:
                         originalScene.customProperties.explorerProjectState?.features?.properties ?? propertiesSettings,
-                    navigationCube: navigationCube,
-                    debugStats: debugStats,
+                    generatedParametricData,
+                    navigationCube,
+                    debugStats,
                     primaryMenu: {
                         buttons: Object.values(primaryMenu),
                     },

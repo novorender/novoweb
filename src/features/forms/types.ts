@@ -7,26 +7,81 @@ export enum FormItemType {
     Dropdown = "dropdown",
     Input = "input",
     Text = "text",
+    File = "file",
+    DateTime = "dateTime",
+    Date = "date",
+    Time = "time",
 }
 
-export type FormItem = SimpleItem | ItemWithOptions;
+export type FormItem = SimpleItem | ItemWithOptions | FileItem | DateTimeItem;
 
-type BaseItem = {
+export type FormFileUploadResponse = { checksum?: string; url?: string };
+
+export type FormsFile = File & FormFileUploadResponse;
+
+type BaseItem<T extends Date | string[] | FormsFile[] | null> = {
     id?: string;
     title: string;
     required: boolean;
-    value?: string[] | null;
+    value?: T;
     relevant?: boolean;
 };
 
-type SimpleItem = BaseItem & {
-    type: Exclude<FormItemType, FormItemType.Dropdown | FormItemType.Checkbox>;
+type SimpleItem = BaseItem<string[] | null> & {
+    type: Exclude<
+        FormItemType,
+        | FormItemType.Dropdown
+        | FormItemType.Checkbox
+        | FormItemType.File
+        | FormItemType.Date
+        | FormItemType.Time
+        | FormItemType.DateTime
+    >;
 };
 
-type ItemWithOptions = BaseItem & {
-    type: Exclude<FormItemType, SimpleItem["type"]>;
+interface ItemWithOptions extends BaseItem<string[] | null> {
+    type: Exclude<
+        FormItemType,
+        | FormItemType.Input
+        | FormItemType.Text
+        | FormItemType.File
+        | FormItemType.Date
+        | FormItemType.Time
+        | FormItemType.DateTime
+    >;
     options: string[];
-};
+}
+
+interface ItemWithOptions extends BaseItem<string[] | null> {
+    type: Exclude<
+        FormItemType,
+        | FormItemType.Input
+        | FormItemType.Text
+        | FormItemType.File
+        | FormItemType.Date
+        | FormItemType.Time
+        | FormItemType.DateTime
+    >;
+    options: string[];
+}
+
+export interface FileItem extends BaseItem<FormsFile[]> {
+    type: FormItemType.File;
+    defaultValue?: FormsFile[];
+    accept: string;
+    multiple: boolean;
+    readonly: boolean;
+    directory?: boolean;
+}
+
+export interface DateTimeItem extends BaseItem<Date> {
+    type: FormItemType.Date | FormItemType.Time | FormItemType.DateTime;
+    readonly?: boolean;
+    defaultValue?: Date;
+    min?: Date;
+    max?: Date;
+    step?: number;
+}
 
 export type ProjectId = string;
 export type TemplateId = string;
@@ -97,7 +152,30 @@ export type FormField =
           multiple?: boolean;
           options: { label: string; value: string; checked?: boolean }[];
       }
-    | { type: "file"; id?: string; required?: boolean; readonly?: boolean; accept?: string[] };
+    | {
+          type: FormItemType.Date | FormItemType.Time | FormItemType.DateTime;
+          id?: string;
+          label?: string;
+          value?: string;
+          defaultValue?: string;
+          required?: boolean;
+          readonly?: boolean;
+          min?: string;
+          max?: string;
+          step?: number;
+      }
+    | {
+          type: "file";
+          id?: string;
+          value?: FormsFile[];
+          defaultValue?: FormsFile[];
+          label?: string;
+          required?: boolean;
+          readonly?: boolean;
+          accept?: string;
+          multiple?: boolean;
+          directory?: boolean;
+      };
 
 export type FormObjectGuid = string;
 
@@ -194,3 +272,5 @@ export type FormTransform = {
     scale?: number;
     updated: boolean;
 };
+
+export type FileTypes = ("Documents" | "Images")[];

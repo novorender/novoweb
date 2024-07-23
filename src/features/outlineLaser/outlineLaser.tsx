@@ -42,6 +42,7 @@ import {
     clippingOutlineLaserActions,
     OutlineGroup,
     selectOutlineGroups,
+    selectOutlineLaser3d,
     selectOutlineLasers,
 } from "./outlineLaserSlice";
 
@@ -58,6 +59,7 @@ export default function ClippingOutline() {
     const dispatch = useAppDispatch();
     const picker = useAppSelector(selectPicker);
     const outlineLasers = useAppSelector(selectOutlineLasers);
+    const laser3d = useAppSelector(selectOutlineLaser3d);
     const cameraType = useAppSelector(selectCameraType);
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
     const snapToNearestAxis = useAppSelector(selectTopDownSnapToAxis) === undefined;
@@ -108,6 +110,10 @@ export default function ClippingOutline() {
         }
     };
 
+    const toggleLaser = (_e: ChangeEvent<HTMLInputElement>, checked: boolean) => {
+        dispatch(clippingOutlineLaserActions.setLaser3d(checked));
+    };
+
     const handleTopDown = () => {
         dispatch(
             renderActions.setCamera({
@@ -139,7 +145,6 @@ export default function ClippingOutline() {
                                             size="medium"
                                             color="primary"
                                             checked={picker === Picker.OutlineLaser}
-                                            disabled={planes.length === 0}
                                             onChange={() => {
                                                 if (picker === Picker.OutlineLaser) {
                                                     dispatch(renderActions.setPicker(Picker.Object));
@@ -178,6 +183,23 @@ export default function ClippingOutline() {
                         label={
                             <Box ml={1} fontSize={16}>
                                 Select cross section
+                            </Box>
+                        }
+                    />
+                    <FormControlLabel
+                        sx={{ ml: 0, mb: 2 }}
+                        control={
+                            <Switch
+                                name="3 point laser"
+                                checked={laser3d && cameraType === CameraType.Pinhole && planes.length === 0}
+                                color="primary"
+                                onChange={toggleLaser}
+                                disabled={cameraType !== CameraType.Pinhole || planes.length > 0}
+                            />
+                        }
+                        label={
+                            <Box ml={1} fontSize={16}>
+                                3 point laser
                             </Box>
                         }
                     />
