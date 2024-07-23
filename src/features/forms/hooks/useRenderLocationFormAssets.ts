@@ -117,6 +117,17 @@ export function useRenderLocationFormAssets() {
         }
     }, [templates, locationForms, active, transform]);
 
+    const baseObjectIdSet = useMemo(() => {
+        const baseObjectIdSet = new Set<number>();
+        if (assetInfoList.status === AsyncStatus.Success) {
+            for (const { baseObjectId } of assetInfoList.data) {
+                baseObjectIdSet.add(baseObjectId);
+                baseObjectIdSet.add(baseObjectId + SELECTED_OBJECT_ID_OFFSET);
+            }
+        }
+        return baseObjectIdSet;
+    }, [assetInfoList]);
+
     const uniqueMarkers = useMemo(() => {
         const uniqueMarkers = new Set<string>();
         for (const form of renderedForms) {
@@ -181,13 +192,8 @@ export function useRenderLocationFormAssets() {
                 return;
             }
 
-            const baseObjectIdSet = new Set<number>(assetInfoList.data.map((a) => a.baseObjectId));
-
             const objects = view.renderState.dynamic.objects.filter(
-                (obj) =>
-                    !obj.baseObjectId ||
-                    (!baseObjectIdSet.has(obj.baseObjectId) &&
-                        !baseObjectIdSet.has(obj.baseObjectId + SELECTED_OBJECT_ID_OFFSET))
+                (obj) => !obj.baseObjectId || !baseObjectIdSet.has(obj.baseObjectId)
             );
 
             needCleaning.current = false;
@@ -269,13 +275,8 @@ export function useRenderLocationFormAssets() {
 
             let objects = view.renderState.dynamic.objects as RenderStateDynamicObject[];
             if (needCleaning.current) {
-                const baseObjectIdSet = new Set<number>(assetInfoList.data.map((a) => a.baseObjectId));
-
                 objects = view.renderState.dynamic.objects.filter(
-                    (obj) =>
-                        !obj.baseObjectId ||
-                        (!baseObjectIdSet.has(obj.baseObjectId) &&
-                            !baseObjectIdSet.has(obj.baseObjectId + SELECTED_OBJECT_ID_OFFSET))
+                    (obj) => !obj.baseObjectId || !baseObjectIdSet.has(obj.baseObjectId)
                 );
 
                 needCleaning.current = false;
@@ -321,6 +322,7 @@ export function useRenderLocationFormAssets() {
         active,
         assetGltfMap,
         dispatchFormsGlobals,
+        baseObjectIdSet,
     ]);
 }
 
