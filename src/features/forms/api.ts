@@ -223,6 +223,7 @@ export const formsApi = createApi({
 
 export const {
     useListTemplatesQuery,
+    useLazyListTemplatesQuery,
     useGetSearchFormQuery,
     useGetLocationFormQuery,
     useGetSearchFormsQuery,

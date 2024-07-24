@@ -3,16 +3,18 @@ import { ReadonlyVec2, ReadonlyVec3 } from "gl-matrix";
 import { forwardRef, MouseEvent, useImperativeHandle, useMemo, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
 import { CameraType, selectCameraType } from "features/render";
-import { selectWidgets } from "slices/explorer";
+import { explorerActions, selectWidgets } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { useFetchAssetList } from "./hooks/useFetchAssetList";
 import { AssetIcon } from "./routes/create/assetIcon";
 import {
     formsActions,
+    selectAlwaysShowMarkers,
     selectCurrentFormsList,
     selectLocationForms,
     selectSelectedFormId,
@@ -46,11 +48,14 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
     const templates = useAppSelector(selectTemplates);
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const selectedTemplateId = useAppSelector(selectCurrentFormsList);
-    const isFormsWidgetAdded = useAppSelector((state) => selectWidgets(state).includes("forms"));
-    const active = useAppSelector(selectCameraType) === CameraType.Orthographic && isFormsWidgetAdded;
+    const isFormsWidgetOpen = useAppSelector((state) => selectWidgets(state).includes(featuresConfig.forms.key));
+    const alwaysShowMarkers = useAppSelector(selectAlwaysShowMarkers);
+    const active =
+        useAppSelector(selectCameraType) === CameraType.Orthographic && (isFormsWidgetOpen || alwaysShowMarkers);
     const dispatch = useAppDispatch();
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const assetList = useFetchAssetList();
+
+    const assetList = useFetchAssetList({ skip: !active });
 
     const iconMap = useMemo(() => {
         if (assetList.status !== AsyncStatus.Success) {
@@ -136,6 +141,7 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
         } else {
             dispatch(formsActions.setCurrentFormsList(templateId));
             dispatch(formsActions.setSelectedFormId(id));
+            dispatch(explorerActions.forceOpenWidget(featuresConfig.forms.key));
         }
     };
 

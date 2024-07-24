@@ -183,6 +183,9 @@ declare module "@novorender/data-js-api" {
                 }[];
             }[];
         };
+        forms?: {
+            alwaysShowMarkers: boolean;
+        };
     };
 
     interface Bookmark {
