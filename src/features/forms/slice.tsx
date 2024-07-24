@@ -129,9 +129,6 @@ export const formsSlice = createSlice({
         toggleAlwaysShowMarkers: (state, _action: PayloadAction<void>) => {
             state.alwaysShowMarkers = !state.alwaysShowMarkers;
         },
-        setAlwaysShowMarkers: (state, action: PayloadAction<State["alwaysShowMarkers"]>) => {
-            state.alwaysShowMarkers = action.payload;
-        },
         removeLocationFormsNotInTemplates: (state, action: PayloadAction<TemplateId[]>) => {
             const newForms = state.locationForms.filter((f) => action.payload.includes(f.templateId));
             if (state.locationForms.length !== newForms.length) {
