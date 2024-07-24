@@ -1,6 +1,7 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { type RootState } from "app/store";
+import { selectBookmark } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { type FormGLtfAsset, type FormRecord, type Template, type TemplateId } from "./types";
@@ -25,6 +26,7 @@ const initialState = {
     templates: { status: AsyncStatus.Success, data: [] },
     assets: { status: AsyncStatus.Initial },
     selectedFormId: undefined,
+    alwaysShowMarkers: false,
 } as {
     currentFormsList: string | null;
     locationForms: (FormRecord & { id: string; templateId: string })[];
@@ -43,6 +45,7 @@ const initialState = {
     templates: AsyncState<Partial<Template>[]>;
     assets: AsyncState<FormGLtfAsset[]>;
     selectedFormId: string | undefined;
+    alwaysShowMarkers: boolean;
 };
 
 type State = typeof initialState;
@@ -84,6 +87,9 @@ export const formsSlice = createSlice({
                 data: [...state.templates.data.filter((t) => t.id !== template.id), template],
             };
         },
+        setTemplates: (state, action: PayloadAction<State["templates"]>) => {
+            state.templates = action.payload;
+        },
         addLocationForms: (state, action: PayloadAction<State["locationForms"]>) => {
             const newForms = action.payload;
             state.locationForms = [
@@ -120,12 +126,28 @@ export const formsSlice = createSlice({
         toggleTemplatesFilter: (state, action: PayloadAction<Exclude<keyof State["templatesFilters"], "name">>) => {
             state.templatesFilters[action.payload] = !state.templatesFilters[action.payload];
         },
+        toggleAlwaysShowMarkers: (state, _action: PayloadAction<void>) => {
+            state.alwaysShowMarkers = !state.alwaysShowMarkers;
+        },
+        setAlwaysShowMarkers: (state, action: PayloadAction<State["alwaysShowMarkers"]>) => {
+            state.alwaysShowMarkers = action.payload;
+        },
         removeLocationFormsNotInTemplates: (state, action: PayloadAction<TemplateId[]>) => {
             const newForms = state.locationForms.filter((f) => action.payload.includes(f.templateId));
             if (state.locationForms.length !== newForms.length) {
                 state.locationForms = newForms;
             }
         },
+    },
+    extraReducers: (builder) => {
+        builder.addCase(selectBookmark, (state, action) => {
+            const { forms } = action.payload;
+            if (!forms) {
+                return;
+            }
+
+            state.alwaysShowMarkers = forms.alwaysShowMarkers ?? false;
+        });
     },
 });
 
@@ -148,6 +170,8 @@ export const selectLocationForms = (state: RootState) => state.forms.locationFor
 export const selectAssets = (state: RootState) => state.forms.assets;
 
 export const selectSelectedFormId = (state: RootState) => state.forms.selectedFormId;
+
+export const selectAlwaysShowMarkers = (state: RootState) => state.forms.alwaysShowMarkers;
 
 const { actions, reducer } = formsSlice;
 export { actions as formsActions, reducer as formsReducer };
