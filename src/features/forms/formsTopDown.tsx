@@ -7,7 +7,7 @@ import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
 import { CameraType, selectCameraType } from "features/render";
-import { selectWidgets } from "slices/explorer";
+import { explorerActions, selectWidgets } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { useFetchAssetList } from "./hooks/useFetchAssetList";
@@ -141,6 +141,7 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
         } else {
             dispatch(formsActions.setCurrentFormsList(templateId));
             dispatch(formsActions.setSelectedFormId(id));
+            dispatch(explorerActions.forceOpenWidget(featuresConfig.forms.key));
         }
     };
 
