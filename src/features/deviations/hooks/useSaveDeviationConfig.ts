@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { isInternalGroup, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { selectDeviations } from "features/render";
+import { useFillGroupObjectIds } from "features/render/hooks/useFillGroupObjectIds";
 import { loadScene } from "features/render/utils";
 import { useSceneId } from "hooks/useSceneId";
 import { selectIsAdminScene, selectProjectIsV2 } from "slices/explorer";
@@ -14,7 +15,7 @@ import { AsyncStatus } from "types/misc";
 
 import { deviationsActions } from "../deviationsSlice";
 import { UiDeviationConfig } from "../deviationTypes";
-import { fillGroupIds, uiConfigToServerConfig } from "../utils";
+import { uiConfigToServerConfig } from "../utils";
 
 export function useSaveDeviationConfig() {
     const dispatch = useAppDispatch();
@@ -27,6 +28,7 @@ export function useSaveDeviationConfig() {
     const isProjectV2 = useAppSelector(selectProjectIsV2);
     const [setDeviationProfiles] = useSetDeviationProfilesMutation();
     const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
+    const fillGroupIds = useFillGroupObjectIds();
 
     return useCallback(
         async ({
@@ -48,7 +50,7 @@ export function useSaveDeviationConfig() {
                 });
 
                 if (isProjectV2) {
-                    const uiConfigWithObjectIds = await updateObjectIds(sceneId, uiConfig, objectGroups);
+                    const uiConfigWithObjectIds = await updateObjectIds(uiConfig, objectGroups, fillGroupIds);
                     await setDeviationProfiles({
                         projectId,
                         config: uiConfigToServerConfig(uiConfigWithObjectIds),
@@ -64,7 +66,17 @@ export function useSaveDeviationConfig() {
                 dispatch(deviationsActions.setSaveStatus({ status: AsyncStatus.Error, msg: "Failed to save changes" }));
             }
         },
-        [dispatch, projectId, scene, sceneId, isAdminScene, isProjectV2, setDeviationProfiles, objectGroups]
+        [
+            dispatch,
+            projectId,
+            scene,
+            sceneId,
+            isAdminScene,
+            isProjectV2,
+            setDeviationProfiles,
+            objectGroups,
+            fillGroupIds,
+        ]
     );
 }
 
@@ -117,9 +129,9 @@ async function saveExplorerSettings({
 }
 
 export async function updateObjectIds(
-    sceneId: string,
     uiConfig: UiDeviationConfig,
-    objectGroups: ObjectGroup[]
+    objectGroups: ObjectGroup[],
+    fillGroupIds: (groups: ObjectGroup[]) => Promise<void>
 ): Promise<UiDeviationConfig> {
     const uniqueGroupIds = new Set<string>();
     for (const profile of uiConfig.profiles) {
@@ -134,7 +146,7 @@ export async function updateObjectIds(
     }
 
     const activeGroups = objectGroups.filter((g) => uniqueGroupIds.has(g.id));
-    await fillGroupIds(sceneId, activeGroups);
+    await fillGroupIds(activeGroups);
 
     const getGroups = (groupIds: string[]) => {
         const groups = activeGroups.filter((g) => groupIds.includes(g.id));

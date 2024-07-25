@@ -46,7 +46,7 @@ export function GroupList() {
         .filter((grp) => !grp.grouping)
         .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
 
-    const isLoading = loadingIds || saveStatus === AsyncStatus.Loading;
+    const isLoading = loadingIds || saveStatus.status === AsyncStatus.Loading;
     const allSelectedOrFrozen = objectGroups.every(
         (group) => group.status === GroupStatus.Selected || group.status === GroupStatus.Frozen
     );
@@ -77,10 +77,10 @@ export function GroupList() {
                             <CheckCircle sx={{ mr: 1 }} />
                             Group selected
                         </Button>
-                        <Button disabled={isLoading} color="grey" onClick={() => history.push("/save")}>
+                        {/* <Button disabled={isLoading} color="grey" onClick={() => history.push("/save")}>
                             <Save sx={{ mr: 1 }} />
                             Save
-                        </Button>
+                        </Button> */}
                     </Box>
                 </Box>
             ) : (

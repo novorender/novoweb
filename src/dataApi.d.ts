@@ -250,5 +250,6 @@ declare module "@novorender/data-js-api" {
 
     interface ObjectGroup {
         frozen: boolean;
+        canManage?: boolean;
     }
 }

@@ -3,7 +3,11 @@ import { ObjectDB } from "@novorender/data-js-api";
 import { getGPUTier } from "detect-gpu";
 import { useEffect, useRef } from "react";
 
-import { useLazyCheckPermissionsQuery, useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
+import {
+    useLazyCheckPermissionsQuery,
+    useLazyGetObjectGroupsQuery,
+    useLazyGetProjectQuery,
+} from "apis/dataV2/dataV2Api";
 import { Permission } from "apis/dataV2/permissions";
 import { ProjectInfo } from "apis/dataV2/projectTypes";
 import { useAppDispatch } from "app/redux-store-interactions";
@@ -15,7 +19,6 @@ import {
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
-import { fillGroupIds } from "features/deviations/utils";
 import { useSceneId } from "hooks/useSceneId";
 import { ProjectType } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
@@ -25,6 +28,7 @@ import { sleep } from "utils/time";
 import { renderActions } from "../renderSlice";
 import { ErrorKind } from "../sceneError";
 import { getDefaultCamera, loadScene } from "../utils";
+import { useFillGroupObjectIds } from "./useFillGroupObjectIds";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
@@ -39,7 +43,9 @@ export function useHandleInit() {
     const dispatch = useAppDispatch();
 
     const [getProject] = useLazyGetProjectQuery();
+    const [getObjectGroups] = useLazyGetObjectGroupsQuery();
     const [checkPermissions] = useLazyCheckPermissionsQuery();
+    const fillGroupObjectIds = useFillGroupObjectIds();
 
     const initialized = useRef(false);
 
@@ -82,7 +88,7 @@ export function useHandleInit() {
                     .unwrap()
                     .catch(() => undefined);
                 const projectIsV2 = Boolean(projectV2);
-                const [tmZoneForCalc, permissions] = await Promise.all([
+                const [tmZoneForCalc, permissions, objectGroups] = await Promise.all([
                     loadTmZoneForCalc(projectV2, sceneData.tmZone),
                     projectV2
                         ? checkPermissions({
@@ -90,6 +96,11 @@ export function useHandleInit() {
                               permissionIds: Object.values(Permission),
                           }).unwrap()
                         : [],
+                    projectV2
+                        ? getObjectGroups({ projectId: sceneId }).unwrap()
+                        : // RTK Query freeze
+                          //   .then((groups) => structuredClone(groups))
+                          sceneData.objectGroups,
                 ]);
 
                 const offlineWorkerState =
@@ -106,14 +117,14 @@ export function useHandleInit() {
                         // TODO do we need it? Or project permissions are reliable?
                         projectV2Info: projectV2 ? { ...projectV2, permissions } : null,
                         tmZoneForCalc,
-                        sceneData,
+                        sceneData: { ...sceneData, objectGroups },
                         sceneConfig: octreeSceneConfig,
                         initialCamera: sceneCamera ?? getDefaultCamera(projectV2?.bounds) ?? view.renderState.camera,
                         deviceProfile,
                     })
                 );
 
-                const groups: ObjectGroup[] = sceneData.objectGroups
+                const groups: ObjectGroup[] = objectGroups
                     .filter((group) => group.id && group.search)
                     .map((group) => ({
                         name: group.name,
@@ -133,13 +144,14 @@ export function useHandleInit() {
                         // NOTE(OLA): Pass IDs as undefined to be loaded when group is activated.
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         ids: group.ids ? new Set(group.ids) : (undefined as any),
+                        canManage: Boolean(group.canManage),
                     }));
 
                 // Ensure frozen groups are loaded before rendering anything to not even put them into memory
                 // (some scenes on some devices may crash upon loading because there's too much data)
-                await fillGroupIds(
-                    sceneId,
-                    groups.filter((g) => g.status === GroupStatus.Frozen)
+                await fillGroupObjectIds(
+                    groups.filter((g) => g.status === GroupStatus.Frozen),
+                    sceneId
                 );
 
                 dispatchObjectGroups(objectGroupsActions.set(groups));
@@ -237,6 +249,8 @@ export function useHandleInit() {
         dispatchHighlighted,
         dispatchHighlightCollections,
         getProject,
+        getObjectGroups,
+        fillGroupObjectIds,
         checkPermissions,
     ]);
 }

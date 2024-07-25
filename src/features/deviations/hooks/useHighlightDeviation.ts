@@ -14,11 +14,10 @@ import {
     useObjectGroups,
 } from "contexts/objectGroups";
 import { ObjectVisibility, renderActions, selectDefaultVisibility, selectViewMode } from "features/render";
-import { useSceneId } from "hooks/useSceneId";
+import { useFillGroupObjectIds } from "features/render/hooks/useFillGroupObjectIds";
 import { ViewMode } from "types/misc";
 
 import { selectAllDeviationGroups, selectSelectedCenterLineFollowPathId, selectSelectedProfile } from "../selectors";
-import { fillGroupIds } from "../utils";
 
 export function useHighlightDeviation() {
     const legendGroups = useAppSelector(selectAllDeviationGroups);
@@ -30,7 +29,7 @@ export function useHighlightDeviation() {
     const deviationType = useAppSelector(selectSelectedProfile)?.deviationType;
     const viewMode = useAppSelector(selectViewMode);
     const active = viewMode === ViewMode.Deviations;
-    const sceneId = useSceneId();
+    const fillGroupIds = useFillGroupObjectIds();
 
     const objectGroupsRef = useRef(objectGroups);
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
@@ -71,7 +70,7 @@ export function useHighlightDeviation() {
             iterationId.current = (iterationId.current + 1) % 100_000;
             const currentIterationId = iterationId.current;
 
-            await fillGroupIds(sceneId, nonHiddenDeviationColoredGroups);
+            await fillGroupIds(nonHiddenDeviationColoredGroups);
 
             if (iterationId.current !== currentIterationId) {
                 return;
@@ -96,7 +95,16 @@ export function useHighlightDeviation() {
 
             installed.current = true;
         }
-    }, [dispatch, dispatchHighlightCollections, legendGroups, restore, followPathId, objectGroups, active, sceneId]);
+    }, [
+        dispatch,
+        dispatchHighlightCollections,
+        legendGroups,
+        restore,
+        followPathId,
+        objectGroups,
+        active,
+        fillGroupIds,
+    ]);
 
     // Sync non deviation-colored groups with objectGroups
     useEffect(() => {

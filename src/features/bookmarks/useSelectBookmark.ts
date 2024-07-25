@@ -3,7 +3,6 @@ import { Bookmark } from "@novorender/data-js-api";
 import { mat3, quat, vec4 } from "gl-matrix";
 import { useCallback } from "react";
 
-import { dataApi } from "apis/dataV1";
 import { useAppDispatch } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
@@ -29,18 +28,18 @@ import { manholeActions } from "features/manhole";
 import { measureActions } from "features/measure";
 import { pointLineActions } from "features/pointLine";
 import { CameraType, ObjectVisibility, renderActions, SelectionBasketMode } from "features/render";
+import { useFillGroupObjectIds } from "features/render/hooks/useFillGroupObjectIds";
 import { flip, flipGLtoCadQuat } from "features/render/utils";
-import { useSceneId } from "hooks/useSceneId";
 import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 
 export function useSelectBookmark() {
-    const sceneId = useSceneId();
     const dispatchSelectionBasket = useDispatchSelectionBasket();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const dispatchHidden = useDispatchHidden();
     const objectGroups = useLazyObjectGroups();
     const dispatchObjectGroups = useDispatchObjectGroups();
+    const fillGroupIds = useFillGroupObjectIds();
 
     const {
         state: { view },
@@ -102,18 +101,7 @@ export function useSelectBookmark() {
                 dispatchSelectionBasket(selectionBasketActions.add(toAdd.flatMap((group) => Array.from(group.ids))));
 
                 dispatch(groupsActions.setLoadingIds(true));
-                await Promise.all(
-                    toLoad
-                        .filter((group) => !group.ids)
-                        .map(async (group) => {
-                            const ids = await dataApi.getGroupIds(sceneId, group.id).catch(() => {
-                                console.warn("failed to load ids for group - ", group.id);
-                                return [] as number[];
-                            });
-
-                            group.ids = new Set(ids);
-                        })
-                );
+                await fillGroupIds(toLoad.filter((group) => !group.ids));
                 dispatch(groupsActions.setLoadingIds(false));
 
                 dispatchSelectionBasket(selectionBasketActions.add(toLoad.flatMap((group) => Array.from(group.ids))));
@@ -136,8 +124,8 @@ export function useSelectBookmark() {
             dispatchObjectGroups,
             dispatchSelectionBasket,
             objectGroups,
-            sceneId,
             view,
+            fillGroupIds,
         ]
     );
 
@@ -195,18 +183,7 @@ export function useSelectBookmark() {
                 );
 
                 dispatch(groupsActions.setLoadingIds(true));
-                await Promise.all(
-                    toLoad
-                        .filter((group) => !group.ids)
-                        .map(async (group) => {
-                            const ids = await dataApi.getGroupIds(sceneId, group.id).catch(() => {
-                                console.warn("failed to load ids for group - ", group.id);
-                                return [] as number[];
-                            });
-
-                            group.ids = new Set(ids);
-                        })
-                );
+                await fillGroupIds(toLoad.filter((group) => !group.ids));
                 dispatch(groupsActions.setLoadingIds(false));
 
                 dispatchSelectionBasket(selectionBasketActions.add(toLoad.flatMap((group) => Array.from(group.ids))));
@@ -499,8 +476,8 @@ export function useSelectBookmark() {
             dispatchObjectGroups,
             dispatchSelectionBasket,
             objectGroups,
-            sceneId,
             view,
+            fillGroupIds,
         ]
     );
 

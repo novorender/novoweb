@@ -27,13 +27,9 @@ import {
 import { MouseEvent, useState } from "react";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
-import { Permission } from "apis/dataV2/permissions";
-import { useAppSelector } from "app/redux-store-interactions";
 import { Tooltip } from "components";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { ColorPicker } from "features/colorPicker";
-import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
-import { selectHasAdminCapabilities } from "slices/explorer";
 import { rgbToVec, vecToRgb } from "utils/color";
 
 export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
@@ -52,9 +48,7 @@ export const StyledCheckbox = styled(Checkbox)`
 export function Group({ group, disabled }: { group: ObjectGroup; disabled: boolean }) {
     const history = useHistory();
     const match = useRouteMatch();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    const checkPermission = useCheckProjectPermission();
-    const canManage = (checkPermission(Permission.GroupManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = group.canManage;
     const dispatchObjectGroups = useDispatchObjectGroups();
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);

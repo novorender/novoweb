@@ -26,7 +26,7 @@ export function Save({ sceneId }: { sceneId: string }) {
     const handleSave = async (e: FormEvent) => {
         e.preventDefault();
 
-        dispatch(groupsActions.setSaveStatus(AsyncStatus.Loading));
+        dispatch(groupsActions.setSaveStatus({ status: AsyncStatus.Loading }));
 
         try {
             const [{ objectGroups: originalGroups, ...originalScene }] = await loadScene(sceneId);
@@ -75,10 +75,15 @@ export function Save({ sceneId }: { sceneId: string }) {
                 throw new Error("An error occurred while saving groups.");
             }
 
-            dispatch(groupsActions.setSaveStatus(AsyncStatus.Success));
+            dispatch(groupsActions.setSaveStatus({ status: AsyncStatus.Success, data: "Groups saved successfully" }));
         } catch (e) {
             console.warn(e);
-            dispatch(groupsActions.setSaveStatus(AsyncStatus.Error));
+            dispatch(
+                groupsActions.setSaveStatus({
+                    status: AsyncStatus.Error,
+                    msg: "An error occured while saving groups",
+                })
+            );
         }
 
         history.push("/");
@@ -97,7 +102,7 @@ export function Save({ sceneId }: { sceneId: string }) {
                 onCancel={() => history.goBack()}
                 component="form"
                 onSubmit={handleSave}
-                loading={status === AsyncStatus.Loading}
+                loading={status.status === AsyncStatus.Loading}
             >
                 <FormControlLabel
                     control={
@@ -106,7 +111,7 @@ export function Save({ sceneId }: { sceneId: string }) {
                             color="primary"
                             checked={saveState}
                             onChange={toggleSaveState as () => void}
-                            disabled={status === AsyncStatus.Loading}
+                            disabled={status.status === AsyncStatus.Loading}
                         />
                     }
                     label={

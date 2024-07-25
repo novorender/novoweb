@@ -2,6 +2,7 @@ import { OfflineErrorCode, OfflineViewState, View } from "@novorender/api";
 import { useCallback, useEffect } from "react";
 
 import { dataApi } from "apis/dataV1";
+import { useLazyGetObjectGroupIdsQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAbortController } from "hooks/useAbortController";
@@ -53,6 +54,8 @@ export function useHandleOffline() {
     const [abortController, abort] = useAbortController();
     const createLogger = useCreateLogger();
     const dispatch = useAppDispatch();
+
+    const [getObjectGroupIds] = useLazyGetObjectGroupIdsQuery();
 
     useEffect(
         function initOfflineScenes() {
@@ -147,7 +150,9 @@ export function useHandleOffline() {
                         user ? dataApi.getBookmarks(viewerSceneId, { personal: true }) : Promise.resolve(),
                         ...sceneData.objectGroups
                             .filter((group) => group.id && !group.ids)
-                            .map((group) => dataApi.getGroupIds(viewerSceneId, group.id)),
+                            .map((group) =>
+                                getObjectGroupIds({ projectId: viewerSceneId, groupId: group.id }).unwrap()
+                            ),
                     ]);
 
                     const persisted = await navigator.storage.persisted();
@@ -276,7 +281,9 @@ export function useHandleOffline() {
                         user ? dataApi.getBookmarks(viewerSceneId, { personal: true }) : Promise.resolve(),
                         ...sceneData.objectGroups
                             .filter((group) => group.id && !group.ids)
-                            .map((group) => dataApi.getGroupIds(viewerSceneId, group.id)),
+                            .map((group) =>
+                                getObjectGroupIds({ projectId: viewerSceneId, groupId: group.id }).unwrap()
+                            ),
                     ]);
 
                     const persisted = await navigator.storage.persisted();
@@ -325,7 +332,18 @@ export function useHandleOffline() {
                 dispatch(offlineActions.setAction(undefined));
             }
         }
-    }, [action, dispatch, offlineWorkerState, view, abort, abortController, createLogger, viewerSceneId, user]);
+    }, [
+        action,
+        dispatch,
+        offlineWorkerState,
+        view,
+        abort,
+        abortController,
+        createLogger,
+        viewerSceneId,
+        user,
+        getObjectGroupIds,
+    ]);
 }
 
 function useCreateLogger() {

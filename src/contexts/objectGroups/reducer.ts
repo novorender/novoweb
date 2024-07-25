@@ -23,6 +23,7 @@ export interface ObjectGroup {
     opacity: number;
     search: SearchPattern[];
     includeDescendants: boolean;
+    canManage: boolean;
 }
 
 export const initialState = [] as ObjectGroup[];
@@ -144,7 +145,7 @@ export function reducer(state: State, action: Actions): ObjectGroup[] {
                 runLoop = state.find((group) => group.name === newName) !== undefined;
             }
 
-            const copy = {
+            const copy: ObjectGroup = {
                 name,
                 id: window.crypto.randomUUID(),
                 grouping: toCopy.grouping,
@@ -154,6 +155,7 @@ export function reducer(state: State, action: Actions): ObjectGroup[] {
                 status: GroupStatus.None,
                 opacity: toCopy.opacity ?? 1,
                 includeDescendants: toCopy.includeDescendants ?? true,
+                canManage: true,
             };
 
             return state.concat(copy);

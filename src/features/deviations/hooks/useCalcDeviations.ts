@@ -5,7 +5,7 @@ import { useCalcDeviationsMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { isInternalGroup, useObjectGroups } from "contexts/objectGroups";
-import { useSceneId } from "hooks/useSceneId";
+import { useFillGroupObjectIds } from "features/render/hooks/useFillGroupObjectIds";
 import { selectProjectIsV2 } from "slices/explorer";
 
 import { deviationsActions } from "..";
@@ -21,7 +21,7 @@ export function useCalcDeviations() {
     const isProjectV2 = useAppSelector(selectProjectIsV2);
     const [calcDeviations] = useCalcDeviationsMutation();
     const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
-    const sceneId = useSceneId();
+    const fillGroupIds = useFillGroupObjectIds();
 
     return useCallback(
         async (config: UiDeviationConfig) => {
@@ -30,7 +30,9 @@ export function useCalcDeviations() {
             try {
                 let success = false;
                 if (isProjectV2) {
-                    const serverConfig = uiConfigToServerConfig(await updateObjectIds(sceneId, config, objectGroups));
+                    const serverConfig = uiConfigToServerConfig(
+                        await updateObjectIds(config, objectGroups, fillGroupIds)
+                    );
                     serverConfig.rebuildRequired = true;
                     await calcDeviations({ projectId: scene.id, config: serverConfig }).unwrap();
 
@@ -61,6 +63,6 @@ export function useCalcDeviations() {
                 );
             }
         },
-        [dispatch, sceneId, scene, isProjectV2, calcDeviations, objectGroups]
+        [dispatch, scene, isProjectV2, calcDeviations, objectGroups, fillGroupIds]
     );
 }

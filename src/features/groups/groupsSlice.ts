@@ -1,11 +1,11 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { type RootState } from "app";
-import { AsyncStatus } from "types/misc";
+import { AsyncState, AsyncStatus } from "types/misc";
 
 const initialState = {
     loadingIds: false,
-    saveStatus: AsyncStatus.Initial,
+    saveStatus: { status: AsyncStatus.Initial } as AsyncState<string | undefined>,
     expandedCollections: [] as string[],
 };
 

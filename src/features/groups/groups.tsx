@@ -28,7 +28,7 @@ export default function Groups() {
     const saveStatus = useAppSelector(selectSaveStatus);
     const dispatch = useAppDispatch();
 
-    const showSnackbar = [AsyncStatus.Success, AsyncStatus.Error].includes(saveStatus);
+    const showSnackbar = [AsyncStatus.Success, AsyncStatus.Error].includes(saveStatus.status);
 
     return (
         <MemoryRouter>
@@ -45,18 +45,20 @@ export default function Groups() {
                         }}
                         autoHideDuration={2500}
                         open={showSnackbar}
-                        onClose={() => dispatch(groupsActions.setSaveStatus(AsyncStatus.Initial))}
+                        onClose={() => dispatch(groupsActions.setSaveStatus({ status: AsyncStatus.Initial }))}
                         message={
-                            saveStatus === AsyncStatus.Error
-                                ? "An error occurred while saving groups."
-                                : "Groups successfully saved"
+                            saveStatus.status === AsyncStatus.Error
+                                ? saveStatus.msg
+                                : saveStatus.status === AsyncStatus.Success
+                                ? saveStatus.data
+                                : ""
                         }
                         action={
                             <IconButton
                                 size="small"
                                 aria-label="close"
                                 color="inherit"
-                                onClick={() => dispatch(groupsActions.setSaveStatus(AsyncStatus.Initial))}
+                                onClick={() => dispatch(groupsActions.setSaveStatus({ status: AsyncStatus.Initial }))}
                             >
                                 <Close fontSize="small" />
                             </IconButton>

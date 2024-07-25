@@ -1,3 +1,5 @@
+import { ObjectId } from "@novorender/api";
+import { ObjectGroup } from "@novorender/data-js-api";
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { minutesToSeconds } from "date-fns";
 
@@ -119,6 +121,25 @@ export const dataV2Api = createApi({
             transformResponse: (data: boolean[], _meta, { permissionIds }) =>
                 permissionIds.filter((_p, idx) => data[idx]),
         }),
+        getObjectGroups: builder.query<ObjectGroup[], { projectId: string }>({
+            query: ({ projectId }) => `/explorer/${projectId}/groups`,
+        }),
+        getObjectGroupIds: builder.query<ObjectId[], { projectId: string; groupId: string }>({
+            query: ({ projectId, groupId }) => `/explorer/${projectId}/groups/${groupId}/ids`,
+        }),
+        putObjectGroup: builder.mutation<void, { projectId: string; group: Omit<ObjectGroup, "canManage"> }>({
+            query: ({ projectId, group }) => ({
+                url: `/explorer/${projectId}/groups`,
+                method: "PUT",
+                body: group,
+            }),
+        }),
+        deleteObjectGroup: builder.mutation<void, { projectId: string; groupId: string }>({
+            query: ({ projectId, groupId }) => ({
+                url: `/explorer/${projectId}/groups/${groupId}`,
+                method: "DELETE",
+            }),
+        }),
     }),
 });
 
@@ -140,4 +161,8 @@ export const {
     useLazyGetFlatPermissionsQuery,
     useCheckPermissionsQuery,
     useLazyCheckPermissionsQuery,
+    useLazyGetObjectGroupsQuery,
+    useLazyGetObjectGroupIdsQuery,
+    usePutObjectGroupMutation,
+    useDeleteObjectGroupMutation,
 } = dataV2Api;
