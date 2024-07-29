@@ -110,14 +110,12 @@ export const dataV2Api = createApi({
         getFlatPermissions: builder.query<PermissionInfo[], void>({
             query: () => "/permissions/flat",
         }),
-        checkPermissions: builder.query<Permission[], { scope: string | AuthScope; permissionIds: Permission[] }>({
-            query: ({ scope, permissionIds }) => ({
-                url: "/roles/check-permissions",
+        listPermissions: builder.query<Permission[], { scope: string | AuthScope }>({
+            query: ({ scope }) => ({
+                url: "/roles/list-permissions",
                 method: "POST",
-                body: { scope: typeof scope === "string" ? scope : authScopeToString(scope), permissionIds },
+                body: { scope: typeof scope === "string" ? scope : authScopeToString(scope) },
             }),
-            transformResponse: (data: boolean[], _meta, { permissionIds }) =>
-                permissionIds.filter((_p, idx) => data[idx]),
         }),
     }),
 });
@@ -138,6 +136,5 @@ export const {
     useLazyGetFileDownloadLinkQuery,
     useSearchEpsgQuery,
     useLazyGetFlatPermissionsQuery,
-    useCheckPermissionsQuery,
-    useLazyCheckPermissionsQuery,
+    useLazyListPermissionsQuery,
 } = dataV2Api;

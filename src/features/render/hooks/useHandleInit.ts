@@ -3,8 +3,7 @@ import { ObjectDB } from "@novorender/data-js-api";
 import { getGPUTier } from "detect-gpu";
 import { useEffect, useRef } from "react";
 
-import { useLazyCheckPermissionsQuery, useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
-import { Permission } from "apis/dataV2/permissions";
+import { useLazyGetProjectQuery, useLazyListPermissionsQuery } from "apis/dataV2/dataV2Api";
 import { ProjectInfo } from "apis/dataV2/projectTypes";
 import { useAppDispatch } from "app/redux-store-interactions";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
@@ -39,7 +38,7 @@ export function useHandleInit() {
     const dispatch = useAppDispatch();
 
     const [getProject] = useLazyGetProjectQuery();
-    const [checkPermissions] = useLazyCheckPermissionsQuery();
+    const [listPermissions] = useLazyListPermissionsQuery();
 
     const initialized = useRef(false);
 
@@ -85,9 +84,8 @@ export function useHandleInit() {
                 const [tmZoneForCalc, permissions] = await Promise.all([
                     loadTmZoneForCalc(projectV2, sceneData.tmZone),
                     projectV2
-                        ? checkPermissions({
+                        ? listPermissions({
                               scope: { organizationId: sceneData.organization, projectId: sceneId },
-                              permissionIds: Object.values(Permission),
                           }).unwrap()
                         : [],
                 ]);
@@ -237,7 +235,7 @@ export function useHandleInit() {
         dispatchHighlighted,
         dispatchHighlightCollections,
         getProject,
-        checkPermissions,
+        listPermissions,
     ]);
 }
 
