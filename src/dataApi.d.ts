@@ -87,10 +87,10 @@ declare module "@novorender/data-js-api" {
             area:
                 | {
                       /** @deprecated  Use only to read legacy bookmarks */
-                      points: [point: [number, number, number], normal: [number, number, number]][];
+                      points: [point: [number, number, number]][];
                   }
                 | {
-                      areas: { points: [number, number, number][]; normals: [number, number, number][] }[];
+                      areas: { points: [number, number, number][] }[];
                   };
             pointLine:
                 | {

@@ -147,13 +147,7 @@ export function useCanvasClickHandler({
                     return;
                 case Picker.Area:
                     if (measure.hover?.drawKind === "vertex" && planes.length) {
-                        const plane = planes[0].normalOffset;
-                        dispatch(
-                            areaActions.addPt(
-                                [measure.hover.parameter, vec3.fromValues(-plane[0], -plane[1], -plane[2])],
-                                view
-                            )
-                        );
+                        dispatch(areaActions.addPt(measure.hover.parameter, view));
                     }
                     return;
                 case Picker.PointLine:
@@ -606,17 +600,15 @@ export function useCanvasClickHandler({
                 break;
             }
             case Picker.Area: {
-                if (measure.hover && measure.hover.drawKind === "vertex" && planes.length > 0) {
-                    const plane = planes[0].normalOffset;
-                    const planeDir = vec3.fromValues(-plane[0], -plane[1], -plane[2]);
-                    dispatch(areaActions.addPt([measure.hover.parameter, planeDir], view));
+                if (measure.hover && measure.hover.drawKind === "vertex") {
+                    dispatch(areaActions.addPt(measure.hover.parameter, view));
                 } else {
                     let useNormal = normal;
                     if (normal === undefined && cameraType === CameraType.Orthographic) {
                         useNormal = vec3.fromValues(0, 0, 1);
                         vec3.transformQuat(useNormal, useNormal, view.renderState.camera.rotation);
                     }
-                    dispatch(areaActions.addPt([position, useNormal ?? [0, 0, 0]], view));
+                    dispatch(areaActions.addPt(position, view));
                 }
                 break;
             }

@@ -164,7 +164,7 @@ export function useCreateBookmark() {
                 measurements: {
                     area: {
                         areas: areas.map((a) => {
-                            return { points: a.points, normals: a.normals };
+                            return { points: a.points };
                         }),
                     },
                     pointLine: {

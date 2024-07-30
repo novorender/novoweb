@@ -7,7 +7,6 @@ import { resetView, selectBookmark } from "features/render";
 
 export type AreaMeasure = {
     points: vec3[];
-    normals: vec3[];
     drawPoints: vec3[];
     area: number;
 };
@@ -15,7 +14,6 @@ export type AreaMeasure = {
 const areaMeasure = (): AreaMeasure => {
     return {
         points: [],
-        normals: [],
         drawPoints: [],
         area: -1,
     };
@@ -32,24 +30,17 @@ export const areaSlice = createSlice({
     initialState: initialState,
     reducers: {
         addPt: {
-            reducer: (
-                state,
-                {
-                    payload: [pt, normal],
-                    meta: { view },
-                }: PayloadAction<[pt: vec3, normal: vec3], string, { view: View }>
-            ) => {
+            reducer: (state, { payload: pt, meta: { view } }: PayloadAction<vec3, string, { view: View }>) => {
                 const current = state.areas[state.currentIndex];
                 const startPt = current.points.at(-1);
                 const z = state.lockElevation && startPt ? startPt[2] : pt[2];
                 current.points.push([pt[0], pt[1], z]);
-                current.normals.push(normal);
 
                 const area = computeArea(current, view);
                 current.area = area.area;
                 current.drawPoints = area.drawPoints;
             },
-            prepare: (pt: [pt: vec3, normal: vec3], view: View) => {
+            prepare: (pt: vec3, view: View) => {
                 return { payload: pt, meta: { view } };
             },
         },
@@ -57,7 +48,6 @@ export const areaSlice = createSlice({
             reducer: (state, { meta: { view } }: PayloadAction<void, string, { view: View }>) => {
                 const current = state.areas[state.currentIndex];
                 current.points.pop();
-                current.normals.pop();
 
                 const area = computeArea(current, view);
                 current.area = area.area;
@@ -104,7 +94,6 @@ export const areaSlice = createSlice({
                 const _area = {
                     ...areaMeasure(),
                     points: area.points.map((p) => p[0]),
-                    normals: area.points.map((p) => p[1]),
                 };
                 state.areas = [
                     {
@@ -136,11 +125,8 @@ export const selectAreas = (state: RootState) => state.area.areas;
 const { actions, reducer } = areaSlice;
 export { actions as areaActions, reducer as areaReducer };
 
-function computeArea(
-    { points, normals }: { points: vec3[]; normals: vec3[] },
-    view: View
-): { area: number; drawPoints: vec3[] } {
-    const area = points.length ? view.measure?.core.areaFromPolygon(points, normals) : undefined;
+function computeArea({ points }: { points: vec3[] }, view: View): { area: number; drawPoints: vec3[] } {
+    const area = points.length ? view.measure?.core.areaFromPolygon(points) : undefined;
 
     return area
         ? {
