@@ -340,11 +340,6 @@ export function useCanvasEventHandlers({
                                     view.renderState.camera.position,
                                     measureHoverSettings
                                 );
-                                if (picker !== Picker.Measurement) {
-                                    tolerance.edge = 0;
-                                    tolerance.face = 0;
-                                    tolerance.segment = 0;
-                                }
                                 hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
                                     result.objectId,
                                     result.position,

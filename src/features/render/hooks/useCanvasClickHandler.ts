@@ -603,11 +603,6 @@ export function useCanvasClickHandler({
                 if (measure.hover && measure.hover.drawKind === "vertex") {
                     dispatch(areaActions.addPt(measure.hover.parameter, view));
                 } else {
-                    let useNormal = normal;
-                    if (normal === undefined && cameraType === CameraType.Orthographic) {
-                        useNormal = vec3.fromValues(0, 0, 1);
-                        vec3.transformQuat(useNormal, useNormal, view.renderState.camera.rotation);
-                    }
                     dispatch(areaActions.addPt(position, view));
                 }
                 break;
