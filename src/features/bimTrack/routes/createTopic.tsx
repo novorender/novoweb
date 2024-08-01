@@ -10,7 +10,6 @@ import {
     MenuItem,
     OutlinedInput,
     Select,
-    TextFieldProps,
     useTheme,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
@@ -52,14 +51,14 @@ export function CreateTopic() {
         status: "",
         labels: [] as string[],
         priority: "",
-        deadline: "",
+        deadline: null as Date | null,
         assigned: "",
     });
     const { title, comment, type, area, stage, status, labels, priority, deadline, assigned } = fields;
     const [includeViewpoint, toggleIncludeViewpoint] = useToggle(true);
     const [viewpoint, setViewpoint] = useState<NewViewpoint>();
 
-    const handleInputChange = ({ name, value }: { name: string; value: string | string[] }) => {
+    const handleInputChange = ({ name, value }: { name: string; value: string | string[] | Date | null }) => {
         setFields((state) => ({ ...state, [name]: value }));
     };
 
@@ -79,7 +78,7 @@ export function CreateTopic() {
             priority,
             topic_type: type,
             topic_status: status,
-            due_date: deadline,
+            due_date: deadline && isValid(new Date(deadline)) ? deadline.toISOString() : "",
             assigned_to: assigned,
         };
         topic = Object.fromEntries(Object.entries(topic).filter(([_, value]) => value.length)) as typeof topic;
@@ -335,19 +334,19 @@ export function CreateTopic() {
                         <FormControl size="small" sx={{ width: 1, mb: 2 }}>
                             <DatePicker
                                 label="Deadline"
-                                value={deadline || null}
+                                value={deadline}
                                 minDate={today}
                                 onChange={(newDate: Date | null) =>
                                     handleInputChange({
                                         name: "deadline",
-                                        value: newDate
-                                            ? isValid(newDate)
-                                                ? set(newDate, { hours: 0, minutes: 0, seconds: 0 }).toISOString()
-                                                : ""
-                                            : "",
+                                        value: newDate ? set(newDate, { hours: 0, minutes: 0, seconds: 0 }) : null,
                                     })
                                 }
-                                renderInput={(params: TextFieldProps) => <TextField {...params} size="small" />}
+                                slotProps={{
+                                    textField: {
+                                        size: "small",
+                                    },
+                                }}
                             />
                         </FormControl>
 

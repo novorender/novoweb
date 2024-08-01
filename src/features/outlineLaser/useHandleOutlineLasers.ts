@@ -98,6 +98,8 @@ export function useHandleOutlineLasers() {
                                 right: outlineValues.right,
                                 down: outlineValues.down,
                                 up: outlineValues.up,
+                                zUp: [],
+                                zDown: [],
                                 laserPosition: newTracerPosition,
                                 measurementX:
                                     trace.measurementX &&

@@ -1,6 +1,17 @@
-import { ArrowBack, Clear, FlightTakeoff } from "@mui/icons-material";
-import { Box, Button, LinearProgress, Typography, useTheme } from "@mui/material";
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowBack, Clear, Download, FlightTakeoff, MoreVert } from "@mui/icons-material";
+import {
+    Box,
+    Button,
+    IconButton,
+    LinearProgress,
+    ListItemIcon,
+    ListItemText,
+    Menu,
+    MenuItem,
+    Typography,
+    useTheme,
+} from "@mui/material";
+import { Fragment, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -11,6 +22,7 @@ import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { selectCurrentFormsList } from "features/forms/slice";
 import { renderActions } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
+import { selectAccessToken, selectConfig } from "slices/explorer";
 
 import { useGetSearchFormQuery, useUpdateSearchFormMutation } from "../../api";
 import { type Form, type FormId, type FormItem as FItype, FormItemType, type FormObjectGuid } from "../../types";
@@ -23,6 +35,8 @@ export function SearchInstance() {
     const history = useHistory();
     const sceneId = useSceneId();
     const currentFormsList = useAppSelector(selectCurrentFormsList);
+    const formsBaseUrl = useAppSelector(selectConfig).dataV2ServerUrl + "/forms/";
+    const accessToken = useAppSelector(selectAccessToken);
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const { idArr: highlighted } = useHighlighted();
@@ -33,6 +47,7 @@ export function SearchInstance() {
     const [items, setItems] = useState<FItype[]>([]);
     const [isUpdated, setIsUpdated] = useState(false);
     const didHighlightId = useRef(false);
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const { data: form, isLoading: isFormLoading } = useGetSearchFormQuery({
         projectId: sceneId,
@@ -120,6 +135,54 @@ export function SearchInstance() {
         dispatchHighlightCollections,
     ]);
 
+    const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        setMenuAnchor(e.currentTarget);
+    };
+
+    const closeMenu = () => {
+        setMenuAnchor(null);
+    };
+
+    const handleExportAsPdf = useCallback(async () => {
+        if (!formsBaseUrl) {
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `${formsBaseUrl}projects/${sceneId}/objects/${objectGuid}/forms/${formId}/download`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Cache-Control": "no-cache, no-store, must-revalidate",
+                        Pragma: "no-cache",
+                        Expires: "0",
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                console.error(`Failed to export form as PDF`);
+            }
+
+            const pdfBlob = await response.blob();
+            const url = window.URL.createObjectURL(pdfBlob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", `${form?.title ?? "Novorender form"}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error(`Failed to export form as PDF: ${err}`);
+        }
+
+        closeMenu();
+    }, [accessToken, form?.title, formId, formsBaseUrl, objectGuid, sceneId]);
+
     const handleBackClick = useCallback(() => {
         dispatchHighlighted(highlightActions.setIds([]));
         dispatch(renderActions.setMainObject(undefined));
@@ -132,12 +195,32 @@ export function SearchInstance() {
 
     const handleClearClick = useCallback(() => {
         setItems((state) =>
-            state.map((item) => ({
-                ...item,
-                value: item.type !== FormItemType.Text ? null : item.value,
-            }))
+            state.map((item): FItype => {
+                switch (item.type) {
+                    case FormItemType.File:
+                        return {
+                            ...item,
+                            value: [],
+                        };
+                    case FormItemType.Text:
+                        return item;
+                    case FormItemType.Date:
+                    case FormItemType.Time:
+                    case FormItemType.DateTime:
+                        return {
+                            ...item,
+                            value: undefined,
+                        };
+                    default:
+                        return {
+                            ...item,
+                            value: null,
+                        };
+                }
+            })
         );
         setIsUpdated(true);
+        closeMenu();
     }, []);
 
     const handleFlyTo = useCallback(() => {
@@ -166,10 +249,25 @@ export function SearchInstance() {
                                     <FlightTakeoff sx={{ mr: 1 }} />
                                     Fly to
                                 </Button>
-                                <Button color="grey" onClick={handleClearClick}>
-                                    <Clear sx={{ mr: 1 }} />
-                                    Clear
-                                </Button>
+                                <>
+                                    <IconButton edge="start" size="small" onClick={openMenu} sx={{ mr: 1 }}>
+                                        <MoreVert fontSize="small" />
+                                    </IconButton>
+                                    <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
+                                        <MenuItem onClick={handleExportAsPdf}>
+                                            <ListItemIcon>
+                                                <Download fontSize="small" />
+                                            </ListItemIcon>
+                                            <ListItemText>Export as PDF</ListItemText>
+                                        </MenuItem>
+                                        <MenuItem onClick={handleClearClick}>
+                                            <ListItemIcon>
+                                                <Clear fontSize="small" />
+                                            </ListItemIcon>
+                                            <ListItemText>Clear</ListItemText>
+                                        </MenuItem>
+                                    </Menu>
+                                </>
                             </>
                         ) : undefined}
                     </Box>

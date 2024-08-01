@@ -11,6 +11,7 @@ import { useHandleDitioAuth } from "features/ditio";
 import { Engine2D } from "features/engine2D/engine2D";
 import { Engine2DHtmlInteractions } from "features/engine2D/engine2DHtmlInteractions";
 import { Engine2DInteractions } from "features/engine2D/engine2DInteractions";
+import { useRenderLocationFormAssets } from "features/forms/hooks/useRenderLocationFormAssets";
 import { useHandleImages } from "features/images";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { useHandleManhole } from "features/manhole";
@@ -131,6 +132,8 @@ export function Render3D() {
     useHandleXsiteManageKeepAlive();
     useHandleXsiteManageMachineLocations();
     useHandleDitioAuth();
+
+    useRenderLocationFormAssets();
 
     const cursor = useHandleCanvasCursor();
     const onClick = useCanvasClickHandler({ pointerDownStateRef });

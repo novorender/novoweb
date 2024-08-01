@@ -10,8 +10,6 @@ import {
     OutlinedInput,
     Select,
     SelectChangeEvent,
-    TextField,
-    TextFieldProps,
     useTheme,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
@@ -285,7 +283,11 @@ export function Filters() {
                         <FormControl size="small" sx={{ width: 1, mb: 2 }}>
                             <DatePicker
                                 label="Deadline"
-                                value={filters[FilterType.Deadline] || null}
+                                value={
+                                    isValid(new Date(filters[FilterType.Deadline]))
+                                        ? new Date(filters[FilterType.Deadline])
+                                        : null
+                                }
                                 onChange={(newDate: Date | null) =>
                                     setFilters((state) => ({
                                         ...state,
@@ -296,7 +298,11 @@ export function Filters() {
                                             : "",
                                     }))
                                 }
-                                renderInput={(params: TextFieldProps) => <TextField {...params} size="small" />}
+                                slotProps={{
+                                    textField: {
+                                        size: "small",
+                                    },
+                                }}
                             />
                         </FormControl>
                     </Box>
