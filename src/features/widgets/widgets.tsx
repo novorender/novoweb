@@ -146,6 +146,7 @@ function NewWidgets() {
             : widgetGroupPanelState.open
             ? 12
             : 0;
+    const maxWidgetGroupPanelWidth = 12;
 
     const getGridLayout = () => {
         if (layout.widgets === 4) {
@@ -157,7 +158,7 @@ function NewWidgets() {
                 // gridTemplateAreas: positionedWidgetsToTemplateAreas2by2(positionedWidgets),
                 width: `50%`,
                 minWidth: "800px",
-                maxWidth: `min(1400px, 100% - 640px - ${theme.spacing(widgetGroupPanelWidth + 2)})`,
+                maxWidth: `min(1400px, 100% - 640px - ${theme.spacing(maxWidgetGroupPanelWidth + 2)})`,
             };
         } else if (layout.widgets === 2) {
             return {
