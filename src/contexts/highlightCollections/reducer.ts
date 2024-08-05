@@ -11,6 +11,8 @@ export enum HighlightCollection {
     FormsNew = "formsNew",
     FormsOngoing = "formsOngoing",
     FormsCompleted = "formsCompleted",
+    ClashObjects1 = "clashObjects1",
+    ClashObjects2 = "clashObjects2",
 }
 
 export const initialState = {
@@ -38,6 +40,16 @@ export const initialState = {
         ids: {} as Record<ObjectId, true | undefined>,
         idArr: [] as ObjectId[],
         color: [0, 0.5, 0, 1] as VecRGBA,
+    },
+    [HighlightCollection.ClashObjects1]: {
+        ids: {} as Record<ObjectId, true | undefined>,
+        idArr: [] as ObjectId[],
+        color: [1, 0, 0, 1] as VecRGBA,
+    },
+    [HighlightCollection.ClashObjects2]: {
+        ids: {} as Record<ObjectId, true | undefined>,
+        idArr: [] as ObjectId[],
+        color: [0, 0, 1, 1] as VecRGBA,
     },
 };
 

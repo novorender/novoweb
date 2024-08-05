@@ -10,17 +10,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Permission } from "apis/dataV2/permissions";
 import { useAppSelector } from "app/redux-store-interactions";
+import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
 import { CameraType, selectCameraType } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
-import { selectConfig } from "slices/explorer";
+import { selectConfig, selectWidgets } from "slices/explorer";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { formsGlobalsActions } from "../formsGlobals";
 import { useDispatchFormsGlobals, useFormsGlobals } from "../formsGlobals/hooks";
 import {
+    selectAlwaysShowMarkers,
     selectAssets,
     selectCurrentFormsList,
     selectLocationForms,
@@ -29,6 +31,7 @@ import {
 } from "../slice";
 import { FormGLtfAsset, LocationTemplate } from "../types";
 import { useFetchAssetList } from "./useFetchAssetList";
+import { useFetchInitialLocationForms } from "./useFetchLocationForms";
 
 type RenderedForm = {
     templateId: string;
@@ -59,8 +62,6 @@ function useTransformDraft() {
 }
 
 export function useRenderLocationFormAssets() {
-    useFetchAssetList();
-
     const {
         state: { view },
     } = useExplorerGlobals();
@@ -73,10 +74,15 @@ export function useRenderLocationFormAssets() {
     const selectedTemplateId = useAppSelector(selectCurrentFormsList);
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const selectedMeshCache = useRef(new WeakMap<RenderStateDynamicMesh, RenderStateDynamicMesh>());
-    const active = useAppSelector(selectCameraType) === CameraType.Pinhole;
+    const isFormsWidgetOpen = useAppSelector((state) => selectWidgets(state).includes(featuresConfig.forms.key));
+    const alwaysShowMarkers = useAppSelector(selectAlwaysShowMarkers);
+    const active = useAppSelector(selectCameraType) === CameraType.Pinhole && (isFormsWidgetOpen || alwaysShowMarkers);
     const assetsUrl = useAppSelector(selectConfig).assetsUrl;
     const checkPermission = useCheckProjectPermission();
     const canView = (checkPermission(Permission.FormsView) || checkPermission(Permission.SceneView)) ?? true;
+
+    useFetchAssetList({ skip: !active });
+    useFetchInitialLocationForms();
 
     const [assetAbortController, assetAbort] = useAbortController();
     const [assetGltfMap, setAssetGltfMap] = useState<AsyncState<Map<string, readonly RenderStateDynamicObject[]>>>({
@@ -120,6 +126,17 @@ export function useRenderLocationFormAssets() {
             return result;
         }
     }, [templates, locationForms, active, transform, canView]);
+
+    const baseObjectIdSet = useMemo(() => {
+        const baseObjectIdSet = new Set<number>();
+        if (assetInfoList.status === AsyncStatus.Success) {
+            for (const { baseObjectId } of assetInfoList.data) {
+                baseObjectIdSet.add(baseObjectId);
+                baseObjectIdSet.add(baseObjectId + SELECTED_OBJECT_ID_OFFSET);
+            }
+        }
+        return baseObjectIdSet;
+    }, [assetInfoList]);
 
     const uniqueMarkers = useMemo(() => {
         const uniqueMarkers = new Set<string>();
@@ -186,13 +203,8 @@ export function useRenderLocationFormAssets() {
                 return;
             }
 
-            const baseObjectIdSet = new Set<number>(assetInfoList.data.map((a) => a.baseObjectId));
-
             const objects = view.renderState.dynamic.objects.filter(
-                (obj) =>
-                    !obj.baseObjectId ||
-                    (!baseObjectIdSet.has(obj.baseObjectId) &&
-                        !baseObjectIdSet.has(obj.baseObjectId + SELECTED_OBJECT_ID_OFFSET))
+                (obj) => !obj.baseObjectId || !baseObjectIdSet.has(obj.baseObjectId)
             );
 
             needCleaning.current = false;
@@ -279,13 +291,8 @@ export function useRenderLocationFormAssets() {
 
             let objects = view.renderState.dynamic.objects as RenderStateDynamicObject[];
             if (needCleaning.current) {
-                const baseObjectIdSet = new Set<number>(assetInfoList.data.map((a) => a.baseObjectId));
-
                 objects = view.renderState.dynamic.objects.filter(
-                    (obj) =>
-                        !obj.baseObjectId ||
-                        (!baseObjectIdSet.has(obj.baseObjectId) &&
-                            !baseObjectIdSet.has(obj.baseObjectId + SELECTED_OBJECT_ID_OFFSET))
+                    (obj) => !obj.baseObjectId || !baseObjectIdSet.has(obj.baseObjectId)
                 );
 
                 needCleaning.current = false;
@@ -332,6 +339,7 @@ export function useRenderLocationFormAssets() {
         assetGltfMap,
         dispatchFormsGlobals,
         canView,
+        baseObjectIdSet,
     ]);
 }
 

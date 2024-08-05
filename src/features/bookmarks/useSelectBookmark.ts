@@ -309,8 +309,8 @@ export function useSelectBookmark() {
 
             dispatch(areaActions.clear());
             if (bookmark.area) {
-                bookmark.area.pts.forEach((pt) => {
-                    dispatch(areaActions.addPt(pt.map((p) => flip(p)) as typeof pt, view));
+                bookmark.area.pts.forEach(([pt]) => {
+                    dispatch(areaActions.addPt(flip(pt), view));
                 });
             }
 

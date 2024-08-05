@@ -328,7 +328,7 @@ async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?:
 async function loadTmZoneForCalc(projectV2: ProjectInfo | undefined, tmZoneV1: string | undefined) {
     if (projectV2) {
         if (projectV2.epsg) {
-            const resp = await fetch(`https://epsg.io/${projectV2.epsg}.proj4`);
+            const resp = await fetch(`https://epsg.io/${projectV2.epsg}.wkt`);
             if (resp.ok) {
                 return resp.text();
             } else {

@@ -2,6 +2,8 @@ import { PickSampleExt } from "@novorender/api";
 import { useCallback } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { featuresConfig } from "config/features";
+import { explorerActions } from "slices/explorer";
 
 import { useLazyFormsGlobals } from "../formsGlobals/hooks";
 import { formsActions, selectCurrentFormsList, selectSelectedFormId } from "../slice";
@@ -25,8 +27,11 @@ export function useLocationFormAssetClickHandler() {
 
             if (!isSelected) {
                 dispatch(formsActions.setCurrentFormsList(templateId));
+                dispatch(formsActions.setSelectedFormId(formId));
+                dispatch(explorerActions.forceOpenWidget(featuresConfig.forms.key));
+            } else {
+                dispatch(formsActions.setSelectedFormId(undefined));
             }
-            dispatch(formsActions.setSelectedFormId(isSelected ? undefined : formId));
 
             return true;
         },

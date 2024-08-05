@@ -1,6 +1,16 @@
-import { ArrowBack, Clear, Delete, FlightTakeoff } from "@mui/icons-material";
-import { Box, Button, LinearProgress, useTheme } from "@mui/material";
-import { type FormEvent, Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { ArrowBack, Clear, Delete, Download, FlightTakeoff, MoreVert } from "@mui/icons-material";
+import {
+    Box,
+    Button,
+    IconButton,
+    LinearProgress,
+    ListItemIcon,
+    ListItemText,
+    Menu,
+    MenuItem,
+    useTheme,
+} from "@mui/material";
+import { type FormEvent, Fragment, MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
 import { Permission } from "apis/dataV2/permissions";
@@ -28,6 +38,7 @@ import { ObjectVisibility, renderActions } from "features/render";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectHasAdminCapabilities } from "slices/explorer";
+import { selectAccessToken, selectConfig } from "slices/explorer";
 
 import { FormItem } from "./formItem";
 
@@ -37,6 +48,8 @@ export function LocationInstance() {
     const history = useHistory();
     const sceneId = useSceneId();
     const currentFormsList = useAppSelector(selectCurrentFormsList);
+    const formsBaseUrl = useAppSelector(selectConfig).dataV2ServerUrl + "/forms/";
+    const accessToken = useAppSelector(selectAccessToken);
     const dispatch = useAppDispatch();
     const flyToForm = useFlyToForm();
     const dispatchFormsGlobals = useDispatchFormsGlobals();
@@ -51,6 +64,7 @@ export function LocationInstance() {
     const [items, setItems] = useState<FItype[]>([]);
     const [isUpdated, setIsUpdated] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const {
         data: form,
@@ -168,6 +182,53 @@ export function LocationInstance() {
         };
     }, [dispatchFormsGlobals]);
 
+    const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        setMenuAnchor(e.currentTarget);
+    };
+
+    const closeMenu = () => {
+        setMenuAnchor(null);
+    };
+
+    const handleExportAsPdf = useCallback(async () => {
+        if (!formsBaseUrl) {
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `${formsBaseUrl}projects/${sceneId}/location/${templateId}/${formId}/download`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Cache-Control": "no-cache, no-store, must-revalidate",
+                        Pragma: "no-cache",
+                        Expires: "0",
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                console.error(`Failed to export form as PDF`);
+            }
+
+            const pdfBlob = await response.blob();
+            const url = window.URL.createObjectURL(pdfBlob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", `${title ?? "Novorender form"}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error(`Failed to export form as PDF: ${err}`);
+        }
+        closeMenu();
+    }, [accessToken, formId, formsBaseUrl, sceneId, templateId, title]);
+
     const handleBack = useCallback(() => {
         if (currentFormsList) {
             history.push(`/forms/${currentFormsList}`);
@@ -204,6 +265,7 @@ export function LocationInstance() {
             })
         );
         setIsUpdated(true);
+        closeMenu();
     }, []);
 
     const handleTitleChange = useCallback(
@@ -264,14 +326,31 @@ export function LocationInstance() {
                             <FlightTakeoff sx={{ mr: 1 }} />
                             Fly to
                         </Button>
-                        <Button color="grey" onClick={handleClearClick} disabled={!canEdit}>
-                            <Clear sx={{ mr: 1 }} />
-                            Clear
-                        </Button>
-                        <Button color="grey" onClick={() => setIsDeleting(true)} disabled={!canDelete}>
-                            <Delete fontSize="small" sx={{ mr: 1 }} />
-                            Delete
-                        </Button>
+                        <>
+                            <IconButton edge="start" size="small" onClick={openMenu} sx={{ mr: 1 }}>
+                                <MoreVert fontSize="small" />
+                            </IconButton>
+                            <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
+                                <MenuItem onClick={handleExportAsPdf}>
+                                    <ListItemIcon>
+                                        <Download fontSize="small" />
+                                    </ListItemIcon>
+                                    <ListItemText>Export as PDF</ListItemText>
+                                </MenuItem>
+                                <MenuItem onClick={() => setIsDeleting(true)} disabled={!canDelete}>
+                                    <ListItemIcon>
+                                        <Delete fontSize="small" />
+                                    </ListItemIcon>
+                                    <ListItemText>Delete</ListItemText>
+                                </MenuItem>
+                                <MenuItem onClick={handleClearClick} disabled={!canEdit}>
+                                    <ListItemIcon>
+                                        <Clear fontSize="small" />
+                                    </ListItemIcon>
+                                    <ListItemText>Clear</ListItemText>
+                                </MenuItem>
+                            </Menu>
+                        </>
                     </Box>
                 </>
             </Box>
