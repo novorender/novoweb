@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
-import { selectAccessToken, selectUser } from "slices/authSlice";
+import { selectUser } from "slices/authSlice";
 import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 

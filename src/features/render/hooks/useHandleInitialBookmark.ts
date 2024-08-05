@@ -50,7 +50,7 @@ export function useHandleInitialBookmark() {
                 console.warn(e);
             }
         }
-    }, [view, sceneId, dispatch, selectBookmark, urlBookmarkId]);
+    }, [view, sceneId, dispatch, selectBookmark, urlBookmarkId, getBookmarks]);
 
     useEffect(() => {
         handleLocalBookmark();

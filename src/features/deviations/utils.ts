@@ -1,6 +1,4 @@
-import { dataApi } from "apis/dataV1";
 import { ColorStop, DeviationProjectConfig, PointToPointGroup, PointToTriangleGroup } from "apis/dataV2/deviationTypes";
-import { ObjectGroup } from "contexts/objectGroups";
 
 import { DeviationForm, DeviationType, SubprofileGroup, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
 

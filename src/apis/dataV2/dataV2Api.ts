@@ -2,7 +2,7 @@ import { Bookmark, ObjectGroup } from "@novorender/data-js-api";
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { minutesToSeconds } from "date-fns";
 
-import { ArcgisWidgetConfig } from "features/arcgis";
+import { type ArcgisWidgetConfig } from "features/arcgis/types";
 import { CustomProperties } from "types/project";
 
 import { AuthScope, PermissionInfo } from "./authTypes";
