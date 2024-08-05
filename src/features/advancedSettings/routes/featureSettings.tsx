@@ -87,23 +87,6 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         sx={{ ml: 0, mb: 1 }}
                         control={
                             <Switch
-                                checked={allowGeneratedParametric.enabled}
-                                name="generated-parametric-data"
-                                onChange={(_evt, checked) =>
-                                    dispatch(renderActions.setGeneratedParametricData({ enabled: checked }))
-                                }
-                            />
-                        }
-                        label={
-                            <Box ml={1} fontSize={16}>
-                                Generated parametric data
-                            </Box>
-                        }
-                    />
-                    <FormControlLabel
-                        sx={{ ml: 0, mb: 1 }}
-                        control={
-                            <Switch
                                 checked={navigationCube.enabled}
                                 name="navigation-cube"
                                 onChange={(_evt, checked) =>
@@ -114,23 +97,6 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         label={
                             <Box ml={1} fontSize={16}>
                                 Navigation cube
-                            </Box>
-                        }
-                    />
-                    <FormControlLabel
-                        sx={{ ml: 0, mb: 1 }}
-                        control={
-                            <Switch
-                                checked={debugStats.enabled}
-                                name="debug-stats"
-                                onChange={(_evt, checked) =>
-                                    dispatch(renderActions.setDebugStats({ enabled: checked }))
-                                }
-                            />
-                        }
-                        label={
-                            <Box ml={1} fontSize={16}>
-                                Performance stats
                             </Box>
                         }
                     />
@@ -345,6 +311,47 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     </Grid>
                                 ))}
                         </Grid>
+                    </AccordionDetails>
+                </Accordion>
+                <Accordion>
+                    <AccordionSummary>Beta</AccordionSummary>
+                    <AccordionDetails>
+                        <Box p={1} mt={1} display="flex" flexDirection="column">
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 1 }}
+                                control={
+                                    <Switch
+                                        checked={allowGeneratedParametric.enabled}
+                                        name="generated-parametric-data"
+                                        onChange={(_evt, checked) =>
+                                            dispatch(renderActions.setGeneratedParametricData({ enabled: checked }))
+                                        }
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Generated parametric data
+                                    </Box>
+                                }
+                            />
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 1 }}
+                                control={
+                                    <Switch
+                                        checked={debugStats.enabled}
+                                        name="debug-stats"
+                                        onChange={(_evt, checked) =>
+                                            dispatch(renderActions.setDebugStats({ enabled: checked }))
+                                        }
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Performance stats
+                                    </Box>
+                                }
+                            />
+                        </Box>
                     </AccordionDetails>
                 </Accordion>
             </ScrollBox>
