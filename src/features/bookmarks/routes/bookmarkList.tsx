@@ -46,8 +46,7 @@ export function BookmarkList() {
     const dispatch = useAppDispatch();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage =
-        (checkPermission(Permission.BookmarkManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.BookmarkManage) ?? isAdmin;
 
     const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
     const [filteredBookmarks, setFilteredBookmarks] = useState(bookmarks);

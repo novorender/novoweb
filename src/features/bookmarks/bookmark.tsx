@@ -83,8 +83,7 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
 
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage =
-        (checkPermission(Permission.BookmarkManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.BookmarkManage) ?? isAdmin;
     const user = useAppSelector(selectUser);
     const [saveBookmarks] = useSaveBookmarksMutation();
 

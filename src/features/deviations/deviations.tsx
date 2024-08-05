@@ -87,8 +87,7 @@ export default function Deviations() {
 function WidgetMenu(props: MenuProps) {
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const checkPermission = useCheckProjectPermission();
-    const canManage =
-        (checkPermission(Permission.DeviationWrite) || checkPermission(Permission.SceneManage)) ?? isAdminScene;
+    const canManage = checkPermission(Permission.DeviationWrite) ?? isAdminScene;
     const history = useHistory();
     const isProjectV2 = useAppSelector(selectProjectIsV2);
     const calculationStatus = useAppSelector(selectDeviationCalculationStatus);

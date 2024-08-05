@@ -22,8 +22,7 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
     const token = useAppSelector(selectDitioAccessToken);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage =
-        (checkPermission(Permission.IntDitioManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntDitioManage) ?? isAdmin;
     const user = useAppSelector(selectUser);
     const [saveDitioConfig] = useSaveDitioConfigMutation();
 

@@ -16,8 +16,7 @@ export function Collection({ collection, bookmarks }: { collection: string; book
     const history = useHistory();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage =
-        (checkPermission(Permission.BookmarkManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.BookmarkManage) ?? isAdmin;
     const expanded = useAppSelector((state) => selectIsCollectionExpanded(state, collection));
     const dispatch = useAppDispatch();
 

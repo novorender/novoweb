@@ -79,7 +79,7 @@ export function useRenderLocationFormAssets() {
     const active = useAppSelector(selectCameraType) === CameraType.Pinhole && (isFormsWidgetOpen || alwaysShowMarkers);
     const assetsUrl = useAppSelector(selectConfig).assetsUrl;
     const checkPermission = useCheckProjectPermission();
-    const canView = (checkPermission(Permission.FormsView) || checkPermission(Permission.SceneView)) ?? true;
+    const canView = checkPermission(Permission.FormsView) ?? true;
 
     useFetchAssetList({ skip: !active });
     useFetchInitialLocationForms();

@@ -34,8 +34,7 @@ export function Feed() {
     const filters = useAppSelector(selectFilters);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage =
-        (checkPermission(Permission.IntDitioManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntDitioManage) ?? isAdmin;
 
     const projects = useAppSelector(selectDitioProjects);
     const { data: feed, isLoading } = useFeedWebRawQuery({ projects, filters }, { skip: !projects.length });

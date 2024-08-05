@@ -31,8 +31,8 @@ export function Templates() {
     const user = useAppSelector(selectUser);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = (checkPermission(Permission.FormsManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
-    const canDelete = checkPermission(Permission.FormsDelete) ?? canManage;
+    const canManage = checkPermission(Permission.FormsManage) ?? isAdmin;
+    const canDelete = checkPermission(Permission.FormsDelete) ?? isAdmin;
 
     const [deleteAllForms, { isLoading: isAllFormsDeleting }] = useDeleteAllFormsMutation();
 

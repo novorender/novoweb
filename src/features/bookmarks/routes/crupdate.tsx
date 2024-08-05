@@ -24,8 +24,7 @@ export function Crupdate() {
 
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage =
-        (checkPermission(Permission.BookmarkManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.BookmarkManage) ?? isAdmin;
 
     const dispatch = useAppDispatch();
     const {

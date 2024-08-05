@@ -28,8 +28,7 @@ export function Auth() {
 
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage =
-        (checkPermission(Permission.IntXsiteManageManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntXsiteManageManage) ?? isAdmin;
     const accessToken = useAppSelector(selectXsiteManageAccessToken);
     const site = useAppSelector(selectXsiteManageSite);
     const config = useAppSelector(selectXsiteManageConfig);

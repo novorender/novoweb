@@ -25,7 +25,7 @@ export function GroupList() {
     const history = useHistory();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = (checkPermission(Permission.GroupManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.GroupManage) ?? isAdmin;
     const loadingIds = useAppSelector(selectLoadingIds);
     const saveStatus = useAppSelector(selectSaveStatus);
     const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));

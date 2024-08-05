@@ -47,8 +47,7 @@ export function SearchInstance() {
     const flyToForm = useFlyToForm();
     const checkPermission = useCheckProjectPermission();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    const canManage = (checkPermission(Permission.FormsManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
-    const canEdit = checkPermission(Permission.FormsFill) ?? canManage;
+    const canEdit = checkPermission(Permission.FormsFill) ?? isAdmin;
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);

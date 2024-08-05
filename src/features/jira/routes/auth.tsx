@@ -38,7 +38,7 @@ export function Auth() {
 
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = (checkPermission(Permission.IntJiraManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntJiraManage) ?? isAdmin;
     const accessToken = useAppSelector(selectJiraAccessToken);
     const accessTokenStr = useAppSelector(selectJiraAccessTokenData);
     const currentUser = useAppSelector(selectJiraUser);

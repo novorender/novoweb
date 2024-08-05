@@ -81,7 +81,7 @@ function WidgetMenu(props: MenuProps) {
     const accessToken = useAppSelector(selectJiraAccessTokenData);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = (checkPermission(Permission.IntJiraManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntJiraManage) ?? isAdmin;
 
     if (!accessToken) {
         return null;

@@ -87,8 +87,7 @@ function WidgetMenu(props: MenuProps) {
     const token = useAppSelector(selectAccessToken);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage =
-        (checkPermission(Permission.IntBimTrackManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntBimTrackManage) ?? isAdmin;
 
     if (token.status !== AsyncStatus.Success) {
         return null;

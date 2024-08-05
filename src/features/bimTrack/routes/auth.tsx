@@ -24,8 +24,7 @@ export function Auth() {
     const config = useAppSelector(selectBimTrackConfig);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage =
-        (checkPermission(Permission.IntBimTrackManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntBimTrackManage) ?? isAdmin;
 
     const [getToken] = useLazyGetTokenQuery();
     const [refreshToken] = useLazyRefreshTokenQuery();

@@ -110,8 +110,7 @@ function WidgetMenu(props: MenuProps) {
     const token = useAppSelector(selectDitioAccessToken);
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage =
-        (checkPermission(Permission.IntDitioManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntDitioManage) ?? isAdmin;
 
     if (token.status !== AsyncStatus.Success || !canManage) {
         return null;

@@ -56,9 +56,8 @@ export function LocationInstance() {
     const lazyFormsGlobals = useLazyFormsGlobals();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = (checkPermission(Permission.FormsManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
-    const canDelete = checkPermission(Permission.FormsDelete) ?? canManage;
-    const canEdit = checkPermission(Permission.FormsFill) ?? canManage;
+    const canDelete = checkPermission(Permission.FormsDelete) ?? isAdmin;
+    const canEdit = checkPermission(Permission.FormsFill) ?? isAdmin;
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);

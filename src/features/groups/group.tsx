@@ -54,7 +54,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
     const match = useRouteMatch();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = (checkPermission(Permission.GroupManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.GroupManage) ?? isAdmin;
     const dispatchObjectGroups = useDispatchObjectGroups();
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
