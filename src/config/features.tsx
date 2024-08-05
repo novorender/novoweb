@@ -452,6 +452,7 @@ export const featuresConfig = {
         defaultLocked: false,
         offline: false,
         tags: [featureTags.review.key],
+        beta: true,
     },
 } as const;
 
@@ -486,3 +487,5 @@ export const defaultLockedWidgets = Object.values(featuresConfig)
 export const viewerWidgets = Object.values(featuresConfig).filter((widget) => widget.type === FeatureType.Widget) as {
     [K in keyof Config]: Config[K]["type"] extends FeatureType.Widget ? Config[K] : never;
 }[keyof Config][];
+export const releasedViewerWidgets = viewerWidgets.filter((w) => !("beta" in w) || !w.beta);
+export const betaViewerWidgets = viewerWidgets.filter((w) => "beta" in w && w.beta);
