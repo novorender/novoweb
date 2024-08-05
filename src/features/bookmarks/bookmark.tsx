@@ -18,7 +18,7 @@ import { css } from "@mui/styled-engine";
 import { MouseEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveBookmarksMutation } from "apis/dataV2/dataV2Api";
 import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Tooltip } from "components";
@@ -86,6 +86,7 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
     const canManage =
         (checkPermission(Permission.BookmarkManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
     const user = useAppSelector(selectUser);
+    const [saveBookmarks] = useSaveBookmarksMutation();
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -102,11 +103,13 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
         const newBookmarks = bookmarks.map((bm) => (bm === bookmark ? { ...bm, img, explorerState } : bm));
 
         try {
-            await dataApi.saveBookmarks(
-                sceneId,
-                newBookmarks.filter((bm) => bm.access === bookmark.access).map(({ access: _access, ...bm }) => bm),
-                { personal: bookmark.access === BookmarkAccess.Personal }
-            );
+            await saveBookmarks({
+                projectId: sceneId,
+                bookmarks: newBookmarks
+                    .filter((bm) => bm.access === bookmark.access)
+                    .map(({ access: _access, ...bm }) => bm),
+                personal: bookmark.access === BookmarkAccess.Personal,
+            }).unwrap();
             dispatch(bookmarksActions.setBookmarks(newBookmarks));
             dispatch(
                 bookmarksActions.setSaveStatus({

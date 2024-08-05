@@ -6,7 +6,6 @@ import {
 } from "@novorender/api";
 import { useEffect, useRef } from "react";
 
-import { dataApi } from "apis/dataV1";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHidden } from "contexts/hidden";
@@ -17,7 +16,7 @@ import { ImmutableObjectIdSet } from "contexts/objectGroups/reducer";
 import { useSelectionBasket } from "contexts/selectionBasket";
 import { selectVisibleOutlineGroups } from "features/outlineLaser";
 import { selectPropertyTreeGroups } from "features/propertyTree/slice";
-import { useSceneId } from "hooks/useSceneId";
+import { useFillGroupIds } from "hooks/useFillGroupIds";
 import { ViewMode } from "types/misc";
 
 import {
@@ -35,7 +34,6 @@ export function useHandleHighlights() {
     const {
         state: { view },
     } = useExplorerGlobals();
-    const sceneId = useSceneId();
     const mainObject = useAppSelector(selectMainObject);
     const highlighted = useHighlighted();
     const { secondaryHighlight, selectedDeviation, formsNew, formsOngoing, formsCompleted } = useHighlightCollections();
@@ -50,6 +48,7 @@ export function useHandleHighlights() {
     const { groups: propertyTreeGroups } = useAppSelector(selectPropertyTreeGroups);
     const cameraType = useAppSelector(selectCameraType);
     const viewMode = useAppSelector(selectViewMode);
+    const fillGroupIds = useFillGroupIds();
 
     const id = useRef(0);
     const prevFrozen = useRef<{ idSets: ObjectGroup["ids"][]; ids: Uint32Array }>();
@@ -77,7 +76,7 @@ export function useHandleHighlights() {
             const currentId = ++id.current;
             const loading = performance.now();
             dispatch(renderActions.addLoadingHandle(loading));
-            await fillActiveGroupIds(sceneId, groups);
+            await fillGroupIds(groups.filter((group) => group.status !== GroupStatus.None));
             dispatch(renderActions.removeLoadingHandle(loading));
 
             if (currentId !== id.current) {
@@ -302,7 +301,6 @@ export function useHandleHighlights() {
     }, [
         view,
         dispatch,
-        sceneId,
         highlighted,
         secondaryHighlight,
         formsNew,
@@ -320,23 +318,8 @@ export function useHandleHighlights() {
         cameraType,
         selectedDeviation,
         viewMode,
+        fillGroupIds,
     ]);
-}
-
-async function fillActiveGroupIds(sceneId: string, groups: ObjectGroup[]): Promise<void> {
-    const proms: Promise<void>[] = groups.map(async (group) => {
-        if (group.status !== GroupStatus.None && !group.ids) {
-            group.ids = new Set(
-                await dataApi.getGroupIds(sceneId, group.id).catch(() => {
-                    console.warn("failed to load ids for group - ", group.id);
-                    return [] as number[];
-                })
-            );
-        }
-    });
-
-    await Promise.all(proms);
-    return;
 }
 
 /**

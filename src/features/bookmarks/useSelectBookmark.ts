@@ -3,7 +3,7 @@ import { Bookmark } from "@novorender/data-js-api";
 import { mat3, quat, vec4 } from "gl-matrix";
 import { useCallback } from "react";
 
-import { dataApi } from "apis/dataV1";
+import { useLazyGetGroupIdsQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
@@ -41,6 +41,7 @@ export function useSelectBookmark() {
     const dispatchHidden = useDispatchHidden();
     const objectGroups = useLazyObjectGroups();
     const dispatchObjectGroups = useDispatchObjectGroups();
+    const [getGroupIds] = useLazyGetGroupIdsQuery();
 
     const {
         state: { view },
@@ -106,10 +107,12 @@ export function useSelectBookmark() {
                     toLoad
                         .filter((group) => !group.ids)
                         .map(async (group) => {
-                            const ids = await dataApi.getGroupIds(sceneId, group.id).catch(() => {
-                                console.warn("failed to load ids for group - ", group.id);
-                                return [] as number[];
-                            });
+                            const ids = await getGroupIds({ projectId: sceneId, groupId: group.id })
+                                .unwrap()
+                                .catch(() => {
+                                    console.warn("failed to load ids for group - ", group.id);
+                                    return [] as number[];
+                                });
 
                             group.ids = new Set(ids);
                         })
@@ -138,6 +141,7 @@ export function useSelectBookmark() {
             objectGroups,
             sceneId,
             view,
+            getGroupIds,
         ]
     );
 
@@ -199,10 +203,12 @@ export function useSelectBookmark() {
                     toLoad
                         .filter((group) => !group.ids)
                         .map(async (group) => {
-                            const ids = await dataApi.getGroupIds(sceneId, group.id).catch(() => {
-                                console.warn("failed to load ids for group - ", group.id);
-                                return [] as number[];
-                            });
+                            const ids = await getGroupIds({ projectId: sceneId, groupId: group.id })
+                                .unwrap()
+                                .catch(() => {
+                                    console.warn("failed to load ids for group - ", group.id);
+                                    return [] as number[];
+                                });
 
                             group.ids = new Set(ids);
                         })
@@ -501,6 +507,7 @@ export function useSelectBookmark() {
             objectGroups,
             sceneId,
             view,
+            getGroupIds,
         ]
     );
 

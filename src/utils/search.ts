@@ -61,7 +61,16 @@ export async function searchByPatterns({
     abortSignal?: AbortSignal;
     full?: boolean;
 }): Promise<void> {
-    const iterator = db.search({ searchPattern: searchPatterns, full }, abortSignal);
+    const iterator = db.search(
+        {
+            searchPattern:
+                typeof searchPatterns === "string"
+                    ? searchPatterns
+                    : searchPatterns.map(ensureSearchPatternValueIsArray),
+            full,
+        },
+        abortSignal
+    );
     let done = false;
 
     while (!done && !abortSignal?.aborted) {
@@ -92,7 +101,15 @@ export async function searchDeepByPatterns({
     callbackInterval?: number;
     abortSignal?: AbortSignal;
 }): Promise<void> {
-    const iterator = db.search({ searchPattern: searchPatterns }, abortSignal);
+    const iterator = db.search(
+        {
+            searchPattern:
+                typeof searchPatterns === "string"
+                    ? searchPatterns
+                    : searchPatterns.map(ensureSearchPatternValueIsArray),
+        },
+        abortSignal
+    );
     let done = false;
 
     while (!done && !abortSignal?.aborted) {
@@ -135,6 +152,13 @@ export async function searchDeepByPatterns({
             { concurrency: 10 }
         );
     }
+}
+
+function ensureSearchPatternValueIsArray(pattern: SearchPattern): SearchPattern {
+    if (typeof pattern.value === "string") {
+        return { ...pattern, value: [pattern.value] };
+    }
+    return pattern;
 }
 
 /**

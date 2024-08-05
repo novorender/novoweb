@@ -1,20 +1,21 @@
 import { mergeRecursive, SceneConfig } from "@novorender/api";
 import { useCallback } from "react";
 
-import { dataApi } from "apis/dataV1";
-import { useSetDeviationProfilesMutation } from "apis/dataV2/dataV2Api";
+import { useSaveCustomPropertiesMutation, useSetDeviationProfilesMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { isInternalGroup, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
 import { selectDeviations } from "features/render";
 import { loadScene } from "features/render/utils";
+import { useFillGroupIds } from "hooks/useFillGroupIds";
 import { useSceneId } from "hooks/useSceneId";
 import { selectIsAdminScene, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
+import { CustomProperties } from "types/project";
 
 import { deviationsActions } from "../deviationsSlice";
 import { UiDeviationConfig } from "../deviationTypes";
-import { fillGroupIds, uiConfigToServerConfig } from "../utils";
+import { uiConfigToServerConfig } from "../utils";
 
 export function useSaveDeviationConfig() {
     const dispatch = useAppDispatch();
@@ -27,6 +28,8 @@ export function useSaveDeviationConfig() {
     const isProjectV2 = useAppSelector(selectProjectIsV2);
     const [setDeviationProfiles] = useSetDeviationProfilesMutation();
     const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
+    const fillGroupIds = useFillGroupIds();
+    const [saveCustomProperties] = useSaveCustomPropertiesMutation();
 
     return useCallback(
         async ({
@@ -45,10 +48,11 @@ export function useSaveDeviationConfig() {
                     sceneId,
                     deviations,
                     isAdminScene,
+                    saveCustomProperties: (data) => saveCustomProperties({ projectId: sceneId, data }).unwrap(),
                 });
 
                 if (isProjectV2) {
-                    const uiConfigWithObjectIds = await updateObjectIds(sceneId, uiConfig, objectGroups);
+                    const uiConfigWithObjectIds = await updateObjectIds(fillGroupIds, uiConfig, objectGroups);
                     await setDeviationProfiles({
                         projectId,
                         config: uiConfigToServerConfig(uiConfigWithObjectIds),
@@ -64,7 +68,18 @@ export function useSaveDeviationConfig() {
                 dispatch(deviationsActions.setSaveStatus({ status: AsyncStatus.Error, msg: "Failed to save changes" }));
             }
         },
-        [dispatch, projectId, scene, sceneId, isAdminScene, isProjectV2, setDeviationProfiles, objectGroups]
+        [
+            dispatch,
+            projectId,
+            scene,
+            sceneId,
+            fillGroupIds,
+            isAdminScene,
+            isProjectV2,
+            setDeviationProfiles,
+            objectGroups,
+            saveCustomProperties,
+        ]
     );
 }
 
@@ -73,11 +88,13 @@ async function saveExplorerSettings({
     sceneId,
     deviations,
     isAdminScene,
+    saveCustomProperties,
 }: {
     scene: SceneConfig;
     sceneId: string;
     deviations: ReturnType<typeof selectDeviations>;
     isAdminScene: boolean;
+    saveCustomProperties: (data: CustomProperties) => Promise<void>;
 }) {
     const id = scene.id;
 
@@ -91,33 +108,12 @@ async function saveExplorerSettings({
             },
         });
 
-        dataApi.putScene(updated);
-    } else {
-        const settings = originalScene.settings;
-        if (settings) {
-            await dataApi.putScene({
-                ...originalScene,
-                url: `${id}:${scene.id}`,
-                settings: {
-                    ...settings,
-                    points: {
-                        ...settings.points,
-                        deviation: {
-                            ...deviations,
-                            mode: deviations.mixFactor === 0 ? "off" : deviations.mixFactor === 1 ? "on" : "mix",
-                            colors: deviations.colorGradient.knots
-                                .map((deviation) => ({ deviation: deviation.position, color: deviation.color }))
-                                .sort((a, b) => a.deviation - b.deviation),
-                        },
-                    },
-                },
-            });
-        }
+        await saveCustomProperties(updated.customProperties);
     }
 }
 
 export async function updateObjectIds(
-    sceneId: string,
+    fillGroupIds: (groups: ObjectGroup[]) => Promise<void>,
     uiConfig: UiDeviationConfig,
     objectGroups: ObjectGroup[]
 ): Promise<UiDeviationConfig> {
@@ -134,7 +130,7 @@ export async function updateObjectIds(
     }
 
     const activeGroups = objectGroups.filter((g) => uniqueGroupIds.has(g.id));
-    await fillGroupIds(sceneId, activeGroups);
+    await fillGroupIds(activeGroups);
 
     const getGroups = (groupIds: string[]) => {
         const groups = activeGroups.filter((g) => groupIds.includes(g.id));

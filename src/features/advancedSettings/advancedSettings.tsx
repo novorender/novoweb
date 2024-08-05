@@ -4,7 +4,7 @@ import { quat, vec3 } from "gl-matrix";
 import { useState } from "react";
 import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveCustomPropertiesMutation } from "apis/dataV2/dataV2Api";
 import { useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { canvasContextMenuConfig } from "config/canvasContextMenu";
@@ -88,6 +88,7 @@ export default function AdvancedSettings() {
     const debugStats = useAppSelector(selectDebugStats);
     const navigationCube = useAppSelector(selectNavigationCube);
     const generatedParametricData = useAppSelector(selectGeneratedParametricData);
+    const [saveCustomProperties] = useSaveCustomPropertiesMutation();
 
     const save = async () => {
         setStatus(Status.Saving);
@@ -147,7 +148,7 @@ export default function AdvancedSettings() {
                 tmZone: projectSettings.tmZone,
             });
 
-            await dataApi.putScene(updated);
+            await saveCustomProperties({ projectId: scene.id, data: updated.customProperties }).unwrap();
 
             return setStatus(Status.SaveSuccess);
         } catch (e) {
@@ -167,14 +168,15 @@ export default function AdvancedSettings() {
         try {
             const [originalScene] = await loadScene(sceneId);
 
-            await dataApi.putScene(
-                mergeRecursive(originalScene, {
+            await saveCustomProperties({
+                projectId: scene.id,
+                data: mergeRecursive(originalScene, {
                     url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
                     customProperties: {
                         initialCameraState: cameraState,
                     },
-                })
-            );
+                }).customProperties,
+            });
         } catch (e) {
             console.warn(e);
             return setStatus(Status.SaveError);

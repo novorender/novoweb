@@ -341,7 +341,7 @@ async function getRoadCenterLine({ db, view, id }: { db: ObjectDB; view: View; i
             {
                 parentPath: projectPath,
                 descentDepth: 1,
-                searchPattern: [{ property: "Novorender/PathId", value: "" }],
+                searchPattern: [{ property: "Novorender/PathId", value: [""] }],
             },
             signal
         );
@@ -361,7 +361,7 @@ async function getRoadCenterLine({ db, view, id }: { db: ObjectDB; view: View; i
 
         const clParentIterator = db.search(
             {
-                searchPattern: [{ property: "name", value: clProperty[1] }],
+                searchPattern: [{ property: "name", value: [clProperty[1]] }],
             },
             signal
         );
@@ -374,9 +374,9 @@ async function getRoadCenterLine({ db, view, id }: { db: ObjectDB; view: View; i
         const clIterator = db.search(
             {
                 searchPattern: [
-                    { property: "path", value: clParent.path },
-                    { property: "Novorender/Path", value: "" },
-                    { property: "Novorender/PathId", value: "" },
+                    { property: "path", value: [clParent.path] },
+                    { property: "Novorender/Path", value: [""] },
+                    { property: "Novorender/PathId", value: [""] },
                 ],
             },
             signal

@@ -2,7 +2,7 @@ import { Box, Checkbox, FormControlLabel, useTheme } from "@mui/material";
 import { FormEvent } from "react";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveGroupsMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -22,6 +22,7 @@ export function Save({ sceneId }: { sceneId: string }) {
     const objectGroups = useLazyObjectGroups();
     const [saveState, toggleSaveState] = useToggle();
     const status = useAppSelector(selectSaveStatus);
+    const [saveGroups] = useSaveGroupsMutation();
 
     const handleSave = async (e: FormEvent) => {
         e.preventDefault();
@@ -59,10 +60,9 @@ export function Save({ sceneId }: { sceneId: string }) {
                     );
             }
 
-            const success = await dataApi.putScene({
-                ...originalScene,
-                url: `${sceneId}:${scene.id}`,
-                objectGroups: updated,
+            const success = await saveGroups({
+                projectId: sceneId,
+                groups: updated,
             });
 
             console.log({

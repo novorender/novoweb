@@ -19,7 +19,7 @@ import { format, isValid } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveBookmarksMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -80,6 +80,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
     const [createIssue] = useCreateIssueMutation();
     const [addAttachment] = useAddAttachmentMutation();
     const createBookmark = useCreateBookmark();
+    const [saveBookmarks] = useSaveBookmarksMutation();
     const today = useRef(new Date());
 
     const [getIssueSuggestions] = useLazyGetIssueSuggestionsQuery();
@@ -141,7 +142,11 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         const bmId = window.crypto.randomUUID();
         const bm = createBookmark();
         const snapshot = await createCanvasSnapshot(canvas, 5000, 5000);
-        const saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id: bmId, name: bmId }], { group: bmId });
+        const saved = await saveBookmarks({
+            projectId: sceneId,
+            bookmarks: [{ ...bm, id: bmId, name: bmId }],
+            group: bmId,
+        }).unwrap();
 
         if (!saved) {
             setSaveStatus(AsyncStatus.Error);

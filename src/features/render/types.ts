@@ -154,6 +154,7 @@ export type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
 );
 
 export type SceneConfig = Omit<SceneData, "settings" | "customProperties"> & {
+    objectGroups: ObjectGroup[];
     settings: Internal.RenderSettingsExt;
     customProperties: CustomProperties;
 };

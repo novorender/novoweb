@@ -3,7 +3,7 @@ import { Box, Button, List, Typography, useTheme } from "@mui/material";
 import { MouseEvent, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveBookmarksMutation } from "apis/dataV2/dataV2Api";
 import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
@@ -51,6 +51,7 @@ export function BookmarkList() {
 
     const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
     const [filteredBookmarks, setFilteredBookmarks] = useState(bookmarks);
+    const [saveBookmarks] = useSaveBookmarksMutation();
 
     useEffect(
         function filterBookmarks() {
@@ -73,20 +74,22 @@ export function BookmarkList() {
 
         try {
             const publicBmks = canManage
-                ? dataApi.saveBookmarks(
-                      sceneId,
-                      bookmarks
+                ? saveBookmarks({
+                      projectId: sceneId,
+                      bookmarks: bookmarks
                           .filter((bm) => bm.access !== BookmarkAccess.Personal)
                           .map(({ access: _access, ...bm }) => bm),
-                      { personal: false }
-                  )
+                      personal: false,
+                  }).unwrap()
                 : Promise.resolve(true);
 
-            const personalBmks = dataApi.saveBookmarks(
-                sceneId,
-                bookmarks.filter((bm) => bm.access === BookmarkAccess.Personal).map(({ access: _access, ...bm }) => bm),
-                { personal: true }
-            );
+            const personalBmks = saveBookmarks({
+                projectId: sceneId,
+                bookmarks: bookmarks
+                    .filter((bm) => bm.access === BookmarkAccess.Personal)
+                    .map(({ access: _access, ...bm }) => bm),
+                personal: true,
+            }).unwrap();
 
             const [savedPublic, savedPersonal] = await Promise.all([publicBmks, personalBmks]);
 

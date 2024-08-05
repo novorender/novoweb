@@ -4,7 +4,7 @@ import { Autocomplete, Box, Button, CircularProgress, debounce, Typography, useT
 import { FormEventHandler, SyntheticEvent, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveCustomPropertiesMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
@@ -34,6 +34,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const [serverInput, setServerInput] = useState(server);
     const [project, setProject] = useState(config.project || null);
     const serverIsValidUrl = isValidUrl(server);
+    const [saveCustomProperties] = useSaveCustomPropertiesMutation();
 
     const {
         data: projects,
@@ -92,7 +93,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                 },
             });
 
-            dataApi.putScene(updated);
+            saveCustomProperties({ projectId: scene.id, data: updated.customProperties }).unwrap();
         } catch {
             console.warn(`Failed to save ${featuresConfig.bimTrack.name} settings.`);
         }

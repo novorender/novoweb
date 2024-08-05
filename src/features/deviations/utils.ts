@@ -145,18 +145,3 @@ export function accountForAbsValues(colorStops: ColorStop[]) {
     const negatives = absolute.filter((cs) => cs.position > 0).map((cs) => ({ ...cs, position: -cs.position }));
     return [...absolute, ...negatives].sort(colorStopSortFn);
 }
-
-export async function fillGroupIds(sceneId: string, groups: ObjectGroup[]): Promise<void> {
-    await Promise.all(
-        groups.map(async (group) => {
-            if (!group.ids) {
-                group.ids = new Set(
-                    await dataApi.getGroupIds(sceneId, group.id).catch(() => {
-                        console.warn("failed to load ids for group - ", group.id);
-                        return [] as number[];
-                    })
-                );
-            }
-        })
-    );
-}

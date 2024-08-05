@@ -13,7 +13,7 @@ import {
 import { FormEventHandler, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveCustomPropertiesMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, IosSwitch, ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -34,6 +34,7 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const settings = useAppSelector(selectPropertiesStampSettings);
     const starred = useAppSelector(selectStarredProperties);
+    const [saveCustomProperties] = useSaveCustomPropertiesMutation();
 
     const [starredArr, setStarredArr] = useState(
         Object.keys(starred).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }))
@@ -81,15 +82,17 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
                     },
                 });
 
-                dataApi.putScene(updated);
+                saveCustomProperties({ projectId: scene.id, data: updated.customProperties });
             } else {
-                dataApi.putScene({
-                    ...originalScene,
-                    url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
-                    customProperties: {
+                saveCustomProperties({
+                    projectId: scene.id,
+                    data: {
                         ...originalScene.customProperties,
                         properties: {
-                            stampSettings: settings,
+                            stampSettings: {
+                                ...settings,
+                                properties: originalScene.customProperties.properties?.stampSettings?.properties ?? [],
+                            },
                             starred: starredArr,
                         },
                     },

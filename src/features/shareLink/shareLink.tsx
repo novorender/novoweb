@@ -2,7 +2,7 @@ import { Close } from "@mui/icons-material";
 import { IconButton, Snackbar, Typography } from "@mui/material";
 import { useState } from "react";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveBookmarksMutation } from "apis/dataV2/dataV2Api";
 import { useAppSelector } from "app/redux-store-interactions";
 import { WidgetMenuButtonWrapper } from "components/widgetMenuButtonWrapper";
 import { featuresConfig } from "config/features";
@@ -25,6 +25,7 @@ export function ShareLink() {
     const viewMode = useAppSelector(selectViewMode);
     const isOnline = useAppSelector(selectIsOnline);
     const sceneId = useSceneId();
+    const [saveBookmarks] = useSaveBookmarksMutation();
 
     const [status, setStatus] = useState(Status.Initial);
 
@@ -50,7 +51,11 @@ export function ShareLink() {
             await navigator.clipboard.write([
                 new ClipboardItem({
                     "text/plain": (async () => {
-                        saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id, name: id }], { group: id });
+                        saved = await saveBookmarks({
+                            projectId: sceneId,
+                            bookmarks: [{ ...bm, id, name: id }],
+                            group: id,
+                        }).unwrap();
 
                         if (!saved) {
                             throw new Error("Failed to save bookmark");

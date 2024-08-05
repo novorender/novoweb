@@ -4,7 +4,7 @@ import { Autocomplete, Box, Button, CircularProgress, Typography, useTheme } fro
 import { FormEventHandler, SyntheticEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveCustomPropertiesMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -34,6 +34,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const config = useAppSelector(selectXsiteManageConfig);
     const accessToken = useAppSelector(selectXsiteManageAccessToken);
     const currentSite = useAppSelector(selectXsiteManageSite);
+    const [saveCustomProperties] = useSaveCustomPropertiesMutation();
 
     const {
         data: sites,
@@ -87,7 +88,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                 },
             });
 
-            dataApi.putScene(updated);
+            saveCustomProperties({ projectId: scene.id, data: updated.customProperties }).unwrap();
         } catch {
             console.warn("Failed to save Xsite Manage settings.");
         }
