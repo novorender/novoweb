@@ -429,35 +429,49 @@ function Measure() {
         let pickPoint = stamp.data.position;
         if (objectId && stamp.data.position) {
             setStatus(AsyncStatus.Loading);
-            if (!isCrossSection) {
-                const tolerance = applyCameraDistanceToMeasureTolerance(
-                    stamp.data.position,
-                    view.renderState.camera.position,
-                    measurePickSettings
-                );
-                const ent = await view.measure?.core
-                    .pickMeasureEntity(objectId, stamp.data.position, tolerance, allowGeneratedParametric.enabled)
-                    .then((res) => res.entity)
-                    .catch(() => undefined);
 
-                const pickMeasurePoint = await view.measure?.core
-                    .pickMeasureEntity(objectId, stamp.data.position, { point: 0.4 }, allowGeneratedParametric.enabled)
-                    .then((res) => res.entity)
-                    .catch(() => undefined);
-                if (pickMeasurePoint?.drawKind === "vertex") {
-                    pickPoint = pickMeasurePoint.parameter;
+            const loadMeasureEntity = async () => {
+                if (!isCrossSection) {
+                    const tolerance = applyCameraDistanceToMeasureTolerance(
+                        stamp.data.position!,
+                        view.renderState.camera.position,
+                        measurePickSettings
+                    );
+                    const ent = await view.measure?.core
+                        .pickMeasureEntity(objectId, stamp.data.position!, tolerance, allowGeneratedParametric.enabled)
+                        .then((res) => res.entity)
+                        .catch(() => undefined);
+
+                    const pickMeasurePoint = await view.measure?.core
+                        .pickMeasureEntity(
+                            objectId,
+                            stamp.data.position!,
+                            { point: 0.4 },
+                            allowGeneratedParametric.enabled
+                        )
+                        .then((res) => res.entity)
+                        .catch(() => undefined);
+                    if (pickMeasurePoint?.drawKind === "vertex") {
+                        pickPoint = pickMeasurePoint.parameter;
+                    }
+                    setMeasureEntity(ent);
+                    setPickPoint(pickPoint);
                 }
-                setMeasureEntity(ent);
-            }
+            };
 
-            setCenterLine(await getRoadCenterLine({ db, view, id: objectId }));
+            const loadCenterLine = async () => {
+                const centerLine = await getRoadCenterLine({ db, view, id: objectId });
+                setCenterLine(centerLine);
+            };
+
+            loadMeasureEntity();
+            loadCenterLine();
         }
 
         const plane = view.renderState.clipping.planes[0]?.normalOffset;
         if (cameraType === CameraType.Orthographic) {
             const [pos] = view.convert.screenSpaceToWorldSpace([vec2.fromValues(stamp.mouseX, stamp.mouseY)]);
             if (pos && plane) {
-                console.log(laserPlane);
                 const laser = await getOutlineLaser(pos, view, "clipping", laserPlane?.rotation ?? 0, [plane]);
                 setLaser(laser ? { laser, plane } : undefined);
                 const outlinePoint = view.selectOutlinePoint(pos, 0.2);
@@ -511,6 +525,7 @@ function Measure() {
                 setLaser({ laser, plane: hiddenPlane });
             }
         }
+
         setPickPoint(pickPoint);
         setStatus(AsyncStatus.Success);
     }, [
