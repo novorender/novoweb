@@ -106,13 +106,8 @@ export function createOAuthStateString(state: OAuthState): string {
     return id;
 }
 
-/**
- * @param permissions user permissions
- * @param permission permission to check
- * @returns `true` if user has access to the given permission or any of its parent permissions up the hierarchy.
- *           E.g. when checking for `int:ditio:manage` - check if has any of `int`, `int:ditio`, `int:ditio:manage`
- */
 export function checkPermission(permissions: Set<Permission>, permission: Permission) {
-    const parts = permission.split(":");
-    return parts.some((_, i) => permissions.has(parts.slice(0, i + 1).join(":") as Permission));
+    // permissions are expected to have both explicit and implicit permissions,
+    // so we don't have to check for parent permissions
+    return permissions.has(permission);
 }

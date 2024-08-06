@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
-import { useLazyListPermissionsQuery } from "apis/dataV2/dataV2Api";
+import { useLazyCheckPermissionsQuery } from "apis/dataV2/dataV2Api";
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { selectSceneOrganization } from "features/render";
 import { explorerActions, selectProjectV2Info } from "slices/explorer";
@@ -10,7 +11,7 @@ export function useRefreshProjectPermissions() {
     const org = useAppSelector(selectSceneOrganization);
     const dispatch = useAppDispatch();
 
-    const [checkPermissions] = useLazyListPermissionsQuery();
+    const [checkPermissions] = useLazyCheckPermissionsQuery();
 
     useEffect(() => {
         if (!projectId) {
@@ -22,6 +23,7 @@ export function useRefreshProjectPermissions() {
             if (!document.hidden) {
                 const permissions = await checkPermissions({
                     scope: { organizationId: org, projectId },
+                    permissions: Object.values(Permission),
                 }).unwrap();
                 dispatch(explorerActions.setProjectPermissions(permissions));
                 // console.log("permissions", permissions);

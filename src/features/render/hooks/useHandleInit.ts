@@ -1,13 +1,15 @@
 import { DeviceProfile, getDeviceProfile, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
+import { SearchOptions } from "@novorender/webgl-api";
 import { getGPUTier } from "detect-gpu";
 import { useEffect, useRef } from "react";
 
 import {
+    useLazyCheckPermissionsQuery,
     useLazyGetExplorerInfoQuery,
     useLazyGetProjectQuery,
-    useLazyListPermissionsQuery,
 } from "apis/dataV2/dataV2Api";
+import { Permission } from "apis/dataV2/permissions";
 import { ProjectInfo } from "apis/dataV2/projectTypes";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
@@ -43,7 +45,7 @@ export function useHandleInit() {
     const dispatch = useAppDispatch();
 
     const [getProject] = useLazyGetProjectQuery();
-    const [listPermissions] = useLazyListPermissionsQuery();
+    const [checkPermissions] = useLazyCheckPermissionsQuery();
     const [getExplorerInfo] = useLazyGetExplorerInfoQuery();
     const fillGroupIds = useFillGroupIds();
 
@@ -88,8 +90,9 @@ export function useHandleInit() {
                 const projectIsV2 = Boolean(projectV2);
                 const [tmZoneForCalc, permissions, explorerInfo] = await Promise.all([
                     loadTmZoneForCalc(projectV2, sceneData.tmZone),
-                    listPermissions({
+                    checkPermissions({
                         scope: { organizationId: sceneData.organization, projectId: sceneId },
+                        permissions: Object.values(Permission),
                     }).unwrap(),
                     getExplorerInfo({ projectId: sceneId }).unwrap(),
                 ]);
@@ -252,7 +255,7 @@ export function useHandleInit() {
         dispatchHighlightCollections,
         getProject,
         getExplorerInfo,
-        listPermissions,
+        checkPermissions,
         config,
         fillGroupIds,
     ]);
@@ -340,11 +343,15 @@ async function loadTmZoneForCalc(projectV2: ProjectInfo | undefined, tmZoneV1: s
     }
 }
 
+// TODO(ND): remove patches once API is updated
+// Some changes to ObjectDB to make it work with data-v2 without changing lib internals
+// and changing all the search calls
 function patchDb(db: ObjectDB | undefined, dataV2ServerUrl: string, sceneId: string) {
     if (!db) {
         return;
     }
 
+    // Override object metadata URL
     const patchedDb = db as ObjectDB & { url: string };
     patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}`;
     const originalGetObjectMetdata = patchedDb.getObjectMetdata.bind(patchedDb);
@@ -353,5 +360,21 @@ function patchDb(db: ObjectDB | undefined, dataV2ServerUrl: string, sceneId: str
         const result = originalGetObjectMetdata(id);
         patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}`;
         return result;
+    };
+
+    // Search no longer accepts simple string when seaching nor single string for `value`
+    const originalSearch = patchedDb.search.bind(patchedDb);
+    patchedDb.search = (filter: SearchOptions, signal: AbortSignal | undefined) => {
+        const searchPattern =
+            typeof filter.searchPattern === "string"
+                ? [{ value: [filter.searchPattern] }]
+                : filter.searchPattern?.map((pattern) => {
+                      if (typeof pattern.value === "string") {
+                          return { ...pattern, value: [pattern.value] };
+                      }
+                      return pattern;
+                  });
+
+        return originalSearch({ ...filter, searchPattern }, signal);
     };
 }

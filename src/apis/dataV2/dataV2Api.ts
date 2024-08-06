@@ -115,12 +115,16 @@ export const dataV2Api = createApi({
         getFlatPermissions: builder.query<PermissionInfo[], void>({
             query: () => "/permissions/flat",
         }),
-        listPermissions: builder.query<Permission[], { scope: string | AuthScope }>({
-            query: ({ scope }) => ({
-                url: "/roles/list-permissions",
+        checkPermissions: builder.query<Permission[], { scope: string | AuthScope; permissions: Permission[] }>({
+            query: ({ scope, permissions }) => ({
+                url: "/roles/check-permissions",
                 method: "POST",
-                body: { scope: typeof scope === "string" ? scope : authScopeToString(scope) },
+                body: {
+                    scope: typeof scope === "string" ? scope : authScopeToString(scope),
+                    permissionIds: permissions,
+                },
             }),
+            transformResponse: (resp: boolean[], _, { permissions }) => permissions.filter((p, i) => resp[i]),
         }),
         getBookmarks: builder.query<Bookmark[], { projectId: string; group?: string; personal?: boolean }>({
             query: ({ projectId, group, personal }) =>
@@ -190,7 +194,7 @@ export const {
     useLazyGetFileDownloadLinkQuery,
     useSearchEpsgQuery,
     useLazyGetFlatPermissionsQuery,
-    useLazyListPermissionsQuery,
+    useLazyCheckPermissionsQuery,
     useGetBookmarksQuery,
     useLazyGetBookmarksQuery,
     useSaveBookmarksMutation,
