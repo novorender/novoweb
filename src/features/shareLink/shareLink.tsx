@@ -51,16 +51,13 @@ export function ShareLink() {
             await navigator.clipboard.write([
                 new ClipboardItem({
                     "text/plain": (async () => {
-                        saved = await saveBookmarks({
+                        await saveBookmarks({
                             projectId: sceneId,
                             bookmarks: [{ ...bm, id, name: id }],
                             group: id,
                         }).unwrap();
 
-                        if (!saved) {
-                            throw new Error("Failed to save bookmark");
-                        }
-
+                        saved = true;
                         return blob;
                     })(),
                 }),

@@ -79,7 +79,13 @@ export function BookmarkList() {
                           .filter((bm) => bm.access !== BookmarkAccess.Personal)
                           .map(({ access: _access, ...bm }) => bm),
                       personal: false,
-                  }).unwrap()
+                  })
+                      .unwrap()
+                      .then(() => true)
+                      .catch((error) => {
+                          console.error(error);
+                          return false;
+                      })
                 : Promise.resolve(true);
 
             const personalBmks = saveBookmarks({
@@ -88,7 +94,13 @@ export function BookmarkList() {
                     .filter((bm) => bm.access === BookmarkAccess.Personal)
                     .map(({ access: _access, ...bm }) => bm),
                 personal: true,
-            }).unwrap();
+            })
+                .unwrap()
+                .then(() => true)
+                .catch((error) => {
+                    console.error(error);
+                    return false;
+                });
 
             const [savedPublic, savedPersonal] = await Promise.all([publicBmks, personalBmks]);
 

@@ -160,7 +160,13 @@ export function Issue({ sceneId }: { sceneId: string }) {
             projectId: sceneId,
             bookmarks: [{ ...bm, id: bmId, name: bmId }],
             group: bmId,
-        }).unwrap();
+        })
+            .unwrap()
+            .then(() => true)
+            .catch((error) => {
+                console.error(error);
+                return false;
+            });
 
         if (!saved) {
             setSaveStatus(AsyncStatus.Error);
