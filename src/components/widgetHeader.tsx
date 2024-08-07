@@ -89,54 +89,61 @@ function WidgetHeaderNew({
 
     return (
         <Box boxShadow={!disableShadow ? theme.customShadows.widgetHeader : undefined}>
-            <Box p={1} display="flex">
-                <Box display="flex" alignItems="center">
-                    {!menuOpen && (
-                        <IconButton edge="start" size="small" onClick={toggleMenu} sx={{ mr: 1 }}>
-                            <ChevronLeft fontSize="small" />
-                        </IconButton>
-                    )}
-                    {WidgetMenu && WidgetMenu({ open: false }) ? (
-                        <>
-                            <IconButton edge="start" size="small" onClick={openMenu} sx={{ mr: 1 }}>
-                                <MoreVert fontSize="small" />
-                            </IconButton>
-                            <WidgetMenu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu} />
-                        </>
-                    ) : null}
-                    <SvgIcon
-                        sx={{
-                            mr: 1,
-                        }}
-                    >
-                        <Icon />
-                    </SvgIcon>
-                    <Typography variant="h6" component="h2">
-                        {name}
-                    </Typography>
-                    {!menuOpen && (
-                        <IconButton
-                            edge="start"
-                            size="small"
-                            onClick={toggleFavorite}
-                            sx={{ ml: 1 }}
-                            color={isFavorite ? "primary" : "default"}
-                        >
-                            {isFavorite ? <Star /> : <StarOutline />}
-                        </IconButton>
-                    )}
-                </Box>
-                <Box ml="auto">
-                    {!menuOpen && <ExpansionButtons widgetKey={key} />}
-                    {isSmall ? (
-                        <IconButton sx={{ mr: 1 }} data-test="minimize-widget" size="small" onClick={toggleMinimize}>
-                            <Minimize color={minimized ? "primary" : undefined} />
-                        </IconButton>
-                    ) : null}
-                    <IconButton data-test="close-widget" size="small" onClick={handleClose}>
-                        <Close />
+            <Box p={1} display="flex" alignItems="center">
+                {!menuOpen && (
+                    <IconButton edge="start" size="small" onClick={toggleMenu} sx={{ mr: 1 }}>
+                        <ChevronLeft fontSize="small" />
                     </IconButton>
-                </Box>
+                )}
+                {WidgetMenu && WidgetMenu({ open: false }) ? (
+                    <>
+                        <IconButton edge="start" size="small" onClick={openMenu} sx={{ mr: 1 }}>
+                            <MoreVert fontSize="small" />
+                        </IconButton>
+                        <WidgetMenu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu} />
+                    </>
+                ) : null}
+                <SvgIcon
+                    sx={{
+                        mr: 1,
+                    }}
+                >
+                    <Icon />
+                </SvgIcon>
+                <Typography
+                    variant="h6"
+                    component="h2"
+                    title={name}
+                    sx={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        flex: "auto",
+                        lineHeight: 1.5,
+                    }}
+                >
+                    {name}
+                </Typography>
+                {!menuOpen && (
+                    <IconButton
+                        edge="start"
+                        size="small"
+                        onClick={toggleFavorite}
+                        sx={{ ml: 1 }}
+                        color={isFavorite ? "primary" : "default"}
+                    >
+                        {isFavorite ? <Star /> : <StarOutline />}
+                    </IconButton>
+                )}
+                {!menuOpen && <ExpansionButtons widgetKey={key} />}
+                {isSmall ? (
+                    <IconButton sx={{ mr: 1 }} data-test="minimize-widget" size="small" onClick={toggleMinimize}>
+                        <Minimize color={minimized ? "primary" : undefined} />
+                    </IconButton>
+                ) : null}
+                <IconButton data-test="close-widget" size="small" onClick={handleClose}>
+                    <Close />
+                </IconButton>
             </Box>
             {children ? (
                 <Box px={1}>
