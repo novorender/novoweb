@@ -16,7 +16,8 @@ export function decodeObjPathName(str: string) {
 }
 
 export function getParentPath(path: string): string {
-    return path.split("/").slice(0, -1).join("/");
+    const lastSlashIdx = path.lastIndexOf("/");
+    return lastSlashIdx > 0 ? path.slice(0, lastSlashIdx) : "";
 }
 
 export function extractObjectIds<T extends { id: number } = HierarcicalObjectReference>(
