@@ -42,16 +42,6 @@ export async function login(
     };
 }
 
-export async function getAccessToken(token: string): Promise<string> {
-    return fetch(dataApi.serviceUrl + "/user/token", {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    })
-        .then((r) => r.text())
-        .catch(() => "");
-}
-
 export async function getUser(accessToken: string): Promise<User | undefined> {
     return fetch(dataApi.serviceUrl + "/user", {
         headers: {
