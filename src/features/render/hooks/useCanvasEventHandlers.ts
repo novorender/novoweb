@@ -13,6 +13,7 @@ import {
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { store } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { lastPickSampleActions, useDispatchLastPickSample } from "contexts/lastPickSample";
 import { selectShowTracer } from "features/followPath";
 import { measureActions, selectMeasureHoverSettings } from "features/measure";
 import { myLocationActions, selectMyLocationAutocenter } from "features/myLocation";
@@ -76,6 +77,7 @@ export function useCanvasEventHandlers({
     const viewMode = useAppSelector(selectViewMode);
     const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
     const dispatch = useAppDispatch();
+    const dispatchLastPickSample = useDispatchLastPickSample();
 
     const hideSvgCursor = () =>
         svg &&
@@ -449,6 +451,9 @@ export function useCanvasEventHandlers({
         } else if (stamp && !stamp.pinned) {
             dispatch(renderActions.setStamp(null));
         }
+
+        const lastPickSample = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        dispatchLastPickSample(lastPickSampleActions.set(lastPickSample ?? null));
 
         if (contextMenuCursorState.current) {
             contextMenuCursorState.current.currentPos[0] += e.movementX;

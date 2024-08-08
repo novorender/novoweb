@@ -7,6 +7,7 @@ import { ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGl
 import { HiddenProvider } from "contexts/hidden";
 import { HighlightCollectionsProvider } from "contexts/highlightCollections";
 import { HighlightedProvider } from "contexts/highlighted";
+import { LastPickSampleProvider } from "contexts/lastPickSample";
 import { ObjectGroupsProvider } from "contexts/objectGroups";
 import { SelectionBasketProvider } from "contexts/selectionBasket";
 import { Consent } from "features/consent";
@@ -88,7 +89,9 @@ function ContextProviders({ children }: { children: ReactNode }) {
                         <SelectionBasketProvider>
                             <FormsGlobalsProvider>
                                 <CameraStateProvider>
-                                    <ObjectGroupsProvider>{children}</ObjectGroupsProvider>
+                                    <LastPickSampleProvider>
+                                        <ObjectGroupsProvider>{children}</ObjectGroupsProvider>
+                                    </LastPickSampleProvider>
                                 </CameraStateProvider>
                             </FormsGlobalsProvider>
                         </SelectionBasketProvider>

@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { HudPanel } from "components/hudPanel";
 import IconButtonExt from "components/iconButtonExt";
 import { useCameraState } from "contexts/cameraState";
+import { useLastPickSample } from "contexts/lastPickSample";
 import { LocationStatus, selectLocationStatus } from "features/myLocation/myLocationSlice";
 import { useGoToMyLocation } from "features/myLocation/useGoToMyLocation";
 import { selectIsTopDown } from "features/orthoCam";
@@ -21,7 +22,7 @@ export default memo(function LocationHudInner() {
             <Box display="flex" gap={2}>
                 <CompassBtn />
                 <MyLocationBtn />
-                <CameraCoordinates />
+                <CursorCoordinates />
                 <Scale />
             </Box>
         </Box>
@@ -97,40 +98,54 @@ function MyLocationBtn() {
     );
 }
 
-function CameraCoordinates() {
-    const cameraState = useCameraState();
+function CursorCoordinates() {
+    const position = useLastPickSample()?.position;
     const tmZone = useAppSelector(selectTmZoneForCalc);
     const [showXyz, setShowXyz] = useState(false);
 
-    if (!cameraState) {
-        return null;
-    }
-
-    const cameraPos = cameraState.position;
-
     let content: ReactNode;
     if (tmZone && !showXyz) {
-        const coords = tm2LatLon({ coords: cameraPos, tmZone });
+        let lon: string, lat: string, alt: string;
+        if (position) {
+            const coords = tm2LatLon({ coords: position, tmZone });
+            lon = coords.longitude.toFixed(5);
+            lat = coords.latitude.toFixed(5);
+            alt = position[2].toFixed(0) + "m";
+        } else {
+            lon = lat = alt = "-";
+        }
 
         content = (
             <>
                 <Box>Lon</Box>
-                <Box ml={1}>{coords.longitude.toFixed(5)}</Box>
+                <Box ml={1} minWidth="70px">
+                    {lon}
+                </Box>
                 <Box ml={2}>Lat</Box>
-                <Box ml={1}>{coords.latitude.toFixed(5)}</Box>
+                <Box ml={1} minWidth="70px">
+                    {lat}
+                </Box>
                 <Box ml={2}>Alt</Box>
-                <Box ml={1}>{cameraPos[2].toFixed(0)}m</Box>
+                <Box ml={1} minWidth="50px">
+                    {alt}
+                </Box>
             </>
         );
     } else {
         content = (
             <>
                 <Box>X</Box>
-                <Box ml={1}>{cameraPos[0].toFixed(3)}</Box>
+                <Box ml={1} minWidth="100px">
+                    {position?.[0].toFixed(3) ?? "-"}
+                </Box>
                 <Box ml={2}>Y</Box>
-                <Box ml={1}>{cameraPos[1].toFixed(3)}</Box>
+                <Box ml={1} minWidth="100px">
+                    {position?.[1].toFixed(3) ?? "-"}
+                </Box>
                 <Box ml={2}>Z</Box>
-                <Box ml={1}>{cameraPos[2].toFixed(3)}</Box>
+                <Box ml={1} minWidth="60px">
+                    {position?.[2].toFixed(3) ?? "-"}
+                </Box>
             </>
         );
     }
