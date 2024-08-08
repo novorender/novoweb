@@ -36,6 +36,7 @@ export const selectSnackbarMessage = (state: RootState) => state.explorer.snackb
 export const selectNewDesign = createSelector([selectWidgetLayout, selectNewDesignRaw], (layout, newDesign) =>
     layout.sideBySide ? newDesign : false
 );
+export const selectAccessToken = (state: RootState) => state.auth.accessToken;
 
 export const selectEnabledWidgets = createSelector(
     (state: RootState) => state.explorer.enabledWidgets,

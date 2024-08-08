@@ -204,7 +204,6 @@ const serverOptions: ServerOptions = {
             rewrite: (path) => path.replace(/^\/xsitemanage/, ""),
             changeOrigin: true,
         },
-        // NOTE(OLA): Omega365 returns invalid headers and proxy crashes on nodejs version > 18.16.0
         "/omega365": {
             target: "https://nyeveier.pims365.no",
             rewrite: (path) => path.replace(/^\/omega365/, ""),

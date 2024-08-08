@@ -17,7 +17,15 @@ import { useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
 import { CanvasContextMenuFeatureKey, canvasContextMenuFeatures } from "config/canvasContextMenu";
-import { ButtonKey, defaultEnabledWidgets, featuresConfig, viewerWidgets, WidgetKey } from "config/features";
+import {
+    betaViewerWidgets,
+    ButtonKey,
+    defaultEnabledWidgets,
+    featuresConfig,
+    releasedViewerWidgets,
+    Widget,
+    WidgetKey,
+} from "config/features";
 import { renderActions, selectDebugStats, selectGeneratedParametricData, selectNavigationCube } from "features/render";
 import {
     explorerActions,
@@ -55,6 +63,18 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
         );
     };
 
+    const sortWidgets = (widgets: Widget[]) =>
+        widgets.sort(
+            (a, b) =>
+                a.name.localeCompare(b.name, "en", { sensitivity: "accent" }) +
+                ((lockedWidgets.includes(a.key) && lockedWidgets.includes(b.key)) ||
+                (!lockedWidgets.includes(a.key) && !lockedWidgets.includes(b.key))
+                    ? 0
+                    : lockedWidgets.includes(a.key)
+                    ? 100
+                    : -100)
+        );
+
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -87,23 +107,6 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         sx={{ ml: 0, mb: 1 }}
                         control={
                             <Switch
-                                checked={allowGeneratedParametric.enabled}
-                                name="generated-parametric-data"
-                                onChange={(_evt, checked) =>
-                                    dispatch(renderActions.setGeneratedParametricData({ enabled: checked }))
-                                }
-                            />
-                        }
-                        label={
-                            <Box ml={1} fontSize={16}>
-                                Generated parametric data
-                            </Box>
-                        }
-                    />
-                    <FormControlLabel
-                        sx={{ ml: 0, mb: 1 }}
-                        control={
-                            <Switch
                                 checked={navigationCube.enabled}
                                 name="navigation-cube"
                                 onChange={(_evt, checked) =>
@@ -117,67 +120,38 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                             </Box>
                         }
                     />
-                    <FormControlLabel
-                        sx={{ ml: 0, mb: 1 }}
-                        control={
-                            <Switch
-                                checked={debugStats.enabled}
-                                name="debug-stats"
-                                onChange={(_evt, checked) =>
-                                    dispatch(renderActions.setDebugStats({ enabled: checked }))
-                                }
-                            />
-                        }
-                        label={
-                            <Box ml={1} fontSize={16}>
-                                Performance stats
-                            </Box>
-                        }
-                    />
                     <Divider />
                 </Box>
                 <Accordion>
                     <AccordionSummary>Widgets</AccordionSummary>
                     <AccordionDetails>
                         <Grid container p={1}>
-                            {[...viewerWidgets]
-                                .sort(
-                                    (a, b) =>
-                                        a.name.localeCompare(b.name, "en", { sensitivity: "accent" }) +
-                                        ((lockedWidgets.includes(a.key) && lockedWidgets.includes(b.key)) ||
-                                        (!lockedWidgets.includes(a.key) && !lockedWidgets.includes(b.key))
-                                            ? 0
-                                            : lockedWidgets.includes(a.key)
-                                            ? 100
-                                            : -100)
+                            {sortWidgets([...releasedViewerWidgets]).map((widget) =>
+                                defaultEnabledWidgets.includes(widget.key) ? null : (
+                                    <Grid item xs={6} key={widget.key}>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    size="small"
+                                                    color="primary"
+                                                    name={widget.key}
+                                                    checked={
+                                                        enabledWidgets.some((enabled) => enabled.key === widget.key) &&
+                                                        !lockedWidgets.includes(widget.key)
+                                                    }
+                                                    onChange={(_e, checked) => toggleWidget(widget.key, checked)}
+                                                    disabled={lockedWidgets.includes(widget.key)}
+                                                />
+                                            }
+                                            label={
+                                                <Box mr={0.5} sx={{ userSelect: "none" }}>
+                                                    {widget.name}
+                                                </Box>
+                                            }
+                                        />
+                                    </Grid>
                                 )
-                                .map((widget) =>
-                                    defaultEnabledWidgets.includes(widget.key) ? null : (
-                                        <Grid item xs={6} key={widget.key}>
-                                            <FormControlLabel
-                                                control={
-                                                    <Checkbox
-                                                        size="small"
-                                                        color="primary"
-                                                        name={widget.key}
-                                                        checked={
-                                                            enabledWidgets.some(
-                                                                (enabled) => enabled.key === widget.key
-                                                            ) && !lockedWidgets.includes(widget.key)
-                                                        }
-                                                        onChange={(_e, checked) => toggleWidget(widget.key, checked)}
-                                                        disabled={lockedWidgets.includes(widget.key)}
-                                                    />
-                                                }
-                                                label={
-                                                    <Box mr={0.5} sx={{ userSelect: "none" }}>
-                                                        {widget.name}
-                                                    </Box>
-                                                }
-                                            />
-                                        </Grid>
-                                    )
-                                )}
+                            )}
                         </Grid>
                     </AccordionDetails>
                 </Accordion>
@@ -345,6 +319,68 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     </Grid>
                                 ))}
                         </Grid>
+                    </AccordionDetails>
+                </Accordion>
+                <Accordion>
+                    <AccordionSummary>Beta</AccordionSummary>
+                    <AccordionDetails>
+                        <Box p={1} mt={1} display="flex" flexDirection="column">
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 1 }}
+                                control={
+                                    <Switch
+                                        checked={allowGeneratedParametric.enabled}
+                                        name="generated-parametric-data"
+                                        onChange={(_evt, checked) =>
+                                            dispatch(renderActions.setGeneratedParametricData({ enabled: checked }))
+                                        }
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Generated parametric data
+                                    </Box>
+                                }
+                            />
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 1 }}
+                                control={
+                                    <Switch
+                                        checked={debugStats.enabled}
+                                        name="debug-stats"
+                                        onChange={(_evt, checked) =>
+                                            dispatch(renderActions.setDebugStats({ enabled: checked }))
+                                        }
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Performance stats
+                                    </Box>
+                                }
+                            />
+                            {sortWidgets([...betaViewerWidgets]).map((widget) => (
+                                <FormControlLabel
+                                    key={widget.key}
+                                    sx={{ ml: 0, mb: 1 }}
+                                    control={
+                                        <Switch
+                                            checked={
+                                                enabledWidgets.some((enabled) => enabled.key === widget.key) &&
+                                                !lockedWidgets.includes(widget.key)
+                                            }
+                                            onChange={(_e, checked) => toggleWidget(widget.key, checked)}
+                                            disabled={lockedWidgets.includes(widget.key)}
+                                        />
+                                    }
+                                    label={
+                                        <Box ml={1} fontSize={16}>
+                                            {widget.name}
+                                        </Box>
+                                    }
+                                />
+                            ))}
+                        </Box>
                     </AccordionDetails>
                 </Accordion>
             </ScrollBox>

@@ -6,6 +6,7 @@ import { searchByPatterns } from "utils/search";
 import { sleep } from "utils/time";
 
 import {
+    DateTimeItem,
     type Form,
     type FormField,
     type FormItem,
@@ -285,6 +286,20 @@ function toFormField(item: FormItem): FormField {
             ...(item.id ? { id: item.id } : {}),
         };
     }
+    if ([FormItemType.Date, FormItemType.Time, FormItemType.DateTime].includes(item.type)) {
+        return {
+            type: item.type as FormItemType.Date | FormItemType.Time | FormItemType.DateTime,
+            label: item.title,
+            value: (item.value as Date)?.toISOString(),
+            required: item.required,
+            readonly: (item as DateTimeItem).readonly,
+            defaultValue: (item as DateTimeItem).defaultValue?.toISOString(),
+            min: (item as DateTimeItem).min?.toISOString(),
+            max: (item as DateTimeItem).max?.toISOString(),
+            step: (item as DateTimeItem).step,
+            ...(item.id ? { id: item.id } : {}),
+        };
+    }
     if (item.type === FormItemType.File) {
         // NOTE: Mapping the value is required to serialize it later
         return {
@@ -359,6 +374,21 @@ function toFormItem(field: FormField): FormItem {
             ...(field.id ? { id: field.id } : {}),
         };
     }
+    if (["date", "time", "dateTime"].includes(field.type)) {
+        type DateTime = Extract<FormField, { type: "dateTime" | "date" | "time" }>;
+        return {
+            type: field.type,
+            title: (field as DateTime).label ?? "",
+            value: field.value ? new Date(field.value as string) : undefined,
+            defaultValue: field.defaultValue ? new Date(field.defaultValue as string) : undefined,
+            required: field.required ?? false,
+            readonly: field.readonly ?? false,
+            min: (field as DateTime).min ? new Date((field as DateTime).min as string) : undefined,
+            max: (field as DateTime).max ? new Date((field as DateTime).max as string) : undefined,
+            step: (field as DateTime).step,
+            ...(field.id ? { id: field.id } : {}),
+        } as DateTimeItem;
+    }
     if (field.type === "file") {
         return {
             type: FormItemType.File,
@@ -386,13 +416,10 @@ export function getFormItemTypeDisplayName(type: FormItemType): string {
             return "Yes / No";
         case FormItemType.TrafficLight:
             return "Traffic light";
-        case FormItemType.Checkbox:
-        case FormItemType.Dropdown:
-        case FormItemType.Input:
-        case FormItemType.Text:
+        case FormItemType.DateTime:
+            return "Date and time";
+        default:
             return type[0].toUpperCase() + type.slice(1);
-        case FormItemType.File:
-            return "File";
     }
 }
 
@@ -428,6 +455,9 @@ function isFormFieldFilled(field: FormField): boolean {
             return typeof field.value === "boolean";
         case "select":
         case "file":
+        case "date":
+        case "time":
+        case "dateTime":
             return (field.value?.length ?? 0) > 0;
         default:
             return false;
@@ -443,6 +473,9 @@ function isFormFieldRequired(field: FormField): boolean {
         case "checkbox":
         case "select":
         case "file":
+        case "date":
+        case "time":
+        case "dateTime":
             return field.required ?? false;
         default:
             return false;

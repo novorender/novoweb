@@ -234,13 +234,7 @@ export function projectV1ZoneNameToEpsg(tmZone: string) {
 }
 
 export function compareStrings(s1: string, s2: string) {
-    if (s1 < s2) {
-        return -1;
-    }
-    if (s1 > s2) {
-        return 1;
-    }
-    return 0;
+    return s1 < s2 ? -1 : s1 > s2 ? 1 : 0;
 }
 
 export function formatLength(l: number) {

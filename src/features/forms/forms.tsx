@@ -1,4 +1,5 @@
-import { Box } from "@mui/material";
+import { Settings as SettingsIcon } from "@mui/icons-material";
+import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { PropsWithChildren, useEffect, useRef } from "react";
 import { MemoryRouter, Route, Switch, SwitchProps, useHistory } from "react-router-dom";
 
@@ -15,8 +16,8 @@ import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import { useGoToSelectedForm } from "./hooks/useGoToSelectedForm";
 import { useLoadLocationTemplates } from "./hooks/useLoadLocationTemplates";
-import { useRenderLocationFormAssets } from "./hooks/useRenderLocationFormAssets";
 import { Create, FormsList, LocationInstance, Object, SearchInstance, Templates } from "./routes";
+import { Settings } from "./routes/settings";
 import { formsActions } from "./slice";
 
 export default function Forms() {
@@ -25,14 +26,14 @@ export default function Forms() {
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.forms.key);
 
     useLoadLocationTemplates();
-    useRenderLocationFormAssets();
 
     return (
-        <>
+        <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
                     menuOpen={menuOpen}
                     toggleMenu={toggleMenu}
+                    WidgetMenu={WidgetMenu}
                     widget={featuresConfig.forms}
                     disableShadow={!menuOpen}
                 />
@@ -42,33 +43,34 @@ export default function Forms() {
                     flexGrow={1}
                     overflow="hidden"
                 >
-                    <MemoryRouter>
-                        <CustomSwitch>
-                            <Route path="/" exact>
-                                <Templates />
-                            </Route>
-                            <Route path="/forms/:templateId">
-                                <FormsList />
-                            </Route>
-                            <Route path="/search-instance/:objectGuid-:formId">
-                                <SearchInstance />
-                            </Route>
-                            <Route path="/location-instance/:templateId-:formId">
-                                <LocationInstance />
-                            </Route>
-                            <Route path="/object/:id">
-                                <Object />
-                            </Route>
-                            <Route path="/create">
-                                <Create />
-                            </Route>
-                        </CustomSwitch>
-                    </MemoryRouter>
+                    <CustomSwitch>
+                        <Route path="/" exact>
+                            <Templates />
+                        </Route>
+                        <Route path="/forms/:templateId">
+                            <FormsList />
+                        </Route>
+                        <Route path="/search-instance/:objectGuid-:formId">
+                            <SearchInstance />
+                        </Route>
+                        <Route path="/location-instance/:templateId-:formId">
+                            <LocationInstance />
+                        </Route>
+                        <Route path="/object/:id">
+                            <Object />
+                        </Route>
+                        <Route path="/create">
+                            <Create />
+                        </Route>
+                        <Route path="/settings">
+                            <Settings />
+                        </Route>
+                    </CustomSwitch>
                 </Box>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.forms.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
-        </>
+        </MemoryRouter>
     );
 }
 
@@ -111,4 +113,24 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
     useGoToSelectedForm();
 
     return <Switch {...props} />;
+}
+
+function WidgetMenu(props: MenuProps) {
+    const history = useHistory();
+
+    return (
+        <Menu {...props}>
+            <MenuItem
+                onClick={() => {
+                    history.push("/settings");
+                    props.onClose?.({}, "backdropClick");
+                }}
+            >
+                <ListItemIcon>
+                    <SettingsIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Settings</ListItemText>
+            </MenuItem>
+        </Menu>
+    );
 }
