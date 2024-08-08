@@ -2,20 +2,23 @@ import { AccountTree, ContentCut, Gradient, Star, Straighten, Terrain } from "@m
 import { Box, ClickAwayListener, Fade, Popper, Stack } from "@mui/material";
 import { MouseEvent, useState } from "react";
 
+import { useAppSelector } from "app/redux-store-interactions";
 import { HudPanel } from "components/hudPanel";
 import IconButtonExt from "components/iconButtonExt";
+import { selectSubtrees, SubtreeStatus } from "features/render";
 
 import { ClippingMenu } from "./clippingMenu";
 import { FavoritesMenu } from "./favoritesMenu";
 import { FilesAndAttrsMenu } from "./filesAndAttrsMenu";
 import { MeasureMenu } from "./measureMenu";
+import { SubtreesMenu } from "./subtreesMenu";
 
 enum Section {
     Measure,
     Clipping,
     FilesAndAttrs,
     Terrain,
-    Layers,
+    Subtrees,
     Favorites,
 }
 
@@ -26,6 +29,7 @@ export function QuickAccessMenu() {
     const [activeSection, setActiveSection] = useState<Section | null>(null);
     const [open, setOpen] = useState(false);
     const [transformTransitionEnabled, setTransformTransitionEnabled] = useState(false);
+    const subtrees = useAppSelector(selectSubtrees);
 
     const closeMenu = () => {
         setOpen(false);
@@ -48,6 +52,9 @@ export function QuickAccessMenu() {
             }, fadeTimeout);
         }
     };
+
+    const showSubtrees =
+        subtrees && Object.values(subtrees).filter((val) => val !== SubtreeStatus.Unavailable).length > 1;
 
     return (
         <ClickAwayListener onClickAway={closeMenu}>
@@ -97,12 +104,14 @@ export function QuickAccessMenu() {
                         >
                             <Terrain />
                         </IconButtonExt>
-                        <IconButtonExt
-                            onClick={(e) => selectSection(e, Section.Layers)}
-                            active={activeSection === Section.Layers}
-                        >
-                            <Gradient />
-                        </IconButtonExt>
+                        {showSubtrees && (
+                            <IconButtonExt
+                                onClick={(e) => selectSection(e, Section.Subtrees)}
+                                active={activeSection === Section.Subtrees}
+                            >
+                                <Gradient />
+                            </IconButtonExt>
+                        )}
                         <IconButtonExt
                             onClick={(e) => selectSection(e, Section.Favorites)}
                             active={activeSection === Section.Favorites}
@@ -125,6 +134,7 @@ export function QuickAccessMenu() {
                                 {activeSection === Section.Measure && <MeasureMenu onSelect={closeMenu} />}
                                 {activeSection === Section.Clipping && <ClippingMenu onSelect={closeMenu} />}
                                 {activeSection === Section.FilesAndAttrs && <FilesAndAttrsMenu onSelect={closeMenu} />}
+                                {activeSection === Section.Subtrees && <SubtreesMenu onSelect={closeMenu} />}
                                 {activeSection === Section.Favorites && <FavoritesMenu onSelect={closeMenu} />}
                             </HudPanel>
                         </Fade>

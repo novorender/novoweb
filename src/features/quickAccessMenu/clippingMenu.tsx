@@ -1,8 +1,10 @@
-import { ListItemIcon, ListItemText, MenuItem, MenuList, useTheme } from "@mui/material";
+import { ListItemIcon, ListItemText, MenuItem, MenuList } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
 import { Picker, renderActions, selectPicker } from "features/render";
+
+import { ActiveIcon } from "./activeIcon";
 
 export function ClippingMenu({ onSelect }: { onSelect?: () => void }) {
     const activePicker = useAppSelector(selectPicker);
@@ -64,10 +66,4 @@ export function ClippingMenu({ onSelect }: { onSelect?: () => void }) {
             </MenuItem> */}
         </MenuList>
     );
-}
-
-function ActiveIcon({ Icon, active }: { Icon: typeof featuresConfig.area.Icon; active: boolean }) {
-    const theme = useTheme();
-
-    return <Icon fontSize="small" sx={{ color: active ? theme.palette.primary.main : undefined }} />;
 }
