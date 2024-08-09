@@ -125,9 +125,7 @@ export function Machine() {
             <ScrollBox p={1} pt={2} pb={2}>
                 {isMachineError || !machine ? (
                     <Typography>
-                        {t("failedToLoadMachineDataFrom")}
-                        {featuresConfig.xsiteManage.name}
-                        {t(".")}
+                        {t("failedToLoadMachineDataFrom", { name: featuresConfig.xsiteManage.name })}
                     </Typography>
                 ) : (
                     <>
@@ -135,7 +133,7 @@ export function Machine() {
                             {machine.name}
                         </Typography>
                         <Typography color="secondary" mb={1}>
-                            {t("dBSN:")}
+                            {t("dbsn")}
                             {toDBSN(machine.machineId)}
                         </Typography>
                         <Divider sx={{ my: 1 }} />
@@ -163,43 +161,21 @@ export function Machine() {
                                 <MenuItem value={LogPointTime.None}>{t("none")}</MenuItem>
                                 <MenuItem value={LogPointTime.Day}>
                                     {t("last24Hours")}{" "}
-                                    {logPointCount[LogPointTime.Day] >= 0 && (
-                                        <>
-                                            {t("(")}
-                                            {logPointCount[LogPointTime.Day]}
-                                            {t(")")}
-                                        </>
-                                    )}{" "}
+                                    {logPointCount[LogPointTime.Day] >= 0 && <>({logPointCount[LogPointTime.Day]})</>}{" "}
                                 </MenuItem>
                                 <MenuItem value={LogPointTime.Week}>
                                     {t("last7Days")}{" "}
-                                    {logPointCount[LogPointTime.Week] >= 0 && (
-                                        <>
-                                            {t("(")}
-                                            {logPointCount[LogPointTime.Week]}
-                                            {t(")")}
-                                        </>
-                                    )}{" "}
+                                    {logPointCount[LogPointTime.Week] >= 0 && <>({logPointCount[LogPointTime.Week]})</>}{" "}
                                 </MenuItem>
                                 <MenuItem value={LogPointTime.Month}>
                                     {t("last30Days")}{" "}
                                     {logPointCount[LogPointTime.Month] >= 0 && (
-                                        <>
-                                            {t("(")}
-                                            {logPointCount[LogPointTime.Month]}
-                                            {t(")")}
-                                        </>
+                                        <>({logPointCount[LogPointTime.Month]})</>
                                     )}{" "}
                                 </MenuItem>
                                 <MenuItem value={LogPointTime.All}>
                                     {t("all")}{" "}
-                                    {logPointCount[LogPointTime.All] >= 0 && (
-                                        <>
-                                            {t("(")}
-                                            {logPointCount[LogPointTime.All]}
-                                            {t(")")}
-                                        </>
-                                    )}{" "}
+                                    {logPointCount[LogPointTime.All] >= 0 && <>({logPointCount[LogPointTime.All]})</>}{" "}
                                 </MenuItem>
                             </Select>
                             <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 2 }}>
@@ -232,7 +208,7 @@ export function Machine() {
                                     )}
                                     renderInput={(params) => <TextField variant="outlined" {...params} />}
                                 />
-                                <FormHelperText>{t("includeAllIfNoCodesAreSelected.")}</FormHelperText>
+                                <FormHelperText>{t("includeAll")}</FormHelperText>
                             </FormControl>
                         </Box>
                     </>

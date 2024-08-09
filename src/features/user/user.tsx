@@ -86,14 +86,14 @@ function LoggedIn({
         <>
             <Grid container>
                 <Grid fontWeight={600} item xs={5}>
-                    {t("user:")}
+                    {t("user")}
                 </Grid>
                 <Grid item xs={7}>
                     {user.user}
                 </Grid>
 
                 <Grid fontWeight={600} item xs={5}>
-                    {t("role:")}
+                    {t("role")}
                 </Grid>
                 <Grid item xs={7}>
                     {role === UserRole.Admin ? "Admin" : role === UserRole.Owner ? "Owner" : "Viewer"}
@@ -101,7 +101,7 @@ function LoggedIn({
                 {org && (
                     <>
                         <Grid fontWeight={600} item xs={5}>
-                            {t("organization:")}
+                            {t("organization")}
                         </Grid>
                         <Grid item xs={7}>
                             {org}

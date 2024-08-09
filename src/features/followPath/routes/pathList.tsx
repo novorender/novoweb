@@ -137,7 +137,7 @@ export function PathList() {
 
             {canUseCylinderOptions ? (
                 <ScrollBox p={1} pt={2} pb={2}>
-                    <InputLabel sx={{ color: "text.primary" }}>{t("followFrom:")}</InputLabel>
+                    <InputLabel sx={{ color: "text.primary" }}>{t("followFrom")}</InputLabel>
                     <Select
                         fullWidth
                         name="pivot"

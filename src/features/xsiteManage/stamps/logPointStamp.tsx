@@ -31,11 +31,11 @@ export function LogPointStamp() {
                 </IconButton>
             </Box>
             <Divider />
-            {t("number:")}
+            {t("number")}
             {stamp.data.logPoint.sequenceId} <br />
-            {t("code:")}
+            {t("code")}
             {stamp.data.logPoint.code} <br />
-            {t("uploaded:")}
+            {t("uploaded")}
             {new Date(stamp.data.logPoint.timestampMs).toLocaleString()}
             <Box mt={1}>
                 <Button

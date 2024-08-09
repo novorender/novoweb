@@ -352,7 +352,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             control={
                                 <IosSwitch size="medium" color="primary" checked={view2d} onChange={handle2dChange} />
                             }
-                            label={<Box fontSize={14}>{t("2D")}</Box>}
+                            label={<Box fontSize={14}>{t("2d")}</Box>}
                         />
                         <Button
                             disabled={profileRange?.min.toFixed(profileFractionDigits) === profile}
@@ -379,7 +379,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             />
                         </Grid>
                         <Grid item xs={6}>
-                            <Typography sx={{ mb: 0.5 }}>{t("profileEnd:")}</Typography>
+                            <Typography sx={{ mb: 0.5 }}>{t("profileEnd")}</Typography>
                             <OutlinedInput
                                 size="small"
                                 fullWidth
@@ -415,7 +415,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             />
                         </Grid>
                         <Grid pt={0} item xs={6}>
-                            <Typography sx={{ mb: 0.5 }}>{t("stepSize(Meters):")}</Typography>
+                            <Typography sx={{ mb: 0.5 }}>{t("stepSize")}</Typography>
                             <OutlinedInput
                                 value={autoStepSize ? String(clipping) : step}
                                 inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
@@ -465,7 +465,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
 
                     <Box display="flex" flexDirection="column" mb={2}>
                         <Box mb={1}>
-                            {t("selectedCenterline:")}
+                            {t("selectedCenterline")}
                             <strong>{pathName}</strong>
                         </Box>
                         <FormControlLabel
@@ -518,10 +518,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
 
                                 <Divider sx={{ my: 1 }} />
 
-                                <Typography>
-                                    {t("clipping:")}
-                                    {clipping} {t("m")}
-                                </Typography>
+                                <Typography>{`${t("clipping:")} ${clipping} m`}</Typography>
                                 <Box mx={2}>
                                     <Slider
                                         getAriaLabel={() => "Clipping far"}
@@ -596,7 +593,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                             }}
                                         />
                                     }
-                                    label={<Box>{t("enableTracer(2D)")}</Box>}
+                                    label={<Box>{t("enableTracer2d")}</Box>}
                                 />
                                 <FormControlLabel
                                     control={

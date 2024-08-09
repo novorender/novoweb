@@ -237,7 +237,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                     <MenuItem value={FormItemType.Text}>{t("textOrURL")}</MenuItem>
                     <MenuItem value={FormItemType.Time}>{t("time")}</MenuItem>
                     <MenuItem value={FormItemType.TrafficLight}>{t("trafficLight")}</MenuItem>
-                    <MenuItem value={FormItemType.YesNo}>{t("yes/No")}</MenuItem>
+                    <MenuItem value={FormItemType.YesNo}>{t("yesNo")}</MenuItem>
                 </Select>
                 {renderAlert(type)}
             </FormControl>

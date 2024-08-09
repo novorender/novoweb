@@ -133,7 +133,7 @@ export default function OrthoCam() {
                                 disabled={cameraType === CameraType.Orthographic}
                             >
                                 <ArrowDownward sx={{ mr: 1 }} />
-                                {t("top-Down")}
+                                {t("topDown")}
                             </Button>
                             <FormControlLabel
                                 sx={{ mr: 1 }}
@@ -145,7 +145,7 @@ export default function OrthoCam() {
                                     />
                                 }
                                 labelPlacement="start"
-                                label={<Box fontSize={14}>{t("2DMode")}</Box>}
+                                label={<Box fontSize={14}>{t("2dMode")}</Box>}
                             />
                         </Box>
                     ) : null}
@@ -220,10 +220,7 @@ export default function OrthoCam() {
                             {viewMode === ViewMode.CrossSection && (
                                 <>
                                     <Divider sx={{ my: 1 }} />
-                                    <Typography>
-                                        {t("clipping:")}
-                                        {clipping} {t("m")}
-                                    </Typography>
+                                    <Typography>{`${t("clipping:")} ${clipping} m`}</Typography>
                                     <Box mx={2}>
                                         <Slider
                                             getAriaLabel={() => "Clipping far"}

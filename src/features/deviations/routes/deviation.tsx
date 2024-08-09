@@ -216,12 +216,12 @@ export function Deviation() {
                     </Box>
                     <Box px={1}>
                         <FormHelperText>
-                            {t("editing")} {groups1.map((g) => g.name).join(", ") || t("[NotSet]")}
+                            {t("editing")} {groups1.map((g) => g.name).join(", ") || t("notSet")}
                             <Box component="span" fontWeight={600}>
                                 {" vs "}
                             </Box>
-                            {groups2.map((g) => g.name).join(", ") || t("[NotSet]")}
-                            {t("...")}
+                            {groups2.map((g) => g.name).join(", ") || t("notSet")}
+                            ...
                         </FormHelperText>
                     </Box>
                 </Box>
@@ -264,9 +264,7 @@ export function Deviation() {
                 </FormControl>
                 {deviationForm.isCopyingFromProfileId && (
                     <FormControl fullWidth sx={{ my: 2 }}>
-                        <InputLabel id="select-profile-to-copy-from-label">
-                            {t("copyFromExistingProfile(Optional)")}
-                        </InputLabel>
+                        <InputLabel id="select-profile-to-copy-from-label">{t("copyFromExistingProfile")}</InputLabel>
                         <Select
                             labelId="select-profile-to-copy-from-label"
                             id="select-profile-to-copy-from"
@@ -330,9 +328,7 @@ export function Deviation() {
                 )}
 
                 <SectionHeader>{t("selectDeviationGroups")}</SectionHeader>
-                <Typography>
-                    {t("createDeviationsBetweenItemsInGroups.ForExampleAPointCloudAnd(Many)3DAsset(S).")}
-                </Typography>
+                <Typography>{t("createDeviationsBetweenItemsInGroups")}</Typography>
                 <GroupAutocomplete
                     options={groups1Options}
                     label="Select GROUPS to analyse"

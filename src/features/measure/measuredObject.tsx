@@ -195,7 +195,7 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                                         {t("distance")}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {duoMeasurementValues.distance.toFixed(3)} {t("m")}
+                                        {duoMeasurementValues.distance.toFixed(3)} m
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -207,7 +207,7 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                                         {t("angle")}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {(duoMeasurementValues.angle.radians * (180 / Math.PI)).toFixed(3)} {t("°")}
+                                        {(duoMeasurementValues.angle.radians * (180 / Math.PI)).toFixed(3)} °
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -219,7 +219,7 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                                         {t("normalDistance")}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {duoMeasurementValues.normalDistance.toFixed(3)} {t("m")}
+                                        {duoMeasurementValues.normalDistance.toFixed(3)} m
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -293,7 +293,7 @@ export function MeasurementData({
                                     {t("length")}
                                 </Grid>
                                 <Grid item xs={5}>
-                                    {measureValues.distance.toFixed(3)} {t("m")}
+                                    {measureValues.distance.toFixed(3)} m
                                 </Grid>
                             </Grid>
                         </ListItem>
@@ -323,7 +323,7 @@ export function MeasurementData({
                                         {t("length")}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {measureValues.totalLength.toFixed(3)} {t("m")}
+                                        {measureValues.totalLength.toFixed(3)} m
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -341,13 +341,13 @@ export function MeasurementData({
                                 {t("diameter")}
                             </Grid>
                             <Grid item xs={5}>
-                                {(measureValues.radius * 2).toFixed(3)} {t("m")}
+                                {(measureValues.radius * 2).toFixed(3)} m
                             </Grid>
                             <Grid item xs={5}>
                                 {t("totalAngle")}
                             </Grid>
                             <Grid item xs={5}>
-                                {Math.round(measureValues.totalAngle * (180 / Math.PI))} {t("deg")}
+                                {Math.round(measureValues.totalAngle * (180 / Math.PI))} deg
                             </Grid>
                         </Grid>
                     </ListItem>
@@ -365,7 +365,7 @@ export function MeasurementData({
                                         {t("height")}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {measureValues.height.toFixed(3)} {t("m")}
+                                        {measureValues.height.toFixed(3)} m
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -377,7 +377,7 @@ export function MeasurementData({
                                         {t("width")}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {measureValues.width.toFixed(3)} {t("m")}
+                                        {measureValues.width.toFixed(3)} m
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -420,15 +420,14 @@ export function MeasurementData({
                                         {measureValues.outerRadius ? "Inner diameter" : "Diameter"}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {(
+                                        {`${(
                                             (measureValues.outerRadius
                                                 ? Math.min(
                                                       measureValues.outerRadius as number,
                                                       measureValues.innerRadius as number,
                                                   )
                                                 : measureValues.innerRadius) * 2
-                                        ).toFixed(3)}{" "}
-                                        {t("m")}
+                                        ).toFixed(3)} m`}
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -440,15 +439,14 @@ export function MeasurementData({
                                         {measureValues.innerRadius ? "Outer diameter" : "Diameter"}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {(
+                                        {`${(
                                             (measureValues.innerRadius
                                                 ? Math.max(
                                                       measureValues.outerRadius as number,
                                                       measureValues.innerRadius as number,
                                                   )
                                                 : measureValues.outerRadius) * 2
-                                        ).toFixed(3)}{" "}
-                                        {t("m")}
+                                        ).toFixed(3)} m`}
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -460,7 +458,7 @@ export function MeasurementData({
                                         {t("elevation")}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {measureValues.heightAboveXyPlane.toFixed(3)} {t("m")}
+                                        {measureValues.heightAboveXyPlane.toFixed(3)} m
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -490,7 +488,7 @@ export function MeasurementData({
                                     {t("diameter")}
                                 </Grid>
                                 <Grid item xs={5}>
-                                    {(measureValues.radius * 2).toFixed(3)} {t("m")}
+                                    {(measureValues.radius * 2).toFixed(3)} m
                                 </Grid>
                             </Grid>
                         </ListItem>
@@ -500,7 +498,7 @@ export function MeasurementData({
                                     {t("length")}
                                 </Grid>
                                 <Grid item xs={5}>
-                                    {distance.toFixed(3)} {t("m")}
+                                    {distance.toFixed(3)} m
                                 </Grid>
                             </Grid>
                         </ListItem>
@@ -510,7 +508,7 @@ export function MeasurementData({
                     </List>
                     {onSettingsChange && (
                         <Box px={2} flex="1 1 auto" overflow="hidden">
-                            <InputLabel sx={{ color: "text.primary", fontWeight: 600 }}>{t("measureFrom:")}</InputLabel>
+                            <InputLabel sx={{ color: "text.primary", fontWeight: 600 }}>{t("measureFrom")}</InputLabel>
                             <Select
                                 fullWidth
                                 name="pivot"

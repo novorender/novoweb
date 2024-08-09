@@ -30,9 +30,7 @@ export function Consent() {
                         {t("consentToUse")}
                     </Typography>
                     <Typography mb={3} textAlign="center">
-                        {t("this3DIsThePropertyOf")}
-                        {organization}{" "}
-                        {t("andMustNeitherBeUsed,ReproducedNorHandedOverToAnyThirdPartyWithoutWrittenConsent.")}
+                        {t("consentMessage", { organization })}
                     </Typography>
                     <Button
                         fullWidth

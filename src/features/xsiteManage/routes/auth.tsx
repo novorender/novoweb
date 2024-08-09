@@ -141,7 +141,7 @@ export function Auth() {
     ) : error ? (
         <ErrorMsg>{error}</ErrorMsg>
     ) : sitesError || tokensError || accessToken.status === AsyncStatus.Error ? (
-        <ErrorMsg>{t("anErrorOccurred.")}</ErrorMsg>
+        <ErrorMsg>{t("errorOccurred")}</ErrorMsg>
     ) : (
         <Box position="relative">
             <LinearProgress />

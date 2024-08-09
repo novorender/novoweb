@@ -76,8 +76,7 @@ export function Login({ sceneId }: { sceneId: string }) {
                     </LoadingButton>
                 </Box>
                 <Typography textAlign={"center"} color={theme.palette.text.secondary}>
-                    {t("redirectsTo")}
-                    {featuresConfig.xsiteManage.name} {t("loginPageOutsideOfNovorender.")}
+                    {t("redirect", { name: featuresConfig.xsiteManage.name })}
                 </Typography>
             </ScrollBox>
         </>

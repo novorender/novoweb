@@ -333,7 +333,7 @@ function UpdatePrompt({ update }: { update: () => void }) {
                 }}
             >
                 <>
-                    {t("updateNotification")}
+                    {t("newVersionAvailable")}
                     <LoadingButton
                         loading={updating}
                         loadingIndicator={<CircularProgress size={20} />}

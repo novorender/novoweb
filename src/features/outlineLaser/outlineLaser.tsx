@@ -138,7 +138,7 @@ export default function ClippingOutline() {
                                     disabled={cameraType === CameraType.Orthographic}
                                 >
                                     <ArrowDownward sx={{ mr: 1 }} />
-                                    {t("top-Down")}
+                                    {t("topDown")}
                                 </Button>
                                 <FormControlLabel
                                     control={

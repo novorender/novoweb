@@ -10,10 +10,10 @@ export function PlanarDiff({ start, end }: { start: ReadonlyVec3; end: ReadonlyV
     return (
         <Grid container>
             <Grid item xs={5}>
-                {t("planarDist.")}
+                {t("planarDist")}
             </Grid>
             <Grid item xs={5}>
-                {planarDiff.toFixed(3)} {t("m")}
+                {planarDiff.toFixed(3)} m
             </Grid>
         </Grid>
     );

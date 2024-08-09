@@ -94,7 +94,7 @@ export function Search({
                             {t("back")}
                         </Button>
                         <Box display="flex" justifyContent="center" alignItems="center" fontSize={14}>
-                            {t("objects:")}
+                            {t("objects")}
                             {ids.length}
                         </Box>
                         <Button
@@ -131,7 +131,7 @@ export function Search({
                         onClick={() => setInputs((state) => state.concat([{ property: "", value: "", exact: true }]))}
                     >
                         <AddCircle sx={{ mr: 0.5 }} />
-                        {t("aND")}
+                        {t("and")}
                     </Button>
                     <Button
                         color="grey"
@@ -156,7 +156,7 @@ export function Search({
                         }
                     >
                         <AddCircle />
-                        <Box ml={0.5}>{t("oR")}</Box>
+                        <Box ml={0.5}>{t("or")}</Box>
                     </Button>
                 </Box>
                 <Box display="flex" mb={1}>

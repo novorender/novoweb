@@ -58,9 +58,7 @@ export function Feed() {
                         sx={{ height: 5, width: 1, mt: "-5px" }}
                         position="absolute"
                     />
-                    <Typography p={1}>
-                        {featuresConfig.ditio.name} {t("hasNotBeenSetUpForThisProject.")}
-                    </Typography>
+                    <Typography p={1}>{t("notSetUpForProject", { name: featuresConfig.ditio.name })}</Typography>
                 </>
             );
         }
@@ -121,7 +119,7 @@ export function Feed() {
                     <LinearProgress />
                 </Box>
             ) : !feed ? (
-                <Typography p={1}>{t("unableToLoadFeed.")}</Typography>
+                <Typography p={1}>{t("unableToLoadFeed")}</Typography>
             ) : !feed.length ? (
                 <Box flex={"1 1 100%"}>
                     <Box
@@ -205,7 +203,7 @@ export function Feed() {
                                                             <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
                                                                 {post.isAlert ? (
                                                                     <Box component="span" color="red">
-                                                                        {t("!")}{" "}
+                                                                        {"! "}
                                                                     </Box>
                                                                 ) : null}
                                                                 {post.taskDescription}
@@ -225,7 +223,7 @@ export function Feed() {
                                                         <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
                                                             {post.isAlert ? (
                                                                 <Box component="span" color="red">
-                                                                    {t("!")}{" "}
+                                                                    {"! "}
                                                                 </Box>
                                                             ) : null}
                                                             {post.taskDescription}

@@ -168,17 +168,18 @@ export default function Manhole() {
                                             {hasLid ? "Elevation lid:" : "Elevation top:"}
                                         </Grid>
                                         <Grid item xs={4} mb={1}>
-                                            {manhole.topElevation.toFixed(3)} {t("m")}
+                                            {manhole.topElevation.toFixed(3)} m
                                         </Grid>
 
                                         <Grid item xs={6} mb={1}>
-                                            {t("elevationInnerBottom:")}
+                                            {t("elevationInnerBottom")}
                                         </Grid>
                                         <Grid item xs={4}>
-                                            {manhole.bottomInnerElevation
-                                                ? manhole.bottomInnerElevation.toFixed(3)
-                                                : manhole.bottomOuterElevation.toFixed(3)}{" "}
-                                            {t("m")}
+                                            {`${
+                                                manhole.bottomInnerElevation
+                                                    ? manhole.bottomInnerElevation.toFixed(3)
+                                                    : manhole.bottomOuterElevation.toFixed(3)
+                                            } m`}
                                         </Grid>
 
                                         {manhole.top.outerRadius && (
@@ -187,32 +188,30 @@ export default function Manhole() {
                                                     {hasLid ? "Diameter lid:" : "Diameter top:"}
                                                 </Grid>
                                                 <Grid item xs={4}>
-                                                    {(manhole.top.outerRadius * 2).toFixed(3)} {t("m")}
+                                                    {(manhole.top.outerRadius * 2).toFixed(3)} m
                                                 </Grid>
                                             </>
                                         )}
 
                                         <Grid item xs={6} mb={1}>
-                                            {t("diameterInnerCylinder:")}
+                                            {t("diameterInnerCylinder")}
                                         </Grid>
                                         <Grid item xs={4}>
-                                            {(
+                                            {`${(
                                                 (manhole.innerRadius ? manhole.innerRadius : manhole.outerRadius) * 2
-                                            ).toFixed(3)}{" "}
-                                            {t("m")}
+                                            ).toFixed(3)} m`}
                                         </Grid>
 
                                         <Grid item xs={6} mb={1}>
                                             {hasLid ? "Depth from lid:" : "Depth from top:"}
                                         </Grid>
                                         <Grid item xs={4}>
-                                            {(
+                                            {`${(
                                                 manhole.topElevation -
                                                 (manhole.bottomInnerElevation
                                                     ? manhole.bottomInnerElevation
                                                     : manhole.bottomOuterElevation)
-                                            ).toFixed(3)}{" "}
-                                            {t("m")}
+                                            ).toFixed(3)} m`}
                                         </Grid>
                                         {collisionValues && (
                                             <>
@@ -220,7 +219,7 @@ export default function Manhole() {
                                                     {hasLid ? "Collision depth from lid:" : "Collision depth from top:"}
                                                 </Grid>
                                                 <Grid item xs={4}>
-                                                    {vec3
+                                                    {`${vec3
                                                         .len(
                                                             vec3.sub(
                                                                 vec3.create(),
@@ -228,8 +227,7 @@ export default function Manhole() {
                                                                 collisionValues.lid[1],
                                                             ),
                                                         )
-                                                        .toFixed(3)}{" "}
-                                                    {t("m")}
+                                                        .toFixed(3)} m`}
                                                 </Grid>
                                             </>
                                         )}
@@ -348,16 +346,15 @@ export default function Manhole() {
                                                 {collisionValues.lid && (
                                                     <>
                                                         <Grid item xs={5}>
-                                                            {t("toLid:")}
+                                                            {t("toLid")}
                                                         </Grid>
                                                         <Grid item xs={5}>
-                                                            {vec3
+                                                            {`${vec3
                                                                 .distance(
                                                                     collisionValues.lid[0],
                                                                     collisionValues.lid[1],
                                                                 )
-                                                                .toFixed(3)}{" "}
-                                                            {t("m")}
+                                                                .toFixed(3)} m`}
                                                         </Grid>
                                                     </>
                                                 )}
@@ -365,16 +362,15 @@ export default function Manhole() {
                                                 {collisionValues.inner && (
                                                     <>
                                                         <Grid item xs={5} mt={1}>
-                                                            {t("toInnerBottom:")}
+                                                            {t("toInnerBottom")}
                                                         </Grid>
                                                         <Grid item xs={5} mt={1}>
-                                                            {vec3
+                                                            {`${vec3
                                                                 .distance(
                                                                     collisionValues.inner[0],
                                                                     collisionValues.inner[1],
                                                                 )
-                                                                .toFixed(3)}{" "}
-                                                            {t("m")}
+                                                                .toFixed(3)} m`}
                                                         </Grid>
                                                     </>
                                                 )}
@@ -382,16 +378,15 @@ export default function Manhole() {
                                                 {collisionValues.outer && (
                                                     <>
                                                         <Grid item xs={5} mt={1}>
-                                                            {t("toOuterBottom:")}
+                                                            {t("toOuterBottom")}
                                                         </Grid>
                                                         <Grid item xs={5} mt={1}>
-                                                            {vec3
+                                                            {`${vec3
                                                                 .distance(
                                                                     collisionValues.outer[0],
                                                                     collisionValues.outer[1],
                                                                 )
-                                                                .toFixed(3)}{" "}
-                                                            {t("m")}
+                                                                .toFixed(3)} m`}
                                                         </Grid>
                                                     </>
                                                 )}

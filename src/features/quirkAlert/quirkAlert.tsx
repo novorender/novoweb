@@ -49,14 +49,12 @@ export function QuirkAlert() {
                         <Warning color="primary" fontSize={"inherit"} />
                     </Box>
                     <Typography mb={1} fontSize={24} fontWeight={700} textAlign="center" component="h1">
-                        {t("unstableGPU(Adreno600)")}
+                        {t("adreno600")}
                     </Typography>
                     <Typography mb={2}>
-                        {t(
-                            "itLooksLikeYourDeviceIsRunningOnAnAdreno600.ThisMayResultInUnexpectedBehaviourWhileUsingCertainNovorenderFeaturesSuchAsClippingPlanesAndToonOutlines.",
-                        )}
+                        {t("adreno600Message")}
                         <br />
-                        {t("pleaseGetInTouchWithSupportIfYouNoticeAnyIssues.")}
+                        {t("getInTouch")}
                     </Typography>
                     <FormControlLabel
                         sx={{ mb: 2 }}
@@ -70,12 +68,12 @@ export function QuirkAlert() {
                         }
                         label={
                             <Box mr={0.5} sx={{ userSelect: "none" }}>
-                                {t("don'TShowAgain")}
+                                {t("dontShowAgain")}
                             </Box>
                         }
                     />
                     <Button fullWidth size="large" variant="contained" onClick={handleSubmit}>
-                        {t("iUnderstand")}
+                        {t("understand")}
                     </Button>
                 </Box>
             </Box>

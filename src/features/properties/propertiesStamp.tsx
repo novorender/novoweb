@@ -2,7 +2,6 @@ import { Close } from "@mui/icons-material";
 import { Box, IconButton, List, Typography } from "@mui/material";
 import { useDrag } from "@use-gesture/react";
 import { useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox, Tooltip } from "components";
@@ -13,7 +12,6 @@ import { ResizeHandle } from "./resizeHandle";
 import { selectShowPropertiesStamp, selectStarredProperties } from "./slice";
 
 export function PropertiesStamp() {
-    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const stamp = useAppSelector(selectStamp);
     const starred = useAppSelector(selectStarredProperties);
@@ -104,7 +102,7 @@ export function PropertiesStamp() {
                                             {getPropertyDisplayName(key.split("/").at(-1) ?? key)}
                                         </Typography>
                                     </Tooltip>
-                                    <ResizeHandle data-resize-handle>{t("|")}</ResizeHandle>
+                                    <ResizeHandle data-resize-handle>|</ResizeHandle>
                                 </Box>
                                 <Box flex="1 1 100%" width={0}>
                                     <Tooltip title={isPath ? getFilePathFromObjectPath(val) : val}>

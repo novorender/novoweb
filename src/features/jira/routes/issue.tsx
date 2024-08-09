@@ -382,7 +382,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                                       <Fragment key={comment.id}>
                                           <Box>
                                               <Typography component="em">
-                                                  {comment.author.displayName} {t("-")}{" "}
+                                                  {comment.author.displayName} {"- "}
                                                   {format(
                                                       new Date(comment.updated ?? comment.created),
                                                       "dd.MM.yyyy - HH:mm",

@@ -144,7 +144,7 @@ export function ViewSwitchSection() {
                     control={
                         <IosSwitch size="medium" color="primary" checked={isTopDown} onChange={handleTopDownChange} />
                     }
-                    label={<Box>{t("top-Down")}</Box>}
+                    label={<Box>{t("topDown")}</Box>}
                 />
             </Box>
         </>

@@ -183,31 +183,23 @@ export default function MyLocation() {
                     )}
                     {geoLocationCoords && (
                         <>
+                            <Box mb={1}>{`${t("accuracy")} ${geoLocationCoords.accuracy} m`}</Box>
                             <Box mb={1}>
-                                {t("accuracy:")}
-                                {geoLocationCoords.accuracy}
-                                {t("m")}
-                            </Box>
-                            <Box mb={1}>
-                                {t("longitude:")}
+                                {t("longitude")}
                                 {geoLocationCoords.longitude}
                             </Box>
                             <Box mb={1}>
-                                {t("latitude:")}
+                                {t("latitude")}
                                 {geoLocationCoords.latitude}
                             </Box>
                             {geoLocationCoords.altitude && (
-                                <Box mb={1}>
-                                    {t("altitude:")}
-                                    {geoLocationCoords.altitude}
-                                    {t("m")}
-                                </Box>
+                                <Box mb={1}>{`${t("altitude")} ${geoLocationCoords.altitude} m`}</Box>
                             )}
                             {currentLocation && (
                                 <Box mb={1}>
-                                    {t("position:[")}
-                                    {currentLocation.map((n) => Math.round(n)).join(", ")}
-                                    {t("]")}
+                                    {t("positionCoords", {
+                                        coords: currentLocation.map((n) => Math.round(n)).join(", "),
+                                    })}
                                 </Box>
                             )}
                         </>

@@ -81,7 +81,7 @@ export function Post() {
                     <LinearProgress />
                 </Box>
             ) : !post ? (
-                <Typography p={1}>{t("unableToLoadPost.")}</Typography>
+                <Typography p={1}>{t("unableToLoadPost")}</Typography>
             ) : (
                 <ScrollBox p={1} pb={3} position="relative">
                     <Box display="flex" alignItems="center" my={1}>

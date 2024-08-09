@@ -156,7 +156,7 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
                 </Typography>
                 <Divider sx={{ mt: 1 }} />
                 {!starredArr.length ? (
-                    <Typography p={1}>{t("noPropertiesStarred.")}</Typography>
+                    <Typography p={1}>{t("noPropertiesStarred")}</Typography>
                 ) : (
                     <List dense disablePadding>
                         {starredArr.map((property) => (

@@ -284,7 +284,7 @@ export function SearchInstance() {
                 <Typography fontWeight={600} mb={2}>
                     {form?.title}
                 </Typography>
-                {items?.length === 0 && <Typography px={0}>{t("selectedObjectDoesn'THaveAnyForms.")}</Typography>}
+                {items?.length === 0 && <Typography px={0}>{t("objectHasNoForms")}</Typography>}
                 {items?.map((item, idx, array) => {
                     return (
                         <Fragment key={item.id}>

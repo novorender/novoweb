@@ -240,8 +240,7 @@ const FollowPathControls = memo(function FollowPathControls() {
             </Box>
 
             <Box position="absolute" bottom="36px" whiteSpace="nowrap" textAlign="center" sx={{ translate: "-50% 0" }}>
-                {t("clipping:")}
-                {clipping} {t("m")}
+                {`${t("clipping:")} ${clipping} m`}
             </Box>
             <Box position="absolute" bottom="0px" width="200px" sx={{ translate: "-50% 0" }}>
                 <Slider

@@ -15,24 +15,24 @@ export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: Rea
                     <TableCell></TableCell>
                     <TableCell align="center">
                         <Box display="inline-block" ml={1}>
-                            {t("x")}
+                            X
                         </Box>
                     </TableCell>
                     <TableCell align="center">
                         <Box display="inline-block" ml={1}>
-                            {t("y")}
+                            Y
                         </Box>
                     </TableCell>
                     <TableCell align="center">
                         <Box display="inline-block" ml={1}>
-                            {t("z")}
+                            Z
                         </Box>
                     </TableCell>
                 </TableRow>
             </TableHead>
             <TableBody>
                 <TableRow>
-                    <TableCell>{t("start(M)")}</TableCell>
+                    <TableCell>{t("startM")}</TableCell>
                     {start.map((v, idx) => (
                         <TableCell key={idx} align="right">
                             {v.toFixed(3)}
@@ -40,7 +40,7 @@ export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: Rea
                     ))}
                 </TableRow>
                 <TableRow>
-                    <TableCell>{t("end(M)")}</TableCell>
+                    <TableCell>{t("endM")}</TableCell>
                     {end.map((v, idx) => (
                         <TableCell key={idx} align="right">
                             {v.toFixed(3)}
@@ -48,7 +48,7 @@ export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: Rea
                     ))}
                 </TableRow>
                 <TableRow>
-                    <TableCell bold>{t("difference(M)")}</TableCell>
+                    <TableCell bold>{t("differenceM")}</TableCell>
                     <TableCell bold align="right">
                         {Math.abs(delta[0]).toFixed(3)}
                     </TableCell>

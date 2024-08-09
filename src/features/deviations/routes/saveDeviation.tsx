@@ -50,9 +50,7 @@ export function SaveDeviation() {
                     disabled={saveStatus.status === AsyncStatus.Loading}
                 />
                 <Box mb={4}>
-                    <FormHelperText>
-                        {t("youCanRecalculateLaterIfYouPlanToUpdateOtherDeviationProfilesNow")}
-                    </FormHelperText>
+                    <FormHelperText>{t("recalculateLater")}</FormHelperText>
                 </Box>
             </Confirmation>
         </>

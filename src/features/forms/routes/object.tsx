@@ -199,7 +199,7 @@ export function Object() {
                             })}
                         </List>
                     ) : (
-                        <Typography px={1}>{t("noFormsAttachedToTheSelectedObject.")}</Typography>
+                        <Typography px={1}>{t("noFormsAttached")}</Typography>
                     )}
                 </ScrollBox>
             )}

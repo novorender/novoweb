@@ -285,7 +285,7 @@ export default function HeightProfile() {
                                 <>
                                     <Box>
                                         <InputLabel sx={{ color: "text.primary", mb: 0.5 }}>
-                                            {t("cylinderProfileFrom:")}{" "}
+                                            {t("cylinderProfileFrom")}
                                         </InputLabel>
                                         <Select
                                             fullWidth
@@ -316,27 +316,19 @@ export default function HeightProfile() {
                                     <Typography fontWeight={600}>{t("elevation")}</Typography>
                                     <Box display="flex">
                                         <Typography minWidth={60}>{t("start")}</Typography>
-                                        <Typography>
-                                            {profile.data.startElevation.toFixed(3)} {t("m")}
-                                        </Typography>
+                                        <Typography>{profile.data.startElevation.toFixed(3)} m</Typography>
                                     </Box>
                                     <Box display="flex">
                                         <Typography minWidth={60}>{t("end")}</Typography>
-                                        <Typography>
-                                            {profile.data.endElevation.toFixed(3)} {t("m")}
-                                        </Typography>
+                                        <Typography>{profile.data.endElevation.toFixed(3)} m</Typography>
                                     </Box>
                                     <Box display="flex">
                                         <Typography minWidth={60}>{t("min")}</Typography>
-                                        <Typography>
-                                            {profile.data.bottom.toFixed(3)} {t("m")}
-                                        </Typography>
+                                        <Typography>{profile.data.bottom.toFixed(3)} m</Typography>
                                     </Box>
                                     <Box display="flex">
                                         <Typography minWidth={60}>{t("max")}</Typography>
-                                        <Typography>
-                                            {profile.data.top.toFixed(3)} {t("m")}
-                                        </Typography>
+                                        <Typography>{profile.data.top.toFixed(3)} m</Typography>
                                     </Box>
                                 </>
                             ) : null}

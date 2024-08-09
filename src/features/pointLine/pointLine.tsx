@@ -143,10 +143,7 @@ export default function PointLine() {
                     {result && result.totalLength > 0 ? (
                         <>
                             <Divider sx={{ py: 0 }} />
-                            <Box p={1}>
-                                {t("totalLength:")}
-                                {result.totalLength.toFixed(3)} {t("m")}
-                            </Box>
+                            <Box p={1}>{t("totalLength", { length: result.totalLength.toFixed(3) })}</Box>
 
                             {points.length > 0 ? (
                                 <Accordion defaultExpanded={false}>

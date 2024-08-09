@@ -538,7 +538,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                                 </StyledFixedSizeList>
                             ) : (
                                 <Typography variant="body2" my={1}>
-                                    {t("noFilesUploaded.")}
+                                    {t("noFilesUploaded")}
                                 </Typography>
                             )}
                             <AddFilesButton

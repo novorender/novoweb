@@ -139,9 +139,7 @@ export function FeatureServerList() {
                         featureServers.status === AsyncStatus.Success &&
                         featureServers.data.length > 0 && (
                             <Box p={1} pt={2} textAlign="center">
-                                <Typography variant="subtitle1">
-                                    {t("layersAreOnlyVisibleInTop-Down2DView.")}
-                                </Typography>
+                                <Typography variant="subtitle1">{t("layersAreOnlyVisibleInTopDown2DView")}</Typography>
                             </Box>
                         )}
 
@@ -357,7 +355,7 @@ function LayerItem({
             )}
             {fullWhere && (
                 <div>
-                    {t("fullFilter:")}
+                    {t("fullFilter")}
                     {fullWhere}
                 </div>
             )}

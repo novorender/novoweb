@@ -77,11 +77,11 @@ export function Root() {
                 ) : (
                     <Box p={1}>
                         <Typography textAlign={"center"} mt={1}>
-                            {t("noImagesFound.")}
+                            {t("noImagesFound")}
                         </Typography>
                         {!tmZone && (
                             <Typography mt={2}>
-                                {t("tM-ZoneIsNotSet.AdminsCanSetThisUnderAdvancedSettings")} {"->"} {t("project.")}
+                                {t("tzNotSet")} {"->"} {t("project.")}
                             </Typography>
                         )}
                         {Object.values(filter).some((val) => val !== "" && val !== "all") && (

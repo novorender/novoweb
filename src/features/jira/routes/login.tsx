@@ -76,7 +76,7 @@ export function Login({ sceneId }: { sceneId: string }) {
                     </LoadingButton>
                 </Box>
                 <Typography textAlign={"center"} color={theme.palette.text.secondary}>
-                    {t("redirectsToJiraLoginPageOutsideOfNovorender.")}
+                    {t("redirectsToJira")}
                 </Typography>
             </ScrollBox>
         </>

@@ -33,9 +33,7 @@ export function RunLog({ data }: { data: UiDeviationConfig }) {
                                 <>
                                     {t("profile")}
                                     <strong>{profile.name}</strong>
-                                    {t(
-                                        ":SomeGroupsAreEmpty.EnsureThatBothGroupsToAnalyseAndGroupsToAnalyseAgainstAreNotEmpty.",
-                                    )}
+                                    {t("emptyGroupsMessage")}
                                 </>
                             );
                             break;
@@ -43,9 +41,7 @@ export function RunLog({ data }: { data: UiDeviationConfig }) {
                             msg = (
                                 <>
                                     {t("profile")}
-                                    <strong>{profile.name}</strong>
-                                    {t(":")}
-                                    {entry.message}
+                                    <strong>{profile.name}</strong>:{entry.message}
                                 </>
                             );
                     }

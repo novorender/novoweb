@@ -121,7 +121,7 @@ export function Clipping() {
     return (
         <>
             <Accordion>
-                <AccordionSummary>{t("clipping(3D)")}</AccordionSummary>
+                <AccordionSummary>{t("clipping3d")}</AccordionSummary>
                 <AccordionDetails>
                     <Box p={1} display="flex" flexDirection="column">
                         <Box display="flex" sx={{ mb: 2 }} alignItems="center">
@@ -174,7 +174,7 @@ export function Clipping() {
                 </AccordionDetails>
             </Accordion>
             <Accordion>
-                <AccordionSummary>{t("clipping(2D)")}</AccordionSummary>
+                <AccordionSummary>{t("clipping2d")}</AccordionSummary>
                 <AccordionDetails>
                     <Box p={1} display="flex" alignItems="center">
                         <Typography

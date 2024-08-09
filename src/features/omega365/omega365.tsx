@@ -43,11 +43,11 @@ export default function Omega365() {
                     </Box>
                 ) : isError ? (
                     <Box p={1} pt={2}>
-                        {t("anErrorOccuredWhileLoadingOmega365ConfigurationForTheProject.")}
+                        {t("omega365ConfigError")}
                     </Box>
                 ) : data?.configured === false ? (
                     <Box p={1} pt={2}>
-                        {t("omega365IntegrationIsNotConfiguredForThisProject.")}
+                        {t("omega365NoIntegration")}
                     </Box>
                 ) : data?.configured === true ? (
                     <DcoumentLoader projectId={projectId} menuOpen={menuOpen} minimized={minimized} />
@@ -109,7 +109,7 @@ function DcoumentLoader({
 
             {!isObjectSelected ? (
                 <Box p={1} pt={2}>
-                    {t("selectAnObjectToSeeAssociatedDocuments.")}
+                    {t("selectObject")}
                 </Box>
             ) : isFetching ? (
                 <Box>
@@ -125,11 +125,11 @@ function DcoumentLoader({
                 >
                     {isError ? (
                         <Box p={1} pt={2}>
-                            {t("anErrorOccuredWhileLoadingOmega365ConfigurationForTheProject.")}
+                            {t("omega365ConfigError")}
                         </Box>
                     ) : documents?.length === 0 ? (
                         <Box p={1} pt={2}>
-                            {t("foundNoDocumentsAttachedToTheSelectedObject.")}
+                            {t("noDocsForObject")}
                         </Box>
                     ) : (
                         <DocumentList documents={documents || []} />
@@ -175,11 +175,11 @@ function DocumentList({ documents }: { documents: Omega365Document[] }) {
                                 <Fragment key={doc.document_ID}>
                                     <Box>
                                         <Box display="flex" mb={0.5}>
-                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>{t("title:")}</Box>
+                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>{t("title")}</Box>
                                             <Box>{doc.documentTitle}</Box>
                                         </Box>
                                         <Box display="flex" mb={1}>
-                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>{t("iD:")}</Box>
+                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>{t("id:")}</Box>
                                             <Box>{doc.document_ID}</Box>
                                         </Box>
                                         <Box display="flex" mx={-1}>

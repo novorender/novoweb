@@ -209,7 +209,7 @@ export function AddObjects({
                                     }
                                 >
                                     <AddCircle />
-                                    <Box ml={0.5}>{t("aND")}</Box>
+                                    <Box ml={0.5}>{t("and")}</Box>
                                 </Button>
                                 <Button
                                     color="grey"
@@ -236,7 +236,7 @@ export function AddObjects({
                                     }
                                 >
                                     <AddCircle />
-                                    <Box ml={0.5}>{t("oR")}</Box>
+                                    <Box ml={0.5}>{t("or")}</Box>
                                 </Button>
                             </>
                         )}
@@ -275,9 +275,7 @@ export function AddObjects({
                             disabled={!ids.length || status !== AsyncStatus.Success || ids.length > MAX_OBJECTS_COUNT}
                             type="submit"
                         >
-                            {t("assign(")}
-                            {ids.length}
-                            {t(")")}
+                            {t("assign", { length: ids.length })}
                         </Button>
                     </Box>
                 </Box>

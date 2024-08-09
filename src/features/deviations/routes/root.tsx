@@ -79,7 +79,7 @@ export function Root() {
                             <>
                                 {calculationStatus.status === DeviationCalculationStatus.Running ? (
                                     <Box p={2} pb={0}>
-                                        <Alert severity="info">{t("deviationCalculationIsInProgress.")}</Alert>
+                                        <Alert severity="info">{t("deviationCalculationInProgress")}</Alert>
                                     </Box>
                                 ) : undefined}
 

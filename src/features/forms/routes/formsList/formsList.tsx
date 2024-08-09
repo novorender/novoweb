@@ -328,7 +328,7 @@ export function FormsList() {
                 <Typography px={1} fontWeight={600} mb={1}>
                     {template?.title ?? ""}
                 </Typography>
-                {items.length === 0 && <Typography px={1}>{t("noFormsHaveBeenAddedYet.")}</Typography>}
+                {items.length === 0 && <Typography px={1}>{t("noForms")}</Typography>}
                 <List dense disablePadding>
                     {items
                         ?.filter(filterItems)

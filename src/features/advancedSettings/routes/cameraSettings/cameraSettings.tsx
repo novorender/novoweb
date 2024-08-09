@@ -212,7 +212,7 @@ export function CameraSettings({
                             <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <InputLabel sx={{ color: "text.primary" }} htmlFor="defaultSpeed">
-                                    {t("default:")}
+                                    {t("default")}
                                 </InputLabel>
                                 <OutlinedInput
                                     id="defaultSpeed"
@@ -228,7 +228,7 @@ export function CameraSettings({
                             <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <InputLabel sx={{ color: "text.primary" }} htmlFor="fastSpeed">
-                                    {t("fast:")}
+                                    {t("fast")}
                                 </InputLabel>
                                 <OutlinedInput
                                     id="fastSpeed"
@@ -377,7 +377,7 @@ export function CameraSettings({
                 </Accordion>
 
                 <Accordion>
-                    <AccordionSummary>{t("2D")}</AccordionSummary>
+                    <AccordionSummary>{t("2d")}</AccordionSummary>
                     <AccordionDetails>
                         <Box px={1} mt={1} display={"flex"} flexDirection={"column"}>
                             <FormControlLabel
@@ -439,7 +439,7 @@ export function CameraSettings({
                                 }
                                 label={
                                     <Box ml={1} fontSize={16}>
-                                        {t("two-FingerRotation(Touch)")}
+                                        {t("twoFingerRotation")}
                                     </Box>
                                 }
                             />
@@ -464,7 +464,7 @@ export function CameraSettings({
                                 }
                                 label={
                                     <Box ml={1} fontSize={16}>
-                                        {t("top-DownPointNorth")}
+                                        {t("topDownPointNorth")}
                                     </Box>
                                 }
                             />
@@ -473,7 +473,7 @@ export function CameraSettings({
                         <Box px={1} component="form" onSubmit={handleDefaultTopDownElevationSubmit}>
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <InputLabel sx={{ color: "text.primary" }} htmlFor="topdown-elevation">
-                                    {t("top-DownElevation(Meters):")}
+                                    {t("topDownElevation:")}
                                 </InputLabel>
                                 <OutlinedInput
                                     id="topdown-elevation"
@@ -488,7 +488,7 @@ export function CameraSettings({
                                     inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
                                 />
                             </Box>
-                            <FormHelperText>{t("leaveBlankToUseCurrentCameraElevation.")}</FormHelperText>
+                            <FormHelperText>{t("leaveBlank")}</FormHelperText>
                         </Box>
                     </AccordionDetails>
                 </Accordion>

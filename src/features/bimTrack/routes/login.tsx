@@ -70,7 +70,7 @@ export function Login({ sceneId }: { sceneId: string }) {
                 </Box>
                 <Typography textAlign={"center"} color={theme.palette.text.secondary}>
                     {t("redirectsTo")}
-                    {featuresConfig.bimTrack.name} {t("loginPageOutsideOfNovorender.")}
+                    {featuresConfig.bimTrack.name} {t("loginPageOutside")}
                 </Typography>
             </ScrollBox>
         </>

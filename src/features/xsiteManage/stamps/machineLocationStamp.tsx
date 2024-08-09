@@ -39,11 +39,11 @@ export function MachineLocationStamp() {
                 </IconButton>
             </Box>
             <Divider sx={{ mb: 0.5 }} />
-            {t("dBSN:")}
+            {t("dbsn")}
             {toDBSN(stamp.data.location.machineId)} <br />
-            {t("latitude:")}
+            {t("latitude")}
             {stamp.data.location.latitude} <br />
-            {t("longitude:")}
+            {t("longitude")}
             {stamp.data.location.longitude} <br />
             {t("time:")}
             {new Date(stamp.data.location.timestampMs).toLocaleString()}

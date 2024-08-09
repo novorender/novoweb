@@ -51,7 +51,7 @@ export default function Offline() {
                 {!menuOpen &&
                     !minimized &&
                     (!offlineWorkerState ? (
-                        <Typography p={1}>{t("offlineIsNotAvailableForThisSceneOrDevice.")}</Typography>
+                        <Typography p={1}>{t("offlineNotAvailable")}</Typography>
                     ) : (
                         <ScrollBox p={1} pt={2}>
                             {sizeWarning ? (
@@ -99,7 +99,7 @@ function Scanning({ progress }: { progress: string }) {
                 <LinearProgress />
             </Box>
             <Box>
-                {t("scanningScene...")}
+                {t("scanningScene")}
                 {progress ? t("filesScanned", { progress }) : ""}
                 <Button
                     sx={{ ml: 2 }}
@@ -124,7 +124,7 @@ function Downloading({ progress }: { progress: string }) {
                 <LinearProgress />
             </Box>
             <Box>
-                {t("downloadingScene...")}
+                {t("downloadingScene")}
                 {progress ? `${progress}%` : ""}
                 <Button
                     sx={{ ml: 2 }}
@@ -146,7 +146,7 @@ function Interrupted() {
     const dispatch = useAppDispatch();
     return (
         <>
-            <Box>{t("sceneDownloadWasInterrupted.")}</Box>
+            <Box>{t("downloadInterrupted")}</Box>
             <Box display="flex" justifyContent="flex-end" mt={1}>
                 <Button
                     disabled={action !== undefined || !isOnline}
@@ -186,7 +186,7 @@ function OlderFormat() {
     const { t } = useTranslation();
     return (
         <>
-            {t("thisSceneIsNotMadeReadyForDownload,PleaseContactSupport.")}
+            {t("nonDownloadableScene")}
             <br />
         </>
     );
@@ -202,7 +202,7 @@ function Pending() {
 
     return (
         <>
-            {t("thisSceneHasNotYetBeenDownloadedForOfflineUse.")}
+            {t("notOfflineScene")}
             <br />
             {offlineWorkerState.initialStorageEstimate?.quota !== undefined &&
                 offlineWorkerState.initialStorageEstimate?.usage !== undefined && (
@@ -243,7 +243,7 @@ function Downloaded() {
     const { t } = useTranslation();
     return (
         <>
-            {t("thisSceneIsAvailableOffline.")}
+            {t("offlineScene")}
             <br />
         </>
     );
@@ -253,7 +253,7 @@ function Incremental() {
     const { t } = useTranslation();
     return (
         <>
-            {t("thisSceneIsBeingIncrementallyDownloaded.")}
+            {t("sceneDownloaded")}
             <br />
         </>
     );
@@ -275,13 +275,14 @@ function ConfirmSync({
 
     return (
         <>
-            {t("synchronizingThisSceneWillRequire")}
-            {formatFileSizeMetric(requiredSize)}
-            {t(",WhichIsMoreThanThe")} {formatFileSizeMetric(availableSize)} {t("estimatedAvailableStorageSpace.")}
+            {t("sceneSyncMessage", {
+                requiredSize: formatFileSizeMetric(requiredSize),
+                availableSize: formatFileSizeMetric(availableSize),
+            })}
             <br />
-            {t("althoughEstimatesAreComplicatedAndInaccurate,ThisProcessWillLikelyFail.")}
+            {t("processLikelyFail")}
             <br />
-            {t("proceedDownloadingTheScene?")}
+            {t("proceedDownloadingScene")}
             <Box display="flex" justifyContent="flex-end" mt={1} gap={1}>
                 <Button
                     disabled={!isOnline}
@@ -330,16 +331,16 @@ function AllDownloadedScenes({ synchronizing }: { synchronizing: boolean }) {
                         <Accordion key={scene.id} defaultExpanded={isCurrent}>
                             <AccordionSummary>
                                 {scene.id.slice(0, 8)}
-                                {t("...")}
+                                ...
                                 {isCurrent ? `(${t("current")})` : ""}
                             </AccordionSummary>
                             <AccordionDetails sx={{ px: 1 }}>
                                 <Typography>
-                                    {t("id:")}
+                                    {t("id")}
                                     {scene.id}
                                 </Typography>
                                 <Typography>
-                                    {t("size:")}
+                                    {t("size")}
                                     {scene.size ? formatFileSizeMetric(scene.size) : t("unknown")}
                                 </Typography>
                                 <Typography>
@@ -347,8 +348,9 @@ function AllDownloadedScenes({ synchronizing }: { synchronizing: boolean }) {
                                     {capitalize(scene.status)}
                                 </Typography>
                                 <Typography>
-                                    {t("lastSynchronized:")}{" "}
-                                    {scene.lastSync ? new Date(scene.lastSync).toLocaleString() : t("unknown")}
+                                    {t("lastSynchronized", {
+                                        date: scene.lastSync ? new Date(scene.lastSync).toLocaleString() : t("unknown"),
+                                    })}
                                 </Typography>
                                 {isCurrent && (
                                     <Box
@@ -389,14 +391,15 @@ function AllDownloadedScenes({ synchronizing }: { synchronizing: boolean }) {
                                                 </AccordionSummary>
                                                 <AccordionDetails sx={{ px: 1 }}>
                                                     <Typography>
-                                                        {t("id:")}
+                                                        {t("id")}
                                                         {viewerScene.id}
                                                     </Typography>
                                                     <Typography>
-                                                        {t("lastSynchronized:")}{" "}
-                                                        {viewerScene.lastSynced
-                                                            ? new Date(viewerScene.lastSynced).toLocaleString()
-                                                            : t("unknown")}
+                                                        {t("lastSynchronized", {
+                                                            date: viewerScene.lastSynced
+                                                                ? new Date(viewerScene.lastSynced).toLocaleString()
+                                                                : t("unknown"),
+                                                        })}
                                                     </Typography>
                                                 </AccordionDetails>
                                                 {isCurrentViewerScene && (

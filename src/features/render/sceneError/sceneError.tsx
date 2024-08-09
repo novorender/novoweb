@@ -117,44 +117,33 @@ export function SceneError() {
                         <Alert severity="warning" sx={{ mb: 2 }}>
                             {error === ErrorKind.NOT_AUTHORIZED && user && (
                                 <>
-                                    {t("youAreCurrentlyLoggedInAs")}
-                                    <em>{user.user}</em> {t("andDoNotHaveAccesToTheSceneWithId")}
-                                    <em>{sceneId}</em>
-                                    {t(".")}
+                                    {t("loggedInAs")}
+                                    <em>{user.user}</em> {t("noAccessToScene")}
+                                    <em>{sceneId}</em>.
                                 </>
                             )}
-                            {error === ErrorKind.LEGACY_BINARY_FORMAT && (
-                                <>{t("thereIsAnIssueWithThisScene.PleaseContactSupport.")}</>
-                            )}
+                            {error === ErrorKind.LEGACY_BINARY_FORMAT && <>{t("sceneIssue")}</>}
                             {error === ErrorKind.UNKNOWN_ERROR && (
                                 <>
-                                    {t("failedToDownloadTheScene.PleaseTryAgainLater.")}
+                                    {t("failedToDownloadTheScene")}
                                     <br />
                                     <br />
-                                    {t(
-                                        "makeSureYouAreUsingAnUpToDateVersionOfEitherSafariOrAChromiumBasedBrowserSuchAsChromeOrEdge.",
-                                    )}
+                                    {t("unsupportedBrowser")}
                                 </>
                             )}
                             {error === ErrorKind.OFFLINE_UNAVAILABLE && (
                                 <>
-                                    {t("theSceneWithId")}
-                                    <em>{sceneId}</em> {t("hasNotBeenDownloadedForYourDeviceAndBrowser.")}
+                                    {t("sceneWithId")}
+                                    <em>{sceneId}</em> {t("notDownloaded")}
                                 </>
                             )}
                             {error === ErrorKind.INVALID_SCENE && (
                                 <>
                                     {t("theSceneWithId")}
-                                    <em>{sceneId}</em> {t("doesNotExist.")}
+                                    <em>{sceneId}</em> {t("notExist")}
                                 </>
                             )}
-                            {error === ErrorKind.DELETED_SCENE && (
-                                <>
-                                    {t(
-                                        "theSceneHasBeenDeleted.IfThisWasDoneByMistakePleaseContactSupportAndWeWillTryToRecoverIt.",
-                                    )}
-                                </>
-                            )}
+                            {error === ErrorKind.DELETED_SCENE && <>{t("sceneDeleted")}</>}
                         </Alert>
 
                         {error === ErrorKind.NOT_AUTHORIZED && user ? (

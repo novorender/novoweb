@@ -253,7 +253,7 @@ export default function RangeSearch() {
                     <ScrollBox flex={"1 1 100%"}>
                         {status === Status.Error ? (
                             <Box px={1} pt={1}>
-                                {t("somethingWentWrongWithTheSearch.")}
+                                {t("searchError")}
                             </Box>
                         ) : searchResults ? (
                             <>

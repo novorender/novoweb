@@ -161,15 +161,14 @@ export function Issues() {
                                     dispatch(jiraActions.setHoveredEntity(""));
                                 }}
                             >
-                                {issue.key} {t("-")}
-                                {issue.fields.summary}
+                                {issue.key} - {issue.fields.summary}
                             </ListItemButton>
                         ))}
                     </List>
                 ) : (
                     <Box flex={"1 1 100%"}>
                         <Typography textAlign={"center"} mt={1}>
-                            {t("noIssuesFound.")}
+                            {t("noIssuesFound")}
                         </Typography>
                         {Object.values(filters).some((val) => val === true) && (
                             <Box width={1} mt={3} display="flex" justifyContent="center">

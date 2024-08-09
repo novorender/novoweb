@@ -166,7 +166,7 @@ export function CreateJsonGroup({
                             }
                             label={
                                 <Box ml={1} fontSize={16}>
-                                    {t("includeChildObjectsOfSearchResult")}
+                                    {t("includeChildObjects")}
                                 </Box>
                             }
                         />
@@ -195,9 +195,7 @@ export function CreateJsonGroup({
                                     {t("search")}
                                 </LoadingButton>
                                 <Button disabled={disableNext} size="large" variant="contained" type="submit">
-                                    {t("next(")}
-                                    {ids.length}
-                                    {t(")")}
+                                    {t("nextLen", { length: ids.length })}
                                 </Button>
                             </Box>
                         </Box>

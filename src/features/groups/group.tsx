@@ -260,10 +260,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                     dispatchObjectGroups(objectGroupsActions.update(group.id, { opacity }));
                                 }}
                             >
-                                <ListItemText>
-                                    {(1 - opacity) * 100}
-                                    {t("%")}
-                                </ListItemText>
+                                <ListItemText>{(1 - opacity) * 100}%</ListItemText>
                             </MenuItem>
                         ))}
                     </Route>

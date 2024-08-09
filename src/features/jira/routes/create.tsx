@@ -286,11 +286,10 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                 }}
                             >
                                 <MenuItem value={project.key}>
-                                    {project.key} {t("-")}
-                                    {project.name}
+                                    {project.key}-{project.name}
                                 </MenuItem>
                             </Select>
-                            <FormHelperText>{t("canOnlyBeChangedByAdminsInSettings.")}</FormHelperText>
+                            <FormHelperText>{t("canOnlyBeChangedByAdminsInSettings")}</FormHelperText>
                         </FormControl>
 
                         <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 1 }}>
@@ -600,8 +599,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                             )}
                                             renderOption={(props, option) => (
                                                 <li {...props} key={option.id}>
-                                                    {option.key} {t("-")}
-                                                    {option.summaryText}
+                                                    {option.key}-{option.summaryText}
                                                 </li>
                                             )}
                                         />
@@ -649,7 +647,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                         ))}
                                     </Select>
                                     <FormHelperText>
-                                        {t("defaultComponentCanOnlyBeChangedByAdminsInSettings.")}
+                                        {t("defaultComponentCanOnlyBeChangedByAdminsInSettings")}
                                     </FormHelperText>
                                 </FormControl>
 

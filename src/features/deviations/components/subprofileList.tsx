@@ -87,7 +87,7 @@ function Item({
             <Typography flex="1 1 auto">
                 {groups1 || (
                     <Typography color="grey" component="span">
-                        {t("[NotSet]")}
+                        {t("notSet")}
                     </Typography>
                 )}
                 <Typography fontWeight={600} component="span">
@@ -95,7 +95,7 @@ function Item({
                 </Typography>
                 {groups2 || (
                     <Typography color="grey" component="span">
-                        {t("[NotSet]")}
+                        {t("notSet")}
                     </Typography>
                 )}
             </Typography>

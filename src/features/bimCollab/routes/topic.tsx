@@ -177,7 +177,7 @@ export function Topic() {
                                 {topic.description}
                             </Typography>
                             <Box display="flex" justifyContent="space-between">
-                                <Typography variant="h6">{t("creator:")}</Typography>
+                                <Typography variant="h6">{t("creator")}</Typography>
                                 <Typography variant="h6" fontWeight={600}>
                                     {topic.creation_author}
                                 </Typography>
@@ -205,7 +205,7 @@ export function Topic() {
                             </Box>
                             <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
                             <Box display="flex" justifyContent="space-between">
-                                <Typography variant="h6">{t("deadline:")}</Typography>
+                                <Typography variant="h6">{t("deadline")}</Typography>
                                 <Typography variant="h6" fontWeight={600}>
                                     {topic.due_date ? new Date(topic.due_date).toLocaleDateString("nb") : "Undecided"}
                                 </Typography>
@@ -454,7 +454,7 @@ function CommentListItem({
                                 >
                                     {t("date:")}
                                     {new Date(comment.date).toLocaleString("nb")} <br />
-                                    {t("by:")}
+                                    {t("by")}
                                     {comment.author}
                                 </Typography>
                             </div>

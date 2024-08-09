@@ -1,11 +1,9 @@
 import { Box, Table, TableBody, TableHead, TableRow } from "@mui/material";
 import { ReadonlyVec3 } from "gl-matrix";
-import { useTranslation } from "react-i18next";
 
 import { TableCell } from "./tableCell";
 
 export function VertexTable({ vertices, text }: { vertices: ReadonlyVec3[]; text?: string[] }) {
-    const { t } = useTranslation();
     return (
         <Table size="small" padding="none">
             <TableHead>
@@ -13,17 +11,17 @@ export function VertexTable({ vertices, text }: { vertices: ReadonlyVec3[]; text
                     <TableCell></TableCell>
                     <TableCell align="center">
                         <Box display="inline-block" ml={1}>
-                            {t("x")}
+                            X
                         </Box>
                     </TableCell>
                     <TableCell align="center">
                         <Box display="inline-block" ml={1}>
-                            {t("y")}
+                            Y
                         </Box>
                     </TableCell>
                     <TableCell align="center">
                         <Box display="inline-block" ml={1}>
-                            {t("z")}
+                            Z
                         </Box>
                     </TableCell>
                 </TableRow>

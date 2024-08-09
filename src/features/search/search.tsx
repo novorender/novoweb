@@ -216,7 +216,7 @@ export default function Search() {
                                             }
                                         >
                                             <AddCircle />
-                                            <Box ml={0.5}>{t("aND")}</Box>
+                                            <Box ml={0.5}>{t("and")}</Box>
                                         </Button>
                                         <Button
                                             color="grey"
@@ -243,7 +243,7 @@ export default function Search() {
                                             }
                                         >
                                             <AddCircle />
-                                            <Box ml={0.5}>{t("oR")}</Box>
+                                            <Box ml={0.5}>{t("or")}</Box>
                                         </Button>
                                     </>
                                 ) : null}
@@ -282,7 +282,7 @@ export default function Search() {
                     <ScrollBox flex={"1 1 100%"}>
                         {status === Status.Error ? (
                             <Box px={1} pt={1}>
-                                {t("somethingWentWrongWithTheSearch.")}
+                                {t("searchError")}
                             </Box>
                         ) : searchResults ? (
                             <>

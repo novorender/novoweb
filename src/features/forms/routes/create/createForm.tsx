@@ -175,7 +175,7 @@ export function CreateForm({
                         <Divider sx={{ my: 1 }} />
                         <Box display="flex" justifyContent="space-between" alignItems="center">
                             <Typography fontWeight={600}>
-                                {t("objectsAssigned:")}
+                                {t("objectsAssigned")}
                                 {formObjects?.ids.length}
                             </Typography>
                             <Button onClick={handleAddObjects}>{t("addObjects")}</Button>
@@ -201,7 +201,7 @@ export function CreateForm({
 
                 <Divider />
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography fontWeight={600}>{t("items:")}</Typography>
+                    <Typography fontWeight={600}>{t("items")}</Typography>
                     <Button onClick={handleAddItem}>{t("addItem")}</Button>
                 </Box>
                 {items.length ? (
@@ -259,7 +259,7 @@ function MarkerLabel({ marker }: { marker: string }) {
 
     const asset = assets.data.find((a) => a.name === marker);
     if (!asset) {
-        return <>{t("[Unknown]")}</>;
+        return <>[{t("unknown")}]</>;
     }
 
     return <>{asset.label}</>;

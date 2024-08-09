@@ -188,7 +188,7 @@ export default function Pims() {
                                         </Box>
                                     ) : !documents.data.length ? (
                                         <Box p={1} pt={2}>
-                                            {t("foundNoDocumentsAttachedToTheSelectedObject.")}
+                                            {t("noDocsForObject")}
                                         </Box>
                                     ) : (
                                         <DocumentList documents={documents.data} />
@@ -238,11 +238,11 @@ function DocumentList({ documents }: { documents: PimsDocument[] }) {
                                 <Fragment key={doc.Dokument_ID}>
                                     <Box>
                                         <Box display="flex" mb={0.5}>
-                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>{t("title:")}</Box>
+                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>{t("title")}</Box>
                                             <Box>{doc.DokumentTittel}</Box>
                                         </Box>
                                         <Box display="flex" mb={1}>
-                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>{t("iD:")}</Box>
+                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>{t("id:")}</Box>
                                             <Box>{doc.Dokument_ID}</Box>
                                         </Box>
                                         <Box display="flex" mx={-1}>
@@ -354,7 +354,7 @@ function Login() {
                 </FormControl>
 
                 <Typography color={"red"} mt={2} visibility={status === AsyncStatus.Error ? "visible" : "hidden"}>
-                    {t("invalidLoginCredentials.")}
+                    {t("invalidLoginCredentials")}
                 </Typography>
 
                 <Box mt={2}>

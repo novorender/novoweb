@@ -79,9 +79,8 @@ export function LogPoints() {
                                 component={Link}
                                 to={`/log-points/${point.localId}`}
                             >
-                                {point.localId}
-                                {t(".")}
-                                {point.code ?? point.type} {t("-")}{" "}
+                                {point.localId}.{point.code ?? point.type}
+                                {" - "}
                                 {format(point.timestampMs, "EEE dd/MM/yyyy HH:MM:SS")}
                             </ListItemButton>
                         ))}

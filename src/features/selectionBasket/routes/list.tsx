@@ -170,14 +170,14 @@ export function List() {
             ) : (
                 <ScrollBox pb={3}>
                     {!objects.data.length ? (
-                        <Box p={1}>{t("noObjectsInSelectionBasket.")}</Box>
+                        <Box p={1}>{t("noObjectsInSelectionBasket")}</Box>
                     ) : (
                         <Box>
                             {objects.data.length !== basket.length && (
                                 <Typography sx={{ px: 1, pt: 1, display: "block" }} variant="caption">
                                     {t("showing")}
                                     {objects.data.length} {t("/")}
-                                    {basket.length} {t("objectsInBasket.")}
+                                    {basket.length} {t("objectsInBasket")}
                                 </Typography>
                             )}
                             <MuiList disablePadding>

@@ -40,18 +40,8 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
                     sx={{ height: 5, width: 1, mt: "-5px" }}
                     position="absolute"
                 />
-                {user && (
-                    <Typography p={1}>
-                        {featuresConfig.ditio.name} {t("hasNotBeenSetUpForThisProject.")}
-                    </Typography>
-                )}
-                {!user && (
-                    <Typography p={1}>
-                        {t("logInToAccess")}
-                        {featuresConfig.ditio.name}
-                        {t(".")}
-                    </Typography>
-                )}
+                {user && <Typography p={1}>{t("notSetUpForProject", { name: featuresConfig.ditio.name })}</Typography>}
+                {!user && <Typography p={1}>{t("logInToAccess", { name: featuresConfig.ditio.name })}</Typography>}
             </>
         );
     }
@@ -120,7 +110,7 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
 
                 {status === AsyncStatus.Error && (
                     <FormHelperText sx={{ pl: 1 }} error={true}>
-                        {t("invalidCredentials.")}
+                        {t("invalidCredentials")}
                     </FormHelperText>
                 )}
 

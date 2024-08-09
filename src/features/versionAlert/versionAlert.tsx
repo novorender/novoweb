@@ -63,19 +63,10 @@ export function VersionAlert() {
                         <Warning color="primary" fontSize={"inherit"} />
                     </Box>
                     <Typography mb={1} fontSize={24} fontWeight={700} textAlign="center" component="h1">
-                        {t("unsupported")} {os} {t("version")}
+                        {t("unsupportedOS", { os })}
                     </Typography>
                     <Typography mb={2}>
-                        {t("itLooksLikeYouAreRunning")} {os} {t("v")}
-                        {major}
-                        {t(".")}
-                        {minor}
-                        {t(".ThisMayResultInUnexpectedIssuesWhileUsingNovorender.WeRecommendThatYouUpgradeToTheLatest")}
-                        {os} {t("versionAvailableOnYourDeviceOrAtLeastV")}
-                        {minSupportedMajor}
-                        {t(".")}
-                        {minSupportedMinor}
-                        {t(".")}
+                        {t("unsupportedOsMessage", { os, major, minor, minSupportedMajor, minSupportedMinor })}
                     </Typography>
                     <FormControlLabel
                         sx={{ mb: 2 }}
@@ -89,12 +80,12 @@ export function VersionAlert() {
                         }
                         label={
                             <Box mr={0.5} sx={{ userSelect: "none" }}>
-                                {t("don'TShowAgain")}
+                                {t("dontShowAgain")}
                             </Box>
                         }
                     />
                     <Button fullWidth size="large" variant="contained" onClick={handleSubmit}>
-                        {t("iUnderstand")}
+                        {t("understand")}
                     </Button>
                 </Box>
             </Box>

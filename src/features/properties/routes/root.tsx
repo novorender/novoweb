@@ -330,7 +330,7 @@ export function Root() {
                 </Box>
             ) : null}
             <ScrollBox pb={2} {...bindResizeHandlers()}>
-                {mainObject === undefined && <Box p={1}>{t("selectAnObjectToViewProperties.")}</Box>}
+                {mainObject === undefined && <Box p={1}>{t("selectAnObjectToViewProperties")}</Box>}
                 {mainObject !== undefined && object ? (
                     <>
                         {propertyLimitMessage ? <Alert severity="warning">{propertyLimitMessage}</Alert> : null}
@@ -539,7 +539,7 @@ function PropertyItem({
                     <Tooltip title={displayName}>
                         <Typography noWrap={true}>{displayName}</Typography>
                     </Tooltip>
-                    <ResizeHandle data-resize-handle>{t("|")}</ResizeHandle>
+                    <ResizeHandle data-resize-handle>|</ResizeHandle>
                 </Box>
                 <Box flex="1 1 100%" width={0}>
                     <Tooltip title={value}>

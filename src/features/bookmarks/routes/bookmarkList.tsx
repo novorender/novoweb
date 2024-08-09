@@ -166,7 +166,7 @@ export function BookmarkList() {
                 {bookmarksStatus === AsyncStatus.Error && (
                     <>
                         <Typography p={1} mb={3}>
-                            {t("anErrorOccurredWhileLoadingBookmarks.")}
+                            {t("errorLoadingBookmarks")}
                         </Typography>
                         <Box display={"flex"} justifyContent={"center"}>
                             <Button onClick={() => dispatch(bookmarksActions.setInitStatus(AsyncStatus.Initial))}>
