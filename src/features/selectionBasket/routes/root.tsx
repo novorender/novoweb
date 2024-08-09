@@ -1,6 +1,7 @@
 import { AddCircle, ColorLens, DeleteSweep, RemoveCircle } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, Link as MuiLink, Radio, RadioGroup, Typography, useTheme } from "@mui/material";
 import { MouseEvent, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -21,6 +22,7 @@ import {
 import { rgbToVec, vecToRgb } from "utils/color";
 
 export function Root() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
     const mode = useAppSelector(selectSelectionBasketMode);
@@ -44,7 +46,7 @@ export function Root() {
     };
 
     const selectedGroups = [...objectGroups, ...propertyTreeGroups].filter(
-        (group) => group.status === GroupStatus.Selected
+        (group) => group.status === GroupStatus.Selected,
     );
     const hasHighlighted = highlighted.length || selectedGroups.length;
 
@@ -64,8 +66,8 @@ export function Root() {
                 objectGroups.map((group) => ({
                     ...group,
                     status: group.status === GroupStatus.Selected ? GroupStatus.None : group.status,
-                }))
-            )
+                })),
+            ),
         );
         dispatch(propertyTreeActions.resetAllGroupsStatus());
     };
@@ -80,8 +82,8 @@ export function Root() {
                 objectGroups.map((group) => ({
                     ...group,
                     status: group.status === GroupStatus.Selected ? GroupStatus.None : group.status,
-                }))
-            )
+                })),
+            ),
         );
         dispatch(propertyTreeActions.resetAllGroupsStatus());
     };
@@ -107,15 +109,15 @@ export function Root() {
                         onClick={handleAdd}
                     >
                         <AddCircle sx={{ mr: 1 }} />
-                        Add
+                        {t("add")}
                     </Button>
                     <Button color="grey" disabled={!hasHighlighted || !visible.length} onClick={handleRemove}>
                         <RemoveCircle sx={{ mr: 1 }} />
-                        Remove
+                        {t("remove")}
                     </Button>
                     <Button color="grey" disabled={!visible.length} onClick={handleClear}>
                         <DeleteSweep sx={{ mr: 1 }} />
-                        Clear
+                        {t("clear")}
                     </Button>
                 </Box>
             </Box>
@@ -123,7 +125,8 @@ export function Root() {
             <ScrollBox display="flex" flexDirection="column" p={1} pb={2} mt={1}>
                 <Box sx={{ mb: 2 }}>
                     <MuiLink component={Link} to="/list">
-                        Objects in basket: {visible.length}
+                        {t("objectsInBasket:")}
+                        {visible.length}
                     </MuiLink>
                 </Box>
                 <FormControlLabel
@@ -139,16 +142,16 @@ export function Root() {
                                     renderActions.setSelectionBasketMode(
                                         mode === SelectionBasketMode.Strict
                                             ? SelectionBasketMode.Loose
-                                            : SelectionBasketMode.Strict
-                                    )
+                                            : SelectionBasketMode.Strict,
+                                    ),
                                 )
                             }
                         />
                     }
-                    label={<Box fontSize={14}>Highlight only from basket</Box>}
+                    label={<Box fontSize={14}>{t("highlightOnlyFromBasket")}</Box>}
                 />
                 <Divider sx={{ mb: 2 }} />
-                <Typography fontWeight={600}>View mode</Typography>
+                <Typography fontWeight={600}>{t("viewMode")}</Typography>
                 <RadioGroup
                     aria-label="View type"
                     value={defaultVisibility}
@@ -168,7 +171,7 @@ export function Root() {
                     />
                 </RadioGroup>
                 <Divider sx={{ my: 2 }} />
-                <Typography fontWeight={600}>Basket color</Typography>
+                <Typography fontWeight={600}>{t("basketColor")}</Typography>
                 <FormControlLabel
                     control={
                         <IosSwitch
@@ -179,7 +182,7 @@ export function Root() {
                             onChange={() => dispatch(renderActions.setSelectionBasketColor({ use: !color.use }))}
                         />
                     }
-                    label={<Box fontSize={14}>Use natural colors</Box>}
+                    label={<Box fontSize={14}>{t("useNaturalColors")}</Box>}
                 />
 
                 {color.use ? (
@@ -196,7 +199,7 @@ export function Root() {
                             }
                             onClick={toggleColorPicker}
                         >
-                            Set basket color
+                            {t("setBasketColor")}
                         </Button>
                     </Box>
                 ) : null}

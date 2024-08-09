@@ -1,6 +1,7 @@
 import { Add, DeleteSweep, Undo } from "@mui/icons-material";
 import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
@@ -34,6 +35,7 @@ export default function PointLine() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.pointLine.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.pointLine.key);
@@ -77,12 +79,12 @@ export default function PointLine() {
                                         checked={selecting}
                                         onChange={() =>
                                             dispatch(
-                                                renderActions.setPicker(selecting ? Picker.Object : Picker.PointLine)
+                                                renderActions.setPicker(selecting ? Picker.Object : Picker.PointLine),
                                             )
                                         }
                                     />
                                 }
-                                label={<Box fontSize={14}>Select</Box>}
+                                label={<Box fontSize={14}>{t("select")}</Box>}
                             />
                             <Button
                                 disabled={!points.length}
@@ -90,7 +92,7 @@ export default function PointLine() {
                                 color="grey"
                             >
                                 <Undo sx={{ mr: 1 }} />
-                                Undo
+                                {t("undo")}
                             </Button>
                             <Button
                                 onClick={() => dispatch(pointLineActions.newPointLine())}
@@ -98,7 +100,7 @@ export default function PointLine() {
                                 disabled={!points.length}
                             >
                                 <Add sx={{ mr: 1 }} />
-                                New
+                                {t("new")}
                             </Button>
                             <Button
                                 disabled={!points.length}
@@ -106,7 +108,7 @@ export default function PointLine() {
                                 color="grey"
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />
-                                Clear
+                                {t("clear")}
                             </Button>
                         </Box>
                     ) : null}
@@ -123,7 +125,7 @@ export default function PointLine() {
                                     onChange={() => dispatch(pointLineActions.toggleLockElevation())}
                                 />
                             }
-                            label={<Box fontSize={14}>Lock elevation</Box>}
+                            label={<Box fontSize={14}>{t("lockElevation")}</Box>}
                         />
                         <FormControlLabel
                             control={
@@ -135,17 +137,20 @@ export default function PointLine() {
                                     onChange={() => dispatch(pointLineActions.toggleLockVertical())}
                                 />
                             }
-                            label={<Box fontSize={14}>Lock vertical</Box>}
+                            label={<Box fontSize={14}>{t("lockVertical")}</Box>}
                         />
                     </Box>
                     {result && result.totalLength > 0 ? (
                         <>
                             <Divider sx={{ py: 0 }} />
-                            <Box p={1}>Total length: {result.totalLength.toFixed(3)} m</Box>
+                            <Box p={1}>
+                                {t("totalLength:")}
+                                {result.totalLength.toFixed(3)} {t("m")}
+                            </Box>
 
                             {points.length > 0 ? (
                                 <Accordion defaultExpanded={false}>
-                                    <AccordionSummary>Points</AccordionSummary>
+                                    <AccordionSummary>{t("points")}</AccordionSummary>
                                     <AccordionDetails>
                                         <Box p={1}>
                                             <VertexTable vertices={points} />

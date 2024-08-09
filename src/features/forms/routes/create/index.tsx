@@ -2,6 +2,7 @@ import { ArrowBack } from "@mui/icons-material";
 import { Box, Button, useTheme } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
 import { Divider } from "components";
@@ -18,6 +19,7 @@ const ADD_OBJECTS_ROUTE = "/add-objects";
 const SELECT_MARKER_ROUTE = "/select-marker";
 
 export function Create() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const match = useRouteMatch();
@@ -74,7 +76,7 @@ export function Create() {
                     <Box display="flex">
                         <Button color="grey" onClick={handleBackClick}>
                             <ArrowBack sx={{ mr: 1 }} />
-                            Back
+                            {t("back")}
                         </Button>
                     </Box>
                 </>

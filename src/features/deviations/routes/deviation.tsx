@@ -21,6 +21,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { useCallback, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -66,6 +67,7 @@ export function Deviation() {
     const {
         state: { view, db },
     } = useExplorerGlobals();
+    const { t } = useTranslation();
     const isProjectV2 = useAppSelector(selectProjectIsV2);
     const theme = useTheme();
     const history = useHistory();
@@ -84,7 +86,7 @@ export function Deviation() {
         (upd: Partial<DeviationForm>) => {
             dispatch(deviationsActions.setDeviationForm({ ...deviationForm, ...upd }));
         },
-        [dispatch, deviationForm]
+        [dispatch, deviationForm],
     );
     const updateSubprofile = useCallback(
         (upd: Partial<SubprofileGroup>) => {
@@ -92,20 +94,20 @@ export function Deviation() {
             subprofiles[deviationForm.subprofileIndex] = { ...subprofiles[deviationForm.subprofileIndex], ...upd };
             dispatch(deviationsActions.setDeviationForm({ ...deviationForm, subprofiles }));
         },
-        [dispatch, deviationForm]
+        [dispatch, deviationForm],
     );
     const updateCenterLine = useCallback(
         (centerLine: CenterLineGroup) => updateSubprofile({ centerLine }),
-        [updateSubprofile]
+        [updateSubprofile],
     );
     const updateTunnelInfo = useCallback(
         (tunnelInfo: TunnelInfoGroup) => updateSubprofile({ tunnelInfo }),
-        [updateSubprofile]
+        [updateSubprofile],
     );
 
     const otherNames = useMemo(
         () => profileList.filter((p) => p.id !== deviationForm.id).map((p) => p.name.toLowerCase()),
-        [profileList, deviationForm.id]
+        [profileList, deviationForm.id],
     );
     const errors = validateDeviationForm(deviationForm, otherNames, objectGroups);
     const subprofileErrors = errors.subprofiles[deviationForm.subprofileIndex];
@@ -114,28 +116,28 @@ export function Deviation() {
 
     const groups1 = useMemo(
         () => selectGroupsForIds(objectGroups, subprofile.groups1.value),
-        [subprofile.groups1.value, objectGroups]
+        [subprofile.groups1.value, objectGroups],
     );
     const groups2 = useMemo(
         () => selectGroupsForIds(objectGroups, subprofile.groups2.value),
-        [subprofile.groups2.value, objectGroups]
+        [subprofile.groups2.value, objectGroups],
     );
     const deviationFavorites = useMemo(
         () => selectGroupsForIds(objectGroups, subprofile.favorites.value),
-        [subprofile.favorites.value, objectGroups]
+        [subprofile.favorites.value, objectGroups],
     );
 
     const groups1Options = useMemo(
         () => [...objectGroups.filter((g) => !groups2.includes(g)), ...groups1.filter((g) => g.deleted)],
-        [objectGroups, groups1, groups2]
+        [objectGroups, groups1, groups2],
     );
     const groups2Options = useMemo(
         () => [...objectGroups.filter((g) => !groups1.includes(g)), ...groups2.filter((g) => g.deleted)],
-        [objectGroups, groups1, groups2]
+        [objectGroups, groups1, groups2],
     );
     const favoriteOptions = useMemo(
         () => [...objectGroups, ...deviationFavorites.filter((g) => g.deleted)],
-        [objectGroups, deviationFavorites]
+        [objectGroups, deviationFavorites],
     );
 
     const handleSave = () => {
@@ -198,11 +200,11 @@ export function Deviation() {
                         }}
                     >
                         <ArrowBack fontSize="small" sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <Button color="grey" onClick={handleSave} disabled={!canSave}>
                         <Save fontSize="small" sx={{ mr: 1 }} />
-                        Save
+                        {t("save")}
                     </Button>
                 </Box>
             </Box>
@@ -214,11 +216,12 @@ export function Deviation() {
                     </Box>
                     <Box px={1}>
                         <FormHelperText>
-                            Editing {groups1.map((g) => g.name).join(", ") || "[not set]"}
+                            {t("editing")} {groups1.map((g) => g.name).join(", ") || t("[NotSet]")}
                             <Box component="span" fontWeight={600}>
                                 {" vs "}
                             </Box>
-                            {groups2.map((g) => g.name).join(", ") || "[not set]"}...
+                            {groups2.map((g) => g.name).join(", ") || t("[NotSet]")}
+                            {t("...")}
                         </FormHelperText>
                     </Box>
                 </Box>
@@ -231,7 +234,7 @@ export function Deviation() {
             ) : null}
             <ScrollBox height={1} p={2} ref={containerRef}>
                 <Typography fontWeight={600} fontSize="1.5rem" mb={2}>
-                    Create deviation profile
+                    t("createDeviationProfile")
                 </Typography>
                 <FormControl>
                     <RadioGroup
@@ -262,7 +265,7 @@ export function Deviation() {
                 {deviationForm.isCopyingFromProfileId && (
                     <FormControl fullWidth sx={{ my: 2 }}>
                         <InputLabel id="select-profile-to-copy-from-label">
-                            Copy from existing profile (optional)
+                            {t("copyFromExistingProfile(Optional)")}
                         </InputLabel>
                         <Select
                             labelId="select-profile-to-copy-from-label"
@@ -299,7 +302,7 @@ export function Deviation() {
 
                 {deviationForm.subprofiles.length > 1 && (
                     <>
-                        <SectionHeader>Subprofiles</SectionHeader>
+                        <SectionHeader>{t("subprofiles")}</SectionHeader>
                         <Box>
                             <SubprofileList
                                 subprofiles={deviationForm.subprofiles}
@@ -326,9 +329,9 @@ export function Deviation() {
                     </>
                 )}
 
-                <SectionHeader>Select deviation Groups</SectionHeader>
+                <SectionHeader>{t("selectDeviationGroups")}</SectionHeader>
                 <Typography>
-                    Create deviations between items in Groups. For example a point cloud and (many) 3D asset(s).
+                    {t("createDeviationsBetweenItemsInGroups.ForExampleAPointCloudAnd(Many)3DAsset(S).")}
                 </Typography>
                 <GroupAutocomplete
                     options={groups1Options}
@@ -341,7 +344,7 @@ export function Deviation() {
                     disabled={formDisabled}
                 />
                 <Box display="flex" justifyContent="center" mt={1}>
-                    <Typography fontWeight={600}>vs</Typography>
+                    <Typography fontWeight={600}>{t("vs")}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                     <FormControl>
@@ -395,7 +398,7 @@ export function Deviation() {
                     helperText={getActiveErrorText(subprofileErrors.groups2)}
                     disabled={formDisabled}
                 />
-                <SectionHeader>Select groups to appear in legend</SectionHeader>
+                <SectionHeader>{t("selectGroupsToAppearInLegend")}</SectionHeader>
                 <GroupAutocomplete
                     options={favoriteOptions}
                     label="Groups"
@@ -406,7 +409,7 @@ export function Deviation() {
                     helperText={getActiveErrorText(subprofileErrors.favorites)}
                     disabled={formDisabled}
                 />
-                <SectionHeader>Deviation parameters</SectionHeader>
+                <SectionHeader>{t("deviationParameters")}</SectionHeader>
                 <FormControlLabel
                     control={
                         <Checkbox
@@ -457,7 +460,7 @@ export function Deviation() {
                                 })
                             }
                         >
-                            <Add sx={{ mr: 1 }} /> Add subprofile
+                            <Add sx={{ mr: 1 }} /> {t("addSubprofile")}
                         </Button>
                     </Box>
                 )}

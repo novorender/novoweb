@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { HierarcicalObjectReference, ObjectData } from "@novorender/webgl-api";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -33,6 +34,7 @@ export function List() {
     const {
         state: { db, scene, view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const [abortController, abort] = useAbortController();
     const basket = useSelectionBasket().idArr;
@@ -71,7 +73,7 @@ export function List() {
                         {
                             searchPattern: [{ property: "id", value: basket.slice(0, 100).map(String) }],
                         },
-                        abortSignal
+                        abortSignal,
                     );
 
                     const data: HierarcicalObjectReference[] = [];
@@ -111,7 +113,7 @@ export function List() {
                 <Box display="flex" justifyContent={"space-between"}>
                     <Button onClick={() => history.push("/")} color="grey" sx={{ mr: 3 }}>
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <FormControlLabel
                         control={
@@ -130,7 +132,7 @@ export function List() {
                                 }}
                             />
                         }
-                        label={<Box fontSize={14}>Fly on select</Box>}
+                        label={<Box fontSize={14}>{t("flyOnSelect")}</Box>}
                     />
                     <Button
                         disabled={
@@ -155,7 +157,7 @@ export function List() {
                         color="grey"
                     >
                         <Flight sx={{ mr: 1 }} />
-                        Overview
+                        {t("overview")}
                     </Button>
                 </Box>
             </Box>
@@ -168,12 +170,14 @@ export function List() {
             ) : (
                 <ScrollBox pb={3}>
                     {!objects.data.length ? (
-                        <Box p={1}>No objects in selection basket.</Box>
+                        <Box p={1}>{t("noObjectsInSelectionBasket.")}</Box>
                     ) : (
                         <Box>
                             {objects.data.length !== basket.length && (
                                 <Typography sx={{ px: 1, pt: 1, display: "block" }} variant="caption">
-                                    Showing {objects.data.length} / {basket.length} objects in basket.
+                                    {t("showing")}
+                                    {objects.data.length} {t("/")}
+                                    {basket.length} {t("objectsInBasket.")}
                                 </Typography>
                             )}
                             <MuiList disablePadding>
@@ -197,7 +201,7 @@ export function List() {
                                                                 : obj.bounds.sphere.center,
                                                             radius: obj.bounds.sphere.radius,
                                                         },
-                                                    })
+                                                    }),
                                                 );
                                             }
                                         }}

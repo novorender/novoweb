@@ -1,5 +1,6 @@
 import { Logout, SettingsRounded } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { MemoryRouter, Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -104,6 +105,7 @@ function WidgetMenu(props: MenuProps) {
 }
 
 function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const dispatch = useAppDispatch();
 
@@ -125,7 +127,7 @@ function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
                     <ListItemIcon>
                         <Logout />
                     </ListItemIcon>
-                    <ListItemText>Log out</ListItemText>
+                    <ListItemText>{t("logOut")}</ListItemText>
                 </>
             </MenuItem>
         </div>
@@ -133,6 +135,7 @@ function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
 }
 
 function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const match = useRouteMatch();
 
@@ -152,7 +155,7 @@ function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
                     <ListItemIcon>
                         <SettingsRounded />
                     </ListItemIcon>
-                    <ListItemText>Settings</ListItemText>
+                    <ListItemText>{t("settings")}</ListItemText>
                 </>
             </MenuItem>
         </div>

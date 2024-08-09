@@ -1,5 +1,6 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Redirect, useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -21,6 +22,7 @@ import {
 let getTokensRequestInitialized = false;
 
 export function Auth() {
+    const { t } = useTranslation();
     const history = useHistory();
     const dispatch = useAppDispatch();
 
@@ -73,13 +75,13 @@ export function Auth() {
                             xsiteManageActions.setAccessToken({
                                 status: AsyncStatus.Success,
                                 data: res.data.id_token,
-                            })
+                            }),
                         );
                         dispatch(
                             xsiteManageActions.setRefreshToken({
                                 token: refreshToken.token,
                                 refreshIn: res.data.expires_in,
-                            })
+                            }),
                         );
                     } else {
                         throw res.error;
@@ -108,7 +110,7 @@ export function Auth() {
                 JSON.stringify({
                     token: tokensResponse.refresh_token,
                     expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
-                })
+                }),
             );
         } else {
             console.warn(tokensError);
@@ -139,7 +141,7 @@ export function Auth() {
     ) : error ? (
         <ErrorMsg>{error}</ErrorMsg>
     ) : sitesError || tokensError || accessToken.status === AsyncStatus.Error ? (
-        <ErrorMsg>An error occurred.</ErrorMsg>
+        <ErrorMsg>{t("anErrorOccurred.")}</ErrorMsg>
     ) : (
         <Box position="relative">
             <LinearProgress />

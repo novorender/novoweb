@@ -1,6 +1,7 @@
 import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, FormHelperText, Typography } from "@mui/material";
 import { FormEventHandler, PropsWithChildren, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { dataApi } from "apis/dataV1";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -13,6 +14,7 @@ import { AsyncStatus } from "types/misc";
 import { ditioActions, selectDitioAccessToken } from "../slice";
 
 export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: string }>) {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const [clientId, setClientId] = useState("");
     const [clientSecret, setClientSecret] = useState("");
@@ -39,9 +41,17 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
                     position="absolute"
                 />
                 {user && (
-                    <Typography p={1}>{featuresConfig.ditio.name} has not been set up for this project.</Typography>
+                    <Typography p={1}>
+                        {featuresConfig.ditio.name} {t("hasNotBeenSetUpForThisProject.")}
+                    </Typography>
                 )}
-                {!user && <Typography p={1}>Log in to access {featuresConfig.ditio.name}.</Typography>}
+                {!user && (
+                    <Typography p={1}>
+                        {t("logInToAccess")}
+                        {featuresConfig.ditio.name}
+                        {t(".")}
+                    </Typography>
+                )}
             </>
         );
     }
@@ -72,7 +82,7 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
                 // reset to be handled in useHandleDitioAuth();
                 dispatch(ditioActions.setAccessToken({ status: AsyncStatus.Initial }));
             }
-        } catch (e) {
+        } catch {
             setStatus(AsyncStatus.Error);
         }
     };
@@ -86,7 +96,8 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
             />
             <ScrollBox p={1} component="form" onSubmit={handleSubmit}>
                 <Typography fontWeight={600} mb={2}>
-                    Add {featuresConfig.ditio.name} integration credentials
+                    {t("add")}
+                    {featuresConfig.ditio.name} {t("integrationCredentials")}
                 </Typography>
 
                 <TextField
@@ -109,7 +120,7 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
 
                 {status === AsyncStatus.Error && (
                     <FormHelperText sx={{ pl: 1 }} error={true}>
-                        Invalid credentials.
+                        {t("invalidCredentials.")}
                     </FormHelperText>
                 )}
 
@@ -124,11 +135,12 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
                         disabled={!clientId || !clientSecret}
                         loadingIndicator={
                             <Box display="flex" alignItems="center">
-                                Save <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
+                                {t("save")}
+                                <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
                             </Box>
                         }
                     >
-                        Save
+                        {t("save")}
                     </LoadingButton>
                 </Box>
             </ScrollBox>

@@ -160,9 +160,9 @@ export function useRenderLocationFormAssets() {
                     [...uniqueMarkers].sort().map(async (name) => {
                         const assetInfo = assetInfoList.data.find((a) => a.name === name)!;
                         result.set(name, await loadAsset(assetsUrl, name, assetInfo, assetAbortController.current));
-                    })
+                    }),
                 );
-            } catch (e) {
+            } catch {
                 setAssetGltfMap({ status: AsyncStatus.Error, msg: "Error loading assets" });
             }
 
@@ -199,7 +199,7 @@ export function useRenderLocationFormAssets() {
             }
 
             const objects = view.renderState.dynamic.objects.filter(
-                (obj) => !obj.baseObjectId || !baseObjectIdSet.has(obj.baseObjectId)
+                (obj) => !obj.baseObjectId || !baseObjectIdSet.has(obj.baseObjectId),
             );
 
             needCleaning.current = false;
@@ -237,7 +237,7 @@ export function useRenderLocationFormAssets() {
                         ref,
                         instances: [],
                         selectedInstances: [],
-                    }))
+                    })),
                 );
             });
 
@@ -282,7 +282,7 @@ export function useRenderLocationFormAssets() {
             let objects = view.renderState.dynamic.objects as RenderStateDynamicObject[];
             if (needCleaning.current) {
                 objects = view.renderState.dynamic.objects.filter(
-                    (obj) => !obj.baseObjectId || !baseObjectIdSet.has(obj.baseObjectId)
+                    (obj) => !obj.baseObjectId || !baseObjectIdSet.has(obj.baseObjectId),
                 );
 
                 needCleaning.current = false;

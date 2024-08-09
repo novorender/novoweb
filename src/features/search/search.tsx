@@ -2,6 +2,7 @@ import { AddCircle } from "@mui/icons-material";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
 import { CSSProperties, FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ListOnScrollProps } from "react-window";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -36,6 +37,7 @@ export default function Search() {
     const {
         state: { db },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.search.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.search.key);
@@ -45,7 +47,7 @@ export default function Search() {
     const [advanced, toggleAdvanced] = useToggle(urlSearchQuery ? Array.isArray(urlSearchQuery) : false);
     const [simpleInput, setSimpleInput] = useState(typeof urlSearchQuery === "string" ? urlSearchQuery : "");
     const [advancedInputs, setAdvancedInputs] = useState(
-        Array.isArray(urlSearchQuery) ? urlSearchQuery : [{ property: "", value: "", exact: true }]
+        Array.isArray(urlSearchQuery) ? urlSearchQuery : [{ property: "", value: "", exact: true }],
     );
 
     const [allSelected, setAllSelected] = useState(false);
@@ -197,7 +199,7 @@ export default function Search() {
                                     }
                                     label={
                                         <Box ml={0.5} fontSize={14}>
-                                            Advanced
+                                            {t("advanced")}
                                         </Box>
                                     }
                                 />
@@ -214,7 +216,7 @@ export default function Search() {
                                             }
                                         >
                                             <AddCircle />
-                                            <Box ml={0.5}>AND</Box>
+                                            <Box ml={0.5}>{t("aND")}</Box>
                                         </Button>
                                         <Button
                                             color="grey"
@@ -235,13 +237,13 @@ export default function Search() {
                                                                       ? input.value.concat("")
                                                                       : [input.value ?? "", ""],
                                                               }
-                                                            : input
-                                                    )
+                                                            : input,
+                                                    ),
                                                 )
                                             }
                                         >
                                             <AddCircle />
-                                            <Box ml={0.5}>OR</Box>
+                                            <Box ml={0.5}>{t("oR")}</Box>
                                         </Button>
                                     </>
                                 ) : null}
@@ -256,7 +258,7 @@ export default function Search() {
                                     fullWidth
                                     sx={{ marginRight: 1 }}
                                 >
-                                    Cancel
+                                    {t("cancel")}
                                 </Button>
                                 <Button
                                     type="submit"
@@ -265,7 +267,7 @@ export default function Search() {
                                     color="primary"
                                     variant="contained"
                                 >
-                                    Search
+                                    {t("search")}
                                 </Button>
                             </Box>
                         </Box>
@@ -280,7 +282,7 @@ export default function Search() {
                     <ScrollBox flex={"1 1 100%"}>
                         {status === Status.Error ? (
                             <Box px={1} pt={1}>
-                                Something went wrong with the search.
+                                {t("somethingWentWrongWithTheSearch.")}
                             </Box>
                         ) : searchResults ? (
                             <>

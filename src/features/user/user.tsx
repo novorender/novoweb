@@ -1,6 +1,7 @@
 import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, Grid, Link } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { dataApi } from "apis/dataV1";
 import { useAppSelector } from "app/redux-store-interactions";
@@ -65,6 +66,8 @@ function LoggedIn({
     loading: boolean;
     setLoading: (state: boolean) => void;
 }) {
+    const { t } = useTranslation();
+
     const role = useAppSelector(selectUserRole);
     const org = useAppSelector(selectSceneOrganization);
     const config = useAppSelector(selectConfig);
@@ -83,14 +86,14 @@ function LoggedIn({
         <>
             <Grid container>
                 <Grid fontWeight={600} item xs={5}>
-                    User:
+                    {t("user:")}
                 </Grid>
                 <Grid item xs={7}>
                     {user.user}
                 </Grid>
 
                 <Grid fontWeight={600} item xs={5}>
-                    Role:
+                    {t("role:")}
                 </Grid>
                 <Grid item xs={7}>
                     {role === UserRole.Admin ? "Admin" : role === UserRole.Owner ? "Owner" : "Viewer"}
@@ -98,7 +101,7 @@ function LoggedIn({
                 {org && (
                     <>
                         <Grid fontWeight={600} item xs={5}>
-                            Organization:
+                            {t("organization:")}
                         </Grid>
                         <Grid item xs={7}>
                             {org}
@@ -126,18 +129,19 @@ function LoggedIn({
                 loading={loading}
                 loadingIndicator={
                     <Box position={"relative"} display="flex" alignItems="center" minWidth={75}>
-                        Log out
+                        {t("logOut")}
                         <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
                     </Box>
                 }
             >
-                Log out
+                {t("logOut")}
             </LoadingButton>
         </>
     );
 }
 
 function LoggedOut({ loading, setLoading }: { loading: boolean; setLoading: (state: boolean) => void }) {
+    const { t } = useTranslation();
     const sceneId = useSceneId();
     const createBookmark = useCreateBookmark();
     const config = useAppSelector(selectConfig);
@@ -191,12 +195,12 @@ function LoggedOut({ loading, setLoading }: { loading: boolean; setLoading: (sta
                     loading={loading}
                     loadingIndicator={
                         <Box position={"relative"} display="flex" alignItems="center" minWidth={75}>
-                            Log in
+                            {t("logIn")}
                             <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
                         </Box>
                     }
                 >
-                    Log in
+                    {t("logIn")}
                 </LoadingButton>
             </Box>
         </ScrollBox>

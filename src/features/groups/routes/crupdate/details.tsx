@@ -2,6 +2,7 @@ import { ArrowBack } from "@mui/icons-material";
 import { Autocomplete, Box, Button, useTheme } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { FormEventHandler, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { Divider, ScrollBox, TextField } from "components";
@@ -25,6 +26,7 @@ export function Details({
     ids: ObjectId[];
     includeDescendants: boolean;
 }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const dispatchHighlighted = useDispatchHighlighted();
@@ -38,9 +40,9 @@ export function Details({
                       (input) =>
                           `${input.property?.split("/").pop()} ${
                               input.value ? input.value : input.range ? `${input.range.min}-${input.range.max}` : ""
-                          }`
+                          }`,
                   )
-                  .join(" + ")
+                  .join(" + "),
     );
     const [collection, setCollection] = useState(groupToEdit?.grouping ?? "");
     const collections = Array.from(
@@ -54,7 +56,7 @@ export function Details({
             }
 
             return set;
-        }, new Set<string>())
+        }, new Set<string>()),
     )
         .filter((collection) => collection !== "")
         .sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
@@ -100,7 +102,7 @@ export function Details({
                 ids: new Set(ids),
                 grouping: collection,
                 search: [...savedInputs],
-            })
+            }),
         );
         dispatchHighlighted(highlightActions.remove(ids));
     };
@@ -115,7 +117,7 @@ export function Details({
                     <Box display="flex" justifyContent={"space-between"}>
                         <Button color="grey" onClick={() => history.goBack()}>
                             <ArrowBack sx={{ mr: 1 }} />
-                            Back
+                            {t("back")}
                         </Button>
                     </Box>
                 </>
@@ -159,10 +161,10 @@ export function Details({
                         fullWidth
                         sx={{ marginRight: 1 }}
                     >
-                        Cancel
+                        {t("cancel")}
                     </Button>
                     <Button type="submit" fullWidth disabled={!name} color="primary" variant="contained">
-                        {groupToEdit ? "Save" : "Add"} group
+                        {groupToEdit ? t("save") : t("add")} {t("group")}
                     </Button>
                 </Box>
             </ScrollBox>

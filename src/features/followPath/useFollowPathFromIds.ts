@@ -36,7 +36,7 @@ export function useFollowPathFromIds() {
 
                 setObjects({ status: AsyncStatus.Success, data: fp });
                 dispatch(followPathActions.setFollowObject(fp));
-            } catch (e) {
+            } catch {
                 setObjects({ status: AsyncStatus.Error, msg: "An error occurred." });
                 dispatch(followPathActions.setFollowObject(undefined));
             }

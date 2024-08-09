@@ -1,6 +1,7 @@
 import { ArrowBack } from "@mui/icons-material";
 import { Box, Button, FormControl, InputLabel, MenuItem, OutlinedInput, Select, useTheme } from "@mui/material";
 import { FormEventHandler, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
 import { Divider, LinearProgress } from "components";
@@ -10,6 +11,7 @@ import { useGetProjectExtensionsQuery, useGetTopicQuery, useUpdateTopicMutation 
 const UNASSIGNED = "unassigned";
 
 export function EditTopic() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
 
@@ -19,7 +21,7 @@ export function EditTopic() {
     const [updateTopic, { isLoading: disabled }] = useUpdateTopicMutation();
 
     const [topicStatus, setTopicStatus] = useState("");
-    const [assignedTo, setAssignedTo] = useState(topic ? topic.assigned_to ?? UNASSIGNED : "");
+    const [assignedTo, setAssignedTo] = useState(topic ? (topic.assigned_to ?? UNASSIGNED) : "");
 
     useEffect(() => {
         if (!topic) {
@@ -66,13 +68,13 @@ export function EditTopic() {
                 </Box>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
-                    Back
+                    {t("back")}
                 </Button>
             </Box>
             <Box mt={1} p={1}>
                 <form onSubmit={handleSubmit}>
                     <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <InputLabel id="bcf-topic-status-label">Status</InputLabel>
+                        <InputLabel id="bcf-topic-status-label">{t("status")}</InputLabel>
                         <Select
                             labelId="bcf-topic-status-label"
                             id="bcf-topic-status"
@@ -107,7 +109,7 @@ export function EditTopic() {
                     </FormControl>
 
                     <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <InputLabel id="bcf-topic-assigned-label">Assigned to</InputLabel>
+                        <InputLabel id="bcf-topic-assigned-label">{t("assignedTo")}</InputLabel>
                         <Select
                             labelId="bcf-topic-assigned-label"
                             id="bcf-topic-assigned"
@@ -121,7 +123,7 @@ export function EditTopic() {
                                 value={UNASSIGNED}
                                 sx={{ fontWeight: assignedTo === UNASSIGNED ? "bold" : "regular" }}
                             >
-                                Unassigned
+                                {t("unassigned")}
                             </MenuItem>
                             {topic.assigned_to && !extensions.user_id_type.includes(topic.assigned_to) ? (
                                 <MenuItem
@@ -156,10 +158,10 @@ export function EditTopic() {
                             disabled={disabled}
                             onClick={() => history.goBack()}
                         >
-                            Cancel
+                            {t("cancel")}
                         </Button>
                         <Button sx={{ ml: 2 }} fullWidth variant="contained" type="submit" disabled={disabled}>
-                            Save
+                            {t("save")}
                         </Button>
                     </Box>
                 </form>

@@ -1,5 +1,6 @@
 import { Box, Checkbox, FormControlLabel, FormHelperText } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -14,6 +15,7 @@ import { useSaveDeviationConfig } from "../hooks/useSaveDeviationConfig";
 import { selectDeviationProfiles, selectSaveStatus } from "../selectors";
 
 export function DeleteDeviation() {
+    const { t } = useTranslation();
     const history = useHistory();
     const { id } = useLocation<{ id: string }>().state;
     const dispatch = useAppDispatch();
@@ -72,7 +74,7 @@ export function DeleteDeviation() {
                 />
                 <Box mb={4}>
                     <FormHelperText>
-                        You can recalculate later if you plan to update other deviation profiles now
+                        {t("youCanRecalculateLaterIfYouPlanToUpdateOtherDeviationProfilesNow")}
                     </FormHelperText>
                 </Box>
             </Confirmation>

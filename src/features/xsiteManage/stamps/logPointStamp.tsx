@@ -1,6 +1,7 @@
 import { Close, FlightTakeoff } from "@mui/icons-material";
 import { Box, Button, IconButton, Typography } from "@mui/material";
 import { quat } from "gl-matrix";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider } from "components";
@@ -11,6 +12,7 @@ export function LogPointStamp() {
     const {
         state: { view },
     } = useExplorerGlobals();
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const stamp = useAppSelector(selectStamp);
 
@@ -29,9 +31,12 @@ export function LogPointStamp() {
                 </IconButton>
             </Box>
             <Divider />
-            Number: {stamp.data.logPoint.sequenceId} <br />
-            Code: {stamp.data.logPoint.code} <br />
-            Uploaded: {new Date(stamp.data.logPoint.timestampMs).toLocaleString()}
+            {t("number:")}
+            {stamp.data.logPoint.sequenceId} <br />
+            {t("code:")}
+            {stamp.data.logPoint.code} <br />
+            {t("uploaded:")}
+            {new Date(stamp.data.logPoint.timestampMs).toLocaleString()}
             <Box mt={1}>
                 <Button
                     variant="outlined"
@@ -44,12 +49,12 @@ export function LogPointStamp() {
                                     position: [stamp.data.logPoint.x, stamp.data.logPoint.y, stamp.data.logPoint.z],
                                     rotation: view ? quat.clone(view.renderState.camera.rotation) : [0, 0, 0, 1],
                                 },
-                            })
+                            }),
                         )
                     }
                 >
                     <FlightTakeoff sx={{ mr: 2 }} />
-                    Fly to point
+                    {t("flyToPoint")}
                 </Button>
             </Box>
         </Box>

@@ -17,6 +17,7 @@ import {
 import { CylinerMeasureType, DuoMeasurementValues, MeasurementValues, MeasureSettings } from "@novorender/api";
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary, MeasurementTable, Tooltip, VertexTable } from "components";
@@ -37,7 +38,7 @@ const NestedAccordionSummary = styled(AccordionSummary)(
         &:hover {
             background: ${theme.palette.grey[300]};
         }
-    `
+    `,
 );
 
 const NestedAccordionDetails = styled(AccordionDetails)(
@@ -45,7 +46,7 @@ const NestedAccordionDetails = styled(AccordionDetails)(
         background: ${theme.palette.grey[200]};
         padding-left: ${theme.spacing(1)};
         padding-right: ${theme.spacing(1)};
-    `
+    `,
 );
 
 const empty = undefined;
@@ -71,7 +72,7 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
         async function getMeasureValues() {
             if (currentMeasureObject) {
                 setMeasureValues(
-                    await view?.measure?.core.measure(currentMeasureObject, undefined, currentMeasureObject.settings)
+                    await view?.measure?.core.measure(currentMeasureObject, undefined, currentMeasureObject.settings),
                 );
             } else {
                 setMeasureValues(undefined);
@@ -149,7 +150,7 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
                                     settings: {
                                         cylinderMeasure: newValue as CylinerMeasureType,
                                     },
-                                })
+                                }),
                             );
                         }}
                     />
@@ -164,6 +165,8 @@ export function MeasuredObject({ obj, idx }: { obj: ExtendedMeasureEntity; idx: 
 }
 
 export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues: DuoMeasurementValues | undefined }) {
+    const { t } = useTranslation();
+
     if (!duoMeasurementValues) {
         return null;
     }
@@ -181,7 +184,7 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
     ].filter((p) => typeof p === "number") as number[];
     return (
         <Accordion defaultExpanded={true}>
-            <AccordionSummary sx={{ fontWeight: 600 }}>Result</AccordionSummary>
+            <AccordionSummary sx={{ fontWeight: 600 }}>{t("result")}</AccordionSummary>
             <AccordionDetails>
                 <>
                     <List>
@@ -189,10 +192,10 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                             <ListItem>
                                 <Grid container>
                                     <Grid item xs={5}>
-                                        Distance
+                                        {t("distance")}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {duoMeasurementValues.distance.toFixed(3)} m
+                                        {duoMeasurementValues.distance.toFixed(3)} {t("m")}
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -201,10 +204,10 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                             <ListItem>
                                 <Grid container>
                                     <Grid item xs={5}>
-                                        Angle
+                                        {t("angle")}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {(duoMeasurementValues.angle.radians * (180 / Math.PI)).toFixed(3)} °
+                                        {(duoMeasurementValues.angle.radians * (180 / Math.PI)).toFixed(3)} {t("°")}
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -213,10 +216,10 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                             <ListItem>
                                 <Grid container>
                                     <Grid item xs={5}>
-                                        Normal distance
+                                        {t("normalDistance")}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {duoMeasurementValues.normalDistance.toFixed(3)} m
+                                        {duoMeasurementValues.normalDistance.toFixed(3)} {t("m")}
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -232,7 +235,8 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                             <ListItem key={idx}>
                                 <Grid container>
                                     <Grid item xs={5}>
-                                        Parameter {arr.length === 2 ? (idx === 0 ? "A" : "B") : ""}
+                                        {t("parameter")}
+                                        {arr.length === 2 ? (idx === 0 ? "A" : "B") : ""}
                                     </Grid>
                                     <Grid item xs={5}>
                                         {p.toFixed(3)}
@@ -249,7 +253,7 @@ export function MeasuredResult({ duoMeasurementValues }: { duoMeasurementValues:
                     </List>
                     <Box p={1}>
                         <Accordion defaultExpanded={true}>
-                            <NestedAccordionSummary>Components</NestedAccordionSummary>
+                            <NestedAccordionSummary>{t("components")}</NestedAccordionSummary>
                             <NestedAccordionDetails>
                                 {pts ? <MeasurementTable start={pts[0]} end={pts[1]} /> : null}
                             </NestedAccordionDetails>
@@ -272,6 +276,8 @@ export function MeasurementData({
     settings?: MeasureSettings;
     onSettingsChange?: (newValue: string) => void;
 }) {
+    const { t } = useTranslation();
+
     if (!("kind" in measureValues)) {
         return null;
     }
@@ -284,10 +290,10 @@ export function MeasurementData({
                         <ListItem>
                             <Grid container>
                                 <Grid item xs={5}>
-                                    Length
+                                    {t("length")}
                                 </Grid>
                                 <Grid item xs={5}>
-                                    {measureValues.distance.toFixed(3)} m
+                                    {measureValues.distance.toFixed(3)} {t("m")}
                                 </Grid>
                             </Grid>
                         </ListItem>
@@ -297,7 +303,7 @@ export function MeasurementData({
                     </List>
                     <Box p={1}>
                         <Accordion defaultExpanded={false}>
-                            <NestedAccordionSummary>Components</NestedAccordionSummary>
+                            <NestedAccordionSummary>{t("components")}</NestedAccordionSummary>
                             <NestedAccordionDetails>
                                 <MeasurementTable start={measureValues.start} end={measureValues.end} />
                             </NestedAccordionDetails>
@@ -314,10 +320,10 @@ export function MeasurementData({
                             <ListItem>
                                 <Grid container>
                                     <Grid item xs={5}>
-                                        Length
+                                        {t("length")}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {measureValues.totalLength.toFixed(3)} m
+                                        {measureValues.totalLength.toFixed(3)} {t("m")}
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -332,16 +338,16 @@ export function MeasurementData({
                     <ListItem>
                         <Grid container>
                             <Grid item xs={5}>
-                                Diameter
+                                {t("diameter")}
                             </Grid>
                             <Grid item xs={5}>
-                                {(measureValues.radius * 2).toFixed(3)} m
+                                {(measureValues.radius * 2).toFixed(3)} {t("m")}
                             </Grid>
                             <Grid item xs={5}>
-                                Total angle
+                                {t("totalAngle")}
                             </Grid>
                             <Grid item xs={5}>
-                                {Math.round(measureValues.totalAngle * (180 / Math.PI))} deg
+                                {Math.round(measureValues.totalAngle * (180 / Math.PI))} {t("deg")}
                             </Grid>
                         </Grid>
                     </ListItem>
@@ -356,10 +362,10 @@ export function MeasurementData({
                             <ListItem>
                                 <Grid container>
                                     <Grid item xs={5}>
-                                        Height
+                                        {t("height")}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {measureValues.height.toFixed(3)} m
+                                        {measureValues.height.toFixed(3)} {t("m")}
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -368,10 +374,10 @@ export function MeasurementData({
                             <ListItem>
                                 <Grid container>
                                     <Grid item xs={5}>
-                                        Width
+                                        {t("width")}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {measureValues.width.toFixed(3)} m
+                                        {measureValues.width.toFixed(3)} {t("m")}
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -399,7 +405,7 @@ export function MeasurementData({
                             <ListItem>
                                 <Grid container>
                                     <Grid item xs={5}>
-                                        Area
+                                        {t("area")}
                                     </Grid>
                                     <Grid item xs={5}>
                                         {measureValues.area.toFixed(3)} &#13217;
@@ -418,11 +424,11 @@ export function MeasurementData({
                                             (measureValues.outerRadius
                                                 ? Math.min(
                                                       measureValues.outerRadius as number,
-                                                      measureValues.innerRadius as number
+                                                      measureValues.innerRadius as number,
                                                   )
                                                 : measureValues.innerRadius) * 2
                                         ).toFixed(3)}{" "}
-                                        m
+                                        {t("m")}
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -438,11 +444,11 @@ export function MeasurementData({
                                             (measureValues.innerRadius
                                                 ? Math.max(
                                                       measureValues.outerRadius as number,
-                                                      measureValues.innerRadius as number
+                                                      measureValues.innerRadius as number,
                                                   )
                                                 : measureValues.outerRadius) * 2
                                         ).toFixed(3)}{" "}
-                                        m
+                                        {t("m")}
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -451,10 +457,10 @@ export function MeasurementData({
                             <ListItem>
                                 <Grid container>
                                     <Grid item xs={5}>
-                                        Elevation
+                                        {t("elevation")}
                                     </Grid>
                                     <Grid item xs={5}>
-                                        {measureValues.heightAboveXyPlane.toFixed(3)} m
+                                        {measureValues.heightAboveXyPlane.toFixed(3)} {t("m")}
                                     </Grid>
                                 </Grid>
                             </ListItem>
@@ -463,7 +469,7 @@ export function MeasurementData({
                     {measureValues.vertices.length ? (
                         <Box p={1}>
                             <Accordion defaultExpanded={false}>
-                                <NestedAccordionSummary>Components</NestedAccordionSummary>
+                                <NestedAccordionSummary>{t("components")}</NestedAccordionSummary>
                                 <NestedAccordionDetails>
                                     <VertexTable vertices={measureValues.vertices} />
                                 </NestedAccordionDetails>
@@ -481,20 +487,20 @@ export function MeasurementData({
                         <ListItem>
                             <Grid container>
                                 <Grid item xs={5}>
-                                    Diameter
+                                    {t("diameter")}
                                 </Grid>
                                 <Grid item xs={5}>
-                                    {(measureValues.radius * 2).toFixed(3)} m
+                                    {(measureValues.radius * 2).toFixed(3)} {t("m")}
                                 </Grid>
                             </Grid>
                         </ListItem>
                         <ListItem>
                             <Grid container>
                                 <Grid item xs={5}>
-                                    Length
+                                    {t("length")}
                                 </Grid>
                                 <Grid item xs={5}>
-                                    {distance.toFixed(3)} m
+                                    {distance.toFixed(3)} {t("m")}
                                 </Grid>
                             </Grid>
                         </ListItem>
@@ -504,7 +510,7 @@ export function MeasurementData({
                     </List>
                     {onSettingsChange && (
                         <Box px={2} flex="1 1 auto" overflow="hidden">
-                            <InputLabel sx={{ color: "text.primary", fontWeight: 600 }}>Measure from: </InputLabel>
+                            <InputLabel sx={{ color: "text.primary", fontWeight: 600 }}>{t("measureFrom:")}</InputLabel>
                             <Select
                                 fullWidth
                                 name="pivot"
@@ -531,7 +537,7 @@ export function MeasurementData({
                     )}
                     <Box p={1}>
                         <Accordion defaultExpanded={false}>
-                            <NestedAccordionSummary>Components</NestedAccordionSummary>
+                            <NestedAccordionSummary>{t("components")}</NestedAccordionSummary>
                             <NestedAccordionDetails>
                                 <MeasurementTable
                                     start={

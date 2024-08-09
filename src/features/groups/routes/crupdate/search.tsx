@@ -2,6 +2,7 @@ import { AddCircle, ArrowBack, ArrowForward } from "@mui/icons-material";
 import { Box, Button, useTheme } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { FormEventHandler, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch } from "react-router-dom";
 
 import { AdvancedSearchInputs, Divider, LinearProgress, ScrollBox } from "components";
@@ -31,6 +32,7 @@ export function Search({
     const {
         state: { db },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const [searching, setSearching] = useState(false);
     const [inputs, setInputs] = useState<SearchPattern[]>(savedInputs);
@@ -89,10 +91,11 @@ export function Search({
                     <Box display="flex" justifyContent={"space-between"}>
                         <Button color="grey" onClick={() => history.goBack()}>
                             <ArrowBack sx={{ mr: 1 }} />
-                            Back
+                            {t("back")}
                         </Button>
                         <Box display="flex" justifyContent="center" alignItems="center" fontSize={14}>
-                            Objects: {ids.length}
+                            {t("objects:")}
+                            {ids.length}
                         </Box>
                         <Button
                             color="grey"
@@ -103,7 +106,7 @@ export function Search({
                                 }
                             }}
                         >
-                            Next
+                            {t("next")}
                             <ArrowForward sx={{ ml: 0.5 }} />
                         </Button>
                     </Box>
@@ -128,7 +131,7 @@ export function Search({
                         onClick={() => setInputs((state) => state.concat([{ property: "", value: "", exact: true }]))}
                     >
                         <AddCircle sx={{ mr: 0.5 }} />
-                        AND
+                        {t("aND")}
                     </Button>
                     <Button
                         color="grey"
@@ -147,13 +150,13 @@ export function Search({
                                                   ? input.value.concat("")
                                                   : [input.value ?? "", ""],
                                           }
-                                        : input
-                                )
+                                        : input,
+                                ),
                             )
                         }
                     >
                         <AddCircle />
-                        <Box ml={0.5}>OR</Box>
+                        <Box ml={0.5}>{t("oR")}</Box>
                     </Button>
                 </Box>
                 <Box display="flex" mb={1}>
@@ -171,10 +174,10 @@ export function Search({
                         fullWidth
                         sx={{ marginRight: 1 }}
                     >
-                        Cancel
+                        {t("cancel")}
                     </Button>
                     <Button type="submit" fullWidth disabled={disableSearch} color="primary" variant="contained">
-                        Search
+                        {t("search")}
                     </Button>
                 </Box>
             </ScrollBox>

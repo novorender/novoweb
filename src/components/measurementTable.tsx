@@ -1,9 +1,11 @@
 import { Box, Table, TableBody, TableHead, TableRow } from "@mui/material";
 import { ReadonlyVec3, vec3 } from "gl-matrix";
+import { useTranslation } from "react-i18next";
 
 import { TableCell } from "./tableCell";
 
 export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: ReadonlyVec3 }) {
+    const { t } = useTranslation();
     const delta = vec3.sub(vec3.create(), end, start);
 
     return (
@@ -13,24 +15,24 @@ export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: Rea
                     <TableCell></TableCell>
                     <TableCell align="center">
                         <Box display="inline-block" ml={1}>
-                            X
+                            {t("x")}
                         </Box>
                     </TableCell>
                     <TableCell align="center">
                         <Box display="inline-block" ml={1}>
-                            Y
+                            {t("y")}
                         </Box>
                     </TableCell>
                     <TableCell align="center">
                         <Box display="inline-block" ml={1}>
-                            Z
+                            {t("z")}
                         </Box>
                     </TableCell>
                 </TableRow>
             </TableHead>
             <TableBody>
                 <TableRow>
-                    <TableCell>Start (m)</TableCell>
+                    <TableCell>{t("start(M)")}</TableCell>
                     {start.map((v, idx) => (
                         <TableCell key={idx} align="right">
                             {v.toFixed(3)}
@@ -38,7 +40,7 @@ export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: Rea
                     ))}
                 </TableRow>
                 <TableRow>
-                    <TableCell>End (m)</TableCell>
+                    <TableCell>{t("end(M)")}</TableCell>
                     {end.map((v, idx) => (
                         <TableCell key={idx} align="right">
                             {v.toFixed(3)}
@@ -46,7 +48,7 @@ export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: Rea
                     ))}
                 </TableRow>
                 <TableRow>
-                    <TableCell bold>Difference (m)</TableCell>
+                    <TableCell bold>{t("difference(M)")}</TableCell>
                     <TableCell bold align="right">
                         {Math.abs(delta[0]).toFixed(3)}
                     </TableCell>

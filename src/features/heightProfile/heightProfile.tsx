@@ -15,6 +15,7 @@ import {
 import { MeasureError, Profile } from "@novorender/api";
 import { ParentSize } from "@visx/responsive";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
@@ -54,6 +55,7 @@ export default function HeightProfile() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const selectingEntity = useAppSelector(selectPicker) === Picker.HeightProfileEntity;
     const selectedPoint = useAppSelector(selectSelectedPoint);
@@ -152,7 +154,7 @@ export default function HeightProfile() {
                 } else {
                     setProfile({ status: AsyncStatus.Success, data: profile });
                 }
-            } catch (e) {
+            } catch {
                 setProfile({
                     status: AsyncStatus.Error,
                     msg: `No height profile available for the selected entity.`,
@@ -184,7 +186,7 @@ export default function HeightProfile() {
                                 }
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />
-                                Clear
+                                {t("clear")}
                             </Button>
                             <FormControlLabel
                                 control={
@@ -198,23 +200,23 @@ export default function HeightProfile() {
                                             }
                                             dispatch(
                                                 renderActions.setPicker(
-                                                    selectingEntity ? Picker.Object : Picker.HeightProfileEntity
-                                                )
+                                                    selectingEntity ? Picker.Object : Picker.HeightProfileEntity,
+                                                ),
                                             );
                                         }}
                                     />
                                 }
-                                label={<Box fontSize={14}>Entity</Box>}
+                                label={<Box fontSize={14}>{t("entity")}</Box>}
                             />
                             <Button
                                 disabled={Boolean(
-                                    profile.status !== AsyncStatus.Success || !profile.data.profilePoints.length
+                                    profile.status !== AsyncStatus.Success || !profile.data.profilePoints.length,
                                 )}
                                 color="grey"
                                 onClick={() => toggleModal()}
                             >
                                 <Timeline sx={{ mr: 1 }} />
-                                Show
+                                {t("show")}
                             </Button>
                         </Box>
                     ) : null}
@@ -259,7 +261,7 @@ export default function HeightProfile() {
                                 px={{ xs: 2, sm: 8 }}
                             >
                                 <Typography component="h1" variant="h5" textAlign="center" mb={2}>
-                                    Height profile
+                                    {t("heightProfile")}
                                 </Typography>
                                 <ParentSize>
                                     {(parent) => (
@@ -283,7 +285,7 @@ export default function HeightProfile() {
                                 <>
                                     <Box>
                                         <InputLabel sx={{ color: "text.primary", mb: 0.5 }}>
-                                            Cylinder profile from:{" "}
+                                            {t("cylinderProfileFrom:")}{" "}
                                         </InputLabel>
                                         <Select
                                             fullWidth
@@ -293,8 +295,8 @@ export default function HeightProfile() {
                                             onChange={(e) => {
                                                 dispatch(
                                                     heightProfileActions.setCylindersProfilesFrom(
-                                                        e.target.value as "center" | "top" | "bottom"
-                                                    )
+                                                        e.target.value as "center" | "top" | "bottom",
+                                                    ),
                                                 );
                                             }}
                                             input={<OutlinedInput fullWidth />}
@@ -311,22 +313,30 @@ export default function HeightProfile() {
                             ) : null}
                             {profile.status === AsyncStatus.Success && profile.data.profilePoints.length ? (
                                 <>
-                                    <Typography fontWeight={600}>Elevation</Typography>
+                                    <Typography fontWeight={600}>{t("elevation")}</Typography>
                                     <Box display="flex">
-                                        <Typography minWidth={60}>Start</Typography>
-                                        <Typography>{profile.data.startElevation.toFixed(3)} m</Typography>
+                                        <Typography minWidth={60}>{t("start")}</Typography>
+                                        <Typography>
+                                            {profile.data.startElevation.toFixed(3)} {t("m")}
+                                        </Typography>
                                     </Box>
                                     <Box display="flex">
-                                        <Typography minWidth={60}>End</Typography>
-                                        <Typography>{profile.data.endElevation.toFixed(3)} m</Typography>
+                                        <Typography minWidth={60}>{t("end")}</Typography>
+                                        <Typography>
+                                            {profile.data.endElevation.toFixed(3)} {t("m")}
+                                        </Typography>
                                     </Box>
                                     <Box display="flex">
-                                        <Typography minWidth={60}>Min</Typography>
-                                        <Typography>{profile.data.bottom.toFixed(3)} m</Typography>
+                                        <Typography minWidth={60}>{t("min")}</Typography>
+                                        <Typography>
+                                            {profile.data.bottom.toFixed(3)} {t("m")}
+                                        </Typography>
                                     </Box>
                                     <Box display="flex">
-                                        <Typography minWidth={60}>Max</Typography>
-                                        <Typography>{profile.data.top.toFixed(3)} m</Typography>
+                                        <Typography minWidth={60}>{t("max")}</Typography>
+                                        <Typography>
+                                            {profile.data.top.toFixed(3)} {t("m")}
+                                        </Typography>
                                     </Box>
                                 </>
                             ) : null}

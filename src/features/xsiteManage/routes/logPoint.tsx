@@ -1,5 +1,6 @@
 import { ArrowBack, LocationOnOutlined } from "@mui/icons-material";
 import { Box, Button, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -12,6 +13,7 @@ import { useGetAllLogPointsQuery } from "../api";
 import { selectXsiteManageSite } from "../slice";
 
 export function LogPoint() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const { id } = useParams<{ id?: string }>();
@@ -45,7 +47,7 @@ export function LogPoint() {
                     position: [pt.x, pt.y, pt.z],
                     rotation: view.renderState.camera.rotation,
                 },
-            })
+            }),
         );
     };
 
@@ -63,12 +65,12 @@ export function LogPoint() {
                     <Box display="flex" justifyContent="space-between">
                         <Button onClick={() => history.push("/log-points")} color="grey">
                             <ArrowBack sx={{ mr: 1 }} />
-                            Back
+                            {t("back")}
                         </Button>
                         {hasPos ? (
                             <Button onClick={handleGoTo} color="grey">
                                 <LocationOnOutlined sx={{ mr: 1 }} />
-                                Go to
+                                {t("goTo")}
                             </Button>
                         ) : null}
                     </Box>
@@ -76,7 +78,11 @@ export function LogPoint() {
             </Box>
             <ScrollBox p={1} pt={2} pb={2}>
                 {isError || !pt ? (
-                    <Typography>Failed to load data from {featuresConfig.xsiteManage.name}.</Typography>
+                    <Typography>
+                        {t("failedToLoadDataFrom")}
+                        {featuresConfig.xsiteManage.name}
+                        {t(".")}
+                    </Typography>
                 ) : (
                     <>
                         <Box mb={1}>{pt.code}</Box>

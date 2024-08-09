@@ -15,6 +15,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -35,6 +36,7 @@ import {
 import { toDBSN } from "../utils";
 
 export function Machine() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const { id } = useParams<{ id?: string }>();
@@ -88,9 +90,9 @@ export function Machine() {
                 dispatch(
                     xsiteManageActions.setAvailableLogPointCodes(
                         uniqueArray(logPointData.filter((lpt) => lpt.code).map((lpt) => lpt.code!)).sort((a, b) =>
-                            a.localeCompare(b, undefined, { numeric: true })
-                        )
-                    )
+                            a.localeCompare(b, undefined, { numeric: true }),
+                        ),
+                    ),
                 );
             }
         }
@@ -110,7 +112,7 @@ export function Machine() {
                     <Box display="flex" justifyContent="space-between">
                         <Button onClick={() => history.push("/machines")} color="grey">
                             <ArrowBack sx={{ mr: 1 }} />
-                            Back
+                            {t("back")}
                         </Button>
                     </Box>
                 </>
@@ -122,19 +124,24 @@ export function Machine() {
             )}
             <ScrollBox p={1} pt={2} pb={2}>
                 {isMachineError || !machine ? (
-                    <Typography>Failed to load machine data from {featuresConfig.xsiteManage.name}.</Typography>
+                    <Typography>
+                        {t("failedToLoadMachineDataFrom")}
+                        {featuresConfig.xsiteManage.name}
+                        {t(".")}
+                    </Typography>
                 ) : (
                     <>
                         <Typography fontWeight={"bold"} mb={1}>
                             {machine.name}
                         </Typography>
                         <Typography color="secondary" mb={1}>
-                            DBSN: {toDBSN(machine.machineId)}
+                            {t("dBSN:")}
+                            {toDBSN(machine.machineId)}
                         </Typography>
                         <Divider sx={{ my: 1 }} />
                         <Box display="flex" flexDirection={"column"}>
                             <InputLabel id="xsite-log-points-since" sx={{ color: "text.primary", fontWeight: 600 }}>
-                                Show log points
+                                {t("showLogPoints")}
                             </InputLabel>
                             <Select
                                 labelId="xsite-log-points-since"
@@ -148,29 +155,51 @@ export function Machine() {
                                         xsiteManageActions.activateLogPoints({
                                             time: e.target.value as LogPointTime,
                                             machine: id ?? "",
-                                        })
+                                        }),
                                     )
                                 }
                                 input={<OutlinedInput />}
                             >
-                                <MenuItem value={LogPointTime.None}>None</MenuItem>
+                                <MenuItem value={LogPointTime.None}>{t("none")}</MenuItem>
                                 <MenuItem value={LogPointTime.Day}>
-                                    Last 24 hours{" "}
-                                    {logPointCount[LogPointTime.Day] >= 0 && <>({logPointCount[LogPointTime.Day]})</>}{" "}
+                                    {t("last24Hours")}{" "}
+                                    {logPointCount[LogPointTime.Day] >= 0 && (
+                                        <>
+                                            {t("(")}
+                                            {logPointCount[LogPointTime.Day]}
+                                            {t(")")}
+                                        </>
+                                    )}{" "}
                                 </MenuItem>
                                 <MenuItem value={LogPointTime.Week}>
-                                    Last 7 days{" "}
-                                    {logPointCount[LogPointTime.Week] >= 0 && <>({logPointCount[LogPointTime.Week]})</>}{" "}
+                                    {t("last7Days")}{" "}
+                                    {logPointCount[LogPointTime.Week] >= 0 && (
+                                        <>
+                                            {t("(")}
+                                            {logPointCount[LogPointTime.Week]}
+                                            {t(")")}
+                                        </>
+                                    )}{" "}
                                 </MenuItem>
                                 <MenuItem value={LogPointTime.Month}>
-                                    Last 30 days{" "}
+                                    {t("last30Days")}{" "}
                                     {logPointCount[LogPointTime.Month] >= 0 && (
-                                        <>({logPointCount[LogPointTime.Month]})</>
+                                        <>
+                                            {t("(")}
+                                            {logPointCount[LogPointTime.Month]}
+                                            {t(")")}
+                                        </>
                                     )}{" "}
                                 </MenuItem>
                                 <MenuItem value={LogPointTime.All}>
-                                    All{" "}
-                                    {logPointCount[LogPointTime.All] >= 0 && <>({logPointCount[LogPointTime.All]})</>}{" "}
+                                    {t("all")}{" "}
+                                    {logPointCount[LogPointTime.All] >= 0 && (
+                                        <>
+                                            {t("(")}
+                                            {logPointCount[LogPointTime.All]}
+                                            {t(")")}
+                                        </>
+                                    )}{" "}
                                 </MenuItem>
                             </Select>
                             <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 2 }}>
@@ -179,7 +208,7 @@ export function Machine() {
                                         sx={{ fontWeight: 600, color: "text.primary" }}
                                         htmlFor={"xiste-logpoint-code-filter"}
                                     >
-                                        Filter by codes
+                                        {t("filterByCodes")}
                                     </FormLabel>
                                 </Box>
                                 <Autocomplete
@@ -203,7 +232,7 @@ export function Machine() {
                                     )}
                                     renderInput={(params) => <TextField variant="outlined" {...params} />}
                                 />
-                                <FormHelperText>Include all if no codes are selected.</FormHelperText>
+                                <FormHelperText>{t("includeAllIfNoCodesAreSelected.")}</FormHelperText>
                             </FormControl>
                         </Box>
                     </>

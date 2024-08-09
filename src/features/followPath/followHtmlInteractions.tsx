@@ -2,6 +2,7 @@ import { css } from "@emotion/react";
 import { Box, Button, Slider, styled } from "@mui/material";
 import { ReadonlyVec2 } from "gl-matrix";
 import { forwardRef, memo, SyntheticEvent, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -71,7 +72,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                 }
             },
         }),
-        [view?.measure, currentProfileCenter]
+        [view?.measure, currentProfileCenter],
     );
 
     if (!isActive) {
@@ -172,13 +173,14 @@ const LegendAlongCenterLine = styled("div")(
         margin: 1rem;
         border-radius: ${theme.shape.borderRadius}px;
         background: ${theme.palette.background.paper};
-    `
+    `,
 );
 
 const FollowPathControls = memo(function FollowPathControls() {
     const {
         state: { view },
     } = useExplorerGlobals();
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const autoStepSize = useAppSelector(selectAutoStepSize);
     const following = useFollowPathFromIds();
@@ -233,12 +235,13 @@ const FollowPathControls = memo(function FollowPathControls() {
                         }
                     }}
                 >
-                    Recenter
+                    {t("recenter")}
                 </Button>
             </Box>
 
             <Box position="absolute" bottom="36px" whiteSpace="nowrap" textAlign="center" sx={{ translate: "-50% 0" }}>
-                Clipping: {clipping} m
+                {t("clipping:")}
+                {clipping} {t("m")}
             </Box>
             <Box position="absolute" bottom="0px" width="200px" sx={{ translate: "-50% 0" }}>
                 <Slider

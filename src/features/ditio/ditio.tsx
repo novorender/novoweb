@@ -1,6 +1,7 @@
 import { SettingsRounded } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { PropsWithChildren, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
     MemoryRouter,
     Redirect,
@@ -126,6 +127,7 @@ function WidgetMenu(props: MenuProps) {
 }
 
 function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const match = useRouteMatch();
 
@@ -145,7 +147,7 @@ function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
                     <ListItemIcon>
                         <SettingsRounded />
                     </ListItemIcon>
-                    <ListItemText>Settings</ListItemText>
+                    <ListItemText>{t("settings")}</ListItemText>
                 </>
             </MenuItem>
         </div>

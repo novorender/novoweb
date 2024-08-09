@@ -22,6 +22,7 @@ import {
 } from "@mui/material";
 import { DatePicker, DateTimePicker, TimePicker } from "@mui/x-date-pickers";
 import { ChangeEvent, type FormEventHandler, useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { Divider, ScrollBox, TextArea, TextField } from "components";
@@ -46,6 +47,7 @@ const DOC_TYPES = [
 const today = new Date();
 
 export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
+    const { t } = useTranslation();
     const sceneId = useSceneId();
     const history = useHistory();
     const [title, setTitle] = useState("");
@@ -84,7 +86,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                 ([FormItemType.Checkbox, FormItemType.Dropdown].includes(type) && options.length) ||
                 (type === FormItemType.Text && value.trim().length) ||
                 (type === FormItemType.File && (!readonly || files.length))),
-        [title, type, options.length, value, readonly, files.length]
+        [title, type, options.length, value, readonly, files.length],
     );
 
     const handleSubmit = useCallback<FormEventHandler>(
@@ -113,10 +115,10 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                     type === FormItemType.Text
                         ? [value]
                         : type === FormItemType.File
-                        ? files
-                        : [FormItemType.Date, FormItemType.Time, FormItemType.DateTime].includes(type) && dateTime
-                        ? dateTime
-                        : undefined,
+                          ? files
+                          : [FormItemType.Date, FormItemType.Time, FormItemType.DateTime].includes(type) && dateTime
+                            ? dateTime
+                            : undefined,
                 required: type !== FormItemType.Text && relevant,
                 ...(type === FormItemType.Checkbox || type === FormItemType.Dropdown ? { options } : {}),
                 ...(type === FormItemType.File && { accept, multiple, readonly }),
@@ -141,23 +143,23 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
             history,
             uploadFiles,
             sceneId,
-        ]
+        ],
     );
 
     const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value), []);
     const handleToggleRelevant = useCallback(
         (_: React.ChangeEvent<HTMLInputElement>) => toggleRelevant(),
-        [toggleRelevant]
+        [toggleRelevant],
     );
     const handleOptionsChange = useCallback((_: React.SyntheticEvent, value: string[]) => setOptions(value), []);
     const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value), []);
     const handleToggleMultiple = useCallback(
         (_: React.ChangeEvent<HTMLInputElement>) => toggleMultiple(),
-        [toggleMultiple]
+        [toggleMultiple],
     );
     const handleToggleReadonly = useCallback(
         (_: React.ChangeEvent<HTMLInputElement>) => toggleReadonly(),
-        [toggleReadonly]
+        [toggleReadonly],
     );
 
     const handleFilesChange = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -197,7 +199,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
     return (
         <ScrollBox p={1} pt={2} pb={3} component="form" onSubmit={handleSubmit}>
             <Typography fontWeight={600} mb={1}>
-                Form item
+                {t("formItem")}
             </Typography>
             <TextField label="Title" value={title} onChange={handleTitleChange} fullWidth />
             <Divider sx={{ my: 1 }} />
@@ -217,7 +219,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
             <Divider sx={{ my: 1 }} />
             <FormControl fullWidth sx={{ mb: 1 }}>
                 <FormLabel sx={{ fontWeight: 600, color: "text.primary", mb: 1 }} id="form-item-type">
-                    Type
+                    {t("type")}
                 </FormLabel>
                 <Select
                     id="form-item-type"
@@ -226,16 +228,16 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                     size="small"
                     fullWidth
                 >
-                    <MenuItem value={FormItemType.Checkbox}>Checkbox</MenuItem>
-                    <MenuItem value={FormItemType.Date}>Date</MenuItem>
-                    <MenuItem value={FormItemType.DateTime}>Date and time</MenuItem>
-                    <MenuItem value={FormItemType.Dropdown}>Dropdown</MenuItem>
-                    <MenuItem value={FormItemType.File}>File</MenuItem>
-                    <MenuItem value={FormItemType.Input}>Input</MenuItem>
-                    <MenuItem value={FormItemType.Text}>Text or URL</MenuItem>
-                    <MenuItem value={FormItemType.Time}>Time</MenuItem>
-                    <MenuItem value={FormItemType.TrafficLight}>Traffic light</MenuItem>
-                    <MenuItem value={FormItemType.YesNo}>Yes/No</MenuItem>
+                    <MenuItem value={FormItemType.Checkbox}>{t("checkbox")}</MenuItem>
+                    <MenuItem value={FormItemType.Date}>{t("date")}</MenuItem>
+                    <MenuItem value={FormItemType.DateTime}>{t("dateAndTime")}</MenuItem>
+                    <MenuItem value={FormItemType.Dropdown}>{t("dropdown")}</MenuItem>
+                    <MenuItem value={FormItemType.File}>{t("file")}</MenuItem>
+                    <MenuItem value={FormItemType.Input}>{t("input")}</MenuItem>
+                    <MenuItem value={FormItemType.Text}>{t("textOrURL")}</MenuItem>
+                    <MenuItem value={FormItemType.Time}>{t("time")}</MenuItem>
+                    <MenuItem value={FormItemType.TrafficLight}>{t("trafficLight")}</MenuItem>
+                    <MenuItem value={FormItemType.YesNo}>{t("yes/No")}</MenuItem>
                 </Select>
                 {renderAlert(type)}
             </FormControl>
@@ -275,7 +277,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                 <>
                     <Divider sx={{ mb: 2 }} />
                     <FormControl size="small" sx={{ width: 1, mb: 1 }}>
-                        <InputLabel id="forms-files-accept-label">Accept file types</InputLabel>
+                        <InputLabel id="forms-files-accept-label">{t("acceptFileTypes")}</InputLabel>
                         <Select
                             labelId="forms-files-accept-label"
                             id="forms-files-accept"
@@ -421,10 +423,10 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
             />
             <Box display="flex" justifyContent="space-between" mt={2}>
                 <Button variant="outlined" color="grey" sx={{ mr: 2 }} fullWidth onClick={history.goBack}>
-                    Cancel
+                    {t("cancel")}
                 </Button>
                 <Button variant="contained" color="primary" fullWidth disabled={!canSave} type="submit">
-                    Save item
+                    {t("saveItem")}
                 </Button>
             </Box>
         </ScrollBox>

@@ -1,5 +1,6 @@
 import { Box, Checkbox, FormControlLabel, useTheme } from "@mui/material";
 import { FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
@@ -19,6 +20,7 @@ export function Save({ sceneId }: { sceneId: string }) {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const objectGroups = useLazyObjectGroups();
     const [saveState, toggleSaveState] = useToggle();
     const status = useAppSelector(selectSaveStatus);
@@ -55,7 +57,7 @@ export function Save({ sceneId }: { sceneId: string }) {
                     .sort(
                         (a, b) =>
                             originalGroups.findIndex((grp) => grp.id === a.id) -
-                            originalGroups.findIndex((grp) => grp.id === b.id)
+                            originalGroups.findIndex((grp) => grp.id === b.id),
                     );
             }
 
@@ -111,7 +113,7 @@ export function Save({ sceneId }: { sceneId: string }) {
                     }
                     label={
                         <Box mr={0.5} sx={{ userSelect: "none" }}>
-                            Include highlight / visibility changes
+                            {t("includeHighlight/VisibilityChanges")}
                         </Box>
                     }
                     sx={{ mb: 3 }}

@@ -9,6 +9,7 @@ import {
     Typography,
 } from "@mui/material";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useObjectGroups } from "contexts/objectGroups";
@@ -22,6 +23,7 @@ import { selectSelectedProfile, selectSelectedSubprofileIndex } from "../selecto
 import { DELETED_DEVIATION_LABEL } from "../utils";
 
 export function SubprofileSelect() {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const landXmlPaths = useAppSelector(selectLandXmlPaths);
     const selectedProfile = useAppSelector(selectSelectedProfile);
@@ -52,12 +54,14 @@ export function SubprofileSelect() {
                         <Box sx={{ textWrap: "wrap" }}>
                             {from}
                             <Typography component="span" fontWeight={600} mx={1}>
-                                vs
+                                {t("vs")}
                             </Typography>
                             {to}
                             {sp.centerLine && centerLineName && (
                                 <FormHelperText>
-                                    Center line: {centerLineName} {sp.centerLine.parameterBounds[0].toFixed(0)}-
+                                    {t("centerLine:")}
+                                    {centerLineName} {sp.centerLine.parameterBounds[0].toFixed(0)}
+                                    {t("-")}
                                     {sp.centerLine.parameterBounds[1].toFixed(0)}
                                 </FormHelperText>
                             )}
@@ -65,7 +69,7 @@ export function SubprofileSelect() {
                     ),
                 };
             }),
-        [objectGroups, selectedProfile, landXmlPaths]
+        [objectGroups, selectedProfile, landXmlPaths, t],
     );
 
     if (!options || options.length < 2 || landXmlPaths.status !== AsyncStatus.Success) {
@@ -85,7 +89,7 @@ export function SubprofileSelect() {
 
     return (
         <FormControl fullWidth>
-            <InputLabel id="select-center-line-label">Select subprofile</InputLabel>
+            <InputLabel id="select-center-line-label">{t("selectSubprofile")}</InputLabel>
             <Select
                 labelId="select-center-line-label"
                 id="select-center-line"

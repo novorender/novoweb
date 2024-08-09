@@ -1,9 +1,12 @@
 import { Alert, Box } from "@mui/material";
 import { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 import { UiDeviationConfig } from "../deviationTypes";
 
 export function RunLog({ data }: { data: UiDeviationConfig }) {
+    const { t } = useTranslation();
+
     if (!data.runData) {
         return;
     }
@@ -28,15 +31,21 @@ export function RunLog({ data }: { data: UiDeviationConfig }) {
                         case "EMPTY_DEVIATION_GROUPS":
                             msg = (
                                 <>
-                                    Profile <strong>{profile.name}</strong>: some groups are empty. Ensure that both
-                                    groups to analyse and groups to analyse against are not empty.
+                                    {t("profile")}
+                                    <strong>{profile.name}</strong>
+                                    {t(
+                                        ":SomeGroupsAreEmpty.EnsureThatBothGroupsToAnalyseAndGroupsToAnalyseAgainstAreNotEmpty.",
+                                    )}
                                 </>
                             );
                             break;
                         default:
                             msg = (
                                 <>
-                                    Profile <strong>{profile.name}</strong>: {entry.message}
+                                    {t("profile")}
+                                    <strong>{profile.name}</strong>
+                                    {t(":")}
+                                    {entry.message}
                                 </>
                             );
                     }

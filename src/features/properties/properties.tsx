@@ -1,5 +1,6 @@
 import { Settings } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { matchPath, MemoryRouter, Route, Switch, useHistory, useLocation } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -46,6 +47,7 @@ export default function Properties() {
 }
 
 function WidgetMenu(props: MenuProps) {
+    const { t } = useTranslation();
     const history = useHistory();
     const location = useLocation();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
@@ -73,7 +75,7 @@ function WidgetMenu(props: MenuProps) {
                 <ListItemIcon>
                     <Settings fontSize="small" />
                 </ListItemIcon>
-                <ListItemText>Settings</ListItemText>
+                <ListItemText>{t("settings")}</ListItemText>
             </MenuItem>
         </Menu>
     );

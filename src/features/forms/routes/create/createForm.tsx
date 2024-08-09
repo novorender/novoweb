@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { FormEventHandler, useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -46,6 +47,7 @@ export function CreateForm({
     objects?: { searchPattern: string | SearchPattern[]; ids: ObjectId[] };
     marker: string | undefined;
 }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const match = useRouteMatch();
@@ -64,7 +66,7 @@ export function CreateForm({
 
     const canSave = useMemo(
         () => title.trim() && items.length && (type === TemplateType.Location ? marker : formObjects?.ids),
-        [title, type, items, marker, formObjects]
+        [title, type, items, marker, formObjects],
     );
 
     const handleAddItem = useCallback(() => {
@@ -73,14 +75,14 @@ export function CreateForm({
 
     const handleTypeChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => setType((e.target as HTMLInputElement).value as TemplateType),
-        [setType]
+        [setType],
     );
 
     const handleTitleChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
             setTitle(e.target.value);
         },
-        [setTitle]
+        [setTitle],
     );
 
     const handleAddObjects = useCallback(() => {
@@ -95,7 +97,7 @@ export function CreateForm({
         (id?: string) => {
             setItems(items.filter((item) => item.id !== id));
         },
-        [items, setItems]
+        [items, setItems],
     );
 
     const handleSubmit: FormEventHandler = useCallback(
@@ -135,7 +137,7 @@ export function CreateForm({
 
                 setStatus({ status: AsyncStatus.Success, data: null });
                 history.goBack();
-            } catch (e) {
+            } catch {
                 setStatus({
                     status: AsyncStatus.Error,
                     msg: "Form creation failed",
@@ -143,7 +145,7 @@ export function CreateForm({
                 return;
             }
         },
-        [abortController, canSave, formObjects, createForm, db, history, items, sceneId, title, type, marker]
+        [abortController, canSave, formObjects, createForm, db, history, items, sceneId, title, type, marker],
     );
 
     return (
@@ -155,11 +157,11 @@ export function CreateForm({
             ) : null}
             <ScrollBox p={1} pt={2} pb={3} component="form" onSubmit={handleSubmit}>
                 <Typography fontWeight={600} mb={1}>
-                    Form
+                    {t("form")}
                 </Typography>
                 <TextField label="Title" value={title} onChange={handleTitleChange} fullWidth />
                 <Typography fontWeight={600} mt={1}>
-                    Form type
+                    {t("formType")}
                 </Typography>
                 <FormControl>
                     <RadioGroup row value={type} onChange={handleTypeChange}>
@@ -172,8 +174,11 @@ export function CreateForm({
                     <>
                         <Divider sx={{ my: 1 }} />
                         <Box display="flex" justifyContent="space-between" alignItems="center">
-                            <Typography fontWeight={600}>Objects assigned: {formObjects?.ids.length}</Typography>
-                            <Button onClick={handleAddObjects}>Add objects</Button>
+                            <Typography fontWeight={600}>
+                                {t("objectsAssigned:")}
+                                {formObjects?.ids.length}
+                            </Typography>
+                            <Button onClick={handleAddObjects}>{t("addObjects")}</Button>
                         </Box>
                     </>
                 )}
@@ -182,22 +187,22 @@ export function CreateForm({
                     <>
                         <Divider sx={{ my: 1 }} />
                         <Box display="flex" alignItems="center">
-                            <Typography fontWeight={600}>Marker:</Typography>
+                            <Typography fontWeight={600}>{t("marker:")}</Typography>
                             <Box flex="auto" />
                             {marker && (
                                 <Box mr={1}>
                                     <MarkerLabel marker={marker} />
                                 </Box>
                             )}
-                            <Button onClick={handleSelectMarker}>Select marker</Button>
+                            <Button onClick={handleSelectMarker}>{t("selectMarker")}</Button>
                         </Box>
                     </>
                 )}
 
                 <Divider />
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography fontWeight={600}>Items:</Typography>
-                    <Button onClick={handleAddItem}>Add item</Button>
+                    <Typography fontWeight={600}>{t("items:")}</Typography>
+                    <Button onClick={handleAddItem}>{t("addItem")}</Button>
                 </Box>
                 {items.length ? (
                     <List dense disablePadding>
@@ -227,7 +232,7 @@ export function CreateForm({
                 ) : null}
                 <Box display="flex" justifyContent="space-between" mt={2}>
                     <Button variant="outlined" color="grey" sx={{ mr: 1 }} fullWidth onClick={history.goBack}>
-                        Cancel
+                        {t("cancel")}
                     </Button>
                     <Button
                         variant="contained"
@@ -236,7 +241,7 @@ export function CreateForm({
                         disabled={!canSave || status === AsyncStatus.Loading || creatingForm}
                         type="submit"
                     >
-                        Save form
+                        {t("saveForm")}
                     </Button>
                 </Box>
             </ScrollBox>
@@ -245,6 +250,7 @@ export function CreateForm({
 }
 
 function MarkerLabel({ marker }: { marker: string }) {
+    const { t } = useTranslation();
     const assets = useAppSelector(selectAssets);
 
     if (assets.status !== AsyncStatus.Success) {
@@ -253,7 +259,7 @@ function MarkerLabel({ marker }: { marker: string }) {
 
     const asset = assets.data.find((a) => a.name === marker);
     if (!asset) {
-        return <>[unknown]</>;
+        return <>{t("[Unknown]")}</>;
     }
 
     return <>{asset.label}</>;

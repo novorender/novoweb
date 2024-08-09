@@ -17,6 +17,7 @@ import {
 import { FollowParametricObject } from "@novorender/api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { FormEvent, MouseEvent, SyntheticEvent, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -60,6 +61,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const {
         state: { view, db },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const view2d = useAppSelector(selectView2d);
     const showGrid = useAppSelector(selectShowGrid);
@@ -92,8 +94,8 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         paths.status === AsyncStatus.Initial || paths.status === AsyncStatus.Loading
             ? "..."
             : paths.status === AsyncStatus.Success
-            ? paths.data.find((p) => p.id === selectedPath)?.name
-            : "[error]";
+              ? paths.data.find((p) => p.id === selectedPath)?.name
+              : "[error]";
 
     useEffect(() => {
         viewModeRef.current = viewMode;
@@ -105,12 +107,12 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
         function syncProfileInput() {
             setProfileInput(profile);
         },
-        [profile]
+        [profile],
     );
 
     useEffect(() => {
         dispatch(
-            followPathActions.setProfileRange({ min: fpObj.parameterBounds.start, max: fpObj.parameterBounds.end })
+            followPathActions.setProfileRange({ min: fpObj.parameterBounds.start, max: fpObj.parameterBounds.end }),
         );
     }, [fpObj, dispatch]);
 
@@ -146,7 +148,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                 roadIds.push(prop[1]);
                             }
                         }
-                    })
+                    }),
                 );
 
                 roadIds = uniqueArray(roadIds);
@@ -343,14 +345,14 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             color="grey"
                         >
                             <ArrowBack sx={{ mr: 1 }} />
-                            Back
+                            {t("back")}
                         </Button>
                         <FormControlLabel
                             sx={{ ml: 3 }}
                             control={
                                 <IosSwitch size="medium" color="primary" checked={view2d} onChange={handle2dChange} />
                             }
-                            label={<Box fontSize={14}>2D</Box>}
+                            label={<Box fontSize={14}>{t("2D")}</Box>}
                         />
                         <Button
                             disabled={profileRange?.min.toFixed(profileFractionDigits) === profile}
@@ -358,7 +360,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             color="grey"
                         >
                             <RestartAlt sx={{ mr: 1 }} />
-                            Start over
+                            {t("startOver")}
                         </Button>
                     </Box>
                 </>
@@ -367,7 +369,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 <Box px={1}>
                     <Grid container columnSpacing={0} rowSpacing={2}>
                         <Grid item xs={6}>
-                            <Typography sx={{ mb: 0.5 }}>Profile start:</Typography>
+                            <Typography sx={{ mb: 0.5 }}>{t("profileStart:")}</Typography>
                             <OutlinedInput
                                 size="small"
                                 fullWidth
@@ -377,7 +379,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             />
                         </Grid>
                         <Grid item xs={6}>
-                            <Typography sx={{ mb: 0.5 }}>Profile end:</Typography>
+                            <Typography sx={{ mb: 0.5 }}>{t("profileEnd:")}</Typography>
                             <OutlinedInput
                                 size="small"
                                 fullWidth
@@ -387,7 +389,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             />
                         </Grid>
                         <Grid item xs={6}>
-                            <Typography sx={{ mb: 0.5 }}>Height:</Typography>
+                            <Typography sx={{ mb: 0.5 }}>{t("height:")}</Typography>
                             <OutlinedInput
                                 size="small"
                                 fullWidth
@@ -397,7 +399,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             />
                         </Grid>
                         <Grid item xs={6} component="form" onSubmit={handleProfileSubmit}>
-                            <Typography sx={{ mb: 0.5 }}>Profile:</Typography>
+                            <Typography sx={{ mb: 0.5 }}>{t("profile:")}</Typography>
                             <OutlinedInput
                                 value={profileInput}
                                 inputProps={{ inputMode: "numeric", pattern: "-?[0-9,.]*" }}
@@ -413,7 +415,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             />
                         </Grid>
                         <Grid pt={0} item xs={6}>
-                            <Typography sx={{ mb: 0.5 }}>Step size (meters):</Typography>
+                            <Typography sx={{ mb: 0.5 }}>{t("stepSize(Meters):")}</Typography>
                             <OutlinedInput
                                 value={autoStepSize ? String(clipping) : step}
                                 inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
@@ -463,7 +465,8 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
 
                     <Box display="flex" flexDirection="column" mb={2}>
                         <Box mb={1}>
-                            Selected centerline: <strong>{pathName}</strong>
+                            {t("selectedCenterline:")}
+                            <strong>{pathName}</strong>
                         </Box>
                         <FormControlLabel
                             control={
@@ -474,7 +477,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                     onChange={handleAutoRecenterChange}
                                 />
                             }
-                            label={<Box>Automatically recenter</Box>}
+                            label={<Box>{t("automaticallyRecenter")}</Box>}
                         />
                         <FormControlLabel
                             control={
@@ -485,7 +488,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                     onChange={handleVerticalClippingChange}
                                 />
                             }
-                            label={<Box>Vertical clipping</Box>}
+                            label={<Box>{t("verticalClipping")}</Box>}
                         />
                         {view2d ? (
                             <>
@@ -498,7 +501,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                             onChange={handleGridChange}
                                         />
                                     }
-                                    label={<Box>Show grid</Box>}
+                                    label={<Box>{t("showGrid")}</Box>}
                                 />
 
                                 <FormControlLabel
@@ -510,12 +513,15 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                             onChange={handleAutoStepSizeChange}
                                         />
                                     }
-                                    label={<Box>Match step size to clipping distance</Box>}
+                                    label={<Box>{t("matchStepSizeToClippingDistance")}</Box>}
                                 />
 
                                 <Divider sx={{ my: 1 }} />
 
-                                <Typography>Clipping: {clipping} m</Typography>
+                                <Typography>
+                                    {t("clipping:")}
+                                    {clipping} {t("m")}
+                                </Typography>
                                 <Box mx={2}>
                                     <Slider
                                         getAriaLabel={() => "Clipping far"}
@@ -535,7 +541,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
 
                 {view2d && (
                     <Accordion>
-                        <AccordionSummary>Deviations</AccordionSummary>
+                        <AccordionSummary>{t("deviations")}</AccordionSummary>
                         <AccordionDetails sx={{ p: 1, display: "flex", flexDirection: "column" }}>
                             <FormControlLabel
                                 sx={{ mb: 1 }}
@@ -547,7 +553,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                         onChange={handleToggleLine}
                                     />
                                 }
-                                label={<Box>Show deviation line</Box>}
+                                label={<Box>{t("showDeviationLine")}</Box>}
                             />
                             <Button
                                 sx={{ mb: 1, alignSelf: "start" }}
@@ -556,10 +562,10 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                 onClick={toggleColorPicker}
                             >
                                 <ColorLens sx={{ mr: 1, color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
-                                Line color
+                                {t("lineColor")}
                             </Button>
                             <Divider sx={{ my: 1, borderColor: theme.palette.grey[300] }} />
-                            <Typography fontWeight={600}>Prioritization</Typography>
+                            <Typography fontWeight={600}>{t("prioritization")}</Typography>
                             <RadioGroup
                                 aria-label="Prioritize deviations"
                                 value={deviations.prioritization}
@@ -575,7 +581,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
 
                 {roadIds && roadIds.length >= 1 && (
                     <Accordion>
-                        <AccordionSummary>Road layers</AccordionSummary>
+                        <AccordionSummary>{t("roadLayers")}</AccordionSummary>
                         <AccordionDetails>
                             <Box px={1}>
                                 <Divider sx={{ borderColor: theme.palette.grey[300] }} />
@@ -590,7 +596,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                             }}
                                         />
                                     }
-                                    label={<Box>Enable tracer (2D)</Box>}
+                                    label={<Box>{t("enableTracer(2D)")}</Box>}
                                 />
                                 <FormControlLabel
                                     control={
@@ -604,7 +610,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                                             disabled={!showTracer}
                                         />
                                     }
-                                    label={<Box>Vertical measure</Box>}
+                                    label={<Box>{t("verticalMeasure")}</Box>}
                                 />
                                 <Divider sx={{ borderColor: theme.palette.grey[300] }} />
                             </Box>

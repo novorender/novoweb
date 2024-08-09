@@ -27,6 +27,7 @@ import {
     useCallback,
     useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { FixedSizeList } from "react-window";
 
 import { Confirmation, ImgModal, withCustomScrollbar } from "components";
@@ -59,7 +60,7 @@ function mapLinks(text?: string[] | null) {
             '"]{2,}[^\\s' +
             CONTROL_CODES +
             "\"')}\\],:;.!?]",
-        "ug"
+        "ug",
     );
 
     const result = [] as (string | JSX.Element)[];
@@ -84,7 +85,7 @@ function mapLinks(text?: string[] | null) {
                 <Link href={href} target="_blank" rel="noopener noreferrer" key={href}>
                     {linkText}
                     <OpenInNew fontSize="small" style={{ marginLeft: "5px" }} />
-                </Link>
+                </Link>,
             );
             currentIndex = match.index + linkText.length;
         }
@@ -143,6 +144,7 @@ const FormItemHeader = ({
 );
 
 export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatch<SetStateAction<FormItem[]>> }) {
+    const { t } = useTranslation();
     const sceneId = useSceneId();
     const theme = useTheme();
     const [uploadFiles, { isLoading: uploading }] = useUploadFilesMutation();
@@ -182,7 +184,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                     }
                 }
                 return _item;
-            })
+            }),
         );
     };
 
@@ -197,8 +199,8 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                           ...item,
                           relevant,
                       }
-                    : _item
-            )
+                    : _item,
+            ),
         );
     };
 
@@ -261,13 +263,13 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                         ? ({
                               ...item,
                               value: [...(item.value ?? []), ...(filteredFiles as { checksum?: string }[])].filter(
-                                  (file, idx, arr) => idx === arr.findIndex((f) => f.checksum === file.checksum)
+                                  (file, idx, arr) => idx === arr.findIndex((f) => f.checksum === file.checksum),
                               ),
                           } as FileItemType)
                         : item;
                 }
                 return item;
-            })
+            }),
         );
     };
 
@@ -286,13 +288,13 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                                   ..._item,
                                   value: (_item.value as FormsFile[]).filter((_, index) => index !== fileIndexToDelete),
                               } as FileItemType)
-                            : _item
-                    )
+                            : _item,
+                    ),
                 );
             }
             setFileIndexToDelete(null);
         },
-        [fileIndexToDelete, item, setItems]
+        [fileIndexToDelete, item, setItems],
     );
 
     const openImageModal = (url: string = "") => {
@@ -325,8 +327,8 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                                                           ? [...(item.value || []), option]
                                                           : (item.value || []).filter((value) => value !== option),
                                                   }
-                                                : _item
-                                        )
+                                                : _item,
+                                        ),
                                     )
                                 }
                                 label={option}
@@ -536,7 +538,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                                 </StyledFixedSizeList>
                             ) : (
                                 <Typography variant="body2" my={1}>
-                                    No files uploaded.
+                                    {t("noFilesUploaded.")}
                                 </Typography>
                             )}
                             <AddFilesButton

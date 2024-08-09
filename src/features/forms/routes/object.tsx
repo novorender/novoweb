@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Redirect, useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -31,6 +32,7 @@ export function Object() {
     const {
         state: { db },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const { id } = useParams<{ id: FormObjectGuid }>();
     const theme = useTheme();
     const history = useHistory();
@@ -94,7 +96,7 @@ export function Object() {
                   projectId: sceneId,
                   objectGuid: object?.guid,
               }
-            : skipToken
+            : skipToken,
     );
 
     if (forms && (currentFormsList || forms?.length === 1) && object?.guid) {
@@ -135,11 +137,11 @@ export function Object() {
                     <Box display="flex" justifyContent="space-between">
                         <Button color="grey" onClick={handleBackClick}>
                             <ArrowBack sx={{ mr: 1 }} />
-                            Back
+                            {t("back")}
                         </Button>
                         <Button color="grey" onClick={handleHomeClick}>
                             <Checklist sx={{ mr: 1 }} />
-                            All forms
+                            {t("allForms")}
                         </Button>
                     </Box>
                 </>
@@ -185,8 +187,8 @@ export function Object() {
                                                     form.state === "new"
                                                         ? "red"
                                                         : form.state === "finished"
-                                                        ? "green"
-                                                        : "orange"
+                                                          ? "green"
+                                                          : "orange"
                                                 }
                                                 fontSize="inherit"
                                             />
@@ -197,7 +199,7 @@ export function Object() {
                             })}
                         </List>
                     ) : (
-                        <Typography px={1}>No forms attached to the selected object.</Typography>
+                        <Typography px={1}>{t("noFormsAttachedToTheSelectedObject.")}</Typography>
                     )}
                 </ScrollBox>
             )}

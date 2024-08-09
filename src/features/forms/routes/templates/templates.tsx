@@ -1,6 +1,7 @@
 import { AddCircle, Delete, FilterAlt } from "@mui/icons-material";
 import { Box, Button, List, Typography, useTheme } from "@mui/material";
 import { type FormEvent, type MouseEvent, useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -19,6 +20,7 @@ import { Template } from "./template";
 const FILTER_MENU_ID = "templates-filter-menu";
 
 export function Templates() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const sceneId = useSceneId();
@@ -74,7 +76,7 @@ export function Templates() {
             dispatch(formsActions.setLocationForms([]));
             setIsDeleting(false);
         },
-        [deleteAllForms, dispatch, sceneId]
+        [deleteAllForms, dispatch, sceneId],
     );
 
     return isDeleting ? (
@@ -97,7 +99,7 @@ export function Templates() {
                         <Box display="flex">
                             <Button color="grey" onClick={handleAddFormClick} disabled={!user}>
                                 <AddCircle sx={{ mr: 1 }} />
-                                Add form
+                                {t("addForm")}
                             </Button>
                             <Button
                                 color="grey"
@@ -108,7 +110,7 @@ export function Templates() {
                                 disabled={isLoading || !templateIds.length || !!error}
                             >
                                 <FilterAlt sx={{ mr: 1 }} />
-                                Filters
+                                {t("filters")}
                             </Button>
                         </Box>
                         <Box display="flex">
@@ -118,7 +120,7 @@ export function Templates() {
                                 disabled={!user || isLoading || !templateIds.length || !!error}
                             >
                                 <Delete fontSize="small" sx={{ mr: 1 }} />
-                                Delete all forms
+                                {t("deleteAllForms")}
                             </Button>
                         </Box>
                     </Box>

@@ -3,6 +3,7 @@ import { Box, Button, FormControlLabel, Typography, useTheme } from "@mui/materi
 import { ObjectDB } from "@novorender/data-js-api";
 import { SearchPattern } from "@novorender/webgl-api";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
@@ -33,6 +34,7 @@ export function Root() {
     const {
         state: { db, scene },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const images = useAppSelector(selectImages);
     const filter = useAppSelector(selectImageFilter);
@@ -75,11 +77,11 @@ export function Root() {
                 ) : (
                     <Box p={1}>
                         <Typography textAlign={"center"} mt={1}>
-                            No images found.
+                            {t("noImagesFound.")}
                         </Typography>
                         {!tmZone && (
                             <Typography mt={2}>
-                                TM-Zone is not set. Admins can set this under Advanced settings {"->"} Project.
+                                {t("tM-ZoneIsNotSet.AdminsCanSetThisUnderAdvancedSettings")} {"->"} {t("project.")}
                             </Typography>
                         )}
                         {Object.values(filter).some((val) => val !== "" && val !== "all") && (
@@ -91,7 +93,7 @@ export function Root() {
                                         dispatch(imagesActions.setImages({ status: AsyncStatus.Initial }));
                                     }}
                                 >
-                                    Clear filter
+                                    {t("clearFilter")}
                                 </Button>
                             </Box>
                         )}
@@ -104,13 +106,14 @@ export function Root() {
 
 // NOTE(OLA): Moved <Cancel /> and <Progress /> out of main component as activeImage changes caused images in list to reload.
 function Cancel() {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const activeImage = useAppSelector(selectActiveImage);
 
     return (
         <Button color="grey" onClick={() => dispatch(imagesActions.setActiveImage(undefined))} disabled={!activeImage}>
             <CancelPresentation sx={{ mr: 1 }} />
-            Cancel
+            {t("cancel")}
         </Button>
     );
 }
@@ -131,6 +134,7 @@ function Progress() {
 }
 
 function Header() {
+    const { t } = useTranslation();
     const history = useHistory();
     const showMarkers = useAppSelector(selectShowImageMarkers);
     const dispatch = useAppDispatch();
@@ -143,11 +147,11 @@ function Header() {
         <Box boxShadow={(theme) => theme.customShadows.widgetHeader} display="flex" justifyContent={"space-between"}>
             <Button onClick={() => history.push("/filter")} color="grey">
                 <FilterAlt sx={{ mr: 1 }} />
-                Filter
+                {t("filter")}
             </Button>
             <FormControlLabel
                 control={<IosSwitch size="medium" color="primary" checked={showMarkers} onChange={toggleShowMarkers} />}
-                label={<Box fontSize={14}>Show markers</Box>}
+                label={<Box fontSize={14}>{t("showMarkers")}</Box>}
             />
             <Cancel />
         </Box>
@@ -189,7 +193,7 @@ async function loadImages({
                 searchPattern,
                 full: true,
             },
-            undefined
+            undefined,
         )) {
             const image = await img.loadMetaData();
             const name = image.name;
@@ -260,7 +264,7 @@ async function loadImages({
     } catch (e) {
         console.warn(e);
         store.dispatch(
-            imagesActions.setImages({ status: AsyncStatus.Error, msg: "An error occurred while loading images." })
+            imagesActions.setImages({ status: AsyncStatus.Error, msg: "An error occurred while loading images." }),
         );
     }
 }

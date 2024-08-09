@@ -2,6 +2,7 @@ import { ArrowBack, LocationOnOutlined } from "@mui/icons-material";
 import { Avatar, Box, Button, ImageList, ImageListItem, Typography, useTheme } from "@mui/material";
 import { format, formatDistance } from "date-fns";
 import { Fragment } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -16,6 +17,7 @@ import { baseUrl, useGetPostQuery } from "../../api";
 import { ditioActions } from "../../slice";
 
 export function Post() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const postId = useParams<{ id: string }>().id;
     const history = useHistory();
@@ -44,7 +46,7 @@ export function Post() {
                     position: [pos[0], pos[1], view.renderState.camera.position[2]],
                     rotation: view.renderState.camera.rotation,
                 },
-            })
+            }),
         );
     };
 
@@ -63,13 +65,13 @@ export function Post() {
                         color="grey"
                     >
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
 
                     {tmZone ? (
                         <Button disabled={!post?.GeoCoordinate} onClick={handleGoTo} color="grey">
                             <LocationOnOutlined sx={{ mr: 1 }} />
-                            Go to
+                            {t("goTo")}
                         </Button>
                     ) : null}
                 </Box>
@@ -79,7 +81,7 @@ export function Post() {
                     <LinearProgress />
                 </Box>
             ) : !post ? (
-                <Typography p={1}>Unable to load post.</Typography>
+                <Typography p={1}>{t("unableToLoadPost.")}</Typography>
             ) : (
                 <ScrollBox p={1} pb={3} position="relative">
                     <Box display="flex" alignItems="center" my={1}>
@@ -89,7 +91,7 @@ export function Post() {
                             <Tooltip
                                 title={`Last modified: ${format(
                                     new Date(post.ModifiedDateTime ?? post.CreatedDateTime),
-                                    "dd.MM.yyyy - HH:mm"
+                                    "dd.MM.yyyy - HH:mm",
                                 )}`}
                             >
                                 <Typography color="text.secondary">
@@ -98,7 +100,7 @@ export function Post() {
                                         new Date(),
                                         {
                                             addSuffix: true,
-                                        }
+                                        },
                                     )}
                                 </Typography>
                             </Tooltip>
@@ -122,7 +124,7 @@ export function Post() {
                                     cols={1}
                                     onMouseEnter={() => {
                                         dispatch(
-                                            ditioActions.setHoveredEntity({ kind: "image", id: image.FileReferenceId })
+                                            ditioActions.setHoveredEntity({ kind: "image", id: image.FileReferenceId }),
                                         );
                                     }}
                                     onMouseLeave={() => {
@@ -155,20 +157,20 @@ export function Post() {
                                                     <Tooltip
                                                         title={`Last modified: ${format(
                                                             new Date(
-                                                                comment.ModifiedDateTime ?? comment.CreatedDateTime
+                                                                comment.ModifiedDateTime ?? comment.CreatedDateTime,
                                                             ),
-                                                            "dd.MM.yyyy - HH:mm"
+                                                            "dd.MM.yyyy - HH:mm",
                                                         )}`}
                                                     >
                                                         <Typography sx={{ ml: 1 }} color="text.secondary" fontSize={12}>
                                                             {formatDistance(
                                                                 new Date(
-                                                                    comment.ModifiedDateTime ?? comment.CreatedDateTime
+                                                                    comment.ModifiedDateTime ?? comment.CreatedDateTime,
                                                                 ),
                                                                 new Date(),
                                                                 {
                                                                     addSuffix: true,
-                                                                }
+                                                                },
                                                             )}
                                                         </Typography>
                                                     </Tooltip>
