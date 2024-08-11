@@ -376,6 +376,18 @@ export function MeasurementData({
                                 </Grid>
                             </ListItem>
                         ) : null}
+                        {measureValues.errorMargin ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={5}>
+                                        Error margin
+                                    </Grid>
+                                    <Grid item xs={5}>
+                                        {measureValues.errorMargin} m
+                                    </Grid>
+                                </Grid>
+                            </ListItem>
+                        ) : null}
                         {measureValues.area ? (
                             <ListItem>
                                 <Grid container>
