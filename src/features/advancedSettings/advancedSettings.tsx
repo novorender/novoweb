@@ -65,6 +65,7 @@ export default function AdvancedSettings() {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.advancedSettings.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.advancedSettings.key);
@@ -190,7 +191,7 @@ export default function AdvancedSettings() {
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
-                    widget={{ ...featuresConfig.advancedSettings, name: "Advanced settings" }}
+                    widget={{ ...featuresConfig.advancedSettings, name: t("advancedSettings") }}
                     disableShadow
                 />
 

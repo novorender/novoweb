@@ -311,7 +311,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                             {issue.fields.summary}
                         </Typography>
 
-                        <Typography fontWeight={600}>{t("description:")}</Typography>
+                        <Typography fontWeight={600}>{t("description")}</Typography>
                         <Box mb={2}>
                             {(issue.fields.description?.content ?? [])?.map((doc, idx: number) => {
                                 if (doc.type === "paragraph") {
@@ -347,18 +347,18 @@ export function Issue({ sceneId }: { sceneId: string }) {
                             })}
                         </Box>
 
-                        <Typography fontWeight={600}>{t("status:")}</Typography>
+                        <Typography fontWeight={600}>{t("statusName")}</Typography>
                         <Box mb={2}>{issue.fields.status ? issue.fields.status.name : "None"}</Box>
 
-                        <Typography fontWeight={600}>{t("assignee:")}</Typography>
+                        <Typography fontWeight={600}>{t("assignee")}</Typography>
                         <Box mb={2}>{issue.fields.assignee ? issue.fields.assignee.displayName : "Unassigned"}</Box>
 
-                        <Typography fontWeight={600}>{t("reporter:")}</Typography>
+                        <Typography fontWeight={600}>{t("reporter")}</Typography>
                         <Box mb={2}>{issue.fields.reporter ? issue.fields.reporter.displayName : "None"}</Box>
 
                         {issue.fields.duedate && (
                             <>
-                                <Typography fontWeight={600}>{t("dueDate:")}</Typography>
+                                <Typography fontWeight={600}>{t("dueDate")}</Typography>
                                 <Box mb={2}>
                                     {issue.fields.duedate
                                         ? format(parse(issue.fields.duedate, "yyyy-MM-dd", new Date()), "MMM dd, yyyy")
@@ -368,7 +368,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                         )}
 
                         <Box display="flex" justifyContent="space-between" alignItems="center">
-                            <Typography fontWeight={600}>{t("comments:")}</Typography>
+                            <Typography fontWeight={600}>{t("comments")}</Typography>
                             {permissions.includes("ADD_COMMENTS") && (
                                 <Button onClick={() => history.push(`/createComment/${key}`)} color="grey">
                                     <AddCircle sx={{ mr: 1 }} />

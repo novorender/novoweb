@@ -114,7 +114,7 @@ export function GroupList() {
                     <Box display="flex" width={1} alignItems="center">
                         <Box flex={"1 1 100%"}>
                             <Typography color="textSecondary" noWrap={true}>
-                                {t("groups:")}
+                                {t("groupsName")}
                                 {objectGroups.length}
                             </Typography>
                         </Box>

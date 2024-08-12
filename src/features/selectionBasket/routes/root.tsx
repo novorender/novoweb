@@ -125,7 +125,7 @@ export function Root() {
             <ScrollBox display="flex" flexDirection="column" p={1} pb={2} mt={1}>
                 <Box sx={{ mb: 2 }}>
                     <MuiLink component={Link} to="/list">
-                        {t("objectsInBasket:")}
+                        {t("objectsInBasketName")}
                         {visible.length}
                     </MuiLink>
                 </Box>

@@ -86,7 +86,7 @@ function LoggedIn({
         <>
             <Grid container>
                 <Grid fontWeight={600} item xs={5}>
-                    {t("user")}
+                    {t("userName")}
                 </Grid>
                 <Grid item xs={7}>
                     {user.user}

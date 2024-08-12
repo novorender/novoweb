@@ -242,7 +242,7 @@ function DocumentList({ documents }: { documents: PimsDocument[] }) {
                                             <Box>{doc.DokumentTittel}</Box>
                                         </Box>
                                         <Box display="flex" mb={1}>
-                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>{t("id:")}</Box>
+                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>{t("idName")}</Box>
                                             <Box>{doc.Dokument_ID}</Box>
                                         </Box>
                                         <Box display="flex" mx={-1}>

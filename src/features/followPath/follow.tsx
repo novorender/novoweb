@@ -369,7 +369,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 <Box px={1}>
                     <Grid container columnSpacing={0} rowSpacing={2}>
                         <Grid item xs={6}>
-                            <Typography sx={{ mb: 0.5 }}>{t("profileStart:")}</Typography>
+                            <Typography sx={{ mb: 0.5 }}>{t("profileStartName")}</Typography>
                             <OutlinedInput
                                 size="small"
                                 fullWidth
@@ -389,7 +389,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             />
                         </Grid>
                         <Grid item xs={6}>
-                            <Typography sx={{ mb: 0.5 }}>{t("height:")}</Typography>
+                            <Typography sx={{ mb: 0.5 }}>{t("heightName")}</Typography>
                             <OutlinedInput
                                 size="small"
                                 fullWidth
@@ -399,7 +399,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                             />
                         </Grid>
                         <Grid item xs={6} component="form" onSubmit={handleProfileSubmit}>
-                            <Typography sx={{ mb: 0.5 }}>{t("profile:")}</Typography>
+                            <Typography sx={{ mb: 0.5 }}>{t("profileName")}</Typography>
                             <OutlinedInput
                                 value={profileInput}
                                 inputProps={{ inputMode: "numeric", pattern: "-?[0-9,.]*" }}
@@ -518,7 +518,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
 
                                 <Divider sx={{ my: 1 }} />
 
-                                <Typography>{`${t("clipping:")} ${clipping} m`}</Typography>
+                                <Typography>{`${t("clippingName")} ${clipping} m`}</Typography>
                                 <Box mx={2}>
                                     <Slider
                                         getAriaLabel={() => "Clipping far"}

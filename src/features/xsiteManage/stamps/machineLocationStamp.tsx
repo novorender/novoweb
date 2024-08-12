@@ -45,7 +45,7 @@ export function MachineLocationStamp() {
             {stamp.data.location.latitude} <br />
             {t("longitude")}
             {stamp.data.location.longitude} <br />
-            {t("time:")}
+            {t("timeName")}
             {new Date(stamp.data.location.timestampMs).toLocaleString()}
             <Box mt={1}>
                 <Button

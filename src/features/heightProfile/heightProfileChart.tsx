@@ -285,15 +285,15 @@ export function HeightProfileChart({
                         }}
                     >
                         <Typography>
-                            {t("length:")}
+                            {t("lengthName")}
                             {tooltipData.x.toFixed(3)}
                         </Typography>
                         <Typography>
-                            {t("elevation:")}
+                            {t("elevationName")}
                             {tooltipData.y.toFixed(3)} m
                         </Typography>
                         <Typography>
-                            {t("slope:")}
+                            {t("slopeName")}
                             {tooltipData.slope.toFixed(2)}% m
                         </Typography>
                     </TooltipWithBounds>

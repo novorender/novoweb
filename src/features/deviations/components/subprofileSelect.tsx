@@ -59,7 +59,7 @@ export function SubprofileSelect() {
                             {to}
                             {sp.centerLine && centerLineName && (
                                 <FormHelperText>
-                                    {t("centerLine:")}
+                                    {t("centerLine")}
                                     {centerLineName} {sp.centerLine.parameterBounds[0].toFixed(0)}-
                                     {sp.centerLine.parameterBounds[1].toFixed(0)}
                                 </FormHelperText>

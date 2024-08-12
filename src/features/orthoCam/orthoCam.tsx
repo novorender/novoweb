@@ -173,7 +173,7 @@ export default function OrthoCam() {
                             {currentElevation && (
                                 <>
                                     <Typography>
-                                        {t("elevation:")}
+                                        {t("elevationName")}
                                         {currentElevation.toFixed(3)}
                                     </Typography>
                                     <Divider sx={{ my: 1 }} />
@@ -220,7 +220,7 @@ export default function OrthoCam() {
                             {viewMode === ViewMode.CrossSection && (
                                 <>
                                     <Divider sx={{ my: 1 }} />
-                                    <Typography>{`${t("clipping:")} ${clipping} m`}</Typography>
+                                    <Typography>{`${t("clippingName")} ${clipping} m`}</Typography>
                                     <Box mx={2}>
                                         <Slider
                                             getAriaLabel={() => "Clipping far"}

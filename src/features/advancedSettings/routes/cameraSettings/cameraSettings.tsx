@@ -288,7 +288,7 @@ export function CameraSettings({
                             <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <InputLabel sx={{ color: "text.primary" }} htmlFor="proportional-speed_min">
-                                    {t("min:")}
+                                    {t("minName")}
                                 </InputLabel>
                                 <OutlinedInput
                                     id="proportional-speed_min"
@@ -310,7 +310,7 @@ export function CameraSettings({
                             <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <InputLabel sx={{ color: "text.primary" }} htmlFor="proportional-speed_max">
-                                    {t("max:")}
+                                    {t("maxName")}
                                 </InputLabel>
                                 <OutlinedInput
                                     id="proportional-speed_max"
@@ -473,7 +473,7 @@ export function CameraSettings({
                         <Box px={1} component="form" onSubmit={handleDefaultTopDownElevationSubmit}>
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <InputLabel sx={{ color: "text.primary" }} htmlFor="topdown-elevation">
-                                    {t("topDownElevation:")}
+                                    {t("topDownElevation")}
                                 </InputLabel>
                                 <OutlinedInput
                                     id="topdown-elevation"

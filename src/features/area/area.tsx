@@ -114,7 +114,7 @@ export default function Area() {
                         <>
                             <Divider sx={{ py: 0 }} />
                             <Box p={1}>
-                                {t("area:")}
+                                {t("areaName")}
                                 {area.toFixed(3)} &#13217;
                             </Box>
                         </>

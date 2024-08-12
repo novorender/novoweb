@@ -207,7 +207,7 @@ function Pending() {
             {offlineWorkerState.initialStorageEstimate?.quota !== undefined &&
                 offlineWorkerState.initialStorageEstimate?.usage !== undefined && (
                     <>
-                        {t("estimatedAvailableSpace:")}{" "}
+                        {t("estimatedAvailableSpace")}{" "}
                         {formatFileSizeMetric(
                             Math.max(
                                 0,
@@ -344,7 +344,7 @@ function AllDownloadedScenes({ synchronizing }: { synchronizing: boolean }) {
                                     {scene.size ? formatFileSizeMetric(scene.size) : t("unknown")}
                                 </Typography>
                                 <Typography>
-                                    {t("status:")}
+                                    {t("statusName")}
                                     {capitalize(scene.status)}
                                 </Typography>
                                 <Typography>

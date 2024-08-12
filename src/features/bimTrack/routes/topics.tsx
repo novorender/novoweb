@@ -218,9 +218,9 @@ function TopicListItem({ topic, projectId, style }: { topic: Topic; projectId: s
                                     WebkitBoxOrient: "vertical",
                                 }}
                             >
-                                {t("priority:")}
+                                {t("priorityName")}
                                 {topic.priority} <br />
-                                {t("status:")}
+                                {t("statusName")}
                                 {topic.topic_status}
                             </Typography>
                         </div>

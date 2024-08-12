@@ -187,7 +187,7 @@ export function CreateForm({
                     <>
                         <Divider sx={{ my: 1 }} />
                         <Box display="flex" alignItems="center">
-                            <Typography fontWeight={600}>{t("marker:")}</Typography>
+                            <Typography fontWeight={600}>{t("markerName")}</Typography>
                             <Box flex="auto" />
                             {marker && (
                                 <Box mr={1}>

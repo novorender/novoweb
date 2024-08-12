@@ -349,7 +349,7 @@ function LayerItem({
             {layer.name}
             {layer.where && (
                 <div>
-                    {t("ownFilter:")}
+                    {t("ownFilter")}
                     {layer.where}
                 </div>
             )}

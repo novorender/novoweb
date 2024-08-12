@@ -184,21 +184,21 @@ export function Topic() {
                             </Box>
                             <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
                             <Box display="flex" justifyContent="space-between">
-                                <Typography variant="h6">{t("status:")}</Typography>
+                                <Typography variant="h6">{t("statusName")}</Typography>
                                 <Typography variant="h6" fontWeight={600}>
                                     {topic.topic_status}
                                 </Typography>
                             </Box>
                             <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
                             <Box display="flex" justifyContent="space-between">
-                                <Typography variant="h6">{t("type:")}</Typography>
+                                <Typography variant="h6">{t("typeName")}</Typography>
                                 <Typography variant="h6" fontWeight={600}>
                                     {topic.topic_type}
                                 </Typography>
                             </Box>
                             <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
                             <Box display="flex" justifyContent="space-between">
-                                <Typography variant="h6">{t("priority:")}</Typography>
+                                <Typography variant="h6">{t("priorityName")}</Typography>
                                 <Typography variant="h6" fontWeight={600}>
                                     {topic.priority}
                                 </Typography>
@@ -212,7 +212,7 @@ export function Topic() {
                             </Box>
                             <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
                             <Box display="flex" justifyContent="space-between">
-                                <Typography variant="h6">{t("labels:")}</Typography>
+                                <Typography variant="h6">{t("labelsName")}</Typography>
                                 <Typography variant="h6" fontWeight={600}>
                                     {topic.labels.join(", ")}
                                 </Typography>
@@ -452,7 +452,7 @@ function CommentListItem({
                                         WebkitBoxOrient: "vertical",
                                     }}
                                 >
-                                    {t("date:")}
+                                    {t("dateName")}
                                     {new Date(comment.date).toLocaleString("nb")} <br />
                                     {t("by")}
                                     {comment.author}
