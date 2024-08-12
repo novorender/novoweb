@@ -236,3 +236,7 @@ export function projectV1ZoneNameToEpsg(tmZone: string) {
 export function compareStrings(s1: string, s2: string) {
     return s1 < s2 ? -1 : s1 > s2 ? 1 : 0;
 }
+
+export function hasMouseSupport() {
+    return matchMedia("(pointer:fine)").matches;
+}

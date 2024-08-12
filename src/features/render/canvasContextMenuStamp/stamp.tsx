@@ -252,6 +252,7 @@ function Selection() {
                 normalOffset,
                 baseW: w,
                 rotation,
+                anchorPos: position,
             })
         );
 

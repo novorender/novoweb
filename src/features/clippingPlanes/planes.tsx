@@ -1,12 +1,13 @@
 import { Cameraswitch, Delete } from "@mui/icons-material";
-import { Box, Button, Slider } from "@mui/material";
-import { ReadonlyQuat, ReadonlyVec3, vec3, vec4 } from "gl-matrix";
+import { Box, IconButton, Slider } from "@mui/material";
 import { SyntheticEvent, useEffect, useRef, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { getSnapToPlaneParams } from "features/orthoCam/utils";
-import { CameraType, renderActions, selectCameraType, selectClippingPlanes } from "features/render";
+import { selectClippingPlanes } from "features/render";
+import { rgbToHex, vecToRgb } from "utils/color";
+
+import { MovingPlaneControl, useClippingPlaneActions } from "./useClippingPlaneActions";
 
 export default function Planes() {
     const {
@@ -14,8 +15,8 @@ export default function Planes() {
     } = useExplorerGlobals(true);
     const [sliders, setSliders] = useState([] as number[]);
     const { planes } = useAppSelector(selectClippingPlanes);
-    const dispatch = useAppDispatch();
-    const cameraType = useAppSelector(selectCameraType);
+    const actions = useClippingPlaneActions();
+    const movingPlaneControl = useRef<MovingPlaneControl>();
 
     useEffect(() => {
         if (planes.length) {
@@ -23,146 +24,37 @@ export default function Planes() {
         }
     }, [planes]);
 
-    const camPos = useRef<ReadonlyVec3 | undefined>(undefined);
-    const camRot = useRef<ReadonlyQuat | undefined>(undefined);
-
-    const moveCameraToPlane = (diff: number) => {
-        if (camRot.current && camPos.current) {
-            const pos = vec3.clone(camPos.current);
-            const dir = vec3.fromValues(0, 0, 1);
-            vec3.transformQuat(dir, dir, camRot.current);
-            vec3.scaleAndAdd(pos, pos, dir, diff);
-            dispatch(
-                renderActions.setCamera({
-                    type: CameraType.Orthographic,
-                    goTo: {
-                        position: pos,
-                        rotation: view.renderState.camera.rotation,
-                        far: view.renderState.camera.far,
-                    },
-                })
-            );
-        }
-    };
-
     const handleSliderChange = (idx: number) => (_event: Event, newValue: number | number[]) => {
-        const selected = planes[idx];
-
-        if (!selected) {
-            return;
-        }
-
-        if (camRot.current === undefined) {
-            camPos.current = view.renderState.camera.position;
-            camRot.current = view.renderState.camera.rotation;
+        if (!movingPlaneControl.current) {
+            movingPlaneControl.current = actions.movePlane(view, planes, idx);
         }
 
         const newVal = typeof newValue === "number" ? newValue : newValue[0];
+        movingPlaneControl.current.update(-newVal);
         setSliders((_state) => {
             const state = [..._state];
             state[idx] = newVal;
             return state;
         });
-
-        const plane = vec4.clone(selected.normalOffset);
-        const diff = -newVal - plane[3];
-        plane[3] = -newVal;
-        view.modifyRenderState({
-            clipping: {
-                planes: planes.map((p, i) => {
-                    if (i === idx) {
-                        return { ...selected, outline: { enabled: false }, normalOffset: plane };
-                    } else if (p.outline?.enabled) {
-                        // Disable all clipping plane outlines while moving slider for better perf
-                        return { ...p, outline: { enabled: false } };
-                    }
-                    return p;
-                }),
-            },
-        });
-        if (cameraType === CameraType.Orthographic) {
-            dispatch(renderActions.setClippingInEdit(true));
-            moveCameraToPlane(diff);
-        }
     };
 
-    const handleSliderChangeCommitted =
-        (idx: number) => (_event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => {
-            const selected = planes[idx];
+    const handleSliderChangeCommitted = (_event: Event | SyntheticEvent<Element, Event>) => {
+        if (!movingPlaneControl.current) {
+            return;
+        }
 
-            camRot.current = undefined;
-            camPos.current = undefined;
-            if (!selected) {
-                return;
-            }
-
-            const plane = vec4.clone(selected.normalOffset);
-            const newVal = typeof newValue === "number" ? newValue : newValue[0];
-            plane[3] = -newVal;
-            view.modifyRenderState({
-                outlines: { on: true },
-            });
-            dispatch(
-                renderActions.setClippingPlanes({
-                    planes: planes.map((p, i) =>
-                        i === idx ? { ...selected, outline: { enabled: i === 0 }, normalOffset: plane } : p
-                    ),
-                })
-            );
-            if (cameraType === CameraType.Orthographic) {
-                dispatch(renderActions.setClippingInEdit(false));
-            }
-        };
-
-    const handleSnapToPlane = (idx: number) => {
-        dispatch(
-            renderActions.setCamera({
-                type: CameraType.Orthographic,
-                goTo: getSnapToPlaneParams({ planeIdx: idx, view }),
-            })
-        );
+        movingPlaneControl.current.finish(true);
+        movingPlaneControl.current = undefined;
     };
 
     const handleCameraSwap = (idx: number) => {
-        if (view.renderState.camera.kind === "orthographic") {
-            if (planes.length > 0) {
-                const planeDir = vec3.fromValues(
-                    planes[0].normalOffset[0],
-                    planes[0].normalOffset[1],
-                    planes[0].normalOffset[2]
-                );
-                dispatch(
-                    renderActions.setCamera({
-                        type: CameraType.Pinhole,
-                        goTo: {
-                            position: vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, planeDir, 15),
-                            rotation: view.renderState.camera.rotation,
-                        },
-                    })
-                );
-            } else {
-                dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
-            }
-        } else {
-            handleSnapToPlane(idx);
-        }
+        actions.swapCamera(view, planes, idx);
     };
 
     const handleDeletePlane = (idx: number) => {
-        view.modifyRenderState({
-            outlines: { on: true },
-        });
-        const newPlanes = planes
-            .filter((_, i) => i !== idx)
-            .map((p, i) => (i === 0 ? { ...p, outline: { enabled: true } } : p));
-        setSliders(newPlanes.map((plane) => -plane.normalOffset[3]));
-        dispatch(
-            renderActions.setClippingPlanes({
-                planes: newPlanes,
-            })
-        );
-        if (cameraType === CameraType.Orthographic) {
-            dispatch(renderActions.setClippingInEdit(false));
+        const newPlanes = actions.deletePlane(view, planes, idx);
+        if (newPlanes) {
+            setSliders(newPlanes.map((plane) => -plane.normalOffset[3]));
         }
     };
 
@@ -170,23 +62,30 @@ export default function Planes() {
         <>
             {planes.length === sliders.length &&
                 planes.map((plane, idx) => {
+                    const rgb = vecToRgb(plane.color);
+                    rgb.a = 1;
+                    const color = rgbToHex(rgb);
+
                     return (
                         <Box mb={2} key={idx} display="flex" alignItems="center" gap={1}>
-                            <Box flex="0 0 80px">Plane {idx + 1}</Box>
+                            <Box flex="0 0 80px" sx={{ color }}>
+                                Plane {idx + 1}
+                            </Box>
                             <Slider
                                 min={-plane.baseW - 20}
                                 max={-plane.baseW + 20}
                                 step={0.1}
                                 value={sliders[idx]}
                                 onChange={handleSliderChange(idx)}
-                                onChangeCommitted={handleSliderChangeCommitted(idx)}
+                                onChangeCommitted={handleSliderChangeCommitted}
+                                sx={{ flex: "auto" }}
                             />
-                            <Button onClick={() => handleCameraSwap(idx)} color="grey">
-                                <Cameraswitch sx={{ mr: 1 }} />
-                            </Button>
-                            <Button onClick={() => handleDeletePlane(idx)} color="grey">
-                                <Delete sx={{ mr: 1 }} />
-                            </Button>
+                            <IconButton onClick={() => handleCameraSwap(idx)} sx={{ flex: 1 }}>
+                                <Cameraswitch />
+                            </IconButton>
+                            <IconButton onClick={() => handleDeletePlane(idx)} sx={{ flex: 1 }}>
+                                <Delete />
+                            </IconButton>
                         </Box>
                     );
                 })}
