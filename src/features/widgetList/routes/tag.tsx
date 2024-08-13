@@ -56,7 +56,7 @@ export function Tag({
 
                                 return (idxA === -1 ? sorting.length : idxA) - (idxB === -1 ? sorting.length : idxB);
                             })
-                            .map(({ Icon, name, key, offline }) => {
+                            .map(({ Icon, nameKey, key, offline }) => {
                                 const activeCurrent = key === currentWidget;
                                 const activeElsewhere = !activeCurrent && activeWidgets.includes(key);
                                 const unavailable = !isOnline && !offline;
@@ -71,7 +71,7 @@ export function Tag({
                                             <IconButton disabled={activeElsewhere || unavailable} size="large">
                                                 <Icon />
                                             </IconButton>
-                                            <Typography textAlign={"center"}>{name}</Typography>
+                                            <Typography textAlign={"center"}>{t(nameKey)}</Typography>
                                         </WidgetMenuButtonWrapper>
                                     </Grid>
                                 );

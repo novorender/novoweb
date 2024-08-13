@@ -1,4 +1,5 @@
 import type { SpeedDialActionProps } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
@@ -16,7 +17,8 @@ import { renderActions, selectMainObject } from "features/render";
 type Props = SpeedDialActionProps;
 
 export function HideSelected(props: Props) {
-    const { name, Icon } = featuresConfig["hideSelected"];
+    const { t } = useTranslation();
+    const { nameKey, Icon } = featuresConfig["hideSelected"];
     const mainObject = useAppSelector(selectMainObject);
 
     const { idArr: highlighted } = useHighlighted();
@@ -38,7 +40,7 @@ export function HideSelected(props: Props) {
             dispatch(renderActions.setMainObject(undefined));
             dispatchHighlighted(highlightActions.setIds([]));
             dispatchHighlightCollections(
-                highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, [])
+                highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, []),
             );
             dispatchSelectionBasket(selectionBasketActions.remove(selected));
         } else if (hidden.length) {
@@ -52,7 +54,7 @@ export function HideSelected(props: Props) {
             data-test="hide-selected"
             FabProps={{ disabled, ...props.FabProps }}
             onClick={toggleHideSelected}
-            title={disabled ? undefined : name}
+            title={disabled ? undefined : t(nameKey)}
             icon={<Icon />}
         />
     );

@@ -11,7 +11,7 @@ import { ViewMode } from "types/misc";
 
 export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {
     const { t } = useTranslation();
-    const { name, Icon } = featuresConfig["toggleSubtrees"];
+    const { nameKey, Icon } = featuresConfig["toggleSubtrees"];
     const subtrees = useAppSelector(selectSubtrees);
     const viewMode = useAppSelector(selectViewMode);
     const dispatch = useAppDispatch();
@@ -42,7 +42,7 @@ export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {
                     ...speedDialProps.FabProps,
                 }}
                 onClick={openMenu}
-                title={name}
+                title={t(nameKey)}
                 icon={<Icon />}
             />
             <Menu

@@ -79,7 +79,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
 
             dataApi.putScene(updated);
         } catch {
-            console.warn(`Failed to save ${featuresConfig.ditio.name} settings.`);
+            console.warn(`Failed to save ${t(featuresConfig.ditio.nameKey)} settings.`);
         }
 
         history.push("/");

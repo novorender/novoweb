@@ -58,7 +58,7 @@ export function Feed() {
                         sx={{ height: 5, width: 1, mt: "-5px" }}
                         position="absolute"
                     />
-                    <Typography p={1}>{t("notSetUpForProject", { name: featuresConfig.ditio.name })}</Typography>
+                    <Typography p={1}>{t("notSetUpForProject", { name: t(featuresConfig.ditio.nameKey) })}</Typography>
                 </>
             );
         }

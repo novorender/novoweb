@@ -66,17 +66,17 @@ export function Login({ sceneId }: { sceneId: string }) {
                         loadingIndicator={
                             <Box position={"relative"} display="flex" alignItems="center" minWidth={190}>
                                 {t("logInTo")}
-                                {featuresConfig.xsiteManage.name}
+                                {t(featuresConfig.xsiteManage.nameKey)}
                                 <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
                             </Box>
                         }
                     >
                         {t("logInTo")}
-                        {featuresConfig.xsiteManage.name}
+                        {t(featuresConfig.xsiteManage.nameKey)}
                     </LoadingButton>
                 </Box>
                 <Typography textAlign={"center"} color={theme.palette.text.secondary}>
-                    {t("redirect", { name: featuresConfig.xsiteManage.name })}
+                    {t("redirect", { name: t(featuresConfig.xsiteManage.nameKey) })}
                 </Typography>
             </ScrollBox>
         </>

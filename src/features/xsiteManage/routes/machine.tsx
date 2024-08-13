@@ -125,7 +125,7 @@ export function Machine() {
             <ScrollBox p={1} pt={2} pb={2}>
                 {isMachineError || !machine ? (
                     <Typography>
-                        {t("failedToLoadMachineDataFrom", { name: featuresConfig.xsiteManage.name })}
+                        {t("failedToLoadMachineDataFrom", { name: t(featuresConfig.xsiteManage.nameKey) })}
                     </Typography>
                 ) : (
                     <>

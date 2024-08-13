@@ -96,7 +96,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
 
             dataApi.putScene(updated);
         } catch {
-            console.warn(`Failed to save ${featuresConfig.bimTrack.name} settings.`);
+            console.warn(`Failed to save ${t(featuresConfig.bimTrack.nameKey)} settings.`);
         }
 
         history.push(`/${project}/topics`);

@@ -40,7 +40,6 @@ const Omega365 = lazy(() => import("features/omega365/omega365"));
 const Arcgis = lazy(() => import("features/arcgis/arcgis"));
 const Forms = lazy(() => import("features/forms/forms"));
 const Clash = lazy(() => import("features/clash/clash"));
-const Settings = lazy(() => import("features/settings/settings"));
 
 export function Widgets() {
     const maximized = useAppSelector(selectMaximized);
@@ -256,9 +255,6 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             break;
         case featuresConfig.clash.key:
             Widget = Clash;
-            break;
-        case featuresConfig.settings.key:
-            Widget = Settings;
             break;
         default:
             return key;

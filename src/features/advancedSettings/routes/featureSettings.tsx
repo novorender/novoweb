@@ -39,7 +39,7 @@ import {
 export function FeatureSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();
     const theme = useTheme();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const dispatch = useAppDispatch();
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
@@ -68,7 +68,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
     const sortWidgets = (widgets: Widget[]) =>
         widgets.sort(
             (a, b) =>
-                a.name.localeCompare(b.name, "en", { sensitivity: "accent" }) +
+                t(b.nameKey).localeCompare(t(b.nameKey), i18n.language, { sensitivity: "accent" }) +
                 ((lockedWidgets.includes(a.key) && lockedWidgets.includes(b.key)) ||
                 (!lockedWidgets.includes(a.key) && !lockedWidgets.includes(b.key))
                     ? 0
@@ -147,7 +147,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                             }
                                             label={
                                                 <Box mr={0.5} sx={{ userSelect: "none" }}>
-                                                    {widget.name}
+                                                    {t(widget.nameKey)}
                                                 </Box>
                                             }
                                         />
@@ -179,7 +179,9 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                         id: "primary-menu-button-1",
                                     }}
                                 >
-                                    <MenuItem value={featuresConfig.home.key}>{featuresConfig.home.name}</MenuItem>
+                                    <MenuItem value={featuresConfig.home.key}>
+                                        {t(featuresConfig.home.nameKey)}
+                                    </MenuItem>
                                 </Select>
                             </FormControl>
 
@@ -202,7 +204,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     }}
                                 >
                                     <MenuItem value={featuresConfig.cameraSpeed.key}>
-                                        {featuresConfig.cameraSpeed.name}
+                                        {t(featuresConfig.cameraSpeed.nameKey)}
                                     </MenuItem>
                                 </Select>
                             </FormControl>
@@ -226,7 +228,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     }}
                                 >
                                     <MenuItem value={featuresConfig.flyToSelected.key}>
-                                        {featuresConfig.flyToSelected.name}
+                                        {t(featuresConfig.flyToSelected.nameKey)}
                                     </MenuItem>
                                 </Select>
                             </FormControl>
@@ -250,7 +252,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     }}
                                 >
                                     <MenuItem value={featuresConfig.stepBack.key}>
-                                        {featuresConfig.stepBack.name}
+                                        {t(featuresConfig.stepBack.nameKey)}
                                     </MenuItem>
                                 </Select>
                             </FormControl>
@@ -280,10 +282,10 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     }}
                                 >
                                     <MenuItem value={featuresConfig.orthoShortcut.key}>
-                                        {featuresConfig.orthoShortcut.name}
+                                        {t(featuresConfig.orthoShortcut.nameKey)}
                                     </MenuItem>
                                     <MenuItem value={featuresConfig.stepForwards.key}>
-                                        {featuresConfig.stepForwards.name}
+                                        {t(featuresConfig.stepForwards.nameKey)}
                                     </MenuItem>
                                 </Select>
                             </FormControl>
@@ -377,7 +379,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            {widget.name}
+                                            {t(widget.nameKey)}
                                         </Box>
                                     }
                                 />

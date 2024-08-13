@@ -86,7 +86,8 @@ export const featuresConfig = {
     //...
     myWidget: {
         key: "myWidget",
-        name: "My Widget",
+        // add new translation pair to translation.json
+        nameKey: "myWidget",
         Icon: WidgetIcon,
         type: FeatureType.Widget,
     },

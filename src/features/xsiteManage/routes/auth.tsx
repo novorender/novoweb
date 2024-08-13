@@ -130,11 +130,11 @@ export function Auth() {
         } else if (isAdmin) {
             history.push("/settings");
         } else if (!config.siteId) {
-            setError(`${featuresConfig.xsiteManage.name} has not yet been set up for this project.`);
+            setError(`${t(featuresConfig.xsiteManage.nameKey)} has not yet been set up for this project.`);
         } else {
-            setError(`You do not have access to the ${config.siteId} ${featuresConfig.xsiteManage.name} site.`);
+            setError(`You do not have access to the ${config.siteId} ${t(featuresConfig.xsiteManage.nameKey)} site.`);
         }
-    }, [sites, history, isAdmin, dispatch, config, site]);
+    }, [sites, history, isAdmin, dispatch, config, site, t]);
 
     return site ? (
         <Redirect to="/machines" />

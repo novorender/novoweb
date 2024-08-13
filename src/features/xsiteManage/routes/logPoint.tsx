@@ -78,7 +78,9 @@ export function LogPoint() {
             </Box>
             <ScrollBox p={1} pt={2} pb={2}>
                 {isError || !pt ? (
-                    <Typography>{t("failedToLoadDataFrom", { name: featuresConfig.xsiteManage.name })}</Typography>
+                    <Typography>
+                        {t("failedToLoadDataFrom", { name: t(featuresConfig.xsiteManage.nameKey) })}
+                    </Typography>
                 ) : (
                     <>
                         <Box mb={1}>{pt.code}</Box>

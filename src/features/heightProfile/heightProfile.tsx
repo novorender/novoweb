@@ -171,7 +171,7 @@ export default function HeightProfile() {
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
-                    widget={{ ...featuresConfig.heightProfile, name: "Height profile" }}
+                    widget={{ ...featuresConfig.heightProfile, nameKey: "heightProfile" }}
                     disableShadow={menuOpen}
                 >
                     {!menuOpen && !minimized ? (

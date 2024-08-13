@@ -23,7 +23,7 @@ export function WidgetError({ widgetKey }: { widgetKey: WidgetKey }) {
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader widget={config} disableShadow={menuOpen} />
                 <ScrollBox display={menuOpen || minimized ? "none" : "block"}>
-                    {t("errorLoadingConfig", { configName: config.name })}
+                    {t("errorLoadingConfig", { configName: t(config.nameKey) })}
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={config.key} onSelect={toggleMenu} />}
             </WidgetContainer>

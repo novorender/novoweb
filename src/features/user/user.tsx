@@ -25,6 +25,8 @@ import {
 import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
 import { deleteFromStorage, saveToStorage } from "utils/storage";
 
+import { LanguageSelector } from "./languageSelector";
+
 export default function User() {
     const [menuOpen, toggleMenu] = useToggle();
     const [loading, setLoading] = useState(false);
@@ -37,13 +39,14 @@ export default function User() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.user} disableShadow={menuOpen} />
+                <WidgetHeader widget={{ ...featuresConfig.user, nameKey: "user" }} disableShadow={menuOpen} />
                 {loading && (
                     <Box>
                         <LinearProgress />
                     </Box>
                 )}
                 <ScrollBox p={1} mt={2} display={!menuOpen && !minimized ? "flex" : "none"} flexDirection="column">
+                    <LanguageSelector />
                     {user ? (
                         <LoggedIn user={user} loading={loading} setLoading={setLoading} />
                     ) : (

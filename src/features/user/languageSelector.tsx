@@ -69,7 +69,7 @@ export function LanguageSelector() {
     };
 
     return (
-        <Box mx={1}>
+        <Box display="flex" justifyContent="center">
             <FormControl fullWidth sx={{ mb: 1 }}>
                 <FormLabel sx={{ fontWeight: 600, color: "text.primary", mb: 1 }} id="app-language">
                     {t("language")}
