@@ -20,9 +20,6 @@ app.use(
     "/bimtrack/token",
     createProxyMiddleware({
         target: "https://auth.bimtrackapp.co/connect/token",
-        pathRewrite: {
-            "^/bimtrack/token": "",
-        },
         on: {
             proxyReq: (proxyReq) => removeTrailingSlashFromPath(proxyReq),
         },
@@ -36,10 +33,7 @@ app.use(
         router: (req) => {
             const url = new URL(`https://explorer.novorender.com/${req.url}`);
             const server = url.searchParams.get("server") ?? "";
-            return server;
-        },
-        pathRewrite: {
-            "^/bimtrack": "",
+            return server + "/bcf/2.1";
         },
         on: {
             proxyReq: (proxyReq) => removeTrailingSlashFromPath(proxyReq),
