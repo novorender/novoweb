@@ -7,12 +7,24 @@ import path from "path";
 const app = express();
 const __dirname = path.resolve(path.dirname("."));
 
+// New http-proxy-middleware adds may add a slash in the end of the path
+// which is recognized as a different path by some servers
+// and causes 404 (e.g. /bimtrack/token)
+function removeTrailingSlashFromPath(proxyReq) {
+    if (proxyReq.path.endsWith("/")) {
+        proxyReq.path = proxyReq.path.slice(0, -1);
+    }
+}
+
 app.use(
     "/bimtrack/token",
     createProxyMiddleware({
-        target: "https://auth.bimtrackapp.co//connect/token",
+        target: "https://auth.bimtrackapp.co/connect/token",
         pathRewrite: {
             "^/bimtrack/token": "",
+        },
+        on: {
+            proxyReq: (proxyReq) => removeTrailingSlashFromPath(proxyReq),
         },
         changeOrigin: true,
     })
@@ -29,6 +41,9 @@ app.use(
         pathRewrite: {
             "^/bimtrack": "",
         },
+        on: {
+            proxyReq: (proxyReq) => removeTrailingSlashFromPath(proxyReq),
+        },
         changeOrigin: true,
     })
 );
@@ -39,6 +54,9 @@ app.use(
         target: "https://api.prod.xsitemanage.com",
         pathRewrite: {
             "^/xsitemanage/": "",
+        },
+        on: {
+            proxyReq: (proxyReq) => removeTrailingSlashFromPath(proxyReq),
         },
         changeOrigin: true,
     })
@@ -51,6 +69,9 @@ app.use(
         pathRewrite: {
             "^/ditio": "",
         },
+        on: {
+            proxyReq: (proxyReq) => removeTrailingSlashFromPath(proxyReq),
+        },
         changeOrigin: true,
     })
 );
@@ -60,6 +81,9 @@ app.use(
         target: "https://ditio-report-api.azurewebsites.net/api",
         pathRewrite: {
             "^/ditio-machines": "",
+        },
+        on: {
+            proxyReq: (proxyReq) => removeTrailingSlashFromPath(proxyReq),
         },
         changeOrigin: true,
     })
