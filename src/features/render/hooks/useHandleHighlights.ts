@@ -38,7 +38,15 @@ export function useHandleHighlights() {
     const sceneId = useSceneId();
     const mainObject = useAppSelector(selectMainObject);
     const highlighted = useHighlighted();
-    const { secondaryHighlight, selectedDeviation, formsNew, formsOngoing, formsCompleted } = useHighlightCollections();
+    const {
+        secondaryHighlight,
+        selectedDeviation,
+        formsNew,
+        formsOngoing,
+        formsCompleted,
+        clashObjects1,
+        clashObjects2,
+    } = useHighlightCollections();
     const hidden = useHidden().idArr;
     const groups = useObjectGroups();
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
@@ -287,6 +295,22 @@ export function useHandleHighlights() {
                         {
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose
+                                    ? clashObjects1.idArr
+                                    : basket.idArr.filter((id) => clashObjects1.ids[id])
+                            ).sort(),
+                            action: createColorSetHighlight(clashObjects1.color),
+                        },
+                        {
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
+                                    ? clashObjects2.idArr
+                                    : basket.idArr.filter((id) => clashObjects2.ids[id])
+                            ).sort(),
+                            action: createColorSetHighlight(clashObjects2.color),
+                        },
+                        {
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
                                     ? mainObject !== undefined
                                         ? highlighted.idArr.concat(mainObject)
                                         : highlighted.idArr
@@ -308,6 +332,8 @@ export function useHandleHighlights() {
         formsNew,
         formsOngoing,
         formsCompleted,
+        clashObjects1,
+        clashObjects2,
         hidden,
         groups,
         propertyTreeGroups,

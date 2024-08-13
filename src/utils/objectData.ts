@@ -16,7 +16,8 @@ export function decodeObjPathName(str: string) {
 }
 
 export function getParentPath(path: string): string {
-    return path.split("/").slice(0, -1).join("/");
+    const lastSlashIdx = path.lastIndexOf("/");
+    return lastSlashIdx > 0 ? path.slice(0, lastSlashIdx) : "";
 }
 
 export function extractObjectIds<T extends { id: number } = HierarcicalObjectReference>(
@@ -34,7 +35,7 @@ export function getObjectNameFromPath(path: string): string {
 export function getFilePathFromObjectPath(objectPath: string): string | null {
     //https://novorender.com/formats-integrations/
     const match = objectPath.match(
-        /^(?<path>.+\.(dem|dwg|dxf|ifc|xml|kof|nwd|obj|pdms|rvm|step|stp|wms|wmts|pts|las|e57|jpg|jpeg|tif|tiff|pdf))/i
+        /^(?<path>.+\.(dem|dwg|dxf|ifc|xml|kof|nwd|obj|pdms|rvm|step|stp|wms|wmts|pts|las|laz|e57|jpg|jpeg|tif|tiff|pdf))/i
     )?.groups;
 
     if (!match || !match.path) {

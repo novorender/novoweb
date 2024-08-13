@@ -39,6 +39,7 @@ import {
     VisibilityOff,
 } from "@mui/icons-material";
 
+import ClashIcon from "media/icons/clash.svg?react";
 import Ditio from "media/icons/ditio.svg?react";
 import Jira from "media/icons/jira-software.svg?react";
 import NewformaKonekt from "media/icons/newforma-konekt.svg?react";
@@ -443,6 +444,16 @@ export const featuresConfig = {
         defaultLocked: true,
         offline: false,
     },
+    clash: {
+        key: "clash",
+        name: "Clash",
+        Icon: ClashIcon,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+        offline: false,
+        tags: [featureTags.review.key],
+        beta: true,
+    },
 } as const;
 
 type Config = typeof featuresConfig;
@@ -476,3 +487,5 @@ export const defaultLockedWidgets = Object.values(featuresConfig)
 export const viewerWidgets = Object.values(featuresConfig).filter((widget) => widget.type === FeatureType.Widget) as {
     [K in keyof Config]: Config[K]["type"] extends FeatureType.Widget ? Config[K] : never;
 }[keyof Config][];
+export const releasedViewerWidgets = viewerWidgets.filter((w) => !("beta" in w) || !w.beta);
+export const betaViewerWidgets = viewerWidgets.filter((w) => "beta" in w && w.beta);

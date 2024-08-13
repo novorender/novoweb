@@ -1,4 +1,4 @@
-import { CoreModule, LoadStatus, MeasureEntity } from "@novorender/api";
+import { CoreModule, LoadStatus, MeasureEntity, PickSampleExt } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
 import {
     KeyboardEvent,
@@ -75,6 +75,8 @@ export function useCanvasEventHandlers({
     const roadLayerTracerEnabled = useAppSelector(selectShowTracer);
     const viewMode = useAppSelector(selectViewMode);
     const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
+    const lastMeasurePickResult = useRef<PickSampleExt>();
+    const downloadHoveredBrepTimer = useRef<ReturnType<typeof setTimeout>>();
     const dispatch = useAppDispatch();
 
     const hideSvgCursor = () =>
@@ -311,44 +313,40 @@ export function useCanvasEventHandlers({
                 }
             };
 
+            const getColor = (localHoverEnt: typeof hoverEnt, localResult: typeof result) =>
+                !localHoverEnt?.entity && !localResult?.objectId
+                    ? "red"
+                    : localHoverEnt?.status === "loaded"
+                    ? "lightgreen"
+                    : localHoverEnt?.status === "unknown"
+                    ? "blue"
+                    : "yellow";
+
             if (shouldPickHoverEnt) {
                 prevHoverUpdate.current = now;
 
-                if (picker === Picker.Measurement) {
-                    if (result) {
-                        let outlinePoint: vec3 | undefined;
-                        if (view.renderState.clipping.planes.length && measureHoverSettings.point) {
-                            outlinePoint = hoverOutline(result.position);
-                        }
-                        if (outlinePoint) {
-                            hoverEnt = pointToHover(outlinePoint, result.objectId);
-                        } else if (view.measure && !planePicking) {
-                            const tolerance = applyCameraDistanceToMeasureTolerance(
-                                result.position,
-                                view.renderState.camera.position,
-                                measureHoverSettings
-                            );
-                            hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
-                                result.objectId,
-                                result.position,
-                                tolerance,
-                                allowGeneratedParametric.enabled
-                            );
-                            vec2.copy(
-                                previous2dSnapPos.current,
-                                vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
-                            );
-                        }
-                    } else {
-                        checkResetHover();
-                    }
-                    prevHoverEnt.current = hoverEnt;
-                } else if (picker === Picker.Area || picker === Picker.PointLine) {
-                    if (result && view.renderState.clipping.planes.length && measureHoverSettings.point) {
-                        const outlinePoint = hoverOutline(result.position);
-                        if (outlinePoint) {
-                            hoverEnt = pointToHover(outlinePoint, result.objectId);
-                            dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
+                const handleHover = async (result: PickSampleExt | undefined) => {
+                    if (picker === Picker.Measurement || picker === Picker.Area || picker === Picker.PointLine) {
+                        if (result) {
+                            let outlinePoint: vec3 | undefined;
+                            if (view.renderState.clipping.planes.length && measureHoverSettings.point) {
+                                outlinePoint = hoverOutline(result.position);
+                            }
+                            if (outlinePoint) {
+                                hoverEnt = pointToHover(outlinePoint, result.objectId);
+                            } else if (view.measure && !planePicking) {
+                                const tolerance = applyCameraDistanceToMeasureTolerance(
+                                    result.position,
+                                    view.renderState.camera.position,
+                                    measureHoverSettings
+                                );
+                                hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
+                                    result.objectId,
+                                    result.position,
+                                    tolerance,
+                                    allowGeneratedParametric.enabled
+                                );
+                            }
                             vec2.copy(
                                 previous2dSnapPos.current,
                                 vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
@@ -356,30 +354,78 @@ export function useCanvasEventHandlers({
                         } else {
                             checkResetHover();
                         }
-                    } else {
-                        checkResetHover();
+                        prevHoverEnt.current = hoverEnt;
+                    } else if (picker === Picker.CrossSection) {
+                        const position =
+                            result?.position ??
+                            view.convert.screenSpaceToWorldSpace([
+                                vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY),
+                            ])[0];
+                        if (crossSectionPoint && position) {
+                            dispatch(orthoCamActions.setCrossSectionHover(position as vec3));
+                        }
                     }
-                } else if (picker === Picker.CrossSection) {
-                    const position =
-                        result?.position ??
-                        view.convert.screenSpaceToWorldSpace([
-                            vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY),
-                        ])[0];
-                    if (crossSectionPoint && position) {
-                        dispatch(orthoCamActions.setCrossSectionHover(position as vec3));
+                    dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
+                };
+                await handleHover(result);
+
+                // Load hovered brep
+                if (
+                    (picker === Picker.Measurement || picker === Picker.Area || picker === Picker.PointLine) &&
+                    hoverEnt?.status === "unknown"
+                ) {
+                    if (!result || result.objectId !== lastMeasurePickResult.current?.objectId) {
+                        if (downloadHoveredBrepTimer.current) {
+                            clearTimeout(downloadHoveredBrepTimer.current);
+                            downloadHoveredBrepTimer.current = undefined;
+                        }
+                    }
+
+                    if (result && result.objectId !== lastMeasurePickResult.current?.objectId) {
+                        const timer = setTimeout(async () => {
+                            const shouldStop = () =>
+                                timer !== downloadHoveredBrepTimer.current ||
+                                result.objectId !== lastMeasurePickResult.current?.objectId;
+
+                            const tolerance = applyCameraDistanceToMeasureTolerance(
+                                result.position,
+                                view.renderState.camera.position,
+                                measureHoverSettings
+                            );
+
+                            // TODO consider better way to download brep
+                            const hoverEnt = await view.measure?.core.pickMeasureEntity(
+                                result.objectId,
+                                result.position,
+                                tolerance,
+                                allowGeneratedParametric.enabled
+                            );
+
+                            if (shouldStop()) {
+                                return;
+                            }
+
+                            await handleHover(lastMeasurePickResult.current);
+
+                            if (shouldStop()) {
+                                return;
+                            }
+
+                            svg?.querySelector("#cursor line, #cursor path")?.setAttribute(
+                                "stroke",
+                                getColor(hoverEnt, result)
+                            );
+                            downloadHoveredBrepTimer.current = undefined;
+                        }, 500);
+
+                        downloadHoveredBrepTimer.current = timer;
                     }
                 }
-                dispatch(measureActions.selectHoverObj(hoverEnt?.entity));
+
+                lastMeasurePickResult.current = result;
             }
 
-            const color =
-                !hoverEnt?.entity && !result?.objectId
-                    ? "red"
-                    : hoverEnt?.status === "loaded"
-                    ? "lightgreen"
-                    : hoverEnt?.status === "unknown"
-                    ? "blue"
-                    : "yellow";
+            const color = getColor(hoverEnt, result);
 
             if (!hoverEnt?.entity || hoverEnt.entity.drawKind === "face") {
                 moveSvgCursor({

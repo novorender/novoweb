@@ -232,3 +232,7 @@ export function projectV1ZoneNameToEpsg(tmZone: string) {
         return "51" + m[1].padStart(2, "0");
     }
 }
+
+export function compareStrings(s1: string, s2: string) {
+    return s1 < s2 ? -1 : s1 > s2 ? 1 : 0;
+}
