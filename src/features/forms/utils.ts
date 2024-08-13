@@ -100,7 +100,13 @@ export async function idsToObjects({
                     abortSignal,
                     callback,
                     full: true,
-                    searchPatterns: [{ property: "id", value: batch, exact: true }],
+                    searchPatterns: [
+                        {
+                            property: "id",
+                            value: batch,
+                            exact: true,
+                        },
+                    ],
                 }).catch(() => {});
             })
         );
@@ -262,7 +268,10 @@ function toFormField(item: FormItem): FormField {
             type: "select",
             label: item.title,
             required: item.required,
-            options: item.options.map((option) => ({ label: option, value: option })),
+            options: item.options.map((option) => ({
+                label: option,
+                value: option,
+            })),
             ...(item.id ? { id: item.id } : {}),
             ...(item.value?.length ? { value: item.value } : item.value === null ? { value: [] } : {}),
         };
@@ -273,7 +282,10 @@ function toFormField(item: FormItem): FormField {
             multiple: true,
             label: item.title,
             required: item.required,
-            options: item.options.map((option) => ({ label: option, value: option })),
+            options: item.options.map((option) => ({
+                label: option,
+                value: option,
+            })),
             ...(item.id ? { id: item.id } : {}),
             ...(item.value?.length ? { value: item.value } : { value: [] }),
         };
@@ -290,12 +302,12 @@ function toFormField(item: FormItem): FormField {
         return {
             type: item.type as FormItemType.Date | FormItemType.Time | FormItemType.DateTime,
             label: item.title,
-            value: (item.value as Date)?.toISOString(),
+            value: toLocalISOString(item.value as Date),
             required: item.required,
             readonly: (item as DateTimeItem).readonly,
-            defaultValue: (item as DateTimeItem).defaultValue?.toISOString(),
-            min: (item as DateTimeItem).min?.toISOString(),
-            max: (item as DateTimeItem).max?.toISOString(),
+            defaultValue: toLocalISOString((item as DateTimeItem).defaultValue),
+            min: toLocalISOString((item as DateTimeItem).min),
+            max: toLocalISOString((item as DateTimeItem).max),
             step: (item as DateTimeItem).step,
             ...(item.id ? { id: item.id } : {}),
         };
@@ -490,4 +502,35 @@ export function determineHighlightCollection(form: Form): HighlightCollection {
         return HighlightCollection.FormsCompleted;
     }
     return HighlightCollection.FormsNew;
+}
+
+function toLocalISOString(date?: Date) {
+    if (!date) {
+        return;
+    }
+
+    let offset = "Z";
+
+    const tz = date.getTimezoneOffset();
+    if (tz !== 0) {
+        const tz_abs = Math.abs(tz);
+        const tz_hour = Math.floor(tz_abs / 60);
+        const tz_min = tz_abs % 60;
+        offset = `${tz > 0 ? "-" : "+"}${tz_hour.toString().padStart(2, "0")}:${tz_min.toString().padStart(2, "0")}`;
+    }
+
+    return (
+        date.getFullYear() +
+        "-" +
+        (date.getMonth() + 1).toString().padStart(2, "0") +
+        "-" +
+        date.getDate().toString().padStart(2, "0") +
+        "T" +
+        date.getHours().toString().padStart(2, "0") +
+        ":" +
+        date.getMinutes().toString().padStart(2, "0") +
+        ":" +
+        date.getSeconds().toString().padStart(2, "0") +
+        `.000000000${offset}`
+    );
 }
