@@ -1,8 +1,9 @@
 import { Cameraswitch, Delete } from "@mui/icons-material";
-import { Box, IconButton, Slider } from "@mui/material";
+import { Box, IconButton, Slider, Typography } from "@mui/material";
 import { SyntheticEvent, useEffect, useRef, useState } from "react";
 
 import { useAppSelector } from "app/redux-store-interactions";
+import { IosSwitch } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectClippingPlanes } from "features/render";
 import { rgbToHex, vecToRgb } from "utils/color";
@@ -14,7 +15,7 @@ export default function Planes() {
         state: { view },
     } = useExplorerGlobals(true);
     const [sliders, setSliders] = useState([] as number[]);
-    const { planes } = useAppSelector(selectClippingPlanes);
+    const { planes, outlines } = useAppSelector(selectClippingPlanes);
     const actions = useClippingPlaneActions();
     const movingPlaneControl = useRef<MovingPlaneControl>();
 
@@ -58,6 +59,10 @@ export default function Planes() {
         }
     };
 
+    const handleToggleOutlines = (idx: number, enabled: boolean) => {
+        actions.toggleOutlines(planes, idx, enabled);
+    };
+
     return (
         <>
             {planes.length === sliders.length &&
@@ -65,6 +70,7 @@ export default function Planes() {
                     const rgb = vecToRgb(plane.color);
                     rgb.a = 1;
                     const color = rgbToHex(rgb);
+                    const outlineEnabled = plane.outline.enabled && outlines;
 
                     return (
                         <Box mb={2} key={idx} display="flex" alignItems="center" gap={1}>
@@ -80,6 +86,28 @@ export default function Planes() {
                                 onChangeCommitted={handleSliderChangeCommitted}
                                 sx={{ flex: "auto" }}
                             />
+                            <Box position="relative">
+                                <IosSwitch
+                                    size="medium"
+                                    color="primary"
+                                    checked={outlineEnabled}
+                                    disabled={!outlines}
+                                    onChange={() => handleToggleOutlines(idx, !plane.outline.enabled)}
+                                />
+                                <Typography
+                                    sx={{
+                                        position: "absolute",
+                                        top: -7,
+                                        left: 0,
+                                        fontSize: "small",
+                                        color: "grey",
+                                        width: "100%",
+                                        textAlign: "center",
+                                    }}
+                                >
+                                    Outline
+                                </Typography>
+                            </Box>
                             <IconButton onClick={() => handleCameraSwap(idx)} sx={{ flex: 1 }}>
                                 <Cameraswitch />
                             </IconButton>
