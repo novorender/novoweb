@@ -1,4 +1,4 @@
-import { IconButton, type SpeedDialActionProps } from "@mui/material";
+import { Box, IconButton, type SpeedDialActionProps, Tooltip } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
@@ -27,9 +27,13 @@ export function CameraSpeed({ position, newDesign, ...speedDialProps }: Props) {
 
     if (newDesign) {
         return (
-            <IconButton onClick={handleClick} title={`${name} - ${speed}`}>
-                <Icon />
-            </IconButton>
+            <Tooltip title={`${name} - ${speed}`} placement="top">
+                <Box>
+                    <IconButton onClick={handleClick}>
+                        <Icon />
+                    </IconButton>
+                </Box>
+            </Tooltip>
         );
     }
 

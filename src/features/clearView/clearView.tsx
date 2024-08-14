@@ -1,4 +1,4 @@
-import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
+import { Box, CircularProgress, SpeedDialActionProps, Tooltip } from "@mui/material";
 import { useState } from "react";
 
 import { SpeedDialAction } from "components";
@@ -24,9 +24,13 @@ export function ClearView({ newDesign, ...props }: Props & { newDesign?: boolean
 
     if (newDesign) {
         return (
-            <IconButtonExt onClick={handleClick} title={name} loading={isLoading} disabled={isLoading}>
-                <Icon />
-            </IconButtonExt>
+            <Tooltip title={name} placement="top">
+                <Box>
+                    <IconButtonExt onClick={handleClick} loading={isLoading} disabled={isLoading}>
+                        <Icon />
+                    </IconButtonExt>
+                </Box>
+            </Tooltip>
         );
     } else {
         return (

@@ -1,4 +1,4 @@
-import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
+import { Box, CircularProgress, SpeedDialActionProps, Tooltip } from "@mui/material";
 import { useState } from "react";
 
 import { SpeedDialAction } from "components";
@@ -32,9 +32,13 @@ export function Home({ position, newDesign, ...speedDialProps }: Props) {
 
     if (newDesign) {
         return (
-            <IconButtonExt onClick={handleClick} title={name} loading={status === Status.Loading} disabled={disabled}>
-                <Icon />
-            </IconButtonExt>
+            <Tooltip title={name} placement="top">
+                <Box>
+                    <IconButtonExt onClick={handleClick} loading={status === Status.Loading} disabled={disabled}>
+                        <Icon />
+                    </IconButtonExt>
+                </Box>
+            </Tooltip>
         );
     }
 

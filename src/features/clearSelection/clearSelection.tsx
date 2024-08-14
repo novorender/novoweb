@@ -1,4 +1,4 @@
-import { IconButton, type SpeedDialActionProps } from "@mui/material";
+import { Box, IconButton, type SpeedDialActionProps, Tooltip } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
@@ -30,9 +30,13 @@ export function ClearSelection({ newDesign, ...props }: Props & { newDesign?: bo
 
     if (newDesign) {
         return (
-            <IconButton onClick={clear} title={name} disabled={disabled}>
-                <Icon />
-            </IconButton>
+            <Tooltip title={name} placement="top">
+                <Box>
+                    <IconButton onClick={clear} disabled={disabled}>
+                        <Icon />
+                    </IconButton>
+                </Box>
+            </Tooltip>
         );
     } else {
         return (

@@ -1,4 +1,4 @@
-import { IconButton, type SpeedDialActionProps } from "@mui/material";
+import { Box, IconButton, type SpeedDialActionProps, Tooltip } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
@@ -33,9 +33,13 @@ export function StepForwards({ position, newDesign, ...speedDialProps }: Props) 
 
     if (newDesign) {
         return (
-            <IconButton onClick={handleClick} title={name} disabled={disabled}>
-                <Icon />
-            </IconButton>
+            <Tooltip title={name} placement="top">
+                <Box>
+                    <IconButton onClick={handleClick} disabled={disabled}>
+                        <Icon />
+                    </IconButton>
+                </Box>
+            </Tooltip>
         );
     }
 

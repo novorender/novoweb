@@ -223,14 +223,18 @@ export function FlyToSelected({ position, newDesign, ...speedDialProps }: Props 
         return (
             <Tooltip open={Boolean(tooltipMessage)} title={tooltipMessage} placement="top">
                 <Box>
-                    <IconButtonExt
-                        onClick={handleClick}
-                        title={disabled ? undefined : name}
-                        disabled={disabled}
-                        loading={status === Status.Loading}
-                    >
-                        <Icon />
-                    </IconButtonExt>
+                    <Tooltip title={name} placement="top">
+                        <Box>
+                            <IconButtonExt
+                                onClick={handleClick}
+                                title={disabled ? undefined : name}
+                                disabled={disabled}
+                                loading={status === Status.Loading}
+                            >
+                                <Icon />
+                            </IconButtonExt>
+                        </Box>
+                    </Tooltip>
                 </Box>
             </Tooltip>
         );

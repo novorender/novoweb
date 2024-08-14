@@ -1,4 +1,4 @@
-import { type SpeedDialActionProps } from "@mui/material";
+import { Box, type SpeedDialActionProps, Tooltip } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
@@ -29,14 +29,17 @@ export function ViewOnlySelected({ newDesign, ...props }: Props & { newDesign?: 
 
     if (newDesign) {
         return (
-            <IconButtonExt
-                onClick={handleClick}
-                title={name}
-                active={currentVisibility === ObjectVisibility.Transparent}
-                color={currentVisibility === ObjectVisibility.SemiTransparent ? "primary" : "default"}
-            >
-                <Icon />
-            </IconButtonExt>
+            <Tooltip title={name} placement="top">
+                <Box>
+                    <IconButtonExt
+                        onClick={handleClick}
+                        active={currentVisibility === ObjectVisibility.Transparent}
+                        color={currentVisibility === ObjectVisibility.SemiTransparent ? "primary" : "default"}
+                    >
+                        <Icon />
+                    </IconButtonExt>
+                </Box>
+            </Tooltip>
         );
     } else {
         return (

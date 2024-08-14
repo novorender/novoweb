@@ -1,5 +1,5 @@
 import { ChevronRight, SpaceDashboard } from "@mui/icons-material";
-import { Box, Divider, IconButton, useTheme } from "@mui/material";
+import { Box, Divider, IconButton, Tooltip, useTheme } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -72,7 +72,11 @@ export function PrimaryMenuNew() {
                     pointerEvents: "auto",
                 }}
             >
-                <IconButton onClick={handleToggle}>{open ? <ChevronRight /> : <SpaceDashboard />}</IconButton>
+                <Tooltip title={open ? "Collapse" : "Expand"} placement="top">
+                    <Box>
+                        <IconButton onClick={handleToggle}>{open ? <ChevronRight /> : <SpaceDashboard />}</IconButton>
+                    </Box>
+                </Tooltip>
                 <Divider orientation="vertical" variant="middle" flexItem sx={{ mx: 1 }} />
                 <Home newDesign />
                 <CameraSpeed newDesign />

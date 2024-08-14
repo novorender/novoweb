@@ -1,4 +1,4 @@
-import { IconButton, type SpeedDialActionProps } from "@mui/material";
+import { Box, IconButton, type SpeedDialActionProps, Tooltip } from "@mui/material";
 import { vec3 } from "gl-matrix";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -75,9 +75,13 @@ export function OrthoShortcut({ position, newDesign, ...speedDialProps }: Props)
 
     if (newDesign) {
         return (
-            <IconButton onClick={handleClick} title={name}>
-                {cameraType === CameraType.Orthographic ? <ThreeDIcon /> : <TwoDIcon />}
-            </IconButton>
+            <Tooltip title={cameraType === CameraType.Orthographic ? "Switch to 3D" : "Switch to 2D"} placement="top">
+                <Box>
+                    <IconButton onClick={handleClick}>
+                        {cameraType === CameraType.Orthographic ? <ThreeDIcon /> : <TwoDIcon />}
+                    </IconButton>
+                </Box>
+            </Tooltip>
         );
     }
 
