@@ -58,7 +58,6 @@ const initialState: State = {
     urlBookmarkId: undefined,
     localBookmarkId: undefined,
     config: {
-        dataServerUrl: import.meta.env.REACT_APP_DATA_SERVER_URL ?? "https://data.novorender.com",
         dataV2ServerUrl: import.meta.env.REACT_APP_DATA_V2_SERVER_URL ?? "https://data-v2.novorender.com",
         projectsUrl: import.meta.env.REACT_APP_PROJECTS_URL ?? "https://projects.novorender.com",
         authServerUrl: import.meta.env.REACT_APP_AUTH_SERVER_URL ?? "https://auth.novorender.com",
@@ -258,7 +257,7 @@ export const explorerSlice = createSlice({
             state.tmZoneForCalc = action.payload.tmZoneForCalc;
             state.sceneType = getSceneType(customProperties);
             state.userRole = getUserRole(customProperties, action.payload.projectV2Info);
-            state.requireConsent = action.payload.explorerInfo?.requireConsent ?? getRequireConsent(customProperties);
+            state.requireConsent = getRequireConsent(customProperties);
 
             state.lockedWidgets = state.lockedWidgets.filter(
                 (widget) =>

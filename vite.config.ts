@@ -215,13 +215,6 @@ const serverOptions: ServerOptions = {
             rewrite: (path) => path.replace(/^\/data-v2/, ""),
             changeOrigin: true,
         },
-        // use REACT_APP_DATA_SERVER_URL=/data-v1 in .env.local to use local version
-        "/data-v1": {
-            target: process.env.DATA_SERVER_URL_PROXY_TARGET ?? "https://127.0.0.1:5000/api",
-            rewrite: (path) => path.replace(/^\/data-v1/, ""),
-            changeOrigin: true,
-            secure: false,
-        },
     },
 };
 

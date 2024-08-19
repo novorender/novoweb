@@ -157,6 +157,7 @@ export type SceneConfig = Omit<SceneData, "settings" | "customProperties"> & {
     objectGroups: ObjectGroup[];
     settings: Internal.RenderSettingsExt;
     customProperties: CustomProperties;
+    projectId: string;
 };
 
 export type CadCamera = { kind: "pinhole" | "orthographic"; position: vec3; rotation: quat; fov: number };

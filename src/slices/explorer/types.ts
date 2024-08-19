@@ -58,7 +58,6 @@ export type State = {
     urlBookmarkId: string | undefined;
     localBookmarkId: string | undefined;
     config: {
-        dataServerUrl: string;
         dataV2ServerUrl: string;
         projectsUrl: string;
         authServerUrl: string;

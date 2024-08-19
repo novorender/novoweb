@@ -4,11 +4,7 @@ import { SearchOptions } from "@novorender/webgl-api";
 import { getGPUTier } from "detect-gpu";
 import { useEffect, useRef } from "react";
 
-import {
-    useLazyCheckPermissionsQuery,
-    useLazyGetExplorerInfoQuery,
-    useLazyGetProjectQuery,
-} from "apis/dataV2/dataV2Api";
+import { useLazyCheckPermissionsQuery, useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
 import { Permission } from "apis/dataV2/permissions";
 import { ProjectInfo } from "apis/dataV2/projectTypes";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -46,7 +42,6 @@ export function useHandleInit() {
 
     const [getProject] = useLazyGetProjectQuery();
     const [checkPermissions] = useLazyCheckPermissionsQuery();
-    const [getExplorerInfo] = useLazyGetExplorerInfoQuery();
     const fillGroupIds = useFillGroupIds();
 
     const initialized = useRef(false);
@@ -77,8 +72,9 @@ export function useHandleInit() {
 
             try {
                 const [{ url: _url, db, ...sceneData }, sceneCamera] = await loadScene(sceneId);
+                const { projectId } = sceneData;
 
-                const projectV2 = await getProject({ projectId: sceneId })
+                const projectV2 = await getProject({ projectId })
                     .unwrap()
                     .catch((e) => {
                         if (e.status === 401) {
@@ -88,16 +84,15 @@ export function useHandleInit() {
                     });
 
                 const projectIsV2 = Boolean(projectV2);
-                const [tmZoneForCalc, permissions, explorerInfo] = await Promise.all([
+                const [tmZoneForCalc, permissions] = await Promise.all([
                     loadTmZoneForCalc(projectV2, sceneData.tmZone),
                     checkPermissions({
-                        scope: { organizationId: sceneData.organization, projectId: sceneId },
+                        scope: { organizationId: sceneData.organization, projectId, sceneId },
                         permissions: Object.values(Permission),
                     }).unwrap(),
-                    getExplorerInfo({ projectId: sceneId }).unwrap(),
                 ]);
 
-                const url = new URL(explorerInfo.url);
+                const url = new URL(_url);
                 const parentSceneId = url.pathname.replaceAll("/", "");
                 url.pathname = "";
                 const octreeSceneConfig = await view.loadScene(
@@ -119,7 +114,6 @@ export function useHandleInit() {
                     renderActions.initScene({
                         projectType: projectIsV2 ? ProjectType.V2 : ProjectType.V1,
                         projectV2Info: projectV2 ? { ...projectV2, permissions } : null,
-                        explorerInfo,
                         tmZoneForCalc,
                         sceneData,
                         sceneConfig: octreeSceneConfig,
@@ -182,7 +176,7 @@ export function useHandleInit() {
                     }
                 });
 
-                patchDb(db, config.dataV2ServerUrl, sceneId);
+                patchDb(db, config.dataV2ServerUrl, projectId);
 
                 resizeObserver.observe(canvas);
                 dispatchGlobals(
@@ -254,7 +248,6 @@ export function useHandleInit() {
         dispatchHighlighted,
         dispatchHighlightCollections,
         getProject,
-        getExplorerInfo,
         checkPermissions,
         config,
         fillGroupIds,
@@ -346,23 +339,24 @@ async function loadTmZoneForCalc(projectV2: ProjectInfo | undefined, tmZoneV1: s
 // TODO(ND): remove patches once API is updated
 // Some changes to ObjectDB to make it work with data-v2 without changing lib internals
 // and changing all the search calls
-function patchDb(db: ObjectDB | undefined, dataV2ServerUrl: string, sceneId: string) {
+function patchDb(db: ObjectDB | undefined, dataV2ServerUrl: string, projectId: string) {
     if (!db) {
         return;
     }
 
     // Override object metadata URL
     const patchedDb = db as ObjectDB & { url: string };
-    patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}`;
+    patchedDb.url = `${dataV2ServerUrl}/projects/${projectId}`;
     const originalGetObjectMetdata = patchedDb.getObjectMetdata.bind(patchedDb);
     patchedDb.getObjectMetdata = (id: number) => {
-        patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}/metadata`;
+        patchedDb.url = `${dataV2ServerUrl}/projects/${projectId}/metadata`;
         const result = originalGetObjectMetdata(id);
-        patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}`;
+        patchedDb.url = `${dataV2ServerUrl}/projects/${projectId}`;
         return result;
     };
 
     // Search no longer accepts simple string when seaching nor single string for `value`
+    // Wrap all values to avoid updating all the consuming code
     const originalSearch = patchedDb.search.bind(patchedDb);
     patchedDb.search = (filter: SearchOptions, signal: AbortSignal | undefined) => {
         const searchPattern =

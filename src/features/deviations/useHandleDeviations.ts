@@ -9,6 +9,7 @@ import { useLoadLandXmlPath } from "features/followPath/hooks/useLoadLandXmlPath
 import { LandXmlPath } from "features/followPath/types";
 import { renderActions, selectDeviations, selectPoints, selectViewMode } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
+import { useSceneId } from "hooks/useSceneId";
 import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { getAssetUrl } from "utils/misc";
@@ -27,7 +28,7 @@ export function useHandleDeviations() {
         state: { view },
     } = useExplorerGlobals();
     const isProjectV2 = useAppSelector(selectProjectIsV2);
-    const projectId = view?.renderState.scene?.config.id;
+    const sceneId = useSceneId();
     const profiles = useAppSelector(selectDeviationProfiles);
     const selectedProfileId = useAppSelector(selectSelectedProfileId);
     const dispatch = useAppDispatch();
@@ -51,7 +52,7 @@ export function useHandleDeviations() {
         async function initDeviationProfiles() {
             if (
                 !view ||
-                !projectId ||
+                !sceneId ||
                 profiles.status !== AsyncStatus.Initial ||
                 landXmlPaths.status !== AsyncStatus.Success
             ) {
@@ -75,7 +76,7 @@ export function useHandleDeviations() {
                         return res.json() as Promise<DeviationProjectConfig>;
                     }),
                     isProjectV2
-                        ? getDeviationProfiles({ projectId })
+                        ? getDeviationProfiles({ projectId: sceneId })
                               .unwrap()
                               .then((data) => (data ? configToUi(data, defaultColorStops) : undefined))
                         : undefined,
@@ -122,7 +123,7 @@ export function useHandleDeviations() {
         dispatch,
         view,
         isProjectV2,
-        projectId,
+        sceneId,
         profiles,
         defaultColorStops,
         getDeviationProfiles,

@@ -6,8 +6,11 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { selectSceneOrganization } from "features/render";
 import { explorerActions, selectProjectV2Info } from "slices/explorer";
 
+import { useSceneId } from "./useSceneId";
+
 export function useRefreshProjectPermissions() {
     const projectId = useAppSelector(selectProjectV2Info)?.id;
+    const sceneId = useSceneId();
     const org = useAppSelector(selectSceneOrganization);
     const dispatch = useAppDispatch();
 
@@ -22,7 +25,7 @@ export function useRefreshProjectPermissions() {
         async function refresh() {
             if (!document.hidden) {
                 const permissions = await checkPermissions({
-                    scope: { organizationId: org, projectId },
+                    scope: { organizationId: org, projectId, sceneId },
                     permissions: Object.values(Permission),
                 }).unwrap();
                 dispatch(explorerActions.setProjectPermissions(permissions));
@@ -44,5 +47,5 @@ export function useRefreshProjectPermissions() {
             clearInterval(timer);
             document.removeEventListener("visibilitychange", onVisible);
         };
-    }, [dispatch, checkPermissions, org, projectId]);
+    }, [dispatch, checkPermissions, org, projectId, sceneId]);
 }

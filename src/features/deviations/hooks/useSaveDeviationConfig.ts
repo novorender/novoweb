@@ -22,7 +22,6 @@ export function useSaveDeviationConfig() {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
-    const projectId = scene.id;
     const sceneId = useSceneId();
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const isProjectV2 = useAppSelector(selectProjectIsV2);
@@ -54,7 +53,7 @@ export function useSaveDeviationConfig() {
                 if (isProjectV2) {
                     const uiConfigWithObjectIds = await updateObjectIds(fillGroupIds, uiConfig, objectGroups);
                     await setDeviationProfiles({
-                        projectId,
+                        projectId: sceneId,
                         config: uiConfigToServerConfig(uiConfigWithObjectIds),
                     }).unwrap();
                 }
@@ -70,7 +69,6 @@ export function useSaveDeviationConfig() {
         },
         [
             dispatch,
-            projectId,
             scene,
             sceneId,
             fillGroupIds,

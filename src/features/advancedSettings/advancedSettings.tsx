@@ -148,7 +148,7 @@ export default function AdvancedSettings() {
                 tmZone: projectSettings.tmZone,
             });
 
-            await saveCustomProperties({ projectId: scene.id, data: updated.customProperties }).unwrap();
+            await saveCustomProperties({ projectId: sceneId, data: updated.customProperties }).unwrap();
 
             return setStatus(Status.SaveSuccess);
         } catch (e) {
@@ -169,7 +169,7 @@ export default function AdvancedSettings() {
             const [originalScene] = await loadScene(sceneId);
 
             await saveCustomProperties({
-                projectId: scene.id,
+                projectId: sceneId,
                 data: mergeRecursive(originalScene, {
                     url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
                     customProperties: {

@@ -93,7 +93,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                 },
             });
 
-            saveCustomProperties({ projectId: scene.id, data: updated.customProperties }).unwrap();
+            saveCustomProperties({ projectId: sceneId, data: updated.customProperties }).unwrap();
         } catch {
             console.warn(`Failed to save ${featuresConfig.bimTrack.name} settings.`);
         }

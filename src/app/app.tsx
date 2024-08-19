@@ -11,7 +11,6 @@ import { useRegisterSW } from "virtual:pwa-register/react";
 import { dataApi } from "apis/dataV1";
 import { Loading } from "components";
 import { StorageKey } from "config/storage";
-import { useRefreshProjectPermissions } from "hooks/useRefreshProjectPermissions";
 import { Explorer } from "pages/explorer";
 import { authActions } from "slices/authSlice";
 import { explorerActions, selectConfig } from "slices/explorer";
@@ -69,14 +68,14 @@ export function App() {
                     });
 
             if (import.meta.env.MODE === "development") {
-                dataApi.serviceUrl = config.dataServerUrl;
+                dataApi.serviceUrl = config.dataV2ServerUrl + "/api";
             } else {
                 const cfg = await load();
                 if (cfg) {
                     dispatch(explorerActions.setConfig(cfg));
                 }
 
-                dataApi.serviceUrl = cfg?.dataServerUrl ?? config.dataServerUrl;
+                dataApi.serviceUrl = (cfg?.dataV2ServerUrl ?? config.dataV2ServerUrl) + "/api";
             }
 
             setConfigStatus(Status.Ready);
@@ -94,8 +93,6 @@ export function App() {
             history.replace(`/${state.sceneId}${window.location.search}`);
         }
     }, [history]);
-
-    useRefreshProjectPermissions();
 
     useEffect(() => {
         const handleOnline = () => dispatch(explorerActions.toggleIsOnline(true));

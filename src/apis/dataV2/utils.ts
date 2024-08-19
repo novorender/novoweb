@@ -51,7 +51,11 @@ export function authScopeToString(scope: AuthScope) {
         "/" +
         [
             scope.organizationId ? `org/${scope.organizationId.toLowerCase()}` : null,
-            scope.projectId ? `project/${scope.projectId}` : null,
+            scope.projectId
+                ? scope.sceneId && scope.projectId !== scope.sceneId
+                    ? `project/${scope.projectId}:${scope.sceneId}`
+                    : `project/${scope.projectId}`
+                : null,
             scope.resourceId && scope.resourceType ? `${scope.resourceType}/${scope.resourceId}` : null,
         ]
             .filter((e) => e)

@@ -50,7 +50,7 @@ export function FeatureServerList() {
     const canManage = checkPermission(Permission.SceneManage) ?? isAdmin;
     // TODO int:arcgis:manage permission
     // const canManage = (checkPermission(Permission.IntArcgisManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
-    const epsg = useProjectEpsg({ skip: featureServers.status !== AsyncStatus.Success });
+    const epsg = useProjectEpsg();
     const isCameraSetCorrectly = useIsCameraSetCorrectly();
 
     const handleFeatureCheck = useCallback(
@@ -106,7 +106,7 @@ export function FeatureServerList() {
                 position="absolute"
             />
 
-            {featureServers.status === AsyncStatus.Loading || epsg.isFetching ? (
+            {featureServers.status === AsyncStatus.Loading ? (
                 <Box>
                     <LinearProgress />
                 </Box>
@@ -114,11 +114,7 @@ export function FeatureServerList() {
                 <Box p={1} pt={2}>
                     {featureServers.msg}
                 </Box>
-            ) : epsg.error ? (
-                <Box p={1} pt={2}>
-                    Error loading TM Zone info
-                </Box>
-            ) : !epsg.data ? (
+            ) : !epsg ? (
                 <Box p={1} pt={2}>
                     TM Zone is not defined for the project
                 </Box>

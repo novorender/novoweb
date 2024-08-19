@@ -17,9 +17,9 @@ import {
     WidgetHeader,
 } from "components";
 import { featuresConfig } from "config/features";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectMainObject } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
+import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorer";
 
@@ -27,7 +27,7 @@ export default function Omega365() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.omega365.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.omega365.key);
-    const projectId = useExplorerGlobals(true).state.scene.id;
+    const projectId = useSceneId();
 
     const { data, isError, isFetching } = useIsOmega365ConfiguredForProjectQuery({ projectId });
 

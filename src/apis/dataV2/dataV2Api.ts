@@ -9,7 +9,7 @@ import { AuthScope, PermissionInfo } from "./authTypes";
 import { DeviationProjectConfig } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
 import { Permission } from "./permissions";
-import { BuildProgressResult, EpsgSearchResult, ExplorerInfo, ProjectInfo } from "./projectTypes";
+import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
 import { authScopeToString, getDataV2DynamicBaseQuery } from "./utils";
 
 export const dataV2Api = createApi({
@@ -49,9 +49,6 @@ export const dataV2Api = createApi({
         }),
         getProject: builder.query<ProjectInfo, { projectId: string }>({
             query: ({ projectId }) => `/projects/${projectId}`,
-        }),
-        getExplorerInfo: builder.query<ExplorerInfo, { projectId: string }>({
-            query: ({ projectId }) => `/explorer/${projectId}`,
         }),
         getArcgisWidgetConfig: builder.query<ArcgisWidgetConfig, { projectId: string }>({
             query: ({ projectId }) => `/explorer/${projectId}/arcgis/config`,
@@ -186,7 +183,6 @@ export const {
     useSetPropertyTreeFavoritesMutation,
     useLazyGetProjectQuery,
     useGetProjectQuery,
-    useLazyGetExplorerInfoQuery,
     useLazyGetDeviationProfilesQuery,
     useSetDeviationProfilesMutation,
     useCalcDeviationsMutation,

@@ -82,10 +82,10 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
                     },
                 });
 
-                saveCustomProperties({ projectId: scene.id, data: updated.customProperties });
+                saveCustomProperties({ projectId: sceneId, data: updated.customProperties });
             } else {
                 saveCustomProperties({
-                    projectId: scene.id,
+                    projectId: sceneId,
                     data: {
                         ...originalScene.customProperties,
                         properties: {

@@ -12,6 +12,7 @@ export type AuthScope = {
     projectId?: string;
     resourceId?: string;
     resourceType?: ResourceType;
+    sceneId?: string;
 };
 
 export enum ResourceType {
