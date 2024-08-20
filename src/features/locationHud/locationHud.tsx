@@ -105,14 +105,19 @@ function CursorCoordinates() {
 
     let content: ReactNode;
     if (tmZone && !showXyz) {
-        let lon: string, lat: string, alt: string;
-        if (position) {
-            const coords = tm2LatLon({ coords: position, tmZone });
-            lon = coords.longitude.toFixed(5);
-            lat = coords.latitude.toFixed(5);
-            alt = position[2].toFixed(0) + "m";
-        } else {
-            lon = lat = alt = "-";
+        let lon = "-",
+            lat = "-",
+            alt = "-";
+
+        try {
+            if (position) {
+                const coords = tm2LatLon({ coords: position, tmZone });
+                lon = coords.longitude.toFixed(5);
+                lat = coords.latitude.toFixed(5);
+                alt = position[2].toFixed(0) + "m";
+            }
+        } catch (ex) {
+            console.warn(ex);
         }
 
         content = (
