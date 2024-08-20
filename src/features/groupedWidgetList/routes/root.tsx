@@ -82,7 +82,7 @@ export function Root({
                     ? sortedEnabledWidgets.filter((w) => favoriteWidgets.includes(w.key))
                     : sortedEnabledWidgets.filter(
                           (widget) =>
-                              widget.type === FeatureType.Widget &&
+                              (widget.type === FeatureType.Widget || widget.type === FeatureType.AdminWidget) &&
                               "groups" in widget &&
                               widget.groups.includes(group.key as never)
                       ),

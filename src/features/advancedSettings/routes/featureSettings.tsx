@@ -26,12 +26,14 @@ import {
     Widget,
     WidgetKey,
 } from "config/features";
+import { useToggleNewDesign } from "features/newDesign/useToggleNewDesign";
 import { renderActions, selectDebugStats, selectGeneratedParametricData, selectNavigationCube } from "features/render";
 import {
     explorerActions,
     selectCanvasContextMenuFeatures,
     selectEnabledWidgets,
     selectLockedWidgets,
+    selectNewDesign,
     selectPrimaryMenu,
 } from "slices/explorer";
 
@@ -47,6 +49,8 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
     const navigationCube = useAppSelector(selectNavigationCube);
     const debugStats = useAppSelector(selectDebugStats);
     const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
+    const newDesign = useAppSelector(selectNewDesign);
+    const toggleNewDesign = useToggleNewDesign();
 
     const toggleWidget = (key: WidgetKey, checked: boolean) => {
         const keys = enabledWidgets.map((w) => w.key);
@@ -380,6 +384,15 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     }
                                 />
                             ))}
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 1 }}
+                                control={<Switch checked={newDesign} onChange={toggleNewDesign} />}
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        New design
+                                    </Box>
+                                }
+                            />
                         </Box>
                     </AccordionDetails>
                 </Accordion>

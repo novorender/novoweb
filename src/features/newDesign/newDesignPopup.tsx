@@ -61,7 +61,9 @@ export function NewDesignPopup() {
                         <Button variant="text" onClick={toggleNewDesign}>
                             toggle
                         </Button>{" "}
-                        between old and new design for now.
+                        between old and new design for now here
+                        <br />
+                        or anytime in <strong>Adv. settings widget → Features → Beta</strong>.
                     </Typography>
                     <Box display="flex" justifyContent="center" mt={2}>
                         <Button variant="outlined" onClick={accept}>
