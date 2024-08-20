@@ -58,19 +58,17 @@ export function useHandleOffline() {
     const [projectId, setProjectId] = useState(view?.renderState.scene?.config.id);
 
     useEffect(() => {
-        if (view && !view?.renderState.scene?.config.id) {
-            // scene.config.id can be uninitialized in the beginning
-            const interval = setInterval(() => {
-                if (view?.renderState.scene?.config.id) {
-                    setProjectId(view.renderState.scene.config.id);
-                    clearInterval(interval);
-                }
-            }, 100);
-
-            return () => {
+        // scene.config.id can be uninitialized in the beginning
+        const interval = setInterval(() => {
+            if (view?.renderState.scene?.config.id) {
+                setProjectId(view.renderState.scene.config.id);
                 clearInterval(interval);
-            };
-        }
+            }
+        }, 100);
+
+        return () => {
+            clearInterval(interval);
+        };
     }, [view]);
 
     useEffect(
