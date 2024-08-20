@@ -1,3 +1,4 @@
+import { StarOutline } from "@mui/icons-material";
 import {
     accordionClasses,
     accordionSummaryClasses,
@@ -114,7 +115,15 @@ export function Root({
                             <AccordionDetails>
                                 {widgets.length === 0 ? (
                                     <Box textAlign="center" color="grey" m={2}>
-                                        No widgets
+                                        {groupKey === featureGroups.favorites.key ? (
+                                            <>
+                                                No favorite widgets selected. Choose your favorites by clicking the{" "}
+                                                <StarOutline sx={{ verticalAlign: "text-bottom" }} /> icon in the top
+                                                right corner of a widget.
+                                            </>
+                                        ) : (
+                                            <>No widgets</>
+                                        )}
                                     </Box>
                                 ) : (
                                     <Grid container wrap="wrap" spacing={1} data-test="widget-list">
