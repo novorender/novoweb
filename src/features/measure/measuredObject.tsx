@@ -376,6 +376,25 @@ export function MeasurementData({
                                 </Grid>
                             </ListItem>
                         ) : null}
+                        {measureValues.errorMargin ? (
+                            <ListItem>
+                                <Tooltip
+                                    title={
+                                        "Since the generated surface from triangles does not have all points lying directly on the plane, the error represents the maximum normal distance from the plane."
+                                    }
+                                    enterDelay={0}
+                                >
+                                    <Grid container>
+                                        <Grid item xs={5}>
+                                            Error margin
+                                        </Grid>
+                                        <Grid item xs={5}>
+                                            {measureValues.errorMargin.toFixed(3)} m
+                                        </Grid>
+                                    </Grid>
+                                </Tooltip>
+                            </ListItem>
+                        ) : null}
                         {measureValues.area ? (
                             <ListItem>
                                 <Grid container>
@@ -532,6 +551,35 @@ export function MeasurementData({
                 </>
             );
         }
+        case "polymesh":
+            return (
+                <>
+                    <List dense>
+                        {measureValues.perimiter ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={5}>
+                                        Perimiter
+                                    </Grid>
+                                    <Grid item xs={5}>
+                                        {measureValues.perimiter.toFixed(3)} m
+                                    </Grid>
+                                </Grid>
+                            </ListItem>
+                        ) : null}
+                    </List>
+                    {measureValues.vertices.length ? (
+                        <Box p={1}>
+                            <Accordion defaultExpanded={false}>
+                                <NestedAccordionSummary>Components</NestedAccordionSummary>
+                                <NestedAccordionDetails>
+                                    <VertexTable vertices={measureValues.vertices} />
+                                </NestedAccordionDetails>
+                            </Accordion>
+                        </Box>
+                    ) : null}
+                </>
+            );
         default:
             return null;
     }

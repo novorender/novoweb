@@ -33,6 +33,7 @@ export type State = {
     tmZoneForCalc: string | undefined;
     requireConsent: boolean;
     organization: string;
+    projectName: string;
     widgets: WidgetKey[];
     favoriteWidgets: WidgetKey[];
     widgetSlot: {

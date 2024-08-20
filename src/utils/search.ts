@@ -3,7 +3,7 @@ import { ObjectDB } from "@novorender/data-js-api";
 import { HierarcicalObjectReference, ObjectData, ObjectId, SearchPattern } from "@novorender/webgl-api";
 import pMap from "p-map";
 
-import { NodeType } from "types/misc";
+import { DeepMutable, NodeType } from "types/misc";
 
 import { sleep } from "./time";
 
@@ -204,7 +204,10 @@ export async function getDescendants({
                 throw new Error("No descendants found");
             }
 
-            return ids;
+            // Bug in descendants which can return NaNs
+            const filteredIds = ids.filter((e) => !isNaN(e));
+            (parentNode as DeepMutable<HierarcicalObjectReference>).descendants = filteredIds;
+            return filteredIds;
         })
     );
 }

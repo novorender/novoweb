@@ -1,5 +1,5 @@
 import { LoadingButton } from "@mui/lab";
-import { Box, CircularProgress, Grid } from "@mui/material";
+import { Box, CircularProgress, Grid, Link } from "@mui/material";
 import { useState } from "react";
 
 import { dataApi } from "apis/dataV1";
@@ -13,7 +13,14 @@ import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import { selectUser, User as UserType } from "slices/authSlice";
-import { selectConfig, selectMaximized, selectMinimized, selectUserRole, UserRole } from "slices/explorer";
+import {
+    selectConfig,
+    selectMaximized,
+    selectMinimized,
+    selectProjectName,
+    selectUserRole,
+    UserRole,
+} from "slices/explorer";
 import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
 import { deleteFromStorage, saveToStorage } from "utils/storage";
 
@@ -66,6 +73,9 @@ function LoggedIn({
     const role = useAppSelector(selectUserRole);
     const org = useAppSelector(selectSceneOrganization);
     const config = useAppSelector(selectConfig);
+    const projectId = useSceneId();
+    const projectName = useAppSelector(selectProjectName);
+    const projectsUrl = useAppSelector(selectConfig).projectsUrl;
 
     const logOut = () => {
         setLoading(true);
@@ -97,6 +107,18 @@ function LoggedIn({
                         </Grid>
                         <Grid item xs={7}>
                             {org}
+                        </Grid>
+                    </>
+                )}
+                {projectsUrl && projectId && projectName && (
+                    <>
+                        <Grid fontWeight={600} item xs={5}>
+                            Project:
+                        </Grid>
+                        <Grid item xs={7}>
+                            <Link href={`${projectsUrl}/org/${org}/p/${projectId}/resources`} target="_blank">
+                                {projectName}
+                            </Link>
                         </Grid>
                     </>
                 )}

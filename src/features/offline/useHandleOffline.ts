@@ -1,5 +1,5 @@
 import { OfflineErrorCode, OfflineViewState, View } from "@novorender/api";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { dataApi } from "apis/dataV1";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -54,9 +54,26 @@ export function useHandleOffline() {
     const createLogger = useCreateLogger();
     const dispatch = useAppDispatch();
 
+    // TODO replace with proper projectId once merged with new auth
+    const [projectId, setProjectId] = useState(view?.renderState.scene?.config.id);
+
+    useEffect(() => {
+        // scene.config.id can be uninitialized in the beginning
+        const interval = setInterval(() => {
+            if (view?.renderState.scene?.config.id) {
+                setProjectId(view.renderState.scene.config.id);
+                clearInterval(interval);
+            }
+        }, 100);
+
+        return () => {
+            clearInterval(interval);
+        };
+    }, [view]);
+
     useEffect(
         function initOfflineScenes() {
-            if (!offlineWorkerState || !view?.renderState.scene?.config.id) {
+            if (!offlineWorkerState || !projectId) {
                 return;
             }
 
@@ -83,18 +100,18 @@ export function useHandleOffline() {
                 scene.logger = createLogger(scene.id);
             });
         },
-        [offlineWorkerState, dispatch, view, createLogger]
+        [offlineWorkerState, dispatch, projectId, createLogger]
     );
 
     useEffect(() => {
         handleAction();
 
         async function handleAction() {
-            if (!view?.renderState.scene?.config.id || !offlineWorkerState || !action) {
+            if (!view || !projectId || !offlineWorkerState || !action) {
                 return;
             }
 
-            const parentSceneId = view.renderState.scene.config.id;
+            const parentSceneId = projectId;
             let resetAction = true;
 
             switch (action.action) {
@@ -325,7 +342,18 @@ export function useHandleOffline() {
                 dispatch(offlineActions.setAction(undefined));
             }
         }
-    }, [action, dispatch, offlineWorkerState, view, abort, abortController, createLogger, viewerSceneId, user]);
+    }, [
+        action,
+        dispatch,
+        offlineWorkerState,
+        view,
+        abort,
+        abortController,
+        createLogger,
+        viewerSceneId,
+        user,
+        projectId,
+    ]);
 }
 
 function useCreateLogger() {
