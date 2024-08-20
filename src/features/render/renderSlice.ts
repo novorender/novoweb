@@ -9,7 +9,7 @@ import {
 import type { Bookmark } from "@novorender/data-js-api";
 import type { EnvironmentDescription } from "@novorender/webgl-api";
 import { createAction, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { quat, vec3, vec4 } from "gl-matrix";
+import { quat, ReadonlyVec3, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app";
 import type { ProjectType } from "slices/explorer";
@@ -77,8 +77,10 @@ const initialState = {
             color: vec4;
             outline: {
                 enabled: boolean;
+                color: vec3;
             };
             rotation?: number;
+            anchorPos?: ReadonlyVec3;
         }[],
     },
     grid: {
@@ -355,8 +357,10 @@ export const renderSlice = createSlice({
             state.clipping = mergeRecursive(state.clipping, action.payload);
             state.clipping.planes = state.clipping.planes.map((plane, idx) => ({
                 ...plane,
+                color: clippingPlaneColors[idx],
                 outline: {
                     enabled: plane.outline ? plane.outline.enabled : idx === 0,
+                    color: clippingPlaneOutlineColors[idx],
                 },
             }));
         },
@@ -373,8 +377,11 @@ export const renderSlice = createSlice({
             if (state.clipping.planes.length < 6) {
                 state.clipping.planes.push({
                     ...action.payload,
-                    color: [0, 1, 0, 0.2],
-                    outline: { enabled: !state.clipping.planes.length },
+                    color: clippingPlaneColors[state.clipping.planes.length],
+                    outline: {
+                        enabled: !state.clipping.planes.length,
+                        color: clippingPlaneOutlineColors[state.clipping.planes.length],
+                    },
                 });
             }
         },
@@ -741,9 +748,10 @@ export const renderSlice = createSlice({
                 outlines: clipping.outlines !== undefined ? clipping.outlines : true,
                 planes: clipping.planes.map(({ normalOffset, color, outline }, idx) => ({
                     normalOffset,
-                    color,
+                    color: color ?? clippingPlaneColors[idx],
                     outline: {
                         enabled: outline ? outline.enabled : idx === 0,
+                        color: clippingPlaneOutlineColors[idx],
                     },
                     baseW: normalOffset[3],
                 })),
@@ -795,6 +803,20 @@ function subtreesFromBookmark(
 
     return subtrees;
 }
+
+const clippingPlaneColors: vec4[] = [
+    [37, 55, 70],
+    [118, 134, 146],
+    [214, 30, 92],
+    [97, 94, 155],
+    [225, 224, 0],
+    [255, 88, 93],
+].map((v) => {
+    vec3.scale(v as vec3, v as vec3, 1 / 255);
+    return [v[0], v[1], v[2], 0.5];
+});
+
+const clippingPlaneOutlineColors = clippingPlaneColors.map((v) => [v[0], v[1], v[2]] as vec3);
 
 export const selectMainObject = (state: RootState) => state.render.mainObject;
 export const selectDefaultVisibility = (state: RootState) => state.render.defaultVisibility;

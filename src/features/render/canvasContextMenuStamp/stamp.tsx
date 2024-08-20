@@ -12,7 +12,7 @@ import { MeasureEntity, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { ReadonlyVec4, vec2, vec3, vec4 } from "gl-matrix";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress } from "components";
@@ -252,6 +252,7 @@ function Selection() {
                 normalOffset,
                 baseW: w,
                 rotation,
+                anchorPos: position,
             })
         );
 
@@ -311,49 +312,58 @@ function Selection() {
 }
 
 type CenterLine = Awaited<ReturnType<NonNullable<View["measure"]>["core"]["pickCurveSegment"]>>;
-async function getRoadCenterLine({ db, view, id }: { db: ObjectDB; view: View; id: number }): Promise<CenterLine> {
+async function getRoadCenterLine({
+    db,
+    view,
+    id,
+}: {
+    db: ObjectDB;
+    view: View;
+    id: number;
+}): Promise<CenterLine | undefined> {
     const obj = await getObjectData({ db, view, id });
 
     if (!obj) {
         return;
     }
 
-    if (obj.properties.find(([key]) => key === "Novorender/Path" || key === "Novorender/PathId")) {
+    if (obj.properties.some(([key]) => key === "Novorender/Path" || key === "Novorender/PathId")) {
         return view.measure?.core.pickCurveSegment(obj.id);
     }
 
     const fileName = getFileNameFromPath(obj.path);
     const isIfc = fileName?.toLowerCase().endsWith(".ifc") ?? false;
+
+    const signal = new AbortController().signal;
     let cl: HierarcicalObjectReference | undefined;
+
     if (isIfc) {
         // ifc
         // Currently we expect single center line under a single project
-
         const parts = obj.path.split("/");
-        const fileIndex = parts.indexOf(fileName!);
-        if (fileIndex === parts.length - 1) {
+        const fileIndex = parts.lastIndexOf(fileName!);
+
+        if (fileIndex === -1 || fileIndex === parts.length - 1) {
             return;
         }
-        const projectPath = parts.slice(0, fileIndex + 2).join("/");
 
-        const signal = new AbortController().signal;
+        const parentPath = parts.slice(0, fileIndex + 2).join("/");
         const iterator = db.search(
             {
-                parentPath: projectPath,
+                parentPath,
                 descentDepth: 1,
                 searchPattern: [{ property: "Novorender/PathId", value: "" }],
             },
             signal
         );
-
         cl = (await iterator.next()).value as HierarcicalObjectReference | undefined;
     } else {
         // landxml
-        const signal = new AbortController().signal;
-        const iterator = db.search({ parentPath: getParentPath(getParentPath(obj.path)), descentDepth: 0 }, signal);
-
-        const res = (await iterator.next()).value as HierarcicalObjectReference | undefined;
-        const clProperty = (await res?.loadMetaData())?.properties.find(([key]) => key.toLowerCase() === "centerline");
+        const parentPath = getParentPath(getParentPath(obj.path));
+        const iterator = db.search({ parentPath, descentDepth: 0, full: true }, signal);
+        const clProperty = (await iterator.next()).value?.properties.find(
+            ([key]: [key: string]) => key.toLowerCase() === "centerline"
+        );
 
         if (!clProperty) {
             return;
@@ -361,7 +371,8 @@ async function getRoadCenterLine({ db, view, id }: { db: ObjectDB; view: View; i
 
         const clParentIterator = db.search(
             {
-                searchPattern: [{ property: "name", value: clProperty[1] }],
+                descentDepth: 0,
+                searchPattern: [{ property: "name", value: clProperty[1], exact: true }],
             },
             signal
         );
@@ -373,8 +384,9 @@ async function getRoadCenterLine({ db, view, id }: { db: ObjectDB; view: View; i
 
         const clIterator = db.search(
             {
+                parentPath: clParent.path,
+                descentDepth: 1,
                 searchPattern: [
-                    { property: "path", value: clParent.path },
                     { property: "Novorender/Path", value: "" },
                     { property: "Novorender/PathId", value: "" },
                 ],
@@ -384,11 +396,7 @@ async function getRoadCenterLine({ db, view, id }: { db: ObjectDB; view: View; i
         cl = (await clIterator.next()).value as HierarcicalObjectReference | undefined;
     }
 
-    if (!cl) {
-        return;
-    }
-
-    return view.measure?.core.pickCurveSegment(cl.id);
+    return cl && view.measure?.core.pickCurveSegment(cl.id);
 }
 
 function Measure() {
@@ -414,105 +422,136 @@ function Measure() {
 
     const isCrossSection = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
 
-    const loadObjectData = useCallback(async () => {
-        if (stamp?.kind !== StampKind.CanvasContextMenu) {
-            console.warn("CanvasContextMenuStamp rendered for the wrong stamp kind");
-            dispatch(renderActions.setStamp(null));
-            return;
-        }
+    useEffect(() => {
+        loadObjectData();
 
-        if (status !== AsyncStatus.Initial) {
-            return;
-        }
+        async function loadObjectData() {
+            if (stamp?.kind !== StampKind.CanvasContextMenu) {
+                console.warn("CanvasContextMenuStamp rendered for the wrong stamp kind");
+                dispatch(renderActions.setStamp(null));
+                return;
+            }
 
-        const objectId = stamp.data.object;
-        let pickPoint = stamp.data.position;
-        if (objectId && stamp.data.position) {
-            setStatus(AsyncStatus.Loading);
-            if (!isCrossSection) {
-                const tolerance = applyCameraDistanceToMeasureTolerance(
-                    stamp.data.position,
-                    view.renderState.camera.position,
-                    measurePickSettings
+            if (status !== AsyncStatus.Initial) {
+                return;
+            }
+
+            const objectId = stamp.data.object;
+            let pickPoint = stamp.data.position;
+            if (objectId && stamp.data.position) {
+                setStatus(AsyncStatus.Loading);
+
+                const loadMeasureEntity = async () => {
+                    if (!isCrossSection) {
+                        const tolerance = applyCameraDistanceToMeasureTolerance(
+                            stamp.data.position!,
+                            view.renderState.camera.position,
+                            measurePickSettings
+                        );
+                        const ent = await view.measure?.core
+                            .pickMeasureEntity(
+                                objectId,
+                                stamp.data.position!,
+                                tolerance,
+                                allowGeneratedParametric.enabled
+                            )
+                            .then((res) => res.entity)
+                            .catch(() => undefined);
+
+                        const pickMeasurePoint = await view.measure?.core
+                            .pickMeasureEntity(
+                                objectId,
+                                stamp.data.position!,
+                                { point: 0.4 },
+                                allowGeneratedParametric.enabled
+                            )
+                            .then((res) => res.entity)
+                            .catch(() => undefined);
+                        if (pickMeasurePoint?.drawKind === "vertex") {
+                            pickPoint = pickMeasurePoint.parameter;
+                        }
+                        setMeasureEntity(ent);
+                        setPickPoint(pickPoint);
+                    }
+                };
+
+                const loadCenterLine = async () => {
+                    const centerLine = await getRoadCenterLine({ db, view, id: objectId });
+                    setCenterLine(centerLine);
+                };
+
+                loadCenterLine();
+                loadMeasureEntity();
+            }
+
+            const plane = view.renderState.clipping.planes[0]?.normalOffset;
+            if (cameraType === CameraType.Orthographic) {
+                const [pos] = view.convert.screenSpaceToWorldSpace([vec2.fromValues(stamp.mouseX, stamp.mouseY)]);
+                if (pos && plane) {
+                    const laser = await getOutlineLaser(pos, view, "clipping", laserPlane?.rotation ?? 0, [plane]);
+                    setLaser(laser ? { laser, plane } : undefined);
+                    const outlinePoint = view.selectOutlinePoint(pos, 0.2);
+                    if (outlinePoint) {
+                        pickPoint = outlinePoint;
+                    }
+                }
+            } else if (plane && stamp.data.position) {
+                const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
+                const rayDir = vec3.sub(vec3.create(), view.renderState.camera.position, stamp.data.position);
+                vec3.normalize(rayDir, rayDir);
+                const d = vec3.dot(planeDir, rayDir);
+                if (d > 0) {
+                    const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
+                    const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
+                    const laser = await getOutlineLaser(pos, view, "clipping", laserPlane?.rotation ?? 0, [plane]);
+                    const outlinePoint = view.selectOutlinePoint(pos, 0.2);
+                    setLaser(laser ? { laser, plane } : undefined);
+                    if (outlinePoint) {
+                        pickPoint = outlinePoint;
+                    }
+                }
+            } else if (stamp.data.position && stamp.data.normal) {
+                const { normal, position } = stamp.data;
+                const offsetPos = vec3.scaleAndAdd(vec3.create(), position, normal, 0.0001);
+                const hiddenPlane = vec4.fromValues(normal[0], normal[1], normal[2], vec3.dot(offsetPos, normal));
+                const hiddenPlanes: ReadonlyVec4[] = [hiddenPlane];
+                if (laser3d) {
+                    const perpendicular = getPerpendicular(normal);
+                    hiddenPlanes.push(
+                        vec4.fromValues(
+                            perpendicular[0],
+                            perpendicular[1],
+                            perpendicular[2],
+                            vec3.dot(perpendicular, offsetPos)
+                        )
+                    );
+                }
+                view.modifyRenderState({
+                    outlines: {
+                        enabled: true,
+                        hidden: true,
+                        planes: hiddenPlanes,
+                    },
+                });
+                await sleep(1000);
+
+                const laser = await getOutlineLaser(
+                    offsetPos,
+                    view,
+                    "outline",
+                    0,
+                    hiddenPlanes,
+                    laser3d ? 1 : undefined
                 );
-                const ent = await view.measure?.core
-                    .pickMeasureEntity(objectId, stamp.data.position, tolerance, allowGeneratedParametric.enabled)
-                    .then((res) => res.entity)
-                    .catch(() => undefined);
-
-                const pickMeasurePoint = await view.measure?.core
-                    .pickMeasureEntity(objectId, stamp.data.position, { point: 0.4 }, allowGeneratedParametric.enabled)
-                    .then((res) => res.entity)
-                    .catch(() => undefined);
-                if (pickMeasurePoint?.drawKind === "vertex") {
-                    pickPoint = pickMeasurePoint.parameter;
+                view.modifyRenderState({ outlines: { enabled: false, hidden: false, planes: [] } });
+                if (laser) {
+                    setLaser({ laser, plane: hiddenPlane });
                 }
-                setMeasureEntity(ent);
             }
 
-            setCenterLine(await getRoadCenterLine({ db, view, id: objectId }));
+            setPickPoint(pickPoint);
+            setStatus(AsyncStatus.Success);
         }
-
-        const plane = view.renderState.clipping.planes[0]?.normalOffset;
-        if (cameraType === CameraType.Orthographic) {
-            const [pos] = view.convert.screenSpaceToWorldSpace([vec2.fromValues(stamp.mouseX, stamp.mouseY)]);
-            if (pos && plane) {
-                console.log(laserPlane);
-                const laser = await getOutlineLaser(pos, view, "clipping", laserPlane?.rotation ?? 0, [plane]);
-                setLaser(laser ? { laser, plane } : undefined);
-                const outlinePoint = view.selectOutlinePoint(pos, 0.2);
-                if (outlinePoint) {
-                    pickPoint = outlinePoint;
-                }
-            }
-        } else if (plane && stamp.data.position) {
-            const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
-            const rayDir = vec3.sub(vec3.create(), view.renderState.camera.position, stamp.data.position);
-            vec3.normalize(rayDir, rayDir);
-            const d = vec3.dot(planeDir, rayDir);
-            if (d > 0) {
-                const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
-                const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
-                const laser = await getOutlineLaser(pos, view, "clipping", laserPlane?.rotation ?? 0, [plane]);
-                const outlinePoint = view.selectOutlinePoint(pos, 0.2);
-                setLaser(laser ? { laser, plane } : undefined);
-                if (outlinePoint) {
-                    pickPoint = outlinePoint;
-                }
-            }
-        } else if (stamp.data.position && stamp.data.normal) {
-            const { normal, position } = stamp.data;
-            const offsetPos = vec3.scaleAndAdd(vec3.create(), position, normal, 0.0001);
-            const hiddenPlane = vec4.fromValues(normal[0], normal[1], normal[2], vec3.dot(offsetPos, normal));
-            const hiddenPlanes: ReadonlyVec4[] = [hiddenPlane];
-            if (laser3d) {
-                const perpendicular = getPerpendicular(normal);
-                hiddenPlanes.push(
-                    vec4.fromValues(
-                        perpendicular[0],
-                        perpendicular[1],
-                        perpendicular[2],
-                        vec3.dot(perpendicular, offsetPos)
-                    )
-                );
-            }
-            view.modifyRenderState({
-                outlines: {
-                    enabled: true,
-                    hidden: true,
-                    planes: hiddenPlanes,
-                },
-            });
-            await sleep(1000);
-
-            const laser = await getOutlineLaser(offsetPos, view, "outline", 0, hiddenPlanes, laser3d ? 1 : undefined);
-            view.modifyRenderState({ outlines: { enabled: false, hidden: false, planes: [] } });
-            if (laser) {
-                setLaser({ laser, plane: hiddenPlane });
-            }
-        }
-        setPickPoint(pickPoint);
-        setStatus(AsyncStatus.Success);
     }, [
         stamp,
         status,
@@ -526,10 +565,6 @@ function Measure() {
         allowGeneratedParametric,
         measurePickSettings,
     ]);
-
-    useEffect(() => {
-        loadObjectData();
-    }, [loadObjectData]);
 
     useEffect(() => {
         if (stamp) {

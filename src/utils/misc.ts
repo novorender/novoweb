@@ -252,3 +252,7 @@ export function formatLength(l: number) {
         return `${(l * 1000).toFixed(3)} mm`;
     }
 }
+
+export function hasMouseSupport() {
+    return matchMedia("(pointer:fine)").matches;
+}
