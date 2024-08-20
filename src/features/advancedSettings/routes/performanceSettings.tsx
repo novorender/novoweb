@@ -1,11 +1,24 @@
 import { ArrowBack, DeleteSweep, Save, Share } from "@mui/icons-material";
-import { Box, Button, Checkbox, FormControlLabel, Typography, useTheme } from "@mui/material";
-import { ChangeEvent, useState } from "react";
+import {
+    Box,
+    Button,
+    Checkbox,
+    FormControl,
+    FormControlLabel,
+    InputLabel,
+    MenuItem,
+    Select,
+    SelectChangeEvent,
+    Typography,
+    useTheme,
+} from "@mui/material";
+import { getDeviceProfile, GPUTier } from "@novorender/api";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox, TextField } from "components";
-import { renderActions, selectDeviceProfile } from "features/render";
+import { renderActions, selectDebugStats, selectDeviceProfile } from "features/render";
 
 export function PerformanceSettings() {
     const history = useHistory();
@@ -19,6 +32,33 @@ export function PerformanceSettings() {
     const [framerateTarget, setFramerateTarget] = useState(String(deviceProfile.framerateTarget));
     const [triangleLimit, setTriangleLimit] = useState(String(deviceProfile.limits.maxPrimitives));
     const [sampleLimit, setSampleLimit] = useState(String(deviceProfile.limits.maxSamples));
+    const debugStats = useAppSelector(selectDebugStats);
+
+    useEffect(() => {
+        setDetailBias(String(deviceProfile.detailBias));
+        setGpuBytesLimit(String(deviceProfile.limits.maxGPUBytes));
+        setRenderResolution(String(deviceProfile.renderResolution));
+        setFramerateTarget(String(deviceProfile.framerateTarget));
+        setTriangleLimit(String(deviceProfile.limits.maxPrimitives));
+        setSampleLimit(String(deviceProfile.limits.maxSamples));
+    }, [deviceProfile]);
+
+    const deviceProfiles = useMemo(() => {
+        const tiers: GPUTier[] = [0, 1, 2, 3];
+        return tiers.map((tier) => getDeviceProfile(tier));
+    }, []);
+
+    const currentTier = useMemo(() => {
+        return deviceProfiles.find((p) => p.tier === deviceProfile.tier)?.tier ?? 0;
+    }, [deviceProfiles, deviceProfile]);
+
+    const handleTier = (e: SelectChangeEvent) => {
+        const tier = Number(e.target.value) as GPUTier;
+        const profile = deviceProfiles.find((p) => p.tier === tier);
+        if (profile) {
+            dispatch(renderActions.setDeviceProfile(profile));
+        }
+    };
 
     const handleChange = (setState: typeof setDetailBias) => (e: ChangeEvent<HTMLInputElement>) => {
         setState(e.target.value);
@@ -106,6 +146,24 @@ export function PerformanceSettings() {
                     Performance settings
                 </Typography>
                 <Divider sx={{ my: 1 }} />
+                {debugStats.enabled && (
+                    <FormControl fullWidth sx={{ mt: 2 }} size="small">
+                        <InputLabel id="tier-select-label">Tier</InputLabel>
+                        <Select
+                            value={`${currentTier}`}
+                            onChange={handleTier}
+                            id="tier-select"
+                            label="Tier"
+                            labelId="tier-select-label"
+                        >
+                            {deviceProfiles.map((profile) => (
+                                <MenuItem key={profile.tier} value={profile.tier}>
+                                    {profile.tier}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                )}
                 <TextField
                     sx={{ mt: 2 }}
                     fullWidth

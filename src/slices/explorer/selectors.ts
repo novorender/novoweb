@@ -28,6 +28,7 @@ export const selectConfig = (state: RootState) => state.explorer.config;
 export const selectProjectIsV2 = (state: RootState) => state.explorer.projectType === ProjectType.V2;
 export const selectProjectV2Info = (state: RootState) => state.explorer.projectV2Info;
 export const selectTmZoneForCalc = (state: RootState) => state.explorer.tmZoneForCalc;
+export const selectProjectName = (state: RootState) => state.explorer.projectName;
 export const selectAccessToken = (state: RootState) => state.auth.accessToken;
 
 export const selectEnabledWidgetsWithoutPermissionCheck = createSelector(
