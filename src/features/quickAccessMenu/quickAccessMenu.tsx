@@ -80,7 +80,7 @@ export function QuickAccessMenu() {
                     }}
                 >
                     <Stack gap={1}>
-                        <Tooltip title="Measurements" placement="right">
+                        <Tooltip title={activeSection !== Section.Measure ? "Measurements" : ""} placement="right">
                             <Box>
                                 <IconButtonExt
                                     onClick={(e) => selectSection(e, Section.Measure)}
@@ -90,7 +90,7 @@ export function QuickAccessMenu() {
                                 </IconButtonExt>
                             </Box>
                         </Tooltip>
-                        <Tooltip title="Clippings" placement="right">
+                        <Tooltip title={activeSection !== Section.Clipping ? "Clippings" : ""} placement="right">
                             <Box>
                                 <IconButtonExt
                                     onClick={(e) => selectSection(e, Section.Clipping)}
@@ -100,7 +100,10 @@ export function QuickAccessMenu() {
                                 </IconButtonExt>
                             </Box>
                         </Tooltip>
-                        <Tooltip title="Files and attributes" placement="right">
+                        <Tooltip
+                            title={activeSection !== Section.FilesAndAttrs ? "Files and attributes" : ""}
+                            placement="right"
+                        >
                             <Box>
                                 <IconButtonExt
                                     onClick={(e) => selectSection(e, Section.FilesAndAttrs)}
@@ -110,7 +113,7 @@ export function QuickAccessMenu() {
                                 </IconButtonExt>
                             </Box>
                         </Tooltip>
-                        <Tooltip title="Terrain" placement="right">
+                        <Tooltip title={activeSection !== Section.Terrain ? "Terrain" : ""} placement="right">
                             <Box>
                                 <IconButtonExt
                                     onClick={(e) => selectSection(e, Section.Terrain)}
@@ -121,7 +124,7 @@ export function QuickAccessMenu() {
                             </Box>
                         </Tooltip>
                         {showSubtrees && (
-                            <Tooltip title="Render types" placement="right">
+                            <Tooltip title={activeSection !== Section.Subtrees ? "Render types" : ""} placement="right">
                                 <Box>
                                     <IconButtonExt
                                         onClick={(e) => selectSection(e, Section.Subtrees)}
@@ -132,7 +135,7 @@ export function QuickAccessMenu() {
                                 </Box>
                             </Tooltip>
                         )}
-                        <Tooltip title="Favorites" placement="right">
+                        <Tooltip title={activeSection !== Section.Favorites ? "Favorites" : ""} placement="right">
                             <Box>
                                 <IconButtonExt
                                     onClick={(e) => selectSection(e, Section.Favorites)}
