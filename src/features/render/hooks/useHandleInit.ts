@@ -76,7 +76,7 @@ export function useHandleInit() {
                     getProject({ projectId: sceneId })
                         .unwrap()
                         .catch((e) => {
-                            if (e.status === 401) {
+                            if (e.status === 401 || e.status === 403) {
                                 throw { error: "Not authorized" };
                             }
                             throw e;
