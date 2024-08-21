@@ -1,4 +1,6 @@
-<a href="https://novorender.com/" target="_blank" rel="noopener noreferrer"><img width="233px" src="https://novorender.com/wp-content/uploads/2021/06/novorender_logo_RGB_2021.png" alt="Novorender logo"></a>
+<a href="https://novorender.com/" target="_blank" rel="noopener noreferrer"><img width="200px" src="https://novorender.com/wp-content/uploads/2023/03/Logo.svg" alt="Novorender logo"></a>
+
+<a href="https://docs.novorender.com/" target="_blank" rel="noopener noreferrer">Novorender docs</a>
 
 <br />
  
@@ -54,13 +56,13 @@ REACT_APP_NOVORENDER_CLIENT_SECRET=
 REACT_APP_DATA_SERVER_URL=https://data.novorender.com/api
 
 # Override local data address. Default is https://127.0.0.1:5000/api
-DATA_SERVER_URL_PROXY_TARGET=https://127.0.0.1:5000/api
+# DATA_SERVER_URL_PROXY_TARGET=https://127.0.0.1:5000/api
 
 #REACT_APP_DATA_V2_SERVER_URL=/data-v2
 REACT_APP_DATA_V2_SERVER_URL=https://data-v2.novorender.com
 
 # Override local data-v2 address. Default is http://127.0.0.1:5000
-DATA_V2_SERVER_URL_PROXY_TARGET=http://127.0.0.1:5000
+# DATA_V2_SERVER_URL_PROXY_TARGET=http://127.0.0.1:5000
 
 ##### SCENES ######
 
