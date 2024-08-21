@@ -18,9 +18,14 @@ import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox, TextField } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { renderActions, selectDebugStats, selectDeviceProfile } from "features/render";
+import { mergeRecursive } from "utils/misc";
 
 export function PerformanceSettings() {
+    const {
+        state: { view },
+    } = useExplorerGlobals(true);
     const history = useHistory();
     const theme = useTheme();
     const dispatch = useAppDispatch();
@@ -56,6 +61,7 @@ export function PerformanceSettings() {
         const tier = Number(e.target.value) as GPUTier;
         const profile = deviceProfiles.find((p) => p.tier === tier);
         if (profile) {
+            view.deviceProfile = mergeRecursive(view.deviceProfile, profile);
             dispatch(renderActions.setDeviceProfile(profile));
         }
     };
