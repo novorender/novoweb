@@ -3,6 +3,7 @@ import { Box, Button, FormControlLabel, List, Typography, useTheme } from "@mui/
 import { type FormEvent, type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation, Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -19,7 +20,9 @@ import { type FormId, type FormObject, type FormRecord, type FormState, Template
 import { mapGuidsToIds } from "features/forms/utils";
 import { ObjectVisibility, Picker, renderActions, selectPicker } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
+import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { FormsListItem } from "./formsListItem";
 
@@ -41,6 +44,10 @@ export function FormsList() {
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const isPickingLocation = useAppSelector(selectPicker) === Picker.FormLocation;
+    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canDelete = checkPermission(Permission.FormsDelete) ?? isAdmin;
+    const canAdd = checkPermission(Permission.FormsManage) ?? isAdmin;
 
     const dispatchHighlightCollections = useDispatchHighlightCollections();
 
@@ -56,17 +63,17 @@ export function FormsList() {
     >(
         template?.type === TemplateType.Search
             ? template.objects!.map((object: FormObject) => ({
-                ...object,
-                id: -1,
-                formState: template.forms![object.guid].state,
-            }))
+                  ...object,
+                  id: -1,
+                  formState: template.forms![object.guid].state,
+              }))
             : template?.type === TemplateType.Location
-                ? Object.entries(template?.forms ?? {}).map(([id, form]: [string, FormRecord]) => ({
-                    ...form,
-                    formState: form.state,
-                    id: Number(id),
-                }))
-                : []
+            ? Object.entries(template?.forms ?? {}).map(([id, form]: [string, FormRecord]) => ({
+                  ...form,
+                  formState: form.state,
+                  id: Number(id),
+              }))
+            : []
     );
     const [loadingItems, setLoadingItems] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -190,7 +197,11 @@ export function FormsList() {
 
     useEffect(() => {
         if (template?.type !== TemplateType.Search) {
-            dispatch(renderActions.setDefaultVisibility(items.length > 0 ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral));
+            dispatch(
+                renderActions.setDefaultVisibility(
+                    items.length > 0 ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral
+                )
+            );
             return;
         }
 
@@ -295,6 +306,7 @@ export function FormsList() {
                                             color="primary"
                                             checked={isPickingLocation}
                                             onChange={addLocationForm}
+                                            disabled={!canAdd}
                                         />
                                     }
                                     label={<Box fontSize={14}>Add</Box>}
@@ -305,7 +317,7 @@ export function FormsList() {
                         <Button
                             color="grey"
                             onClick={() => setIsDeleting(true)}
-                            disabled={loadingTemplate || loadingItems || !items.length}
+                            disabled={!canDelete || loadingTemplate || loadingItems || !items.length}
                         >
                             <Delete fontSize="small" sx={{ mr: 1 }} />
                             Delete all
