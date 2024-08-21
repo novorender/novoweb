@@ -71,17 +71,18 @@ export function useHandleInit() {
             const view = await createView(canvas, { deviceProfile });
 
             try {
-                const [{ url: _url, db, ...sceneData }, sceneCamera] = await loadScene(sceneId);
+                const [[{ url: _url, db, ...sceneData }, sceneCamera], projectV2] = await Promise.all([
+                    loadScene(sceneId),
+                    getProject({ projectId: sceneId })
+                        .unwrap()
+                        .catch((e) => {
+                            if (e.status === 401) {
+                                throw { error: "Not authorized" };
+                            }
+                            throw e;
+                        }),
+                ]);
                 const { projectId } = sceneData;
-
-                const projectV2 = await getProject({ projectId })
-                    .unwrap()
-                    .catch((e) => {
-                        if (e.status === 401) {
-                            throw { error: "Not authorized" };
-                        }
-                        throw e;
-                    });
 
                 const projectIsV2 = Boolean(projectV2);
                 const [tmZoneForCalc, permissions] = await Promise.all([
@@ -176,7 +177,7 @@ export function useHandleInit() {
                     }
                 });
 
-                patchDb(db, config.dataV2ServerUrl, projectId);
+                patchDb(db, config.dataV2ServerUrl, sceneId);
 
                 resizeObserver.observe(canvas);
                 dispatchGlobals(
@@ -339,19 +340,19 @@ async function loadTmZoneForCalc(projectV2: ProjectInfo | undefined, tmZoneV1: s
 // TODO(ND): remove patches once API is updated
 // Some changes to ObjectDB to make it work with data-v2 without changing lib internals
 // and changing all the search calls
-function patchDb(db: ObjectDB | undefined, dataV2ServerUrl: string, projectId: string) {
+function patchDb(db: ObjectDB | undefined, dataV2ServerUrl: string, sceneId: string) {
     if (!db) {
         return;
     }
 
     // Override object metadata URL
     const patchedDb = db as ObjectDB & { url: string };
-    patchedDb.url = `${dataV2ServerUrl}/projects/${projectId}`;
+    patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}`;
     const originalGetObjectMetdata = patchedDb.getObjectMetdata.bind(patchedDb);
     patchedDb.getObjectMetdata = (id: number) => {
-        patchedDb.url = `${dataV2ServerUrl}/projects/${projectId}/metadata`;
+        patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}/metadata`;
         const result = originalGetObjectMetdata(id);
-        patchedDb.url = `${dataV2ServerUrl}/projects/${projectId}`;
+        patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}`;
         return result;
     };
 
