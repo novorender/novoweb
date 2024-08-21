@@ -88,7 +88,8 @@ const initialState: State = {
         novorenderClientSecret: import.meta.env.REACT_APP_NOVORENDER_CLIENT_SECRET ?? "",
         assetsUrl: import.meta.env.ASSETS_URL ?? "https://novorenderblobs.blob.core.windows.net/assets",
     },
-    newDesign: localStorage.getItem(newDesignLocalStorageKey) === "false" ? false : true,
+    newDesign: false,
+    canUseNewDesign: false,
     snackbarMessage: null,
 };
 
@@ -477,6 +478,11 @@ export const explorerSlice = createSlice({
             } else {
                 state.contextMenu.canvas.features =
                     getCanvasContextMenuFeatures(customProperties) ?? state.contextMenu.canvas.features;
+            }
+
+            if (customProperties.features?.newUx) {
+                state.canUseNewDesign = true;
+                state.newDesign = localStorage.getItem(newDesignLocalStorageKey) === "true";
             }
         });
     },

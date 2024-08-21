@@ -30,6 +30,7 @@ import { useToggleNewDesign } from "features/newDesign/useToggleNewDesign";
 import { renderActions, selectDebugStats, selectGeneratedParametricData, selectNavigationCube } from "features/render";
 import {
     explorerActions,
+    selectCanUseNewDesign,
     selectCanvasContextMenuFeatures,
     selectEnabledWidgets,
     selectLockedWidgets,
@@ -50,6 +51,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
     const debugStats = useAppSelector(selectDebugStats);
     const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
     const newDesign = useAppSelector(selectNewDesign);
+    const canUseNewDesign = useAppSelector(selectCanUseNewDesign);
     const toggleNewDesign = useToggleNewDesign();
 
     const toggleWidget = (key: WidgetKey, checked: boolean) => {
@@ -384,15 +386,17 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     }
                                 />
                             ))}
-                            <FormControlLabel
-                                sx={{ ml: 0, mb: 1 }}
-                                control={<Switch checked={newDesign} onChange={toggleNewDesign} />}
-                                label={
-                                    <Box ml={1} fontSize={16}>
-                                        New design
-                                    </Box>
-                                }
-                            />
+                            {canUseNewDesign && (
+                                <FormControlLabel
+                                    sx={{ ml: 0, mb: 1 }}
+                                    control={<Switch checked={newDesign} onChange={toggleNewDesign} />}
+                                    label={
+                                        <Box ml={1} fontSize={16}>
+                                            New design
+                                        </Box>
+                                    }
+                                />
+                            )}
                         </Box>
                     </AccordionDetails>
                 </Accordion>

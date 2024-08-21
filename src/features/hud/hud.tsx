@@ -3,7 +3,6 @@ import { Box, useTheme } from "@mui/material";
 import { useAppSelector } from "app/redux-store-interactions";
 import LocationHud from "features/locationHud/locationHud";
 import { NavigationCube } from "features/navigationCube";
-import { NewDesignPopup } from "features/newDesign/newDesignPopup";
 import { PrimaryMenu, PrimaryMenuNew } from "features/primaryMenu";
 import { QuickAccessMenu } from "features/quickAccessMenu/quickAccessMenu";
 import { selectNavigationCube } from "features/render";
@@ -21,7 +20,7 @@ export function Hud() {
     return (
         <>
             {newDesign ? <HudNew /> : <HudOld />}
-            <NewDesignPopup />
+            {/* <NewDesignPopup /> */}
         </>
     );
 }

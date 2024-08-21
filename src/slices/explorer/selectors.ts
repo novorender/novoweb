@@ -31,6 +31,7 @@ export const selectConfig = (state: RootState) => state.explorer.config;
 export const selectProjectIsV2 = (state: RootState) => state.explorer.projectType === ProjectType.V2;
 export const selectTmZoneForCalc = (state: RootState) => state.explorer.tmZoneForCalc;
 export const selectNewDesignRaw = (state: RootState) => state.explorer.newDesign;
+export const selectCanUseNewDesign = (state: RootState) => state.explorer.canUseNewDesign;
 export const selectSnackbarMessage = (state: RootState) => state.explorer.snackbarMessage;
 
 export const selectNewDesign = createSelector([selectWidgetLayout, selectNewDesignRaw], (layout, newDesign) =>

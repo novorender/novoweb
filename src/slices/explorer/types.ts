@@ -84,6 +84,7 @@ export type State = {
         assetsUrl: string;
     };
     newDesign: boolean;
+    canUseNewDesign: boolean;
     snackbarMessage: {
         msg: string;
         closeAfter?: number;
