@@ -1,5 +1,5 @@
 import { AccountTree, ContentCut, Gradient, Star, Straighten, Terrain } from "@mui/icons-material";
-import { Box, ClickAwayListener, Fade, Popper, Stack } from "@mui/material";
+import { Box, ClickAwayListener, Fade, Popper, Stack, Tooltip } from "@mui/material";
 import { MouseEvent, useState } from "react";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -80,44 +80,68 @@ export function QuickAccessMenu() {
                     }}
                 >
                     <Stack gap={1}>
-                        <IconButtonExt
-                            onClick={(e) => selectSection(e, Section.Measure)}
-                            active={activeSection === Section.Measure}
-                        >
-                            <Straighten />
-                        </IconButtonExt>
-                        <IconButtonExt
-                            onClick={(e) => selectSection(e, Section.Clipping)}
-                            active={activeSection === Section.Clipping}
-                        >
-                            <ContentCut />
-                        </IconButtonExt>
-                        <IconButtonExt
-                            onClick={(e) => selectSection(e, Section.FilesAndAttrs)}
-                            active={activeSection === Section.FilesAndAttrs}
-                        >
-                            <AccountTree />
-                        </IconButtonExt>
-                        <IconButtonExt
-                            onClick={(e) => selectSection(e, Section.Terrain)}
-                            active={activeSection === Section.Terrain}
-                        >
-                            <Terrain />
-                        </IconButtonExt>
+                        <Tooltip title="Measurements" placement="right">
+                            <Box>
+                                <IconButtonExt
+                                    onClick={(e) => selectSection(e, Section.Measure)}
+                                    active={activeSection === Section.Measure}
+                                >
+                                    <Straighten />
+                                </IconButtonExt>
+                            </Box>
+                        </Tooltip>
+                        <Tooltip title="Clippings" placement="right">
+                            <Box>
+                                <IconButtonExt
+                                    onClick={(e) => selectSection(e, Section.Clipping)}
+                                    active={activeSection === Section.Clipping}
+                                >
+                                    <ContentCut />
+                                </IconButtonExt>
+                            </Box>
+                        </Tooltip>
+                        <Tooltip title="Files and attributes" placement="right">
+                            <Box>
+                                <IconButtonExt
+                                    onClick={(e) => selectSection(e, Section.FilesAndAttrs)}
+                                    active={activeSection === Section.FilesAndAttrs}
+                                >
+                                    <AccountTree />
+                                </IconButtonExt>
+                            </Box>
+                        </Tooltip>
+                        <Tooltip title="Terrain" placement="right">
+                            <Box>
+                                <IconButtonExt
+                                    onClick={(e) => selectSection(e, Section.Terrain)}
+                                    active={activeSection === Section.Terrain}
+                                >
+                                    <Terrain />
+                                </IconButtonExt>
+                            </Box>
+                        </Tooltip>
                         {showSubtrees && (
-                            <IconButtonExt
-                                onClick={(e) => selectSection(e, Section.Subtrees)}
-                                active={activeSection === Section.Subtrees}
-                            >
-                                <Gradient />
-                            </IconButtonExt>
+                            <Tooltip title="Render types" placement="right">
+                                <Box>
+                                    <IconButtonExt
+                                        onClick={(e) => selectSection(e, Section.Subtrees)}
+                                        active={activeSection === Section.Subtrees}
+                                    >
+                                        <Gradient />
+                                    </IconButtonExt>
+                                </Box>
+                            </Tooltip>
                         )}
-                        <IconButtonExt
-                            onClick={(e) => selectSection(e, Section.Favorites)}
-                            active={activeSection === Section.Favorites}
-                        >
-                            <Star />
-                        </IconButtonExt>
+                        <Tooltip title="Favorites" placement="right">
+                            <Box>
+                                <IconButtonExt
+                                    onClick={(e) => selectSection(e, Section.Favorites)}
+                                    active={activeSection === Section.Favorites}
+                                >
+                                    <Star />
+                                </IconButtonExt>
+                            </Box>
+                        </Tooltip>
                     </Stack>
                 </HudPanel>
 

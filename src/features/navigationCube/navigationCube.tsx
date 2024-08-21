@@ -193,7 +193,7 @@ const CubeContainer = styled("svg", { shouldForwardProp: (prop) => prop !== "loa
 }>(
     ({ loading, newDesign }) => css`
         position: absolute;
-        top: ${newDesign ? "80px" : "30px"};
+        top: ${newDesign ? "100px" : "30px"};
         left: 30px;
         overflow: visible;
         pointer-events: none;

@@ -1,5 +1,5 @@
 import { GpsFixed } from "@mui/icons-material";
-import { Box, IconButton, SvgIcon, useTheme } from "@mui/material";
+import { Box, IconButton, SvgIcon, Tooltip, useTheme } from "@mui/material";
 import { decomposeRotation } from "@novorender/api/web_app/controller/orientation";
 import { memo, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
@@ -47,24 +47,31 @@ function CompassBtn() {
 
     return (
         <HudPanel sx={{ pointerEvents: "auto" }}>
-            <IconButton
-                onClick={() => {
-                    dispatch(renderActions.setNavigationCube({ enabled: !navigationCube.enabled }));
-                }}
-                sx={navigationCube.enabled ? { outline: `3px solid ${theme.palette.primary.main}` } : {}}
-            >
-                <SvgIcon>
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        xmlns="http://www.w3.org/2000/svg"
-                        style={{ rotate: `${rotation}rad` }}
+            <Tooltip title="Navigation cube" placement="bottom">
+                <Box>
+                    <IconButton
+                        onClick={() => {
+                            dispatch(renderActions.setNavigationCube({ enabled: !navigationCube.enabled }));
+                        }}
+                        sx={navigationCube.enabled ? { outline: `3px solid ${theme.palette.primary.main}` } : {}}
                     >
-                        <path d="M 12 1 l -6 10 l 1 1 l 5 -2 l 5 2 l 1 -1 z" fill={theme.palette.primary.main} />
-                        <path d="M 12 23 l 6 -10 l -1 -1 l -5 2 l -5 -2 l -1 1 z" />
-                    </svg>
-                </SvgIcon>
-            </IconButton>
+                        <SvgIcon>
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                xmlns="http://www.w3.org/2000/svg"
+                                style={{ rotate: `${rotation}rad` }}
+                            >
+                                <path
+                                    d="M 12 1 l -6 10 l 1 1 l 5 -2 l 5 2 l 1 -1 z"
+                                    fill={theme.palette.primary.main}
+                                />
+                                <path d="M 12 23 l 6 -10 l -1 -1 l -5 2 l -5 -2 l -1 1 z" />
+                            </svg>
+                        </SvgIcon>
+                    </IconButton>
+                </Box>
+            </Tooltip>
         </HudPanel>
     );
 }
@@ -91,9 +98,13 @@ function MyLocationBtn() {
 
     return (
         <HudPanel sx={{ pointerEvents: "auto" }}>
-            <IconButtonExt onClick={goToMyLocation} disabled={loading} loading={loading}>
-                <GpsFixed />
-            </IconButtonExt>
+            <Tooltip title="My location" placement="bottom">
+                <Box>
+                    <IconButtonExt onClick={goToMyLocation} disabled={loading} loading={loading}>
+                        <GpsFixed />
+                    </IconButtonExt>
+                </Box>
+            </Tooltip>
         </HudPanel>
     );
 }
@@ -116,27 +127,30 @@ function CursorCoordinates() {
                 lat = coords.latitude.toFixed(5);
                 alt = position[2].toFixed(0) + "m";
             }
+
+            content = (
+                <>
+                    <Box>Lon</Box>
+                    <Box ml={1} minWidth="70px">
+                        {lon}
+                    </Box>
+                    <Box ml={2}>Lat</Box>
+                    <Box ml={1} minWidth="70px">
+                        {lat}
+                    </Box>
+                    <Box ml={2}>Alt</Box>
+                    <Box ml={1} minWidth="50px">
+                        {alt}
+                    </Box>
+                </>
+            );
         } catch (ex) {
             console.warn(ex);
+            setShowXyz(true);
         }
+    }
 
-        content = (
-            <>
-                <Box>Lon</Box>
-                <Box ml={1} minWidth="70px">
-                    {lon}
-                </Box>
-                <Box ml={2}>Lat</Box>
-                <Box ml={1} minWidth="70px">
-                    {lat}
-                </Box>
-                <Box ml={2}>Alt</Box>
-                <Box ml={1} minWidth="50px">
-                    {alt}
-                </Box>
-            </>
-        );
-    } else {
+    if (!content) {
         content = (
             <>
                 <Box>X</Box>
@@ -160,9 +174,11 @@ function CursorCoordinates() {
             sx={{ pointerEvents: "auto", cursor: tmZone ? "pointer" : undefined }}
             onClick={() => setShowXyz(!showXyz)}
         >
-            <Box display="flex" p={1}>
-                {content}
-            </Box>
+            <Tooltip title="Coordinates" placement="bottom">
+                <Box display="flex" p={1}>
+                    {content}
+                </Box>
+            </Tooltip>
         </HudPanel>
     );
 }
@@ -190,10 +206,12 @@ function Scale() {
     }
 
     return (
-        <HudPanel sx={{ px: 2, width: scale.px, position: "relative" }}>
-            <Box textAlign="center" width="100%" p={1}>
-                {formatLength(scale.width)}
-            </Box>
+        <HudPanel sx={{ pointerEvents: "auto", px: 2, width: scale.px, position: "relative" }}>
+            <Tooltip title="Scale" placement="bottom">
+                <Box textAlign="center" width="100%" p={1}>
+                    {formatLength(scale.width)}
+                </Box>
+            </Tooltip>
             <Box position="relative">
                 <Box
                     width="100%"
