@@ -71,6 +71,10 @@ REACT_APP_SCENE_ID=3b3caf9359c943f48ce49055e8b3e118
 REACT_APP_VERSION=$npm_package_version
 ```
 
+This config will work with public scenes as is.
+To work with non public scenes you'll need to set `REACT_APP_NOVORENDER_CLIENT_ID` and `REACT_APP_NOVORENDER_CLIENT_SECRET`.
+You can request them at support@novorender.com.
+
 ## Add new widget
 
 Add a new property to the features config.
