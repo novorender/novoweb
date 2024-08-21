@@ -81,11 +81,13 @@ export const ClippingPlaneInteractions = forwardRef(function Interactions(_props
         const cameraDir = getCameraDir(view.renderState.camera.rotation);
         const isFacingNormal = Math.abs(vec3.dot(normal, cameraDir)) > 0.999;
 
-        const posDragedFrom = startPoint;
+        let posDragedFrom = startPoint;
         const direction = vec3.scaleAndAdd(vec3.create(), originalAnchorPos, normal, -1);
-        const direction2d = isFacingNormal
+        const dir2d = isFacingNormal
             ? vec2.add(vec2.create(), posDragedFrom, vec2.fromValues(0, 1))
             : view.convert.worldSpaceToScreenSpace([direction])[0]!;
+        vec2.sub(dir2d, dir2d, posDragedFrom);
+        const lenDir2d = vec2.len(dir2d);
         let newOffset = originalNormalOffset[3];
 
         const overlay = document.createElement("div");
@@ -115,16 +117,16 @@ export const ClippingPlaneInteractions = forwardRef(function Interactions(_props
             const diffMult = e.shiftKey ? 0.1 : 1;
             const posDragedTo = vec2.fromValues(e.clientX, e.clientY);
 
-            const dir2d = vec2.sub(vec2.create(), direction2d, posDragedFrom);
             const delta = vec2.sub(vec2.create(), posDragedFrom, posDragedTo);
 
-            const lenDir2d = vec2.len(dir2d);
             const step = (vec2.dot(dir2d, delta) / (lenDir2d * lenDir2d)) * diffMult;
 
-            if (Math.abs(step) > 0.01) {
-                newOffset = originalNormalOffset[3] + step;
+            if (Math.abs(step) >= 0.001) {
+                newOffset += step;
                 state.update(newOffset);
             }
+
+            posDragedFrom = posDragedTo;
         }
 
         function stop(save: boolean) {
