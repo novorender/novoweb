@@ -50,7 +50,12 @@ export function PerformanceSettings() {
 
     const deviceProfiles = useMemo(() => {
         const tiers: GPUTier[] = [0, 1, 2, 3];
-        return tiers.map((tier) => getDeviceProfile(tier));
+        const profiles = tiers.map((tier) => getDeviceProfile(tier));
+        (profiles[0] as any).framerateTarget = 15;
+        (profiles[1] as any).framerateTarget = 20;
+        (profiles[2] as any).framerateTarget = 30;
+        (profiles[3] as any).framerateTarget = 60;
+        return profiles;
     }, []);
 
     const currentTier = useMemo(() => {
