@@ -71,17 +71,16 @@ export function useHandleInit() {
             const view = await createView(canvas, { deviceProfile });
 
             try {
-                const [[{ url: _url, db, ...sceneData }, sceneCamera], projectV2] = await Promise.all([
-                    loadScene(sceneId),
-                    getProject({ projectId: sceneId })
-                        .unwrap()
-                        .catch((e) => {
-                            if (e.status === 401 || e.status === 403) {
-                                throw { error: "Not authorized" };
-                            }
-                            throw e;
-                        }),
-                ]);
+                const [{ url: _url, db, ...sceneData }, sceneCamera] = await loadScene(sceneId);
+
+                const projectV2 = await getProject({ projectId: sceneId })
+                    .unwrap()
+                    .catch((e) => {
+                        if (e.status === 401 || e.status === 403) {
+                            throw { error: "Not authorized" };
+                        }
+                        throw e;
+                    });
                 const { projectId } = sceneData;
 
                 const projectIsV2 = Boolean(projectV2);
