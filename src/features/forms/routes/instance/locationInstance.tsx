@@ -384,7 +384,7 @@ export function LocationInstance() {
                     );
                 })}
                 <Box mt={2}>
-                    <TransformEditor />
+                    <TransformEditor disabled={!canEdit} />
                 </Box>
             </ScrollBox>
         </>

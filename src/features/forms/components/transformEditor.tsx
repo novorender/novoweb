@@ -42,7 +42,7 @@ const marks = [
     },
 ];
 
-export function TransformEditor() {
+export function TransformEditor({ disabled }: { disabled?: boolean }) {
     const selectedTemplateId = useAppSelector(selectCurrentFormsList);
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const isPickingLocation = useAppSelector(selectPicker) === Picker.FormLocation;
@@ -146,6 +146,7 @@ export function TransformEditor() {
                                         onChange={pickNewLocation}
                                     />
                                 }
+                                disabled={disabled}
                                 label={<Box fontSize={14}>Move</Box>}
                                 sx={{ ml: 1 }}
                             />
@@ -158,6 +159,7 @@ export function TransformEditor() {
                                 size="small"
                                 label="X"
                                 variant="outlined"
+                                disabled={disabled}
                             />
                             <TextField
                                 value={transform.y}
@@ -166,6 +168,7 @@ export function TransformEditor() {
                                 size="small"
                                 label="Y"
                                 variant="outlined"
+                                disabled={disabled}
                             />
                             <TextField
                                 value={transform.z}
@@ -174,6 +177,7 @@ export function TransformEditor() {
                                 size="small"
                                 label="Z"
                                 variant="outlined"
+                                disabled={disabled}
                             />
                         </Stack>
                     </Stack>
@@ -186,6 +190,7 @@ export function TransformEditor() {
                         size="small"
                         label="Scale"
                         variant="outlined"
+                        disabled={disabled}
                     />
                     <Stack gap={1}>
                         <Typography fontWeight={600}>Rotation</Typography>
@@ -194,21 +199,24 @@ export function TransformEditor() {
                                 title="Roll (X)"
                                 value={transform.roll}
                                 onChange={(roll) => updateTransform({ roll })}
+                                disabled={disabled}
                             />
                             <RotationComponentInput
                                 title="Pitch (Y)"
                                 value={transform.pitch}
                                 onChange={(pitch) => updateTransform({ pitch })}
+                                disabled={disabled}
                             />
                             <RotationComponentInput
                                 title="Yaw (Z)"
                                 value={transform.yaw}
                                 onChange={(yaw) => updateTransform({ yaw })}
+                                disabled={disabled}
                             />
                         </Stack>
                     </Stack>
                     <Box display="flex" justifyContent="end" gap={1}>
-                        <Button type="button" onClick={handleReset}>
+                        <Button type="button" onClick={handleReset} disabled={disabled}>
                             Reset
                         </Button>
                     </Box>
@@ -222,16 +230,18 @@ function RotationComponentInput({
     title,
     value,
     onChange,
+    disabled,
 }: {
     title: string;
     value: number;
     onChange: (value: number) => void;
+    disabled?: boolean;
 }) {
     return (
         <Stack spacing={2} direction="row" sx={{ mb: 1, width: 1 }} alignItems="center">
             <Typography minWidth={62}>{title}</Typography>
             <IconButton
-                disabled={value <= -180}
+                disabled={value <= -180 || disabled}
                 onClick={() => {
                     onChange(value - 1);
                 }}
@@ -248,12 +258,13 @@ function RotationComponentInput({
                 }}
                 valueLabelDisplay="auto"
                 marks={marks}
+                disabled={disabled}
             />
             <IconButton
                 onClick={() => {
                     onChange(value + 1);
                 }}
-                disabled={value >= 180}
+                disabled={value >= 180 || disabled}
                 size="small"
             >
                 <AddCircleOutline fontSize="small" />
@@ -279,6 +290,7 @@ function RotationComponentInput({
                     max: 180,
                     type: "number",
                 }}
+                disabled={disabled}
             />
         </Stack>
     );
