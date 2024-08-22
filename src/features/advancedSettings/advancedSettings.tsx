@@ -34,7 +34,7 @@ import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import {
     selectCanvasContextMenuFeatures,
-    selectEnabledWidgets,
+    selectEnabledWidgetsWithoutPermissionCheck,
     selectIsAdminScene,
     selectMaximized,
     selectMinimized,
@@ -77,7 +77,7 @@ export default function AdvancedSettings() {
     const points = useAppSelector(selectPoints);
     const terrain = useAppSelector(selectTerrain);
     const { environments: _environments, ...background } = useAppSelector(selectBackground);
-    const enabledWidgets = useAppSelector(selectEnabledWidgets);
+    const enabledWidgets = useAppSelector(selectEnabledWidgetsWithoutPermissionCheck);
     const projectSettings = useAppSelector(selectProjectSettings);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
     const canvasCtxMenu = useAppSelector(selectCanvasContextMenuFeatures);
