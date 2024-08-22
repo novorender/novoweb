@@ -2,6 +2,7 @@ import { useEffect } from "react";
 
 import { useLazyGetDeviationProfilesQuery } from "apis/dataV2/dataV2Api";
 import { ColorStop, DeviationProjectConfig } from "apis/dataV2/deviationTypes";
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectLandXmlPaths } from "features/followPath";
@@ -9,6 +10,7 @@ import { useLoadLandXmlPath } from "features/followPath/hooks/useLoadLandXmlPath
 import { LandXmlPath } from "features/followPath/types";
 import { renderActions, selectDeviations, selectPoints, selectViewMode } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus, ViewMode } from "types/misc";
@@ -39,6 +41,7 @@ export function useHandleDeviations() {
     const [abortController] = useAbortController();
     const active = useAppSelector(selectViewMode) === ViewMode.Deviations;
     const landXmlPaths = useAppSelector(selectLandXmlPaths);
+    const checkProjectPermission = useCheckProjectPermission();
 
     const [getDeviationProfiles] = useLazyGetDeviationProfilesQuery();
 
@@ -54,7 +57,8 @@ export function useHandleDeviations() {
                 !view ||
                 !sceneId ||
                 profiles.status !== AsyncStatus.Initial ||
-                landXmlPaths.status !== AsyncStatus.Success
+                landXmlPaths.status !== AsyncStatus.Success ||
+                !checkProjectPermission(Permission.DeviationRead)
             ) {
                 return;
             }
@@ -131,6 +135,7 @@ export function useHandleDeviations() {
         abortController,
         selectedProfileId,
         landXmlPaths,
+        checkProjectPermission,
     ]);
 
     // Set current deviation and colors
