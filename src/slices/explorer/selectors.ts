@@ -59,6 +59,8 @@ export const selectEnabledWidgets = createSelector(
                     case "omegaPims365":
                     case "xsiteManage":
                         return can(`int:${w.key}:use` as Permission);
+                    case "omega365":
+                        return can(`int:omegaPims365:use` as Permission);
                     case "bookmarks":
                         return can(Permission.BookmarkRead);
                     case "groups":
