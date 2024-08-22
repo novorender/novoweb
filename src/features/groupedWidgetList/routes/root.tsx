@@ -10,7 +10,6 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { useHistory, useLocation } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import { Accordion } from "components/accordion";
@@ -41,18 +40,15 @@ const sortedFeatureGroups = Object.values(featureGroups).sort((a, b) => {
 export function Root({
     handleClick,
     currentWidget,
+    expandedGroupKey,
+    setExpandedGroupKey,
 }: {
     currentWidget: WidgetKey | undefined;
     handleClick: (key: WidgetKey) => () => void;
+    expandedGroupKey: FeatureGroupKey | null;
+    setExpandedGroupKey: (group: FeatureGroupKey | null) => void;
 }) {
     const theme = useTheme();
-    const history = useHistory();
-
-    const expandedGroupKey = useLocation<{ group?: FeatureGroupKey }>().state?.group || null;
-
-    const setExpandedGroupKey = (group: FeatureGroupKey | null) => {
-        history.push("/", { group });
-    };
 
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const lockedWidgets = useAppSelector(selectLockedWidgets);

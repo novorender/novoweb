@@ -1,5 +1,4 @@
-import { ReactNode, useEffect } from "react";
-import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
+import { useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { FeatureGroupKey, featuresConfig, type WidgetKey } from "config/features";
@@ -18,6 +17,10 @@ export default function GroupedWidgetList({
 }) {
     const activeWidgets = useAppSelector(selectWidgets);
     const dispatch = useAppDispatch();
+    const config = widgetKey ? featuresConfig[widgetKey] : undefined;
+    const [expandedGroupKey, setExpandedGroupKey] = useState(
+        featureGroupKey || (config && "groups" in config && config.groups[0]) || null
+    );
 
     const handleClick = (key: WidgetKey) => () => {
         const active = key !== widgetKey && activeWidgets.includes(key);
@@ -35,31 +38,12 @@ export default function GroupedWidgetList({
         dispatch(explorerActions.replaceWidgetSlot({ replace: widgetKey, key }));
     };
 
-    const config = widgetKey ? featuresConfig[widgetKey] : undefined;
-    const group = featureGroupKey ?? (config && "groups" in config && config.groups[0]);
-
     return (
-        <MemoryRouter
-            initialEntries={group ? ["/", { pathname: "/", state: { group } }] : undefined}
-            initialIndex={group ? 1 : 0}
-        >
-            <CustomSwitch featureGroupKey={featureGroupKey}>
-                <Route path="/" exact>
-                    <Root currentWidget={widgetKey} handleClick={handleClick} />
-                </Route>
-            </CustomSwitch>
-        </MemoryRouter>
+        <Root
+            currentWidget={widgetKey}
+            handleClick={handleClick}
+            expandedGroupKey={expandedGroupKey}
+            setExpandedGroupKey={setExpandedGroupKey}
+        />
     );
-}
-
-function CustomSwitch({ featureGroupKey, children }: { featureGroupKey?: FeatureGroupKey; children: ReactNode }) {
-    const history = useHistory();
-
-    useEffect(() => {
-        if (featureGroupKey) {
-            history.push({ pathname: "/", state: { group: featureGroupKey } });
-        }
-    }, [history, featureGroupKey]);
-
-    return <Switch>{children}</Switch>;
 }

@@ -7,7 +7,6 @@ export const initialState: State = null;
 
 enum ActionTypes {
     Set,
-    SetPositionAtCursor,
 }
 
 function set(state: null | PickSampleExt) {
@@ -29,7 +28,7 @@ export const StateContext = createContext<State>(undefined as any);
 export const LazyStateContext = createContext<LazyContextType>(undefined as any);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const DispatchContext = createContext<DispatchLastPickSample>(undefined as any);
-export function reducer(state: State, action: Actions): State {
+export function reducer(_state: State, action: Actions): State {
     switch (action.type) {
         case ActionTypes.Set: {
             return action.state;
