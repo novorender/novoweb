@@ -39,7 +39,7 @@ const initialState: State = {
     organization: "",
     projectName: "",
     widgets: [],
-    // TODO remove
+    // TODO probably should be stored on the backend instead
     favoriteWidgets: JSON.parse(localStorage.getItem(favoriteWidgetsStorageKey) || "[]"),
     widgetSlot: {
         open: false,
@@ -161,26 +161,19 @@ export const explorerSlice = createSlice({
 
             state.widgets = state.widgets.filter((slot) => slot !== action.payload);
             removeIrrelevantMaximized(state);
-
-            // if (state.maximized.length !== state.widgets.length) {
-            //     state.maximized = [];
-            // }
-            // if (state.maximizedHorizontal.length !== state.widgets.length) {
-            //     state.maximizedHorizontal = [];
-            // }
         },
         addFavoriteWidget: (state, action: PayloadAction<WidgetKey>) => {
             const key = action.payload;
             if (!state.favoriteWidgets.includes(key)) {
                 state.favoriteWidgets.push(key);
             }
-            // TODO remove
+            // TODO consider storing on backend
             localStorage.setItem(favoriteWidgetsStorageKey, JSON.stringify(state.favoriteWidgets));
         },
         removeFavoriteWidget: (state, action: PayloadAction<WidgetKey>) => {
             const key = action.payload;
             state.favoriteWidgets = state.favoriteWidgets.filter((w) => w !== key);
-            // TODO remove
+            // TODO consider storing on backend
             localStorage.setItem(favoriteWidgetsStorageKey, JSON.stringify(state.favoriteWidgets));
         },
         setWidgetSlot: (state, action: PayloadAction<State["widgetSlot"]>) => {

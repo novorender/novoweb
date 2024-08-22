@@ -41,16 +41,16 @@ export function ViewOnlySelected({ newDesign, ...props }: Props & { newDesign?: 
                 </Box>
             </Tooltip>
         );
-    } else {
-        return (
-            <SpeedDialAction
-                {...props}
-                data-test="view-only-selected"
-                active={currentVisibility !== ObjectVisibility.Neutral}
-                onClick={handleClick}
-                title={name}
-                icon={<Icon />}
-            />
-        );
     }
+
+    return (
+        <SpeedDialAction
+            {...props}
+            data-test="view-only-selected"
+            active={currentVisibility !== ObjectVisibility.Neutral}
+            onClick={handleClick}
+            title={name}
+            icon={<Icon />}
+        />
+    );
 }

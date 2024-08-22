@@ -139,8 +139,6 @@ function NewWidgets() {
             .sort((w1, w2) => compareStrings(w1.key, w2.key));
     }, [positionedWidgets, gridSize, theme, showNewSlot]);
 
-    const gap = 2;
-
     const widgetGroupPanelWidth =
         widgetGroupPanelState.expanded && widgetGroupPanelState.open
             ? theme.customSpacing.widgetGroupPanelExpandedWidth
@@ -152,42 +150,22 @@ function NewWidgets() {
     const getGridLayout = () => {
         if (layout.widgets === 4) {
             return {
-                // gridColumn: "3 / 5",
-                // gridRow: "1 / 3",
-                // gridTemplateRows: "repeat(2, minmax(0, 1fr))",
-                // gridTemplateColumns: "repeat(2, minmax(0, 600px))",
-                // gridTemplateAreas: positionedWidgetsToTemplateAreas2by2(positionedWidgets),
                 width: `50%`,
                 minWidth: "800px",
                 maxWidth: `min(1400px, 100% - 640px - ${theme.spacing(maxWidgetGroupPanelWidth + 2)})`,
             };
         } else if (layout.widgets === 2) {
             return {
-                // gridColumn: "3 / 5",
-                // gridRow: "1 / 3",
-                // gridTemplateRows: "repeat(2, minmax(0, 1fr))",
-                // gridTemplateColumns: "minmax(0, 600px)",
-                // gridTemplateAreas: maximized.length ? `"one" "one"` : `"two" "one"`,
                 width: `30%`,
                 minWidth: "400px",
                 maxWidth: "700px",
             };
         } else if (layout.widgets === 1 && layout.sideBySide) {
             return {
-                // gridColumn: "3 / 4",
-                // gridRow: "1 / 3",
-                // gridTemplateColumns: "minmax(420px, 1fr)",
-                // gridTemplateRows: "minmax(0, 1fr)",
-                // gridTemplateAreas: `"one"`,
                 width: `420px`,
             };
         } else if (layout.widgets === 1 && !layout.sideBySide) {
             return {
-                // gridColumn: "1 / 4",
-                // gridRow: "1 / 3",
-                // gridTemplateColumns: "1fr",
-                // gridTemplateRows: "1fr",
-                // gridTemplateAreas: `"one"`,
                 width: `100%`,
             };
         }
@@ -203,7 +181,7 @@ function NewWidgets() {
                 mb: 9,
                 mr: widgetGroupPanelWidth,
                 transition: "margin 0.2s",
-                gap,
+                gap: 2,
                 pointerEvents: "none",
             }}
             {...getGridLayout()}
