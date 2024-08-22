@@ -42,9 +42,6 @@ export const selectEnabledWidgets = createSelector(
         if (projectInfo) {
             const permissionSet = new Set(projectInfo.permissions);
             const can = (p: Permission) => checkPermission(permissionSet, p);
-            if (can(Permission.SceneManage)) {
-                return widgets;
-            }
 
             return widgets.filter((w) => {
                 if (defaultEnabledWidgets.includes(w.key)) {
