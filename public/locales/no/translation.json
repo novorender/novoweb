@@ -322,7 +322,7 @@
     "selectDeviationProfile": "Velg avviksprofil",
     "notSetUpForProject": "{{name}} er ikke satt opp for dette prosjektet.",
     "logInToAccess": "Logg inn for å få tilgang til {{name}}.",
-    "integrationCredentials": "integrasjonslegitimasjon",
+    "addIntegrationCredentials": "Legg til {{name}}-integrasjonslegitimasjon",
     "invalidCredentials": "Ugyldig legitimasjon.",
     "follow": "Følg",
     "followFrom": "Følg fra:",
@@ -537,5 +537,7 @@
     "outsideRange": "Utenfor området -1 til 1",
     "showingIssues": "Viser {{count}} av {{total}} problemer",
     "logInTo": "Logg inn på {{name}}",
-    "redirectsTo": "Omdirigerer til {{name}}-innloggingssiden utenfor Novorender."
+    "redirectsTo": "Omdirigerer til {{name}}-innloggingssiden utenfor Novorender.",
+    "failedToSaveSettings": "Kunne ikke lagre innstillingene",
+    "settingsSuccessfullySaved": "Innstillingene ble lagret"
 }

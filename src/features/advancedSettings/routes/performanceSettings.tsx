@@ -77,7 +77,7 @@ export function PerformanceSettings() {
                 },
                 framerateTarget: Number(framerateTarget),
                 renderResolution: Number(renderResolution),
-            })
+            }),
         );
     };
 
@@ -87,12 +87,12 @@ export function PerformanceSettings() {
                 encodeURI(
                     `${window.location.origin}${
                         window.location.pathname
-                    }?debug=true&debugDeviceProfile=${JSON.stringify(deviceProfile)}`
+                    }?debug=true&debugDeviceProfile=${JSON.stringify(deviceProfile)}`,
                 ),
             ],
             {
                 type: "text/plain",
-            }
+            },
         );
 
         try {
@@ -145,7 +145,7 @@ export function PerformanceSettings() {
             </Box>
             <ScrollBox height={1} px={1} mt={1} mb={4}>
                 <Typography pt={1} variant="h6" fontWeight={600}>
-                    t("performanceSettings")
+                    {t("performanceSettings")}
                 </Typography>
                 <Divider sx={{ my: 1 }} />
                 {debugStats.enabled && (

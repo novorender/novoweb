@@ -322,7 +322,7 @@
     "selectDeviationProfile": "Sélectionner le profil de déviation",
     "notSetUpForProject": "{{name}} n'a pas été configuré pour ce projet.",
     "logInToAccess": "Connectez-vous pour accéder à {{name}}.",
-    "integrationCredentials": "identifiants d'intégration",
+    "addIntegrationCredentials": "Ajouter les identifiants d'intégration {{name}}",
     "invalidCredentials": "Identifiants invalides.",
     "follow": "Suivre",
     "followFrom": "Suivre à partir de:",
@@ -537,5 +537,7 @@
     "outsideRange": "En dehors de la plage -1 à 1",
     "showingIssues": "Affichage de {{count}} sur {{total}} problèmes",
     "logInTo": "Se connecter à {{name}}",
-    "redirectsTo": "Redirige vers la page de connexion {{name}} en dehors de Novorender."
+    "redirectsTo": "Redirige vers la page de connexion {{name}} en dehors de Novorender.",
+    "failedToSaveSettings": "Échec de l'enregistrement des paramètres",
+    "settingsSuccessfullySaved": "Paramètres enregistrés avec succès"
 }
