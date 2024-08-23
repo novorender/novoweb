@@ -41,7 +41,7 @@ export function RunLog({ data }: { data: UiDeviationConfig }) {
                             msg = (
                                 <>
                                     {t("profile")}
-                                    <strong>{profile.name}</strong>:{entry.message}
+                                    <strong>{profile.name}</strong>: {entry.message}
                                 </>
                             );
                     }

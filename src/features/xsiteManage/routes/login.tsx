@@ -65,14 +65,12 @@ export function Login({ sceneId }: { sceneId: string }) {
                         loading={loading}
                         loadingIndicator={
                             <Box position={"relative"} display="flex" alignItems="center" minWidth={190}>
-                                {t("logInTo")}
-                                {t(featuresConfig.xsiteManage.nameKey)}
+                                {t("logInTo", { name: t(featuresConfig.xsiteManage.nameKey) })}
                                 <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
                             </Box>
                         }
                     >
-                        {t("logInTo")}
-                        {t(featuresConfig.xsiteManage.nameKey)}
+                        {t("logInTo", { name: t(featuresConfig.xsiteManage.nameKey) })}
                     </LoadingButton>
                 </Box>
                 <Typography textAlign={"center"} color={theme.palette.text.secondary}>

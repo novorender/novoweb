@@ -115,9 +115,7 @@ export function AddObjects({
 
             if (idCount === 0) {
                 setLimitSnackbarOpen(true);
-                setSnackbarMessage(
-                    `No objects found satisfying the search criteria. Ensure objects you're looking for have GUID property defined.`,
-                );
+                setSnackbarMessage(t("noObjectsFound"));
             }
         } catch {
             return setStatus({

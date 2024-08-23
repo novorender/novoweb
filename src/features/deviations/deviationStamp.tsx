@@ -15,7 +15,7 @@ export function DeviationStamp() {
     return (
         <Box sx={{ pointerEvents: "auto" }}>
             <MenuItem>
-                {`${t("deviation")} ${stamp.data.deviation === MAX_FLOAT ? "Outside range -1 to 1" : stamp.data.deviation.toFixed(3)}`}
+                {`${t("deviation")} ${stamp.data.deviation === MAX_FLOAT ? t("outsideRange") : stamp.data.deviation.toFixed(3)}`}
             </MenuItem>
         </Box>
     );

@@ -175,9 +175,7 @@ export function List() {
                         <Box>
                             {objects.data.length !== basket.length && (
                                 <Typography sx={{ px: 1, pt: 1, display: "block" }} variant="caption">
-                                    {t("showing")}
-                                    {objects.data.length} {t("/")}
-                                    {basket.length} {t("objectsInBasket")}
+                                    {t("objectsInBasket", { count: objects.data.length, total: basket.length })}
                                 </Typography>
                             )}
                             <MuiList disablePadding>

@@ -58,19 +58,16 @@ export function Login({ sceneId }: { sceneId: string }) {
                         loading={loading}
                         loadingIndicator={
                             <Box position={"relative"} display="flex" alignItems="center" minWidth={220}>
-                                {t("logInTo")}
-                                {t(featuresConfig.bimTrack.nameKey)}
+                                {t("logInTo", { name: t(featuresConfig.bimTrack.nameKey) })}
                                 <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
                             </Box>
                         }
                     >
-                        {t("logInTo")}
-                        {t(featuresConfig.bimTrack.nameKey)}
+                        {t("logInTo", { name: t(featuresConfig.bimTrack.nameKey) })}
                     </LoadingButton>
                 </Box>
                 <Typography textAlign={"center"} color={theme.palette.text.secondary}>
-                    {t("redirectsTo")}
-                    {t(featuresConfig.bimTrack.nameKey)} {t("loginPageOutside")}
+                    {t("redirectsTo", { name: t(featuresConfig.bimTrack.nameKey) })}
                 </Typography>
             </ScrollBox>
         </>

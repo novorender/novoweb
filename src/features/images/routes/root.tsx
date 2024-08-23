@@ -2,6 +2,7 @@ import { CancelPresentation, FilterAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, Typography, useTheme } from "@mui/material";
 import { ObjectDB } from "@novorender/data-js-api";
 import { SearchPattern } from "@novorender/webgl-api";
+import { t } from "i18next";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
@@ -263,8 +264,6 @@ async function loadImages({
         store.dispatch(imagesActions.setImages({ status: AsyncStatus.Success, data: images }));
     } catch (e) {
         console.warn(e);
-        store.dispatch(
-            imagesActions.setImages({ status: AsyncStatus.Error, msg: "An error occurred while loading images." }),
-        );
+        store.dispatch(imagesActions.setImages({ status: AsyncStatus.Error, msg: t("errorLoadingImages") }));
     }
 }

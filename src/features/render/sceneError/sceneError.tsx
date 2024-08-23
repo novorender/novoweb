@@ -103,16 +103,16 @@ export function SceneError() {
                     <Box>
                         <Typography paragraph variant="h4" component="h1" align="center">
                             {error === ErrorKind.NOT_AUTHORIZED
-                                ? "Unable to access scene"
+                                ? t("notAuthorized")
                                 : error === ErrorKind.UNKNOWN_ERROR
-                                  ? "An error occurred"
+                                  ? t("unknownError")
                                   : error === ErrorKind.OFFLINE_UNAVAILABLE
-                                    ? `Offline scene not found`
+                                    ? t("offlineUnavailable")
                                     : error === ErrorKind.INVALID_SCENE
-                                      ? `Scene not found`
+                                      ? t("invalidScene")
                                       : error === ErrorKind.DELETED_SCENE
-                                        ? "Deleted scene"
-                                        : "Unable to load scene"}
+                                        ? t("deletedScene")
+                                        : t("unableToLoadScene")}
                         </Typography>
                         <Alert severity="warning" sx={{ mb: 2 }}>
                             {error === ErrorKind.NOT_AUTHORIZED && user && (

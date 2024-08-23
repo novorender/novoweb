@@ -76,9 +76,7 @@ export function Project() {
             <Box py={1} height={1} display="flex" flexDirection="column">
                 <Box sx={{ px: 1, my: 1 }}>
                     <Typography variant="body2">
-                        {t("showing")}
-                        {filteredTopics.length} {t("of")}
-                        {topics.length} {t("issues")}
+                        {t("showingIssues", { count: filteredTopics.length, total: topics.length })}
                     </Typography>
                 </Box>
                 <Box flex={"1 1 100%"}>
