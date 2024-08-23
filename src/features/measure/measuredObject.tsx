@@ -567,6 +567,18 @@ export function MeasurementData({
                                 </Grid>
                             </ListItem>
                         ) : null}
+                        {measureValues.area ? (
+                            <ListItem>
+                                <Grid container>
+                                    <Grid item xs={5}>
+                                        Area
+                                    </Grid>
+                                    <Grid item xs={5}>
+                                        {measureValues.area.toFixed(3)} &#13217;
+                                    </Grid>
+                                </Grid>
+                            </ListItem>
+                        ) : null}
                     </List>
                     {measureValues.vertices.length ? (
                         <Box p={1}>
