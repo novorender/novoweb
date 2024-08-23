@@ -26,7 +26,7 @@ import {
     selectWidgets,
 } from "slices/explorer";
 
-import { ScrollBox } from "../../../components/scrollBox";
+import { WidgetBottomScrollBox } from "../../../components/scrollBox";
 import { WidgetMenuButtonWrapper } from "../../../components/widgetMenuButtonWrapper";
 import { groupSorting } from "../sorting";
 
@@ -94,7 +94,7 @@ export function Root({
                     position="absolute"
                 />
             </Box>
-            <ScrollBox flexGrow={1} py={2}>
+            <WidgetBottomScrollBox flexGrow={1} py={2}>
                 {widgetGroups.map(({ groupKey, groupName, GroupIcon, widgets }) => {
                     return (
                         <GroupAccordion
@@ -156,7 +156,7 @@ export function Root({
                         </GroupAccordion>
                     );
                 })}
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }

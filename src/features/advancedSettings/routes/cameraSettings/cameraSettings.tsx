@@ -17,7 +17,15 @@ import { ChangeEvent, FormEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
+import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    Divider,
+    LinearProgress,
+    Switch,
+    WidgetBottomScrollBox,
+} from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectDefaultTopDownElevation, selectTopDownSnapToAxis } from "features/orthoCam";
 import {
@@ -174,7 +182,7 @@ export function CameraSettings({
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} mt={1} pb={3}>
+            <WidgetBottomScrollBox height={1} mt={1} pb={3}>
                 <Typography p={1} pb={0} variant="h6" fontWeight={600}>
                     Camera settings
                 </Typography>
@@ -511,7 +519,7 @@ export function CameraSettings({
                 >
                     Save default camera position
                 </Button>
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }

@@ -5,7 +5,7 @@ import { useHistory } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, LinearProgress, ScrollBox } from "components";
+import { Divider, LinearProgress, WidgetBottomScrollBox } from "components";
 import { GroupStatus } from "contexts/objectGroups";
 import { selectViewMode } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
@@ -160,7 +160,7 @@ export function BookmarkList() {
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox display="flex" flexDirection="column" height={1} pb={2}>
+            <WidgetBottomScrollBox display="flex" flexDirection="column" height={1} pb={2}>
                 {bookmarksStatus === AsyncStatus.Error && (
                     <>
                         <Typography p={1} mb={3}>
@@ -183,7 +183,7 @@ export function BookmarkList() {
                 {collections.map((collection) => (
                     <Collection bookmarks={filteredBookmarks} key={collection} collection={collection} />
                 ))}
-            </ScrollBox>
+            </WidgetBottomScrollBox>
             <FilterMenu
                 anchorEl={filterMenuAnchor}
                 open={Boolean(filterMenuAnchor)}

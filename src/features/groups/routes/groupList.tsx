@@ -3,7 +3,7 @@ import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
-import { Divider, LinearProgress, ScrollBox } from "components";
+import { Divider, LinearProgress, WidgetBottomScrollBox } from "components";
 import {
     GroupStatus,
     isInternalGroup,
@@ -93,7 +93,7 @@ export function GroupList() {
                 </Box>
             ) : null}
 
-            <ScrollBox display="flex" flexDirection="column" height={1} pt={1} pb={2}>
+            <WidgetBottomScrollBox display="flex" flexDirection="column" height={1} pt={1} pb={2}>
                 <StyledListItemButton
                     disableRipple
                     disabled={isLoading}
@@ -178,7 +178,7 @@ export function GroupList() {
                 {collections.map((collection) => (
                     <Collection disabled={isLoading} key={collection} collection={collection} />
                 ))}
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }

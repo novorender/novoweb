@@ -36,8 +36,8 @@ import {
     Divider,
     IosSwitch,
     LinearProgress,
-    ScrollBox,
     Tooltip,
+    WidgetBottomScrollBox,
 } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -323,7 +323,7 @@ export function Root() {
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox pb={2} {...bindResizeHandlers()}>
+            <WidgetBottomScrollBox pb={2} {...bindResizeHandlers()}>
                 {mainObject === undefined && <Box p={1}>Select an object to view properties.</Box>}
                 {mainObject !== undefined && object ? (
                     <>
@@ -357,7 +357,7 @@ export function Root() {
                         ) : null}
                     </>
                 ) : null}
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }

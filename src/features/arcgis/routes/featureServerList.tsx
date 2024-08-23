@@ -27,7 +27,7 @@ import { useCallback, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Accordion, AccordionDetails, AccordionSummary, ScrollBox } from "components";
+import { Accordion, AccordionDetails, AccordionSummary, WidgetBottomScrollBox } from "components";
 import { CameraType, renderActions } from "features/render";
 import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
@@ -143,7 +143,7 @@ export function FeatureServerList() {
                             </Box>
                         )}
 
-                    <ScrollBox display="flex" flexDirection="column" height={1} pt={1} pb={2}>
+                    <WidgetBottomScrollBox display="flex" flexDirection="column" height={1} pt={1} pb={2}>
                         {featureServers.data.map((featureServer) => {
                             return (
                                 <FeatureServerItem
@@ -158,7 +158,7 @@ export function FeatureServerList() {
                                 />
                             );
                         })}
-                    </ScrollBox>
+                    </WidgetBottomScrollBox>
                 </>
             ) : null}
         </>

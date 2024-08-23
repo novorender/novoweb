@@ -3,7 +3,7 @@ import { Box, Button, Checkbox, Divider, FormControlLabel } from "@mui/material"
 import { useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { IosSwitch, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import { IosSwitch, LogoSpeedDial, WidgetBottomScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { Picker, renderActions, selectPicker } from "features/render";
@@ -97,7 +97,7 @@ export default function Area() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox flexDirection="column" display={menuOpen || minimized ? "none" : "flex"}>
+                <WidgetBottomScrollBox flexDirection="column" display={menuOpen || minimized ? "none" : "flex"}>
                     <Box px={1} pt={1}>
                         <FormControlLabel
                             control={
@@ -119,7 +119,7 @@ export default function Area() {
                             <Box p={1}>Area: {area.toFixed(3)} &#13217;</Box>
                         </>
                     ) : null}
-                </ScrollBox>
+                </WidgetBottomScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.area.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
