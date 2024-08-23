@@ -106,14 +106,36 @@ export function WidgetGroupPanel() {
 }
 
 function BottomPanel() {
+    // complicated margins/width/heights and wrappers around the panel and svg are all for good shadows
     return (
         <Box sx={{ position: "absolute", display: "flex", height: "64px", bottom: 0, left: 0, width: "100%" }}>
-            <HudPanel
-                sx={{ flex: "auto", borderTopLeftRadius: 0, borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
-            ></HudPanel>
-            <svg width="64" height="64" viewBox="0 0 64 64" fill="white">
-                <path d="m 0 0 v 64 a 16 16 0 0 0 16 -16 a 36 36 0 0 1 32 -32 A 16 16 0 0 0 64 0 z" />
-            </svg>
+            <Box sx={{ flex: "auto", overflow: "hidden", ml: "-10px", mb: "-10px" }}>
+                <HudPanel
+                    sx={{
+                        height: "calc(100% - 10px)",
+                        borderTopLeftRadius: 0,
+                        borderTopRightRadius: 0,
+                        borderBottomRightRadius: 0,
+                        ml: "10px",
+                        mb: "10px",
+                        filter: "drop-shadow(0px 2px 4px rgba(0,0,0,0.2)) drop-shadow(0px 4px 5px rgba(0,0,0,0.14)) drop-shadow(0px 1px 10px rgba(0,0,0,0.12))",
+                    }}
+                    elevation={0}
+                ></HudPanel>
+            </Box>
+            <Box sx={{ overflow: "hidden", width: "74px", mr: "-10px", mb: "-10px" }}>
+                <svg
+                    width="64"
+                    height="64"
+                    viewBox="0 0 64 64"
+                    fill="white"
+                    style={{
+                        filter: "drop-shadow(0px 2px 4px rgba(0,0,0,0.2)) drop-shadow(0px 4px 5px rgba(0,0,0,0.14)) drop-shadow(0px 1px 10px rgba(0,0,0,0.12))",
+                    }}
+                >
+                    <path d="m 0 0 v 64 a 16 16 0 0 0 16 -16 a 36 36 0 0 1 32 -32 A 16 16 0 0 0 64 0 z" />
+                </svg>
+            </Box>
         </Box>
     );
 }

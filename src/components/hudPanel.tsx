@@ -2,7 +2,7 @@ import { css, Paper, PaperProps, styled } from "@mui/material";
 import { ForwardedRef, forwardRef } from "react";
 
 export const HudPanel = styled(
-    forwardRef((props: PaperProps, ref: ForwardedRef<HTMLDivElement>) => <Paper ref={ref} elevation={0} {...props} />)
+    forwardRef((props: PaperProps, ref: ForwardedRef<HTMLDivElement>) => <Paper ref={ref} elevation={4} {...props} />)
 )(
     ({ theme }) => css`
         border-radius: ${theme.customShape.hudPanelBorderRadius}px;

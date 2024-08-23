@@ -16,7 +16,7 @@ const ConnectedPaper = (props: PaperProps) => {
 
     return (
         <Paper
-            elevation={newDesign ? 0 : 4}
+            elevation={4}
             sx={{ borderRadius: `${newDesign ? theme.customShape.hudPanelBorderRadius : theme.shape.borderRadius}px` }}
             {...props}
             onClick={() => dispatch(renderActions.setStamp(null))}
