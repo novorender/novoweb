@@ -90,8 +90,7 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
             />
             <ScrollBox p={1} component="form" onSubmit={handleSubmit}>
                 <Typography fontWeight={600} mb={2}>
-                    {t("add")}
-                    {t(featuresConfig.ditio.nameKey)} {t("integrationCredentials")}
+                    {t("addIntegrationCredentials", { name: t(featuresConfig.ditio.nameKey) })}
                 </Typography>
 
                 <TextField

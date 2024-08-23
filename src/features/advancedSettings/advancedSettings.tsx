@@ -65,6 +65,7 @@ export default function AdvancedSettings() {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.advancedSettings.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.advancedSettings.key);
@@ -212,7 +213,7 @@ export default function AdvancedSettings() {
                         open={showSnackbar}
                         onClose={() => setStatus(Status.Idle)}
                         message={
-                            status === Status.SaveError ? "Failed to save settings" : "Settings successfully saved"
+                            status === Status.SaveError ? t("failedToSaveSettings") : t("settingsSuccessfullySaved")
                         }
                         action={
                             <IconButton

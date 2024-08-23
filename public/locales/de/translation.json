@@ -322,7 +322,7 @@
     "selectDeviationProfile": "Abweichungsprofil auswählen",
     "notSetUpForProject": "{{name}} wurde für dieses Projekt nicht eingerichtet.",
     "logInToAccess": "Melden Sie sich an, um auf {{name}} zuzugreifen.",
-    "integrationCredentials": "Integrations-Anmeldeinformationen",
+    "addIntegrationCredentials": "{{name}}-Integrationsanmeldedaten hinzufügen",
     "invalidCredentials": "Ungültige Anmeldeinformationen.",
     "follow": "Folgen",
     "followFrom": "Folgen von:",
@@ -537,5 +537,7 @@
     "outsideRange": "Außerhalb des Bereichs -1 bis 1",
     "showingIssues": "Zeige {{count}} von {{total}} Problemen",
     "logInTo": "Bei {{name}} anmelden",
-    "redirectsTo": "Leitet zur {{name}}-Anmeldeseite außerhalb von Novorender weiter."
+    "redirectsTo": "Leitet zur {{name}}-Anmeldeseite außerhalb von Novorender weiter.",
+    "failedToSaveSettings": "Speichern der Einstellungen fehlgeschlagen",
+    "settingsSuccessfullySaved": "Einstellungen erfolgreich gespeichert"
 }
