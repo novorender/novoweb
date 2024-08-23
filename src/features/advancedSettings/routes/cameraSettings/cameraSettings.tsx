@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { quat, vec3 } from "gl-matrix";
 import { ChangeEvent, FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -57,6 +58,7 @@ export function CameraSettings({
     }) => Promise<void>;
     saving: boolean;
 }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const theme = useTheme();
     const {
@@ -85,7 +87,7 @@ export function CameraSettings({
         max: String(proportionalSpeed.max),
     });
     const [defaultTopDownElevationInput, setDefaultTopDownElevationInput] = useState(
-        defaultTopDownElevation !== undefined ? String(defaultTopDownElevation) : ""
+        defaultTopDownElevation !== undefined ? String(defaultTopDownElevation) : "",
     );
 
     const handleSpeedChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -112,7 +114,7 @@ export function CameraSettings({
         };
 
         setSpeeds(
-            Object.fromEntries(Object.entries(levels).map(([key, value]) => [key, String(value)])) as typeof speeds
+            Object.fromEntries(Object.entries(levels).map(([key, value]) => [key, String(value)])) as typeof speeds,
         );
         dispatch(renderActions.setCameraDefaults({ pinhole: { speedLevels: levels } }));
     };
@@ -161,11 +163,11 @@ export function CameraSettings({
                 <Box display="flex" justifyContent="space-between">
                     <Button onClick={() => history.goBack()} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <Button sx={{ ml: "auto" }} onClick={save} color="grey" disabled={saving}>
                         <Save sx={{ mr: 1 }} />
-                        Save
+                        {t("save")}
                     </Button>
                 </Box>
             </Box>
@@ -176,12 +178,12 @@ export function CameraSettings({
             ) : null}
             <ScrollBox height={1} mt={1} pb={3}>
                 <Typography p={1} pb={0} variant="h6" fontWeight={600}>
-                    Camera settings
+                    {t("cameraSettings")}
                 </Typography>
                 <Divider sx={{ my: 1 }} />
                 <Clipping />
                 <Accordion>
-                    <AccordionSummary>Movement speed</AccordionSummary>
+                    <AccordionSummary>{t("movementSpeed")}</AccordionSummary>
                     <AccordionDetails>
                         <Box
                             p={1}
@@ -194,7 +196,7 @@ export function CameraSettings({
                             <BaseDivider sx={{ mb: 1, color: theme.palette.grey[500] }} />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <InputLabel sx={{ color: "text.primary" }} htmlFor="slowSpeed">
-                                    Slow:
+                                    {t("slow")}
                                 </InputLabel>
                                 <OutlinedInput
                                     id="slowSpeed"
@@ -210,7 +212,7 @@ export function CameraSettings({
                             <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <InputLabel sx={{ color: "text.primary" }} htmlFor="defaultSpeed">
-                                    Default:
+                                    {t("default")}
                                 </InputLabel>
                                 <OutlinedInput
                                     id="defaultSpeed"
@@ -226,7 +228,7 @@ export function CameraSettings({
                             <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <InputLabel sx={{ color: "text.primary" }} htmlFor="fastSpeed">
-                                    Fast:
+                                    {t("fast")}
                                 </InputLabel>
                                 <OutlinedInput
                                     id="fastSpeed"
@@ -246,7 +248,7 @@ export function CameraSettings({
                 </Accordion>
 
                 <Accordion>
-                    <AccordionSummary>Proportional movement speed</AccordionSummary>
+                    <AccordionSummary>{t("proportionalMovementSpeed")}</AccordionSummary>
                     <AccordionDetails>
                         <Box px={1} mt={1}>
                             <FormControlLabel
@@ -263,14 +265,14 @@ export function CameraSettings({
                                                             enabled: !proportionalSpeed.enabled,
                                                         },
                                                     },
-                                                })
+                                                }),
                                             );
                                         }}
                                     />
                                 }
                                 label={
                                     <Box ml={1} fontSize={16}>
-                                        Enabled
+                                        {t("enabled")}
                                     </Box>
                                 }
                             />
@@ -286,7 +288,7 @@ export function CameraSettings({
                             <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <InputLabel sx={{ color: "text.primary" }} htmlFor="proportional-speed_min">
-                                    Min:
+                                    {t("minName")}
                                 </InputLabel>
                                 <OutlinedInput
                                     id="proportional-speed_min"
@@ -308,7 +310,7 @@ export function CameraSettings({
                             <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <InputLabel sx={{ color: "text.primary" }} htmlFor="proportional-speed_max">
-                                    Max:
+                                    {t("maxName")}
                                 </InputLabel>
                                 <OutlinedInput
                                     id="proportional-speed_max"
@@ -334,13 +336,13 @@ export function CameraSettings({
                 </Accordion>
 
                 <Accordion>
-                    <AccordionSummary>Controls</AccordionSummary>
+                    <AccordionSummary>{t("controls")}</AccordionSummary>
                     <AccordionDetails>
                         <Box p={1} display="flex" flexDirection="column">
                             <BaseDivider sx={{ mb: 1, color: theme.palette.grey[500] }} />
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <InputLabel id="controls-label" sx={{ color: "text.primary" }}>
-                                    Controls
+                                    {t("controls")}
                                 </InputLabel>
                                 <Select
                                     labelId="controls-label"
@@ -375,7 +377,7 @@ export function CameraSettings({
                 </Accordion>
 
                 <Accordion>
-                    <AccordionSummary>2D</AccordionSummary>
+                    <AccordionSummary>{t("2d")}</AccordionSummary>
                     <AccordionDetails>
                         <Box px={1} mt={1} display={"flex"} flexDirection={"column"}>
                             <FormControlLabel
@@ -388,14 +390,14 @@ export function CameraSettings({
                                             dispatch(
                                                 renderActions.setCameraDefaults({
                                                     orthographic: { usePointerLock: !usePointerLock },
-                                                })
+                                                }),
                                             );
                                         }}
                                     />
                                 }
                                 label={
                                     <Box ml={1} fontSize={16}>
-                                        Reset pointer when released
+                                        {t("resetPointerWhenReleased")}
                                     </Box>
                                 }
                             />
@@ -409,14 +411,14 @@ export function CameraSettings({
                                             dispatch(
                                                 renderActions.setCameraDefaults({
                                                     orthographic: { deAcceleration: !deAcceleration },
-                                                })
+                                                }),
                                             );
                                         }}
                                     />
                                 }
                                 label={
                                     <Box ml={1} fontSize={16}>
-                                        Gradual deceleration
+                                        {t("gradualDeceleration")}
                                     </Box>
                                 }
                             />
@@ -430,14 +432,14 @@ export function CameraSettings({
                                             dispatch(
                                                 renderActions.setCameraDefaults({
                                                     orthographic: { touchRotate: !touchRotate },
-                                                })
+                                                }),
                                             );
                                         }}
                                     />
                                 }
                                 label={
                                     <Box ml={1} fontSize={16}>
-                                        Two-finger rotation (touch)
+                                        {t("twoFingerRotation")}
                                     </Box>
                                 }
                             />
@@ -455,14 +457,14 @@ export function CameraSettings({
                                                             ? "north"
                                                             : undefined,
                                                     },
-                                                })
+                                                }),
                                             );
                                         }}
                                     />
                                 }
                                 label={
                                     <Box ml={1} fontSize={16}>
-                                        Top-down point north
+                                        {t("topDownPointNorth")}
                                     </Box>
                                 }
                             />
@@ -471,7 +473,7 @@ export function CameraSettings({
                         <Box px={1} component="form" onSubmit={handleDefaultTopDownElevationSubmit}>
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <InputLabel sx={{ color: "text.primary" }} htmlFor="topdown-elevation">
-                                    Top-down elevation (meters):
+                                    {t("topDownElevation")}
                                 </InputLabel>
                                 <OutlinedInput
                                     id="topdown-elevation"
@@ -486,7 +488,7 @@ export function CameraSettings({
                                     inputProps={{ inputMode: "numeric", pattern: "[0-9,.]*" }}
                                 />
                             </Box>
-                            <FormHelperText>Leave blank to use current camera elevation.</FormHelperText>
+                            <FormHelperText>{t("leaveBlank")}</FormHelperText>
                         </Box>
                     </AccordionDetails>
                 </Accordion>
@@ -509,7 +511,7 @@ export function CameraSettings({
                         });
                     }}
                 >
-                    Save default camera position
+                    {t("saveDefaultCameraPosition")}
                 </Button>
             </ScrollBox>
         </>

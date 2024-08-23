@@ -12,6 +12,7 @@ import {
     Tooltip,
 } from "@mui/material";
 import { FormEventHandler, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -23,6 +24,7 @@ import { FeatureServerDefinition } from "../arcgisTypes";
 import { FeatureServer } from "../types";
 
 export function EditFeatureServer() {
+    const { t } = useTranslation();
     const history = useHistory();
     const dispatch = useAppDispatch();
     const featureServerId = useLocation<{ id?: string }>().state?.id;
@@ -42,13 +44,13 @@ export function EditFeatureServer() {
             layerWhere: "",
             layers: [],
             definition: { status: AsyncStatus.Initial },
-        }
+        },
     );
     const [urlChanged, setUrlChanged] = useState(false);
     const [nameChanged, setNameChanged] = useState(false);
 
     const [useOnlySelectedLayers, setUseOnlySelectedLayers] = useState(
-        (featureServer.enabledLayerIds?.length ?? 0) > 0
+        (featureServer.enabledLayerIds?.length ?? 0) > 0,
     );
     const [fsDefinition, setFsDefinition] = useState<AsyncState<FeatureServerDefinition>>({
         status: AsyncStatus.Initial,
@@ -65,7 +67,7 @@ export function EditFeatureServer() {
             const url = parsedUrl.origin + parsedUrl.pathname;
             const match = url.match(/(.+\/FeatureServer)\/(\d+)\/*$/);
             return match ? [match[1], Number(match[2])] : [url, undefined];
-        } catch (ex) {
+        } catch {
             return ["", undefined];
         }
     }, [featureServer.url]);
@@ -111,7 +113,7 @@ export function EditFeatureServer() {
 
                 setFsDefinition({ status: AsyncStatus.Success, data: respJson });
                 setFeatureServer((config) => ({ ...config, url: fsUrl }));
-            } catch (e) {
+            } catch {
                 setFsDefinition({ status: AsyncStatus.Error, msg: "Error loading feature server information" });
             }
         }
@@ -169,7 +171,7 @@ export function EditFeatureServer() {
         } else {
             try {
                 new URL(featureServer.url);
-            } catch (ex) {
+            } catch {
                 urlError = "Invalid URL";
             }
         }
@@ -287,7 +289,7 @@ export function EditFeatureServer() {
                                 }
                                 label={
                                     <Box mr={0.5} display="flex" gap={2} alignItems="baseline">
-                                        <Box>Use only selected layers</Box>
+                                        <Box>{t("useOnlySelectedLayers")}</Box>
                                         <Button
                                             variant="text"
                                             size="small"
@@ -299,7 +301,7 @@ export function EditFeatureServer() {
                                                         : "none",
                                             }}
                                         >
-                                            Select layers
+                                            {t("selectLayers")}
                                         </Button>
                                     </Box>
                                 }
@@ -309,9 +311,9 @@ export function EditFeatureServer() {
                 ) : fsDefinition.status === AsyncStatus.Success ? (
                     <>
                         <Box mr={0.5} display="flex" justifyContent="space-between" alignItems="baseline" width="100%">
-                            <div>Select layers</div>
+                            <div>{t("selectLayers")}</div>
                             <Button variant="text" size="small" onClick={() => setIsEditingLayerList(false)}>
-                                Back
+                                {t("back")}
                             </Button>
                         </Box>
                         <LayerList
@@ -327,7 +329,7 @@ export function EditFeatureServer() {
                                     setFeatureServer({
                                         ...featureServer,
                                         enabledLayerIds: [...(featureServer.enabledLayerIds || []), layerId].sort(
-                                            (a, b) => a - b
+                                            (a, b) => a - b,
                                         ),
                                     });
                                 }

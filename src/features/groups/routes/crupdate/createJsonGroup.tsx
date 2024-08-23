@@ -2,6 +2,7 @@ import { LoadingButton } from "@mui/lab";
 import { Box, Button, FormControlLabel, Link, Modal, Typography, useTheme } from "@mui/material";
 import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
 import { FormEventHandler, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch } from "react-router-dom";
 
 import { ScrollBox, Switch, TextField } from "components";
@@ -40,6 +41,7 @@ export function CreateJsonGroup({
     const {
         state: { db },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const dispatchHighlighted = useDispatchHighlighted();
 
     const [status, setStatus] = useState(Status.Initial);
@@ -121,7 +123,7 @@ export function CreateJsonGroup({
                 >
                     <ScrollBox width={1} px={{ xs: 2, sm: 8 }} py={8} component="form" onSubmit={handleSubmit}>
                         <Typography mb={1} fontSize={24} fontWeight={700} textAlign="center" component="h1">
-                            Input JSON
+                            {t("inputJSON")}
                         </Typography>
 
                         <Box mb={3} component="pre" textAlign="center">
@@ -164,7 +166,7 @@ export function CreateJsonGroup({
                             }
                             label={
                                 <Box ml={1} fontSize={16}>
-                                    Include child objects of search result
+                                    {t("includeChildObjects")}
                                 </Box>
                             }
                         />
@@ -178,7 +180,7 @@ export function CreateJsonGroup({
                                 sx={{ mr: 3 }}
                                 onClick={() => history.goBack()}
                             >
-                                Cancel
+                                {t("cancel")}
                             </Button>
                             <Box display="flex">
                                 <LoadingButton
@@ -190,10 +192,10 @@ export function CreateJsonGroup({
                                     loading={status === Status.Searching}
                                     loadingIndicator="Searching..."
                                 >
-                                    Search
+                                    {t("search")}
                                 </LoadingButton>
                                 <Button disabled={disableNext} size="large" variant="contained" type="submit">
-                                    Next ({ids.length})
+                                    {t("nextLen", { length: ids.length })}
                                 </Button>
                             </Box>
                         </Box>

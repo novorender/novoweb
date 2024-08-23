@@ -1,6 +1,7 @@
 import { ArrowBack } from "@mui/icons-material";
 import { Box, Button, useTheme } from "@mui/material";
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
@@ -9,6 +10,7 @@ import { useCreateCommentMutation } from "../jiraApi";
 import { AdfNode } from "../types";
 
 export function CreateComment() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
 
@@ -69,7 +71,7 @@ export function CreateComment() {
             <Box display="flex" alignItems="center" boxShadow={theme.customShadows.widgetHeader}>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
-                    Back
+                    {t("back")}
                 </Button>
             </Box>
 
@@ -102,7 +104,7 @@ export function CreateComment() {
                                 disabled={loading}
                                 onClick={() => history.goBack()}
                             >
-                                Cancel
+                                {t("cancel")}
                             </Button>
                             <Button
                                 sx={{ ml: 2 }}
@@ -111,7 +113,7 @@ export function CreateComment() {
                                 type="submit"
                                 disabled={loading || !comment}
                             >
-                                Add comment
+                                {t("addComment")}
                             </Button>
                         </Box>
                     </form>

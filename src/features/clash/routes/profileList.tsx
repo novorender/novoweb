@@ -1,4 +1,5 @@
 import { Box, List, ListItemButton, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { LinearProgress, ScrollBox } from "components";
@@ -11,6 +12,7 @@ export default function ProfileList() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
 
@@ -28,7 +30,7 @@ export default function ProfileList() {
                 </Box>
             ) : !data ? (
                 <Box color="grey" m={4} textAlign="center">
-                    No clash profiles
+                    {t("noClashProfiles")}
                 </Box>
             ) : (
                 <ScrollBox>

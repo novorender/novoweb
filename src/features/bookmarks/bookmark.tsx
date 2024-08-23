@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { css } from "@mui/styled-engine";
 import { MouseEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
@@ -40,7 +41,7 @@ const Description = styled(Typography)(
         -webkit-box-orient: vertical;
         flex: 1 1 100%;
         height: 0;
-    `
+    `,
 );
 
 const ImgTooltip = styled(({ className, ...props }: TooltipProps) => (
@@ -54,7 +55,7 @@ const ImgTooltip = styled(({ className, ...props }: TooltipProps) => (
             border-radius: 4px;
             border: 1px solid ${theme.palette.grey.A400};
         }
-    `
+    `,
 );
 
 const Img = styled("img")(
@@ -63,13 +64,14 @@ const Img = styled("img")(
         width: 100%;
         object-fit: cover;
         display: block;
-    `
+    `,
 );
 
 export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
     const {
         state: { canvas },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -100,14 +102,14 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
             await dataApi.saveBookmarks(
                 sceneId,
                 newBookmarks.filter((bm) => bm.access === bookmark.access).map(({ access: _access, ...bm }) => bm),
-                { personal: bookmark.access === BookmarkAccess.Personal }
+                { personal: bookmark.access === BookmarkAccess.Personal },
             );
             dispatch(bookmarksActions.setBookmarks(newBookmarks));
             dispatch(
                 bookmarksActions.setSaveStatus({
                     status: AsyncStatus.Success,
                     data: "Bookmark updated",
-                })
+                }),
             );
         } catch (e) {
             console.warn(e);
@@ -115,7 +117,7 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                 bookmarksActions.setSaveStatus({
                     status: AsyncStatus.Error,
                     msg: "An error occurred while updating the bookmark.",
-                })
+                }),
             );
         }
 
@@ -182,7 +184,7 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                     <MenuItem
                         onClick={() => {
                             navigator.clipboard.writeText(
-                                `${window.location.origin}${window.location.pathname}?bookmarkId=${bookmark.id}`
+                                `${window.location.origin}${window.location.pathname}?bookmarkId=${bookmark.id}`,
                             );
                             closeMenu();
                         }}
@@ -190,7 +192,7 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                         <ListItemIcon>
                             <Share fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Share</ListItemText>
+                        <ListItemText>{t("share")}</ListItemText>
                     </MenuItem>
                 )}
                 {(isAdmin || (bookmark.access === BookmarkAccess.Personal && user)) && [
@@ -214,19 +216,19 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                         <ListItemIcon>
                             <Edit fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Edit</ListItemText>
+                        <ListItemText>{t("edit")}</ListItemText>
                     </MenuItem>,
                     <MenuItem key="update" onClick={handleUpdate}>
                         <ListItemIcon>
                             <Cached fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Update</ListItemText>
+                        <ListItemText>{t("update")}</ListItemText>
                     </MenuItem>,
                     <MenuItem key="delete" onClick={() => history.push(`delete/${bookmark.id}`)}>
                         <ListItemIcon>
                             <Delete fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Delete</ListItemText>
+                        <ListItemText>{t("delete")}</ListItemText>
                     </MenuItem>,
                 ]}
             </Menu>

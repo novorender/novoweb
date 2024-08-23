@@ -1,6 +1,7 @@
 import { AddCircle, FilterAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, List, ListItemButton, Typography, useTheme } from "@mui/material";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -24,6 +25,7 @@ import {
 } from "../jiraSlice";
 
 export function Issues() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
 
@@ -48,7 +50,7 @@ export function Issues() {
             userId: currentUser?.accountId ?? "",
             filters,
         },
-        { skip: !project || !component || !accessToken, refetchOnMountOrArgChange: true }
+        { skip: !project || !component || !accessToken, refetchOnMountOrArgChange: true },
     );
 
     const {
@@ -60,7 +62,7 @@ export function Issues() {
         {
             project: project?.key ?? "",
         },
-        { skip: !project || !accessToken }
+        { skip: !project || !accessToken },
     );
 
     const { data: user } = useGetCurrentUserQuery(undefined, {
@@ -102,7 +104,7 @@ export function Issues() {
                             color="grey"
                         >
                             <FilterAlt sx={{ mr: 1 }} />
-                            Filters
+                            {t("filters")}
                         </Button>
                         {metaCustomfieldKey && (
                             <FormControlLabel
@@ -116,7 +118,7 @@ export function Issues() {
                                         }}
                                     />
                                 }
-                                label={<Box fontSize={14}>Markers</Box>}
+                                label={<Box fontSize={14}>{t("markers")}</Box>}
                             />
                         )}
                         {permissions.includes("CREATE_ISSUES") && (
@@ -127,7 +129,7 @@ export function Issues() {
                                 color="grey"
                             >
                                 <AddCircle sx={{ mr: 1 }} />
-                                Create
+                                {t("create")}
                             </Button>
                         )}
                     </Box>
@@ -166,7 +168,7 @@ export function Issues() {
                 ) : (
                     <Box flex={"1 1 100%"}>
                         <Typography textAlign={"center"} mt={1}>
-                            No issues found.
+                            {t("noIssuesFound")}
                         </Typography>
                         {Object.values(filters).some((val) => val === true) && (
                             <Box width={1} mt={3} display="flex" justifyContent="center">
@@ -176,7 +178,7 @@ export function Issues() {
                                         dispatch(jiraActions.clearFilters());
                                     }}
                                 >
-                                    Clear filters
+                                    {t("clearFilters")}
                                 </Button>
                             </Box>
                         )}

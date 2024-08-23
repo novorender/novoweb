@@ -36,7 +36,7 @@ export interface OutlineLaser {
 export function getMeasurePointsFromTracer(
     measurement: TraceMeasurement,
     startAr: ReadonlyVec3[],
-    endAr: ReadonlyVec3[]
+    endAr: ReadonlyVec3[],
 ) {
     if (measurement.start && measurement.end) {
         return [measurement.start, measurement.end];
@@ -77,7 +77,7 @@ export const outlineLaserSlice = createSlice({
             state.outlineGroups = state.outlineGroups.map((group) =>
                 group.name === action.payload.name
                     ? { ...group, hidden: action.payload.hide === undefined ? !group.hidden : action.payload.hide }
-                    : group
+                    : group,
             );
         },
         setLaser3d: (state, action: PayloadAction<State["laser3d"]>) => {
@@ -103,9 +103,14 @@ export const outlineLaserSlice = createSlice({
                 state.lasers[action.payload].measurementX &&
                 state.lasers[action.payload].measurementX!.startIdx !== undefined
             ) {
-                state.lasers[action.payload].measurementX!.startIdx === state.lasers[action.payload].left.length - 1
-                    ? (state.lasers[action.payload].measurementX = undefined)
-                    : (state.lasers[action.payload].measurementX!.startIdx! += 1);
+                if (
+                    state.lasers[action.payload].measurementX!.startIdx ===
+                    state.lasers[action.payload].left.length - 1
+                ) {
+                    state.lasers[action.payload].measurementX = undefined;
+                } else {
+                    state.lasers[action.payload].measurementX!.startIdx! += 1;
+                }
             }
         },
         incrementLaserRight: (state, action: PayloadAction<number>) => {
@@ -113,9 +118,14 @@ export const outlineLaserSlice = createSlice({
                 state.lasers[action.payload].measurementX &&
                 state.lasers[action.payload].measurementX!.endIdx !== undefined
             ) {
-                state.lasers[action.payload].measurementX!.endIdx === state.lasers[action.payload].right.length - 1
-                    ? (state.lasers[action.payload].measurementX = undefined)
-                    : (state.lasers[action.payload].measurementX!.endIdx! += 1);
+                if (
+                    state.lasers[action.payload].measurementX!.endIdx ===
+                    state.lasers[action.payload].right.length - 1
+                ) {
+                    state.lasers[action.payload].measurementX = undefined;
+                } else {
+                    state.lasers[action.payload].measurementX!.endIdx! += 1;
+                }
             }
         },
         incrementLaserDown: (state, action: PayloadAction<number>) => {
@@ -123,9 +133,14 @@ export const outlineLaserSlice = createSlice({
                 state.lasers[action.payload].measurementY &&
                 state.lasers[action.payload].measurementY!.startIdx !== undefined
             ) {
-                state.lasers[action.payload].measurementY!.startIdx === state.lasers[action.payload].down.length - 1
-                    ? (state.lasers[action.payload].measurementY = undefined)
-                    : (state.lasers[action.payload].measurementY!.startIdx! += 1);
+                if (
+                    state.lasers[action.payload].measurementY!.startIdx ===
+                    state.lasers[action.payload].down.length - 1
+                ) {
+                    state.lasers[action.payload].measurementY = undefined;
+                } else {
+                    state.lasers[action.payload].measurementY!.startIdx! += 1;
+                }
             }
         },
         incrementLaserUp: (state, action: PayloadAction<number>) => {
@@ -133,9 +148,11 @@ export const outlineLaserSlice = createSlice({
                 state.lasers[action.payload].measurementY &&
                 state.lasers[action.payload].measurementY!.endIdx !== undefined
             ) {
-                state.lasers[action.payload].measurementY!.endIdx === state.lasers[action.payload].up.length - 1
-                    ? (state.lasers[action.payload].measurementY = undefined)
-                    : (state.lasers[action.payload].measurementY!.endIdx! += 1);
+                if (state.lasers[action.payload].measurementY!.endIdx === state.lasers[action.payload].up.length - 1) {
+                    state.lasers[action.payload].measurementY = undefined;
+                } else {
+                    state.lasers[action.payload].measurementY!.endIdx! += 1;
+                }
             }
         },
         incrementLaserZDown: (state, action: PayloadAction<number>) => {
@@ -143,9 +160,14 @@ export const outlineLaserSlice = createSlice({
                 state.lasers[action.payload].measurementZ &&
                 state.lasers[action.payload].measurementZ!.startIdx !== undefined
             ) {
-                state.lasers[action.payload].measurementZ!.startIdx === state.lasers[action.payload].zDown.length - 1
-                    ? (state.lasers[action.payload].measurementZ = undefined)
-                    : (state.lasers[action.payload].measurementZ!.startIdx! += 1);
+                if (
+                    state.lasers[action.payload].measurementZ!.startIdx ===
+                    state.lasers[action.payload].zDown.length - 1
+                ) {
+                    state.lasers[action.payload].measurementZ = undefined;
+                } else {
+                    state.lasers[action.payload].measurementZ!.startIdx! += 1;
+                }
             }
         },
         incrementLaserZUp: (state, action: PayloadAction<number>) => {
@@ -153,9 +175,11 @@ export const outlineLaserSlice = createSlice({
                 state.lasers[action.payload].measurementZ &&
                 state.lasers[action.payload].measurementZ!.endIdx !== undefined
             ) {
-                state.lasers[action.payload].measurementZ!.endIdx === state.lasers[action.payload].zUp.length - 1
-                    ? (state.lasers[action.payload].measurementZ = undefined)
-                    : (state.lasers[action.payload].measurementZ!.endIdx! += 1);
+                if (state.lasers[action.payload].measurementZ!.endIdx === state.lasers[action.payload].zUp.length - 1) {
+                    state.lasers[action.payload].measurementZ = undefined;
+                } else {
+                    state.lasers[action.payload].measurementZ!.endIdx! += 1;
+                }
             }
         },
         removeMeasurementX: (state, action: PayloadAction<number>) => {
@@ -213,7 +237,7 @@ export const outlineLaserSlice = createSlice({
 
 export const selectOutlineGroups = (state: RootState) => state.clippingOutline.outlineGroups;
 export const selectVisibleOutlineGroups = createSelector(selectOutlineGroups, (groups) =>
-    groups.filter((group) => !group.hidden)
+    groups.filter((group) => !group.hidden),
 );
 export const selectOutlineLaserPlane = (state: RootState) => state.clippingOutline.laserPlane;
 export const selectOutlineLasers = (state: RootState) => state.clippingOutline.lasers;

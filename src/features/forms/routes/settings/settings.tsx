@@ -1,5 +1,6 @@
 import { ArrowBack } from "@mui/icons-material";
 import { Box, Button, Divider, FormControlLabel, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -7,6 +8,7 @@ import { IosSwitch, ScrollBox } from "components";
 import { formsActions, selectAlwaysShowMarkers } from "features/forms/slice";
 
 export function Settings() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const alwaysShowMarkers = useAppSelector(selectAlwaysShowMarkers);
@@ -21,7 +23,7 @@ export function Settings() {
                 <Box display="flex" justifyContent="space-between">
                     <Button onClick={() => history.goBack()} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                 </Box>
             </Box>
@@ -35,7 +37,7 @@ export function Settings() {
                             onChange={() => dispatch(formsActions.toggleAlwaysShowMarkers())}
                         />
                     }
-                    label={<Box fontSize={14}>Show markers when component is closed</Box>}
+                    label={<Box fontSize={14}>{t("showMarkersWhenComponentIsClosed")}</Box>}
                     sx={{ ml: 1 }}
                 />
             </ScrollBox>

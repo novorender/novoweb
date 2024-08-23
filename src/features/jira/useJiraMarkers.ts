@@ -43,7 +43,7 @@ export function useJiraMarkers() {
             userId: currentUser?.accountId ?? "",
             filters,
         },
-        { skip: !project || !component || !accessToken, refetchOnMountOrArgChange: true }
+        { skip: !project || !component || !accessToken, refetchOnMountOrArgChange: true },
     );
 
     useEffect(() => {
@@ -68,14 +68,14 @@ export function useJiraMarkers() {
                             ...JSON.parse(field),
                             icon: config.issueTypes[issue.fields.issuetype.id]?.icon ?? "default",
                         };
-                    } catch (e) {
+                    } catch {
                         console.warn("error parsing NOVORENDER_META of issue", issue.key);
                     }
 
                     return undefined;
                 })
                 .filter((marker) => marker !== undefined && isRealVec(marker.position))
-                .slice(0, 100) as JiraMarkerData[]
+                .slice(0, 100) as JiraMarkerData[],
         );
     }, [issues, metaCustomfieldKey, showMarkers, config.issueTypes]);
 

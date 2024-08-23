@@ -2,6 +2,7 @@ import { Visibility } from "@mui/icons-material";
 import { Box, Checkbox, ListItemButton, Typography } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { ChangeEvent, CSSProperties } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -33,6 +34,7 @@ export function CustomParentNode({
     const {
         state: { db },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHidden = useDispatchHidden();
 
@@ -97,7 +99,7 @@ export function CustomParentNode({
                 <Box display="flex" alignItems="center" width={0} flex={"1 1 100%"}>
                     <Tooltip title={"All results"}>
                         <Typography color={"textSecondary"} noWrap={true}>
-                            All results
+                            {t("allResults")}
                         </Typography>
                     </Tooltip>
                 </Box>

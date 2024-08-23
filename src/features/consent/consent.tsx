@@ -1,10 +1,12 @@
 import { Box, Button, Modal, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import ConsentIcon from "media/icons/consent.svg?react";
 import { explorerActions, selectOrganization, selectRequireConsent } from "slices/explorer";
 
 export function Consent() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const organization = useAppSelector(selectOrganization);
     const requireConsent = useAppSelector(selectRequireConsent);
@@ -25,11 +27,10 @@ export function Consent() {
                         <ConsentIcon />
                     </Box>
                     <Typography mb={1} fontSize={24} fontWeight={700} textAlign="center" component="h1">
-                        Consent to use
+                        {t("consentToUse")}
                     </Typography>
                     <Typography mb={3} textAlign="center">
-                        This 3D is the property of {organization} and must neither be used, reproduced nor handed over
-                        to any third party without written consent.
+                        {t("consentMessage", { organization })}
                     </Typography>
                     <Button
                         fullWidth
@@ -37,7 +38,7 @@ export function Consent() {
                         variant="contained"
                         onClick={() => dispatch(explorerActions.setRequireConsent(false))}
                     >
-                        Agree
+                        {t("agree")}
                     </Button>
                 </Box>
             </Box>

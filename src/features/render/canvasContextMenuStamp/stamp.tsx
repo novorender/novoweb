@@ -13,6 +13,7 @@ import { ObjectDB } from "@novorender/data-js-api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { ReadonlyVec4, vec2, vec3, vec4 } from "gl-matrix";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress } from "components";
@@ -149,7 +150,7 @@ function Selection() {
                 const obj = await getObjectData({ db, id: objectId, view });
                 const file = getFilePathFromObjectPath(obj?.path ?? "");
                 const layer = obj?.properties.find(([key]) =>
-                    ["ifcClass", "dwg/layer"].map((str) => str.toLowerCase()).includes(key.toLowerCase())
+                    ["ifcClass", "dwg/layer"].map((str) => str.toLowerCase()).includes(key.toLowerCase()),
                 );
                 setProperties({
                     layer,
@@ -245,14 +246,14 @@ function Selection() {
             clippingOutlineLaserActions.setLaserPlane({
                 normalOffset,
                 rotation: rotation,
-            })
+            }),
         );
         dispatch(
             renderActions.addClippingPlane({
                 normalOffset,
                 baseW: w,
                 rotation,
-            })
+            }),
         );
 
         close();
@@ -279,7 +280,7 @@ function Selection() {
                             {properties?.layer
                                 ? config.hideLayer.name.replace(
                                       "class / layer",
-                                      (properties.layer ?? [""])[0].toLowerCase() === "ifcclass" ? "class" : "layer"
+                                      (properties.layer ?? [""])[0].toLowerCase() === "ifcclass" ? "class" : "layer",
                                   )
                                 : config.hideLayer.name}
                         </ListItemText>
@@ -353,7 +354,7 @@ async function getRoadCenterLine({
                 descentDepth: 1,
                 searchPattern: [{ property: "Novorender/PathId", value: "" }],
             },
-            signal
+            signal,
         );
         cl = (await iterator.next()).value as HierarcicalObjectReference | undefined;
     } else {
@@ -361,7 +362,7 @@ async function getRoadCenterLine({
         const parentPath = getParentPath(getParentPath(obj.path));
         const iterator = db.search({ parentPath, descentDepth: 0, full: true }, signal);
         const clProperty = (await iterator.next()).value?.properties.find(
-            ([key]: [key: string]) => key.toLowerCase() === "centerline"
+            ([key]: [key: string]) => key.toLowerCase() === "centerline",
         );
 
         if (!clProperty) {
@@ -373,7 +374,7 @@ async function getRoadCenterLine({
                 descentDepth: 0,
                 searchPattern: [{ property: "name", value: clProperty[1], exact: true }],
             },
-            signal
+            signal,
         );
         const clParent = (await clParentIterator.next()).value as HierarcicalObjectReference | undefined;
 
@@ -390,7 +391,7 @@ async function getRoadCenterLine({
                     { property: "Novorender/PathId", value: "" },
                 ],
             },
-            signal
+            signal,
         );
         cl = (await clIterator.next()).value as HierarcicalObjectReference | undefined;
     }
@@ -399,6 +400,7 @@ async function getRoadCenterLine({
 }
 
 function Measure() {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const {
         state: { db, view },
@@ -445,14 +447,14 @@ function Measure() {
                         const tolerance = applyCameraDistanceToMeasureTolerance(
                             stamp.data.position!,
                             view.renderState.camera.position,
-                            measurePickSettings
+                            measurePickSettings,
                         );
                         const ent = await view.measure?.core
                             .pickMeasureEntity(
                                 objectId,
                                 stamp.data.position!,
                                 tolerance,
-                                allowGeneratedParametric.enabled
+                                allowGeneratedParametric.enabled,
                             )
                             .then((res) => res.entity)
                             .catch(() => undefined);
@@ -462,7 +464,7 @@ function Measure() {
                                 objectId,
                                 stamp.data.position!,
                                 { point: 0.4 },
-                                allowGeneratedParametric.enabled
+                                allowGeneratedParametric.enabled,
                             )
                             .then((res) => res.entity)
                             .catch(() => undefined);
@@ -521,8 +523,8 @@ function Measure() {
                             perpendicular[0],
                             perpendicular[1],
                             perpendicular[2],
-                            vec3.dot(perpendicular, offsetPos)
-                        )
+                            vec3.dot(perpendicular, offsetPos),
+                        ),
                     );
                 }
                 view.modifyRenderState({
@@ -540,7 +542,7 @@ function Measure() {
                     "outline",
                     0,
                     hiddenPlanes,
-                    laser3d ? 1 : undefined
+                    laser3d ? 1 : undefined,
                 );
                 view.modifyRenderState({ outlines: { enabled: false, hidden: false, planes: [] } });
                 if (laser) {
@@ -593,7 +595,7 @@ function Measure() {
             measureActions.selectEntity({
                 entity: measureEntity,
                 pin: true,
-            })
+            }),
         );
 
         close();
@@ -613,7 +615,7 @@ function Measure() {
                     ObjectId: -1,
                     drawKind: "vertex",
                     parameter: pickPoint,
-                })
+                }),
             );
         } else {
             dispatch(
@@ -625,7 +627,7 @@ function Measure() {
                         settings: { planeMeasure: view.renderState.clipping.planes[0]?.normalOffset },
                     },
                     pin: true,
-                })
+                }),
             );
             close();
         }
@@ -745,7 +747,7 @@ function Measure() {
                             }}
                         />
                         <Typography px={1} fontWeight={600}>
-                            Road
+                            {t("road")}
                         </Typography>
                         <Divider
                             sx={{
@@ -760,7 +762,7 @@ function Measure() {
                         <ListItemIcon>
                             <RouteOutlined fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Pick center line</ListItemText>
+                        <ListItemText>{t("pickCenterLine")}</ListItemText>
                     </MenuItem>
                 </Box>
             )}

@@ -2,6 +2,7 @@ import { Cameraswitch, Delete } from "@mui/icons-material";
 import { Box, Button, Slider } from "@mui/material";
 import { ReadonlyQuat, ReadonlyVec3, vec3, vec4 } from "gl-matrix";
 import { SyntheticEvent, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -12,6 +13,7 @@ export default function Planes() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const [sliders, setSliders] = useState([] as number[]);
     const { planes } = useAppSelector(selectClippingPlanes);
     const dispatch = useAppDispatch();
@@ -40,7 +42,7 @@ export default function Planes() {
                         rotation: view.renderState.camera.rotation,
                         far: view.renderState.camera.far,
                     },
-                })
+                }),
             );
         }
     };
@@ -105,9 +107,9 @@ export default function Planes() {
             dispatch(
                 renderActions.setClippingPlanes({
                     planes: planes.map((p, i) =>
-                        i === idx ? { ...selected, outline: { enabled: i === 0 }, normalOffset: plane } : p
+                        i === idx ? { ...selected, outline: { enabled: i === 0 }, normalOffset: plane } : p,
                     ),
-                })
+                }),
             );
             if (cameraType === CameraType.Orthographic) {
                 dispatch(renderActions.setClippingInEdit(false));
@@ -119,7 +121,7 @@ export default function Planes() {
             renderActions.setCamera({
                 type: CameraType.Orthographic,
                 goTo: getSnapToPlaneParams({ planeIdx: idx, view }),
-            })
+            }),
         );
     };
 
@@ -129,7 +131,7 @@ export default function Planes() {
                 const planeDir = vec3.fromValues(
                     planes[0].normalOffset[0],
                     planes[0].normalOffset[1],
-                    planes[0].normalOffset[2]
+                    planes[0].normalOffset[2],
                 );
                 dispatch(
                     renderActions.setCamera({
@@ -138,7 +140,7 @@ export default function Planes() {
                             position: vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, planeDir, 15),
                             rotation: view.renderState.camera.rotation,
                         },
-                    })
+                    }),
                 );
             } else {
                 dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
@@ -159,7 +161,7 @@ export default function Planes() {
         dispatch(
             renderActions.setClippingPlanes({
                 planes: newPlanes,
-            })
+            }),
         );
         if (cameraType === CameraType.Orthographic) {
             dispatch(renderActions.setClippingInEdit(false));
@@ -172,7 +174,10 @@ export default function Planes() {
                 planes.map((plane, idx) => {
                     return (
                         <Box mb={2} key={idx} display="flex" alignItems="center" gap={1}>
-                            <Box flex="0 0 80px">Plane {idx + 1}</Box>
+                            <Box flex="0 0 80px">
+                                {t("plane")}
+                                {idx + 1}
+                            </Box>
                             <Slider
                                 min={-plane.baseW - 20}
                                 max={-plane.baseW + 20}

@@ -1,4 +1,5 @@
 import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
+import { t } from "i18next";
 import { useState } from "react";
 
 import { SpeedDialAction } from "components";
@@ -9,7 +10,7 @@ import { AsyncStatus } from "types/misc";
 type Props = SpeedDialActionProps;
 
 export function ClearView(props: Props) {
-    const { name, Icon } = featuresConfig["clearView"];
+    const { nameKey, Icon } = featuresConfig["clearView"];
     const resetView = useResetView();
     const [status, setStatus] = useState(AsyncStatus.Initial);
 
@@ -24,7 +25,7 @@ export function ClearView(props: Props) {
             {...props}
             data-test="clear-selection"
             onClick={handleClick}
-            title={name}
+            title={t(nameKey)}
             icon={
                 <Box
                     width={1}

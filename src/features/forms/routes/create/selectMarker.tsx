@@ -1,4 +1,5 @@
 import { List, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { ScrollBox } from "components";
@@ -8,6 +9,7 @@ import { AsyncStatus } from "types/misc";
 import { AssetIcon } from "./assetIcon";
 
 export function SelectMarker({ marker, onChange }: { marker: string | undefined; onChange: (marker: string) => void }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const assetList = useFetchAssetList();
 
@@ -23,7 +25,7 @@ export function SelectMarker({ marker, onChange }: { marker: string | undefined;
     return (
         <ScrollBox p={1} pt={2} pb={3}>
             <Typography fontWeight={600} mb={1}>
-                Select marker
+                {t("selectMarker")}
             </Typography>
             <List disablePadding>
                 {assetList.data.map((asset) => (
