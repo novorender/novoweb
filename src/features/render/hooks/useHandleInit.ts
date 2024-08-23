@@ -96,7 +96,13 @@ export function useHandleInit() {
                         tmZoneForCalc,
                         sceneData,
                         sceneConfig: octreeSceneConfig,
-                        initialCamera: sceneCamera ?? getDefaultCamera(projectV2?.bounds) ?? view.renderState.camera,
+                        initialCamera: sceneCamera ??
+                            getDefaultCamera(projectV2?.bounds) ?? {
+                                position: view.renderState.camera.position,
+                                rotation: view.renderState.camera.rotation,
+                                fov: view.renderState.camera.fov,
+                                kind: view.renderState.camera.kind,
+                            },
                         deviceProfile,
                     })
                 );
