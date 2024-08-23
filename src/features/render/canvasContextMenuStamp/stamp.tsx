@@ -351,7 +351,6 @@ async function getRoadCenterLine({
         const iterator = db.search(
             {
                 parentPath,
-                descentDepth: 1,
                 searchPattern: [{ property: "Novorender/PathId", value: "" }],
             },
             signal,
