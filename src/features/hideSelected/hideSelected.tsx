@@ -1,4 +1,5 @@
 import { Box, IconButton, type SpeedDialActionProps, Tooltip } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
@@ -16,7 +17,8 @@ import { renderActions, selectMainObject } from "features/render";
 type Props = SpeedDialActionProps;
 
 export function HideSelected({ newDesign, ...props }: Props & { newDesign?: boolean }) {
-    const { name, Icon } = featuresConfig["hideSelected"];
+    const { t } = useTranslation();
+    const { nameKey, Icon } = featuresConfig["hideSelected"];
     const mainObject = useAppSelector(selectMainObject);
 
     const { idArr: highlighted } = useHighlighted();
@@ -38,7 +40,7 @@ export function HideSelected({ newDesign, ...props }: Props & { newDesign?: bool
             dispatch(renderActions.setMainObject(undefined));
             dispatchHighlighted(highlightActions.setIds([]));
             dispatchHighlightCollections(
-                highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, [])
+                highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, []),
             );
             dispatchSelectionBasket(selectionBasketActions.remove(selected));
         } else if (hidden.length) {
@@ -48,7 +50,7 @@ export function HideSelected({ newDesign, ...props }: Props & { newDesign?: bool
 
     if (newDesign) {
         return (
-            <Tooltip title={name} placement="top">
+            <Tooltip title={t(nameKey)} placement="top">
                 <Box>
                     <IconButton onClick={toggleHideSelected} disabled={disabled}>
                         <Icon />
@@ -64,7 +66,7 @@ export function HideSelected({ newDesign, ...props }: Props & { newDesign?: bool
             data-test="hide-selected"
             FabProps={{ disabled, ...props.FabProps }}
             onClick={toggleHideSelected}
-            title={disabled ? undefined : name}
+            title={disabled ? undefined : t(nameKey)}
             icon={<Icon />}
         />
     );

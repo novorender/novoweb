@@ -1,6 +1,7 @@
 import { ChevronLeft, Close, CropSquare, Height, Minimize, MoreVert, Star, StarOutline } from "@mui/icons-material";
 import { Box, IconButton, MenuProps, SvgIcon, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { MouseEvent, ReactNode, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Widget, WidgetKey } from "config/features";
@@ -34,7 +35,7 @@ export function WidgetHeader(props: {
 }
 
 function WidgetHeaderNew({
-    widget: { name, Icon, key },
+    widget: { nameKey, Icon, key },
     children,
     disableShadow,
     WidgetMenu,
@@ -48,6 +49,7 @@ function WidgetHeaderNew({
     menuOpen: boolean;
     toggleMenu: () => void;
 }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
     const minimized = useAppSelector(selectMinimized) === key;
@@ -113,7 +115,7 @@ function WidgetHeaderNew({
                 <Typography
                     variant="h6"
                     component="h2"
-                    title={name}
+                    title={t(nameKey)}
                     sx={{
                         whiteSpace: "nowrap",
                         overflow: "hidden",
@@ -122,7 +124,7 @@ function WidgetHeaderNew({
                         lineHeight: 1.5,
                     }}
                 >
-                    {name}
+                    {t(nameKey)}
                 </Typography>
                 {!menuOpen && (
                     <IconButton
@@ -201,7 +203,7 @@ function ExpansionButtons({ widgetKey }: { widgetKey: WidgetKey }) {
 }
 
 function WidgetHeaderOld({
-    widget: { name, Icon, key },
+    widget: { nameKey, Icon, key },
     children,
     disableShadow,
     WidgetMenu,
@@ -211,6 +213,7 @@ function WidgetHeaderOld({
     disableShadow?: boolean;
     WidgetMenu?: (props: MenuProps) => JSX.Element | null;
 }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
     const maximized = useAppSelector(selectMaximized).includes(key);
@@ -266,7 +269,7 @@ function WidgetHeaderOld({
                         <Icon />
                     </SvgIcon>
                     <Typography variant="h6" component="h2">
-                        {name}
+                        {t(nameKey)}
                     </Typography>
                 </Box>
                 <Box ml="auto">

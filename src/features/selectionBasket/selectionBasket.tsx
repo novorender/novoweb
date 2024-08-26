@@ -1,5 +1,6 @@
 import { FileDownload } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { matchPath, MemoryRouter, Route, Switch, useHistory, useLocation } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -23,6 +24,7 @@ export default function SelectionBasketRouter() {
 }
 
 function SelectionBasket() {
+    const { t } = useTranslation();
     const history = useHistory();
     const location = useLocation();
 
@@ -37,7 +39,7 @@ function SelectionBasket() {
                 <WidgetHeader
                     menuOpen={menuOpen}
                     toggleMenu={toggleMenu}
-                    widget={{ ...featuresConfig.selectionBasket, name: "Selection basket" }}
+                    widget={{ ...featuresConfig.selectionBasket, nameKey: "selectionBasket" }}
                     WidgetMenu={(props) => (
                         <Menu {...props}>
                             <div>
@@ -62,7 +64,7 @@ function SelectionBasket() {
                                         <ListItemIcon>
                                             <FileDownload fontSize="small" />
                                         </ListItemIcon>
-                                        <ListItemText>Export as CSV</ListItemText>
+                                        <ListItemText>{t("exportAsCSV")}</ListItemText>
                                     </>
                                 </MenuItem>
                             </div>

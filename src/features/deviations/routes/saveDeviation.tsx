@@ -1,5 +1,6 @@
 import { Box, Checkbox, FormControlLabel, FormHelperText } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -11,6 +12,7 @@ import { useMergeFormAndSave } from "../hooks/useMergeFormAndSave";
 import { selectSaveStatus } from "../selectors";
 
 export function SaveDeviation() {
+    const { t } = useTranslation();
     const history = useHistory();
     const mergeFormAndSave = useMergeFormAndSave();
     const calcDeviations = useCalcDeviations();
@@ -48,9 +50,7 @@ export function SaveDeviation() {
                     disabled={saveStatus.status === AsyncStatus.Loading}
                 />
                 <Box mb={4}>
-                    <FormHelperText>
-                        You can recalculate later if you plan to update other deviation profiles now
-                    </FormHelperText>
+                    <FormHelperText>{t("recalculateLater")}</FormHelperText>
                 </Box>
             </Confirmation>
         </>

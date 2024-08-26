@@ -1,5 +1,6 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Redirect, useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -21,6 +22,7 @@ import {
 let getTokensRequestInitialized = false;
 
 export function Auth() {
+    const { t } = useTranslation();
     const history = useHistory();
     const dispatch = useAppDispatch();
 
@@ -73,13 +75,13 @@ export function Auth() {
                             xsiteManageActions.setAccessToken({
                                 status: AsyncStatus.Success,
                                 data: res.data.id_token,
-                            })
+                            }),
                         );
                         dispatch(
                             xsiteManageActions.setRefreshToken({
                                 token: refreshToken.token,
                                 refreshIn: res.data.expires_in,
-                            })
+                            }),
                         );
                     } else {
                         throw res.error;
@@ -108,7 +110,7 @@ export function Auth() {
                 JSON.stringify({
                     token: tokensResponse.refresh_token,
                     expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
-                })
+                }),
             );
         } else {
             console.warn(tokensError);
@@ -128,18 +130,18 @@ export function Auth() {
         } else if (isAdmin) {
             history.push("/settings");
         } else if (!config.siteId) {
-            setError(`${featuresConfig.xsiteManage.name} has not yet been set up for this project.`);
+            setError(`${t(featuresConfig.xsiteManage.nameKey)} has not yet been set up for this project.`);
         } else {
-            setError(`You do not have access to the ${config.siteId} ${featuresConfig.xsiteManage.name} site.`);
+            setError(`You do not have access to the ${config.siteId} ${t(featuresConfig.xsiteManage.nameKey)} site.`);
         }
-    }, [sites, history, isAdmin, dispatch, config, site]);
+    }, [sites, history, isAdmin, dispatch, config, site, t]);
 
     return site ? (
         <Redirect to="/machines" />
     ) : error ? (
         <ErrorMsg>{error}</ErrorMsg>
     ) : sitesError || tokensError || accessToken.status === AsyncStatus.Error ? (
-        <ErrorMsg>An error occurred.</ErrorMsg>
+        <ErrorMsg>{t("errorOccurred")}</ErrorMsg>
     ) : (
         <Box position="relative">
             <LinearProgress />

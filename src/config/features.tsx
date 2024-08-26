@@ -61,7 +61,7 @@ export enum FeatureType {
 export const featureTags = {
     review: {
         key: "review",
-        name: "Review",
+        nameKey: "review",
         Icon: Straighten,
         type: FeatureType.Tag,
     },
@@ -138,7 +138,7 @@ export const featuresConfig = {
         // Previous component was called Omega 365, but then it got renamed to PIMS
         // and we have another Omega 365 component now
         key: "omegaPims365",
-        name: "PIMS",
+        nameKey: "pims",
         Icon: Attachment,
         type: FeatureType.Widget,
         // NOTE(OLA): POC! Enable only for nye veier
@@ -148,7 +148,7 @@ export const featuresConfig = {
     },
     omega365: {
         key: "omega365",
-        name: "Omega 365",
+        nameKey: "omega365Name",
         Icon: Attachment,
         type: FeatureType.Widget,
         defaultLocked: true,
@@ -157,7 +157,7 @@ export const featuresConfig = {
     },
     xsiteManage: {
         key: "xsiteManage",
-        name: "Xsite Manage",
+        nameKey: "xSiteManage",
         Icon: GpsFixed,
         type: FeatureType.Widget,
         defaultLocked: true,
@@ -166,7 +166,7 @@ export const featuresConfig = {
     },
     jira: {
         key: "jira",
-        name: "Jira",
+        nameKey: "jira",
         Icon: Jira,
         type: FeatureType.Widget,
         defaultLocked: true,
@@ -175,7 +175,7 @@ export const featuresConfig = {
     },
     area: {
         key: "area",
-        name: "Area",
+        nameKey: "area",
         Icon: SquareFoot,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -185,7 +185,7 @@ export const featuresConfig = {
     },
     pointLine: {
         key: "pointLine",
-        name: "Point line",
+        nameKey: "pointLine",
         Icon: LinearScale,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -195,7 +195,7 @@ export const featuresConfig = {
     },
     manhole: {
         key: "manhole",
-        name: "Manhole",
+        nameKey: "manhole",
         Icon: FiberSmartRecord,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -205,7 +205,7 @@ export const featuresConfig = {
     },
     heightProfile: {
         key: "heightProfile",
-        name: "Ht. profile" as string,
+        nameKey: "htProfile" as string,
         Icon: Timeline,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -215,7 +215,7 @@ export const featuresConfig = {
     },
     user: {
         key: "user",
-        name: "User",
+        nameKey: "user",
         Icon: Person,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -224,7 +224,7 @@ export const featuresConfig = {
     },
     rangeSearch: {
         key: "rangeSearch",
-        name: "Range search",
+        nameKey: "rangeSearch",
         Icon: Search,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -233,7 +233,7 @@ export const featuresConfig = {
     },
     ditio: {
         key: "ditio",
-        name: "Ditio",
+        nameKey: "ditio",
         Icon: Ditio,
         type: FeatureType.Widget,
         defaultLocked: true,
@@ -242,7 +242,7 @@ export const featuresConfig = {
     },
     myLocation: {
         key: "myLocation",
-        name: "My location",
+        nameKey: "myLocation",
         Icon: MyLocation,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -251,7 +251,7 @@ export const featuresConfig = {
     },
     bimcollab: {
         key: "bimcollab",
-        name: "BIMcollab",
+        nameKey: "bimCollab",
         Icon: Domain,
         type: FeatureType.Widget,
         defaultLocked: true,
@@ -260,7 +260,7 @@ export const featuresConfig = {
     },
     bimTrack: {
         key: "bimTrack",
-        name: "Newforma Konekt",
+        nameKey: "newFormaKonekt",
         Icon: NewformaKonekt,
         type: FeatureType.Widget,
         defaultLocked: true,
@@ -269,7 +269,7 @@ export const featuresConfig = {
     },
     advancedSettings: {
         key: "advancedSettings",
-        name: "Adv. settings" as string,
+        nameKey: "advSettings" as string,
         Icon: Settings,
         type: FeatureType.AdminWidget,
         defaultLocked: false,
@@ -278,7 +278,7 @@ export const featuresConfig = {
     },
     selectionBasket: {
         key: "selectionBasket",
-        name: "Sel. basket" as string,
+        nameKey: "selBasket" as string,
         Icon: Layers,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -287,7 +287,7 @@ export const featuresConfig = {
     },
     modelTree: {
         key: "modelTree",
-        name: "Model tree",
+        nameKey: "modelTree",
         Icon: Category,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -296,7 +296,7 @@ export const featuresConfig = {
     },
     properties: {
         key: "properties",
-        name: "Properties",
+        nameKey: "properties",
         Icon: List,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -305,7 +305,7 @@ export const featuresConfig = {
     },
     propertyTree: {
         key: "propertyTree",
-        name: "Property tree",
+        nameKey: "propertyTree",
         Icon: AccountTreeRounded,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -314,7 +314,7 @@ export const featuresConfig = {
     },
     bookmarks: {
         key: "bookmarks",
-        name: "Bookmarks",
+        nameKey: "bookmarks",
         Icon: Star,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -323,7 +323,7 @@ export const featuresConfig = {
     },
     groups: {
         key: "groups",
-        name: "Groups",
+        nameKey: "groups",
         Icon: Folder,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -332,7 +332,7 @@ export const featuresConfig = {
     },
     search: {
         key: "search",
-        name: "Search",
+        nameKey: "search",
         Icon: Search,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -341,7 +341,7 @@ export const featuresConfig = {
     },
     measure: {
         key: "measure",
-        name: "Measure",
+        nameKey: "measure",
         Icon: Straighten,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -351,7 +351,7 @@ export const featuresConfig = {
     },
     outlineLaser: {
         key: "outlineLaser",
-        name: "Outline laser",
+        nameKey: "outlineLaser",
         Icon: Height,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -361,7 +361,7 @@ export const featuresConfig = {
     },
     shareLink: {
         key: "shareLink",
-        name: "Share link",
+        nameKey: "shareLink",
         Icon: Share,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -370,7 +370,7 @@ export const featuresConfig = {
     },
     clippingPlanes: {
         key: "clippingPlanes",
-        name: "Clipping plane",
+        nameKey: "clippingPlane",
         Icon: CropLandscape,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -379,7 +379,7 @@ export const featuresConfig = {
     },
     orthoCam: {
         key: "orthoCam",
-        name: "2D",
+        nameKey: "2D",
         Icon: Cameraswitch,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -388,7 +388,7 @@ export const featuresConfig = {
     },
     images: {
         key: "images",
-        name: "Images",
+        nameKey: "images",
         Icon: Image,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -397,7 +397,7 @@ export const featuresConfig = {
     },
     deviations: {
         key: "deviations",
-        name: "Deviations",
+        nameKey: "deviations",
         Icon: BlurOn,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -410,7 +410,7 @@ export const featuresConfig = {
     },
     followPath: {
         key: "followPath",
-        name: "Follow path",
+        nameKey: "followPath",
         Icon: RouteOutlined,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -420,7 +420,7 @@ export const featuresConfig = {
     },
     home: {
         key: "home",
-        name: "Home",
+        nameKey: "home",
         Icon: Home,
         type: FeatureType.Button,
         defaultLocked: false,
@@ -428,7 +428,7 @@ export const featuresConfig = {
     },
     stepBack: {
         key: "stepBack",
-        name: "Step back",
+        nameKey: "stepBack",
         Icon: Undo,
         type: FeatureType.Button,
         defaultLocked: false,
@@ -436,7 +436,7 @@ export const featuresConfig = {
     },
     stepForwards: {
         key: "stepForwards",
-        name: "Step forwards",
+        nameKey: "stepForwards",
         Icon: Redo,
         type: FeatureType.Button,
         defaultLocked: false,
@@ -444,7 +444,7 @@ export const featuresConfig = {
     },
     orthoShortcut: {
         key: "orthoShortcut",
-        name: "2D shortcut",
+        nameKey: "2dShortcut",
         Icon: Cameraswitch,
         type: FeatureType.Button,
         defaultLocked: false,
@@ -452,7 +452,7 @@ export const featuresConfig = {
     },
     cameraSpeed: {
         key: "cameraSpeed",
-        name: "Camera speed",
+        nameKey: "cameraSpeed",
         Icon: Run,
         type: FeatureType.Button,
         defaultLocked: false,
@@ -460,7 +460,7 @@ export const featuresConfig = {
     },
     flyToSelected: {
         key: "flyToSelected",
-        name: "Fly to selected",
+        nameKey: "flyToSelected",
         Icon: FlightTakeoff,
         type: FeatureType.Button,
         defaultLocked: false,
@@ -468,7 +468,7 @@ export const featuresConfig = {
     },
     multipleSelection: {
         key: "multipleSelection",
-        name: "Multiple selection",
+        nameKey: "multipleSelection",
         Icon: Layers,
         type: FeatureType.Button,
         defaultLocked: false,
@@ -476,7 +476,7 @@ export const featuresConfig = {
     },
     selectionColor: {
         key: "selectionColor",
-        name: "Selection color",
+        nameKey: "selectionColor",
         Icon: ColorLens,
         type: FeatureType.Button,
         defaultLocked: false,
@@ -484,7 +484,7 @@ export const featuresConfig = {
     },
     viewOnlySelected: {
         key: "viewOnlySelected",
-        name: "View only selected",
+        nameKey: "viewOnlySelected",
         Icon: Visibility,
         type: FeatureType.Button,
         defaultLocked: false,
@@ -492,7 +492,7 @@ export const featuresConfig = {
     },
     hideSelected: {
         key: "hideSelected",
-        name: "Hide selected",
+        nameKey: "hideSelected",
         Icon: VisibilityOff,
         type: FeatureType.Button,
         defaultLocked: false,
@@ -500,7 +500,7 @@ export const featuresConfig = {
     },
     clearView: {
         key: "clearView",
-        name: "Clear",
+        nameKey: "clear",
         Icon: RestartAlt,
         type: FeatureType.Button,
         defaultLocked: false,
@@ -508,7 +508,7 @@ export const featuresConfig = {
     },
     clearSelection: {
         key: "clearSelection",
-        name: "Clear selection",
+        nameKey: "clearSelection",
         Icon: CheckBox,
         type: FeatureType.Button,
         defaultLocked: false,
@@ -516,7 +516,7 @@ export const featuresConfig = {
     },
     toggleSubtrees: {
         key: "toggleSubtrees",
-        name: "Toggle render types",
+        nameKey: "toggleRenderTypes",
         Icon: Gradient,
         type: FeatureType.Button,
         defaultLocked: false,
@@ -524,7 +524,7 @@ export const featuresConfig = {
     },
     offline: {
         key: "offline",
-        name: "Offline",
+        nameKey: "offline",
         Icon: DownloadForOffline,
         type: FeatureType.Widget,
         defaultLocked: true,
@@ -533,7 +533,7 @@ export const featuresConfig = {
     },
     arcgis: {
         key: "arcgis",
-        name: "ArcGIS",
+        nameKey: "arcGis",
         Icon: Public,
         type: FeatureType.Widget,
         defaultLocked: true,
@@ -542,7 +542,7 @@ export const featuresConfig = {
     },
     forms: {
         key: "forms",
-        name: "Forms",
+        nameKey: "forms",
         Icon: Ballot,
         type: FeatureType.Widget,
         defaultLocked: true,
@@ -551,7 +551,7 @@ export const featuresConfig = {
     },
     clash: {
         key: "clash",
-        name: "Clash",
+        nameKey: "clash",
         Icon: ClashIcon,
         type: FeatureType.Widget,
         defaultLocked: false,
@@ -589,8 +589,8 @@ export const defaultLockedWidgets = Object.values(featuresConfig)
     .filter((widget) => widget.defaultLocked)
     .map((widget) => widget.key as WidgetKey);
 
-export const viewerWidgets = Object.values(featuresConfig).filter((widget) => widget.type === FeatureType.Widget) as {
-    [K in keyof Config]: Config[K]["type"] extends FeatureType.Widget ? Config[K] : never;
-}[keyof Config][];
+export const viewerWidgets = Object.values(featuresConfig).filter(
+    (widget): widget is Widget => widget.type === FeatureType.Widget,
+);
 export const releasedViewerWidgets = viewerWidgets.filter((w) => !("beta" in w) || !w.beta);
 export const betaViewerWidgets = viewerWidgets.filter((w) => "beta" in w && w.beta);

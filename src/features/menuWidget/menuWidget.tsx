@@ -1,5 +1,6 @@
 import { Close } from "@mui/icons-material";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer } from "components";
@@ -8,6 +9,7 @@ import NovorenderIcon from "media/icons/novorender-small.svg?react";
 import { explorerActions, selectWidgetSlot } from "slices/explorer";
 
 export function MenuWidget() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const dispatch = useAppDispatch();
     const widgetSlot = useAppSelector(selectWidgetSlot);
@@ -27,7 +29,7 @@ export function MenuWidget() {
                                 style={{ fill: theme.palette.primary.main, marginRight: theme.spacing(1) }}
                             />
                             <Typography variant="body1" component="h2">
-                                Functions
+                                {t("functions")}
                             </Typography>
                         </Box>
                         <Box ml="auto">

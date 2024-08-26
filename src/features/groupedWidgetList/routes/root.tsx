@@ -10,6 +10,7 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import { Accordion } from "components/accordion";
@@ -49,6 +50,7 @@ export function Root({
     setExpandedGroupKey: (group: FeatureGroupKey | null) => void;
 }) {
     const theme = useTheme();
+    const { t } = useTranslation();
 
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const lockedWidgets = useAppSelector(selectLockedWidgets);
@@ -80,7 +82,7 @@ export function Root({
                           (widget) =>
                               (widget.type === FeatureType.Widget || widget.type === FeatureType.AdminWidget) &&
                               "groups" in widget &&
-                              widget.groups.includes(group.key as never)
+                              widget.groups.includes(group.key as never),
                       ),
         };
     });
@@ -123,7 +125,7 @@ export function Root({
                                     </Box>
                                 ) : (
                                     <Grid container wrap="wrap" spacing={1} data-test="widget-list">
-                                        {widgets.map(({ Icon, name, key, type, ...widget }) => {
+                                        {widgets.map(({ Icon, nameKey, key, type, ...widget }) => {
                                             const activeCurrent = key === currentWidget;
                                             const activeElsewhere = !activeCurrent && activeWidgets.includes(key);
                                             const unavailable = !isOnline && "offline" in widget && !widget.offline;
@@ -144,7 +146,7 @@ export function Root({
                                                             >
                                                                 <Icon />
                                                             </IconButton>
-                                                            <Typography textAlign={"center"}>{name}</Typography>
+                                                            <Typography textAlign={"center"}>{t(nameKey)}</Typography>
                                                         </WidgetMenuButtonWrapper>
                                                     )}
                                                 </Grid>
@@ -168,7 +170,7 @@ const GroupAccordion = styled(Accordion)(
                 margin: 0;
             }
         }
-    `
+    `,
 );
 
 const GroupAccordionSummary = styled(AccordionSummary)(
@@ -184,5 +186,5 @@ const GroupAccordionSummary = styled(AccordionSummary)(
                 opacity: 0.2;
             }
         }
-    `
+    `,
 );

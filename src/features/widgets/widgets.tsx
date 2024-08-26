@@ -231,7 +231,7 @@ function OldWidgets() {
                 dispatch(explorerActions.setWidgets(slots.slice(0, layout.widgets)));
             }
         },
-        [layout, slots, dispatch, maximized]
+        [layout, slots, dispatch, maximized],
     );
 
     useEffect(() => {
@@ -255,10 +255,10 @@ function OldWidgets() {
                     maximized.length === 2
                         ? `"two one" "two one"`
                         : maximized.length === 1
-                        ? slots.indexOf(maximized[0]) === 0
-                            ? `"three one" "two one"`
-                            : `"three two" "three one"`
-                        : `"four two" "three one"`,
+                          ? slots.indexOf(maximized[0]) === 0
+                              ? `"three one" "two one"`
+                              : `"three two" "three one"`
+                          : `"four two" "three one"`,
             };
         } else if (layout.widgets === 2) {
             return {

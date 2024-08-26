@@ -1,5 +1,6 @@
 import { Warning } from "@mui/icons-material";
 import { Box, Button, Checkbox, FormControlLabel, Modal, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import { selectDeviceProfile } from "features/render";
@@ -10,6 +11,7 @@ const storageKey = `ignore_quirk_warning_${quirk}`;
 const runCheck = !localStorage[storageKey];
 
 export function QuirkAlert() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const [modalOpen, toggleModal] = useToggle(true);
     const [hideNext, toggleHideNext] = useToggle(false);
@@ -47,12 +49,12 @@ export function QuirkAlert() {
                         <Warning color="primary" fontSize={"inherit"} />
                     </Box>
                     <Typography mb={1} fontSize={24} fontWeight={700} textAlign="center" component="h1">
-                        Unstable GPU (Adreno 600)
+                        {t("adreno600")}
                     </Typography>
                     <Typography mb={2}>
-                        It looks like your device is running on an Adreno 600. This may result in unexpected behaviour
-                        while using certain Novorender features such as clipping planes and toon outlines. <br />
-                        Please get in touch with support if you notice any issues.
+                        {t("adreno600Message")}
+                        <br />
+                        {t("getInTouch")}
                     </Typography>
                     <FormControlLabel
                         sx={{ mb: 2 }}
@@ -66,12 +68,12 @@ export function QuirkAlert() {
                         }
                         label={
                             <Box mr={0.5} sx={{ userSelect: "none" }}>
-                                Don't show again
+                                {t("dontShowAgain")}
                             </Box>
                         }
                     />
                     <Button fullWidth size="large" variant="contained" onClick={handleSubmit}>
-                        I understand
+                        {t("understand")}
                     </Button>
                 </Box>
             </Box>

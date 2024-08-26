@@ -1,6 +1,7 @@
 import { GpsFixed, GpsOff } from "@mui/icons-material";
 import { Box, FormControlLabel, ListItemButton, ListItemIcon, ListItemText, useTheme } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 
@@ -20,6 +21,7 @@ import {
 import { Machine } from "../types";
 
 export function Machines() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const dispatch = useAppDispatch();
@@ -59,7 +61,7 @@ export function Machines() {
                 }
 
                 return isActive(now, locationA) && isActive(now, locationB) ? 0 : isActive(now, locationA) ? -1 : 1;
-            })
+            }),
         );
     }, [machines, machineLocations]);
 
@@ -89,7 +91,7 @@ export function Machines() {
                             }
                             label={
                                 <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                    Machines
+                                    {t("machines")}
                                 </Box>
                             }
                         />
@@ -105,7 +107,7 @@ export function Machines() {
                             }
                             label={
                                 <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                    Log points
+                                    {t("logPoints")}
                                 </Box>
                             }
                         />
@@ -148,7 +150,7 @@ export function Machines() {
                                                 dispatch(
                                                     xsiteManageActions.activateLogPoints({
                                                         machine: machine.machineId,
-                                                    })
+                                                    }),
                                                 );
                                             }}
                                             onMouseEnter={() => {

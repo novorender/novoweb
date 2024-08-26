@@ -1,6 +1,7 @@
 import { ArrowDownward, ColorLens } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, Slider, Typography } from "@mui/material";
 import { ChangeEvent, MouseEvent, SyntheticEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, IosSwitch, LogoSpeedDial, ScrollBox, Switch, WidgetContainer, WidgetHeader } from "components";
@@ -42,6 +43,7 @@ export default function OrthoCam() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const grid = useAppSelector(selectGrid);
     const cameraType = useAppSelector(selectCameraType);
@@ -88,7 +90,7 @@ export default function OrthoCam() {
             renderActions.setCamera({
                 type: CameraType.Orthographic,
                 goTo: getTopDownParams({ view, elevation: defaultTopDownElevation, snapToNearestAxis }),
-            })
+            }),
         );
     };
 
@@ -136,7 +138,7 @@ export default function OrthoCam() {
                                 disabled={cameraType === CameraType.Orthographic}
                             >
                                 <ArrowDownward sx={{ mr: 1 }} />
-                                Top-down
+                                {t("topDown")}
                             </Button>
                             <FormControlLabel
                                 sx={{ mr: 1 }}
@@ -148,7 +150,7 @@ export default function OrthoCam() {
                                     />
                                 }
                                 labelPlacement="start"
-                                label={<Box fontSize={14}>2D mode</Box>}
+                                label={<Box fontSize={14}>{t("2dMode")}</Box>}
                             />
                         </Box>
                     ) : null}
@@ -166,7 +168,7 @@ export default function OrthoCam() {
                             }
                             label={
                                 <Box ml={1} fontSize={16}>
-                                    Render terrain as background
+                                    {t("renderTerrainAsBackground")}
                                 </Box>
                             }
                         />
@@ -175,7 +177,10 @@ export default function OrthoCam() {
                         <>
                             {currentElevation && (
                                 <>
-                                    <Typography>Elevation: {currentElevation.toFixed(3)}</Typography>
+                                    <Typography>
+                                        {t("elevationName")}
+                                        {currentElevation.toFixed(3)}
+                                    </Typography>
                                     <Divider sx={{ my: 1 }} />
                                 </>
                             )}
@@ -184,7 +189,7 @@ export default function OrthoCam() {
                                 control={<Switch name={"Show grid"} checked={grid.enabled} onChange={toggleGrid} />}
                                 label={
                                     <Box ml={1} fontSize={16}>
-                                        Show grid
+                                        {t("showGrid")}
                                     </Box>
                                 }
                             />
@@ -200,7 +205,7 @@ export default function OrthoCam() {
                                 }
                                 label={
                                     <Box ml={1} fontSize={16}>
-                                        Select cross section
+                                        {t("selectCrossSection")}
                                     </Box>
                                 }
                             />
@@ -213,14 +218,14 @@ export default function OrthoCam() {
                                     sx={{ minWidth: 175, display: "flex", justifyContent: "flex-start" }}
                                 >
                                     <ColorLens sx={{ mr: 1, color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
-                                    Background color
+                                    {t("backgroundColor")}
                                 </Button>
                             </Box>
 
                             {viewMode === ViewMode.CrossSection && (
                                 <>
                                     <Divider sx={{ my: 1 }} />
-                                    <Typography>Clipping: {clipping} m</Typography>
+                                    <Typography>{`${t("clippingName")} ${clipping} m`}</Typography>
                                     <Box mx={2}>
                                         <Slider
                                             getAriaLabel={() => "Clipping far"}
@@ -251,7 +256,7 @@ export default function OrthoCam() {
                     dispatch(
                         renderActions.setBackground({
                             color: rgba,
-                        })
+                        }),
                     );
                 }}
             />

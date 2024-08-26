@@ -1,5 +1,6 @@
 import { MyLocation as MyLocationIcon } from "@mui/icons-material";
 import { Box, Button, FormControlLabel } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
@@ -32,6 +33,7 @@ export default function MyLocation() {
     const minimized = useAppSelector(selectMinimized) === featuresConfig.myLocation.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.myLocation.key);
 
+    const { t } = useTranslation();
     const tmZone = useAppSelector(selectTmZoneForCalc);
     const currentLocation = useAppSelector(selectCurrentLocation);
     const showMarker = useAppSelector(selectShowLocationMarker);
@@ -58,7 +60,7 @@ export default function MyLocation() {
                                 onClick={goToPos}
                                 color="grey"
                             >
-                                <MyLocationIcon fontSize="small" sx={{ mr: 1 }} /> Go to
+                                <MyLocationIcon fontSize="small" sx={{ mr: 1 }} /> {t("goTo")}
                             </Button>
                             <FormControlLabel
                                 disabled={!tmZone}
@@ -76,7 +78,7 @@ export default function MyLocation() {
                                         }}
                                     />
                                 }
-                                label={<Box fontSize={14}>Marker</Box>}
+                                label={<Box fontSize={14}>{t("marker")}</Box>}
                             />
                             <FormControlLabel
                                 disabled={!tmZone}
@@ -93,7 +95,7 @@ export default function MyLocation() {
                                         }}
                                     />
                                 }
-                                label={<Box fontSize={14}>Center</Box>}
+                                label={<Box fontSize={14}>{t("center")}</Box>}
                             />
                         </Box>
                     ) : null}
@@ -115,12 +117,24 @@ export default function MyLocation() {
                     )}
                     {geoLocationCoords && (
                         <>
-                            <Box mb={1}>Accuracy: {geoLocationCoords.accuracy}m</Box>
-                            <Box mb={1}>Longitude: {geoLocationCoords.longitude}</Box>
-                            <Box mb={1}>Latitude: {geoLocationCoords.latitude}</Box>
-                            {geoLocationCoords.altitude && <Box mb={1}>Altitude: {geoLocationCoords.altitude}m</Box>}
+                            <Box mb={1}>{`${t("accuracy")} ${geoLocationCoords.accuracy} m`}</Box>
+                            <Box mb={1}>
+                                {t("longitude")}
+                                {geoLocationCoords.longitude}
+                            </Box>
+                            <Box mb={1}>
+                                {t("latitude")}
+                                {geoLocationCoords.latitude}
+                            </Box>
+                            {geoLocationCoords.altitude && (
+                                <Box mb={1}>{`${t("altitude")} ${geoLocationCoords.altitude} m`}</Box>
+                            )}
                             {currentLocation && (
-                                <Box mb={1}>Position: [{currentLocation.map((n) => Math.round(n)).join(", ")}]</Box>
+                                <Box mb={1}>
+                                    {t("positionCoords", {
+                                        coords: currentLocation.map((n) => Math.round(n)).join(", "),
+                                    })}
+                                </Box>
                             )}
                         </>
                     )}

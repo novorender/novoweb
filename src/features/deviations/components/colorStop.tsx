@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { MouseEvent, useMemo, useState } from "react";
 import { ColorResult } from "react-color";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { ColorPicker } from "features/colorPicker";
@@ -38,11 +39,12 @@ export function ColorStopList({
     errors?: DeviationFormErrors;
     disabled?: boolean;
 }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const colorStops = useMemo(
         () => sortColorStops(colorStopsUnsorted.slice(), absoluteValues),
-        [colorStopsUnsorted, absoluteValues]
+        [colorStopsUnsorted, absoluteValues],
     );
 
     return (
@@ -66,7 +68,7 @@ export function ColorStopList({
                             colorStops.some(
                                 (cs, i) =>
                                     i !== index &&
-                                    Math.abs(Math.abs(cs.position) - Math.abs(colorStops[index].position)) < 0.01
+                                    Math.abs(Math.abs(cs.position) - Math.abs(colorStops[index].position)) < 0.01,
                             )
                         }
                     />
@@ -82,7 +84,7 @@ export function ColorStopList({
             {!disabled && (
                 <Box display="flex" justifyContent="flex-end" pr={2}>
                     <Button size="small" onClick={() => history.push("/deviation/addColorStop")}>
-                        <Add sx={{ mr: 1 }} /> Add color stop
+                        <Add sx={{ mr: 1 }} /> {t("addColorStop")}
                     </Button>
                 </Box>
             )}
@@ -107,6 +109,7 @@ export function ColorStop({
     absoluteValues: boolean;
     hasErrors: boolean;
 }) {
+    const { t } = useTranslation();
     const colorStop = colorStops[index];
     const history = useHistory();
 
@@ -216,7 +219,7 @@ export function ColorStop({
                             <ListItemIcon>
                                 <Delete fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText>Delete</ListItemText>
+                            <ListItemText>{t("delete")}</ListItemText>
                         </MenuItem>
                     </Menu>
                 </>

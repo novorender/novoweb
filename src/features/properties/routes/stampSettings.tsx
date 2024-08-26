@@ -11,6 +11,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { FormEventHandler, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
@@ -28,6 +29,7 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const dispatch = useAppDispatch();
@@ -36,7 +38,7 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
     const starred = useAppSelector(selectStarredProperties);
 
     const [starredArr, setStarredArr] = useState(
-        Object.keys(starred).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }))
+        Object.keys(starred).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" })),
     );
     const [saveStatus, setSaveStatus] = useState(AsyncStatus.Initial);
     const [input, setInput] = useState("");
@@ -112,7 +114,7 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
                 <Box display="flex" justifyContent="space-between">
                     <Button onClick={() => history.goBack()} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <FormControlLabel
                         sx={{ ml: 2 }}
@@ -126,13 +128,13 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
                         }
                         label={
                             <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                Enabled
+                                {t("enabled")}
                             </Box>
                         }
                     />
                     <Button disabled={saveStatus !== AsyncStatus.Initial} onClick={handleSave} color="grey">
                         <Save sx={{ mr: 1 }} />
-                        Save
+                        {t("save")}
                     </Button>
                 </Box>
             </Box>
@@ -145,16 +147,16 @@ export function StampSettings({ sceneId }: { sceneId: string }) {
                     onChange={(e) => setInput(e.target.value)}
                 />
                 <Button variant="contained" type="submit">
-                    Add
+                    {t("add")}
                 </Button>
             </Box>
             <ScrollBox pb={3}>
                 <Typography px={1} fontWeight={600}>
-                    Starred properties
+                    {t("starredProperties")}
                 </Typography>
                 <Divider sx={{ mt: 1 }} />
                 {!starredArr.length ? (
-                    <Typography p={1}>No properties starred.</Typography>
+                    <Typography p={1}>{t("noPropertiesStarred")}</Typography>
                 ) : (
                     <List dense disablePadding>
                         {starredArr.map((property) => (

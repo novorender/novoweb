@@ -2,6 +2,7 @@ import { Box, FormControlLabel } from "@mui/material";
 import { FollowParametricObject, rotationFromDirection } from "@novorender/api";
 import { vec3 } from "gl-matrix";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { IosSwitch } from "components";
@@ -19,6 +20,7 @@ export function ViewSwitchSection() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const view2d = useAppSelector(selectView2d);
     const goToProfile = useGoToProfile();
@@ -67,7 +69,7 @@ export function ViewSwitchSection() {
 
         const pos = Math.max(
             selectedCenterLine.parameterBounds[0],
-            Math.min(selectedCenterLine.parameterBounds[1], Number(profilePos))
+            Math.min(selectedCenterLine.parameterBounds[1], Number(profilePos)),
         );
 
         dispatch(renderActions.setViewMode(ViewMode.Deviations));
@@ -99,18 +101,18 @@ export function ViewSwitchSection() {
                             position,
                             rotation: rotationFromDirection(
                                 [0, 0, 1],
-                                snapToNearestAxis ? view.renderState.camera.rotation : undefined
+                                snapToNearestAxis ? view.renderState.camera.rotation : undefined,
                             ),
                             fov: 100,
                         },
-                    })
+                    }),
                 );
             } else {
                 dispatch(
                     renderActions.setCamera({
                         type: CameraType.Orthographic,
                         goTo: getTopDownParams({ view, elevation: defaultTopDownElevation, snapToNearestAxis }),
-                    })
+                    }),
                 );
             }
         } else {
@@ -134,7 +136,7 @@ export function ViewSwitchSection() {
                             disabled={!selectedCenterLine}
                         />
                     }
-                    label={<Box>Follow path</Box>}
+                    label={<Box>{t("followPath")}</Box>}
                 />
             </Box>
             <Box>
@@ -142,7 +144,7 @@ export function ViewSwitchSection() {
                     control={
                         <IosSwitch size="medium" color="primary" checked={isTopDown} onChange={handleTopDownChange} />
                     }
-                    label={<Box>Top-down</Box>}
+                    label={<Box>{t("topDown")}</Box>}
                 />
             </Box>
         </>

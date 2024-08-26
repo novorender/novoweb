@@ -2,6 +2,7 @@ import { Add, Delete, Settings } from "@mui/icons-material";
 import { ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -89,6 +90,7 @@ export default function Deviations() {
 }
 
 function WidgetMenu(props: MenuProps) {
+    const { t } = useTranslation();
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const history = useHistory();
     const isProjectV2 = useAppSelector(selectProjectIsV2);
@@ -145,7 +147,7 @@ function WidgetMenu(props: MenuProps) {
                         <ListItemIcon>
                             <Settings fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Settings</ListItemText>
+                        <ListItemText>{t("settings")}</ListItemText>
                     </MenuItem>
                     <MenuItem
                         onClick={() => {
@@ -157,7 +159,7 @@ function WidgetMenu(props: MenuProps) {
                         <ListItemIcon>
                             <Delete fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Remove</ListItemText>
+                        <ListItemText>{t("remove")}</ListItemText>
                     </MenuItem>
                     <Tooltip
                         title={
@@ -185,7 +187,7 @@ function WidgetMenu(props: MenuProps) {
                                 <ListItemIcon>
                                     <Add fontSize="small" />
                                 </ListItemIcon>
-                                <ListItemText>New</ListItemText>
+                                <ListItemText>{t("new")}</ListItemText>
                             </MenuItem>
                         </span>
                     </Tooltip>

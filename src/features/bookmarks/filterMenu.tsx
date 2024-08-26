@@ -1,5 +1,6 @@
 import { Search } from "@mui/icons-material";
 import { Checkbox, InputAdornment, Menu, MenuItem, MenuProps, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { TextField } from "components";
@@ -8,6 +9,7 @@ import { selectUser } from "slices/authSlice";
 import { bookmarksActions, selectBookmarkFilters } from "./bookmarksSlice";
 
 export function FilterMenu({ ...MenuProps }: MenuProps) {
+    const { t } = useTranslation();
     const theme = useTheme();
 
     const filters = useAppSelector(selectBookmarkFilters);
@@ -43,21 +45,21 @@ export function FilterMenu({ ...MenuProps }: MenuProps) {
                 onClick={() => dispatch(bookmarksActions.toggleFilter("measurements"))}
                 sx={{ display: "flex", justifyContent: "space-between" }}
             >
-                <Typography>Measure</Typography>
+                <Typography>{t("measure")}</Typography>
                 <Checkbox checked={filters.measurements} />
             </MenuItem>
             <MenuItem
                 onClick={() => dispatch(bookmarksActions.toggleFilter("clipping"))}
                 sx={{ display: "flex", justifyContent: "space-between" }}
             >
-                <Typography>Clipping</Typography>
+                <Typography>{t("clipping")}</Typography>
                 <Checkbox checked={filters.clipping} />
             </MenuItem>
             <MenuItem
                 onClick={() => dispatch(bookmarksActions.toggleFilter("groups"))}
                 sx={{ display: "flex", justifyContent: "space-between" }}
             >
-                <Typography>Groups</Typography>
+                <Typography>{t("groups")}</Typography>
                 <Checkbox checked={filters.groups} />
             </MenuItem>
             {user
@@ -69,12 +71,12 @@ export function FilterMenu({ ...MenuProps }: MenuProps) {
                                   bookmarksActions.setFilters({
                                       personal: !filters.personal,
                                       public: !filters.personal ? false : filters.public,
-                                  })
+                                  }),
                               )
                           }
                           sx={{ display: "flex", justifyContent: "space-between" }}
                       >
-                          <Typography>Personal</Typography>
+                          <Typography>{t("personal")}</Typography>
                           <Checkbox checked={filters.personal} />
                       </MenuItem>,
                       <MenuItem
@@ -84,12 +86,12 @@ export function FilterMenu({ ...MenuProps }: MenuProps) {
                                   bookmarksActions.setFilters({
                                       public: !filters.public,
                                       personal: !filters.public ? false : filters.personal,
-                                  })
+                                  }),
                               )
                           }
                           sx={{ display: "flex", justifyContent: "space-between" }}
                       >
-                          <Typography>Public</Typography>
+                          <Typography>{t("public")}</Typography>
                           <Checkbox checked={filters.public} />
                       </MenuItem>,
                   ]

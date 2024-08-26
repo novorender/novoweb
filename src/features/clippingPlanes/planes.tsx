@@ -1,6 +1,7 @@
 import { Cameraswitch, Delete } from "@mui/icons-material";
 import { Box, IconButton, Slider, Typography } from "@mui/material";
 import { SyntheticEvent, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import { IosSwitch } from "components";
@@ -14,6 +15,7 @@ export default function Planes() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const [sliders, setSliders] = useState([] as number[]);
     const { planes, outlines } = useAppSelector(selectClippingPlanes);
     const actions = useClippingPlaneActions();
@@ -75,7 +77,8 @@ export default function Planes() {
                     return (
                         <Box mb={2} key={idx} display="flex" alignItems="center" gap={1}>
                             <Box flex="0 0 80px" sx={{ color }}>
-                                Plane {idx + 1}
+                                {t("plane")}
+                                {idx + 1}
                             </Box>
                             <Slider
                                 min={-plane.baseW - 20}

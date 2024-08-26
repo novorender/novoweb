@@ -5,6 +5,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import enLocale from "date-fns/locale/en-GB";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { generatePath, Redirect, Route, Switch, useHistory, useLocation, useParams } from "react-router-dom";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
@@ -59,10 +60,13 @@ export function App() {
                     .catch(async () => {
                         if (attempt < 2) {
                             return new Promise((resolve) => {
-                                timeOutId = window.setTimeout(async () => {
-                                    ++attempt;
-                                    resolve(await load());
-                                }, Math.pow(2, attempt) * 1000);
+                                timeOutId = window.setTimeout(
+                                    async () => {
+                                        ++attempt;
+                                        resolve(await load());
+                                    },
+                                    Math.pow(2, attempt) * 1000,
+                                );
                             });
                         }
                     });
@@ -179,7 +183,7 @@ export function App() {
                             JSON.stringify({
                                 token: res.refresh_token,
                                 expires: Date.now() + res.refresh_token_expires_in * 1000,
-                            })
+                            }),
                         );
                         dispatch(authActions.login({ accessToken: res.access_token, user }));
                         saveToStorage(StorageKey.AccessToken, res.access_token);
@@ -229,14 +233,14 @@ export function App() {
                                 JSON.stringify({
                                     token: res.refresh_token,
                                     expires: parsedToken.expires,
-                                })
+                                }),
                             );
 
                             dispatch(authActions.login({ accessToken: res.access_token, user }));
                             saveToStorage(StorageKey.AccessToken, res.access_token);
                         }
                     }
-                } catch (e) {
+                } catch {
                     deleteFromStorage(StorageKey.RefreshToken);
                 }
             }
@@ -304,6 +308,7 @@ export function App() {
 }
 
 function UpdatePrompt({ update }: { update: () => void }) {
+    const { t } = useTranslation();
     const [updating, setUpdating] = useState(false);
 
     return (
@@ -328,7 +333,7 @@ function UpdatePrompt({ update }: { update: () => void }) {
                 }}
             >
                 <>
-                    A new version is available.
+                    {t("newVersionAvailable")}
                     <LoadingButton
                         loading={updating}
                         loadingIndicator={<CircularProgress size={20} />}
@@ -340,7 +345,7 @@ function UpdatePrompt({ update }: { update: () => void }) {
                         }}
                         sx={{ ml: 2, color: "#fff" }}
                     >
-                        Update
+                        {t("update")}
                     </LoadingButton>
                 </>
             </Paper>
