@@ -30,11 +30,11 @@ export default function Planes() {
 
     const handleSliderChange = (idx: number) => (_event: Event, newValue: number | number[]) => {
         if (!movingPlaneControl.current) {
-            movingPlaneControl.current = actions.movePlane(view, planes, idx);
+            movingPlaneControl.current = actions.movePlanes(view, planes, [idx]);
         }
 
         const newVal = typeof newValue === "number" ? newValue : newValue[0];
-        movingPlaneControl.current.update(-newVal);
+        movingPlaneControl.current.update([-newVal]);
         setSliders((_state) => {
             const state = [..._state];
             state[idx] = newVal;

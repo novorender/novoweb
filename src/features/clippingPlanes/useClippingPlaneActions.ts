@@ -17,10 +17,10 @@ export function useClippingPlaneActions() {
                 renderActions.setCamera({
                     type: CameraType.Orthographic,
                     goTo: getSnapToPlaneParams({ planeIdx: idx, view, anchorPos }),
-                })
+                }),
             );
         },
-        [dispatch]
+        [dispatch],
     );
 
     const swapCamera = useCallback(
@@ -30,7 +30,7 @@ export function useClippingPlaneActions() {
                     const planeDir = vec3.fromValues(
                         planes[0].normalOffset[0],
                         planes[0].normalOffset[1],
-                        planes[0].normalOffset[2]
+                        planes[0].normalOffset[2],
                     );
                     dispatch(
                         renderActions.setCamera({
@@ -40,11 +40,11 @@ export function useClippingPlaneActions() {
                                     vec3.create(),
                                     view.renderState.camera.position,
                                     planeDir,
-                                    15
+                                    15,
                                 ),
                                 rotation: view.renderState.camera.rotation,
                             },
-                        })
+                        }),
                     );
                 } else {
                     dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
@@ -53,26 +53,49 @@ export function useClippingPlaneActions() {
                 snapToPlane(view, idx, planes[idx].anchorPos);
             }
         },
-        [dispatch, snapToPlane]
+        [dispatch, snapToPlane],
     );
 
-    const movePlane = useCallback(
-        (view: View, planes: RenderState["clipping"]["planes"], idx: number) => {
-            const plane = planes[idx];
-            const originalAnchorPos = plane.anchorPos!;
-            const originalAnchorPos2d = getAnchorPos2d(view, [originalAnchorPos])[0];
-            const originalNormalOffset = plane.normalOffset;
+    const movePlanes = useCallback(
+        (view: View, planes: RenderState["clipping"]["planes"], idxList: number[]) => {
             const originalCameraPos = view.renderState.camera.position;
             const originalCameraRot = view.renderState.camera.rotation;
-            const normal = vec3.fromValues(originalNormalOffset[0], originalNormalOffset[1], originalNormalOffset[2]);
-            const isParallelToGround = Math.abs(vec3.dot(normal, vec3.fromValues(0, 0, 1))) > 0.999;
             const cameraDir = getCameraDir(view.renderState.camera.rotation);
-            const isParallelToCamera = Math.abs(vec3.dot(normal, cameraDir)) > 0.999;
-            let normalOffset = originalNormalOffset;
-            let anchorPos = originalAnchorPos;
 
-            const anchor = document.querySelector(`#${getClippingPlaneAnchorId(idx)}`) as HTMLElement;
-            const offsetNode = anchor?.querySelector(`[data-offset]`) as HTMLElement;
+            const editedPlanes = planes
+                .map((plane, idx) => ({ plane, idx }))
+                .filter(({ idx }) => idxList.includes(idx))
+                .map(({ plane, idx }) => {
+                    const originalAnchorPos = plane.anchorPos!;
+                    const originalAnchorPos2d = getAnchorPos2d(view, [originalAnchorPos])[0];
+                    const originalNormalOffset = plane.normalOffset;
+                    const normal = vec3.fromValues(
+                        originalNormalOffset[0],
+                        originalNormalOffset[1],
+                        originalNormalOffset[2],
+                    );
+                    const isParallelToGround = Math.abs(vec3.dot(normal, vec3.fromValues(0, 0, 1))) > 0.999;
+                    const isParallelToCamera = Math.abs(vec3.dot(normal, cameraDir)) > 0.999;
+                    const normalOffset = originalNormalOffset;
+                    const anchorPos = originalAnchorPos;
+
+                    const anchor = document.querySelector(`#${getClippingPlaneAnchorId(idx)}`) as HTMLElement;
+                    const offsetNode = anchor?.querySelector(`[data-offset]`) as HTMLElement;
+
+                    return {
+                        idx,
+                        originalAnchorPos,
+                        originalAnchorPos2d,
+                        originalNormalOffset,
+                        normal,
+                        isParallelToGround,
+                        isParallelToCamera,
+                        normalOffset,
+                        anchorPos,
+                        anchor,
+                        offsetNode,
+                    };
+                });
 
             const moveCameraToPlane = (diff: number) => {
                 if (originalCameraRot && originalCameraPos) {
@@ -88,35 +111,89 @@ export function useClippingPlaneActions() {
                                 rotation: view.renderState.camera.rotation,
                                 far: view.renderState.camera.far,
                             },
-                        })
+                        }),
                     );
                 }
             };
 
             return {
-                update(newValue: number) {
-                    normalOffset = vec4.clone(originalNormalOffset);
-                    const diff = originalNormalOffset[3] - newValue;
-                    normalOffset[3] = newValue;
-                    anchorPos = vec3.scaleAndAdd(
-                        vec3.create(),
-                        originalAnchorPos,
-                        vec3.fromValues(normalOffset[0], normalOffset[1], normalOffset[2]),
-                        newValue - originalNormalOffset[3]
-                    );
+                update(newValues: number[]) {
+                    let movedCameraToPlane = false;
+
+                    editedPlanes.forEach((editedPlane, idx) => {
+                        const {
+                            originalNormalOffset,
+                            isParallelToCamera,
+                            anchor,
+                            originalAnchorPos,
+                            originalAnchorPos2d,
+                            anchorPos,
+                            offsetNode,
+                            isParallelToGround,
+                        } = editedPlane;
+                        const newValue = newValues[idx];
+                        editedPlane.normalOffset = vec4.clone(editedPlane.originalNormalOffset);
+                        const diff = editedPlane.originalNormalOffset[3] - newValue;
+                        const { normalOffset } = editedPlane;
+                        normalOffset[3] = newValue;
+                        editedPlane.anchorPos = vec3.scaleAndAdd(
+                            vec3.create(),
+                            originalAnchorPos,
+                            vec3.fromValues(normalOffset[0], normalOffset[1], normalOffset[2]),
+                            newValue - originalNormalOffset[3],
+                        );
+
+                        if (cameraType === CameraType.Orthographic && isParallelToCamera && !movedCameraToPlane) {
+                            dispatch(renderActions.setClippingInEdit(true));
+                            moveCameraToPlane(-diff);
+                            movedCameraToPlane = true;
+                        }
+
+                        if (anchor) {
+                            let pos2d: ReadonlyVec2 | undefined;
+                            if (view.renderState.camera.kind === "orthographic" && isParallelToCamera) {
+                                if (originalAnchorPos2d) {
+                                    pos2d = vec2.clone(originalAnchorPos2d);
+                                    pos2d[1] += diff;
+                                }
+                            } else {
+                                pos2d = getAnchorPos2d(view!, [anchorPos])[0];
+                            }
+
+                            if (pos2d) {
+                                anchor.style.setProperty("left", `${pos2d[0]}px`);
+                                anchor.style.setProperty("top", `${pos2d[1]}px`);
+                            }
+
+                            if (offsetNode) {
+                                offsetNode.style.setProperty("display", "block");
+
+                                let text = `${diff > 0 ? "+" : ""}${diff.toFixed(2)}m`;
+                                if (isParallelToGround) {
+                                    text += ` (alt: ${anchorPos[2].toFixed(2)}m)`;
+                                }
+                                offsetNode.innerText = text;
+                            }
+                        }
+
+                        return editedPlane;
+                    });
 
                     view.modifyRenderState({
                         clipping: {
                             planes: planes.map((p, i) => {
-                                if (i === idx) {
+                                const editedPlane = editedPlanes.find((p2) => p2.idx === i);
+                                if (editedPlane) {
+                                    const { normalOffset, isParallelToCamera } = editedPlane;
+
                                     return {
-                                        ...plane,
+                                        ...editedPlanes,
                                         outline: { enabled: false },
                                         normalOffset,
                                         color:
                                             cameraType === CameraType.Orthographic && isParallelToCamera
                                                 ? [0, 0, 0, 0]
-                                                : plane.color,
+                                                : p.color,
                                     };
                                 } else if (p.outline?.enabled) {
                                     // Disable all clipping plane outlines while moving slider for better perf
@@ -126,37 +203,6 @@ export function useClippingPlaneActions() {
                             }),
                         },
                     });
-                    if (cameraType === CameraType.Orthographic && isParallelToCamera) {
-                        dispatch(renderActions.setClippingInEdit(true));
-                        moveCameraToPlane(-diff);
-                    }
-
-                    if (anchor) {
-                        let pos2d: ReadonlyVec2 | undefined;
-                        if (view.renderState.camera.kind === "orthographic" && isParallelToCamera) {
-                            if (originalAnchorPos2d) {
-                                pos2d = vec2.clone(originalAnchorPos2d);
-                                pos2d[1] += diff;
-                            }
-                        } else {
-                            pos2d = getAnchorPos2d(view!, [anchorPos])[0];
-                        }
-
-                        if (pos2d) {
-                            anchor.style.setProperty("left", `${pos2d[0]}px`);
-                            anchor.style.setProperty("top", `${pos2d[1]}px`);
-                        }
-
-                        if (offsetNode) {
-                            offsetNode.style.setProperty("display", "block");
-
-                            let text = `${diff > 0 ? "+" : ""}${diff.toFixed(2)}m`;
-                            if (isParallelToGround) {
-                                text += ` (alt: ${anchorPos[2].toFixed(2)}m)`;
-                            }
-                            offsetNode.innerText = text;
-                        }
-                    }
                 },
                 finish(save: boolean) {
                     view.modifyRenderState({
@@ -165,30 +211,41 @@ export function useClippingPlaneActions() {
                     if (save) {
                         dispatch(
                             renderActions.setClippingPlanes({
-                                planes: planes.map((p, i) => (i === idx ? { ...plane, normalOffset, anchorPos } : p)),
-                            })
+                                planes: planes.map((p, i) => {
+                                    const editedPlane = editedPlanes.find((p2) => p2.idx === i);
+                                    if (editedPlane) {
+                                        const { normalOffset, anchorPos } = editedPlane;
+                                        return { ...p, normalOffset, anchorPos };
+                                    }
+                                    return p;
+                                }),
+                            }),
                         );
                     } else {
                         dispatch(
                             renderActions.setClippingPlanes({
                                 planes: planes.slice(),
-                            })
+                            }),
                         );
                     }
+
                     if (cameraType === CameraType.Orthographic) {
                         dispatch(renderActions.setClippingInEdit(false));
                     }
-                    offsetNode?.style.setProperty("display", "none");
 
-                    const pos2d = getAnchorPos2d(view!, [anchorPos])[0];
-                    if (pos2d) {
-                        anchor.style.setProperty("left", `${pos2d[0]}px`);
-                        anchor.style.setProperty("top", `${pos2d[1]}px`);
+                    for (const { offsetNode, anchor, anchorPos } of editedPlanes) {
+                        offsetNode?.style.setProperty("display", "none");
+
+                        const pos2d = getAnchorPos2d(view!, [anchorPos])[0];
+                        if (pos2d) {
+                            anchor.style.setProperty("left", `${pos2d[0]}px`);
+                            anchor.style.setProperty("top", `${pos2d[1]}px`);
+                        }
                     }
                 },
             } as MovingPlaneControl;
         },
-        [dispatch, cameraType]
+        [dispatch, cameraType],
     );
 
     const deletePlane = useCallback(
@@ -203,7 +260,7 @@ export function useClippingPlaneActions() {
             dispatch(
                 renderActions.setClippingPlanes({
                     planes: newPlanes,
-                })
+                }),
             );
             if (cameraType === CameraType.Orthographic) {
                 dispatch(renderActions.setClippingInEdit(false));
@@ -211,7 +268,7 @@ export function useClippingPlaneActions() {
 
             return newPlanes;
         },
-        [dispatch, cameraType]
+        [dispatch, cameraType],
     );
 
     const toggleOutlines = useCallback(
@@ -219,10 +276,10 @@ export function useClippingPlaneActions() {
             dispatch(
                 renderActions.setClippingPlanes({
                     planes: planes.map((p, i) => (i === idx ? { ...p, outline: { enabled } } : p)),
-                })
+                }),
             );
         },
-        [dispatch]
+        [dispatch],
     );
 
     const alignCamera = useCallback(
@@ -237,17 +294,17 @@ export function useClippingPlaneActions() {
                 renderActions.setCamera({
                     type: CameraType.Pinhole,
                     goTo: { position, rotation },
-                })
+                }),
             );
         },
-        [dispatch]
+        [dispatch],
     );
 
-    return { swapCamera, deletePlane, movePlane, toggleOutlines, alignCamera };
+    return { swapCamera, deletePlane, movePlanes, toggleOutlines, alignCamera };
 }
 
 export interface MovingPlaneControl {
-    update: (newValue: number) => void;
+    update: (newValues: number[]) => void;
     finish: (save: boolean) => void;
 }
 

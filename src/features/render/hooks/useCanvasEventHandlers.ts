@@ -14,6 +14,7 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { store } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { lastPickSampleActions, useDispatchLastPickSample } from "contexts/lastPickSample";
+import { useClippingPlaneActions } from "features/clippingPlanes/useClippingPlaneActions";
 import { selectShowTracer } from "features/followPath";
 import { measureActions, selectMeasureHoverSettings } from "features/measure";
 import { myLocationActions, selectMyLocationAutocenter } from "features/myLocation";
@@ -80,6 +81,8 @@ export function useCanvasEventHandlers({
     const downloadHoveredBrepTimer = useRef<ReturnType<typeof setTimeout>>();
     const dispatch = useAppDispatch();
     const dispatchLastPickSample = useDispatchLastPickSample();
+    const { movePlanes } = useClippingPlaneActions();
+    const movingPlaneControl = useRef<ReturnType<typeof movePlanes>>();
 
     const hideSvgCursor = () =>
         svg &&
@@ -101,34 +104,26 @@ export function useCanvasEventHandlers({
             return;
         }
 
-        if (clippingPlaneCommitTimer.current) {
-            clearTimeout(clippingPlaneCommitTimer.current);
+        if (!movingPlaneControl.current) {
+            movingPlaneControl.current = movePlanes(
+                view,
+                clippingPlanes.planes,
+                clippingPlanes.planes.map((_, i) => i),
+            );
         }
 
-        view.modifyRenderState({
-            clipping: {
-                planes: view.renderState.clipping.planes.map((plane) => ({
-                    ...plane,
-                    normalOffset: [
-                        plane.normalOffset[0],
-                        plane.normalOffset[1],
-                        plane.normalOffset[2],
-                        plane.normalOffset[3] + -delta,
-                    ],
-                })),
-            },
-        });
+        if (clippingPlaneCommitTimer.current) {
+            clearTimeout(clippingPlaneCommitTimer.current);
+            clippingPlaneCommitTimer.current = undefined;
+        }
+
+        const newValues = view.renderState.clipping.planes.map((p) => p.normalOffset[3] - delta);
+        movingPlaneControl.current.update(newValues);
 
         clippingPlaneCommitTimer.current = setTimeout(() => {
-            dispatch(
-                renderActions.setClippingPlanes({
-                    planes: view.renderState.clipping.planes.map((plane) => ({
-                        color: plane.color ? [...plane.color] : [0, 1, 0, 1],
-                        baseW: plane.normalOffset[3],
-                        normalOffset: [...plane.normalOffset],
-                    })),
-                })
-            );
+            movingPlaneControl.current?.finish(true);
+            movingPlaneControl.current = undefined;
+            clippingPlaneCommitTimer.current = undefined;
         }, 100);
     };
 
@@ -319,10 +314,10 @@ export function useCanvasEventHandlers({
                 !localHoverEnt?.entity && !localResult?.objectId
                     ? "red"
                     : localHoverEnt?.status === "loaded"
-                    ? "lightgreen"
-                    : localHoverEnt?.status === "unknown"
-                    ? "blue"
-                    : "yellow";
+                      ? "lightgreen"
+                      : localHoverEnt?.status === "unknown"
+                        ? "blue"
+                        : "yellow";
 
             if (shouldPickHoverEnt) {
                 prevHoverUpdate.current = now;

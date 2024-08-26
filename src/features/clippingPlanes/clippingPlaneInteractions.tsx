@@ -90,7 +90,7 @@ export const ClippingPlaneInteractions = forwardRef(function Interactions(_props
         window.addEventListener("pointercancel", onPointerCancel);
         setMovingPlaneIndex(index);
 
-        const state = actions.movePlane(view, clipping.planes, index);
+        const state = actions.movePlanes(view, clipping.planes, [index]);
 
         const startPoint = vec2.fromValues(e.clientX, e.clientY);
         const plane = clipping.planes[index];
@@ -142,7 +142,7 @@ export const ClippingPlaneInteractions = forwardRef(function Interactions(_props
 
             if (Math.abs(step) >= 0.001) {
                 newOffset += step;
-                state.update(newOffset);
+                state.update([newOffset]);
             }
 
             posDragedFrom = posDragedTo;
