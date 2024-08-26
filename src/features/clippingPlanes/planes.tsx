@@ -77,7 +77,7 @@ export default function Planes() {
                     return (
                         <Box mb={2} key={idx} display="flex" alignItems="center" gap={1}>
                             <Box flex="0 0 80px" sx={{ color }}>
-                                {t("plane")}
+                                {t("plane") + " "}
                                 {idx + 1}
                             </Box>
                             <Slider
@@ -108,7 +108,7 @@ export default function Planes() {
                                         textAlign: "center",
                                     }}
                                 >
-                                    Outline
+                                    {t("outlines")}
                                 </Typography>
                             </Box>
                             <IconButton onClick={() => handleCameraSwap(idx)} sx={{ flex: 1 }}>
