@@ -225,7 +225,25 @@ export function useClippingPlaneActions() {
         [dispatch]
     );
 
-    return { swapCamera, deletePlane, movePlane, toggleOutlines };
+    const alignCamera = useCallback(
+        (view: View, planes: RenderState["clipping"]["planes"], idx: number) => {
+            const { position, rotation } = getSnapToPlaneParams({
+                planeIdx: idx,
+                view,
+                anchorPos: planes[idx].anchorPos,
+                offset: 20,
+            });
+            dispatch(
+                renderActions.setCamera({
+                    type: CameraType.Pinhole,
+                    goTo: { position, rotation },
+                })
+            );
+        },
+        [dispatch]
+    );
+
+    return { swapCamera, deletePlane, movePlane, toggleOutlines, alignCamera };
 }
 
 export interface MovingPlaneControl {

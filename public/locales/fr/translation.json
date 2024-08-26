@@ -558,5 +558,6 @@
     "collapse": "Réduire",
     "expand": "Développer",
     "openWidget": "Ouvrir le widget",
-    "crossSection": "Coupe transversale"
+    "crossSection": "Coupe transversale",
+    "alignCamera": "Aligner la caméra"
 }

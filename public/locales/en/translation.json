@@ -558,5 +558,6 @@
     "collapse": "Collapse",
     "expand": "Expand",
     "openWidget": "Open widget",
-    "crossSection": "Cross section"
+    "crossSection": "Cross section",
+    "alignCamera": "Align camera"
 }

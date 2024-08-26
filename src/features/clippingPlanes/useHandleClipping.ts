@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { getCameraDir } from "features/engine2D/utils";
-import { selectClippingPlanes } from "features/render";
+import { selectClippingPlanes, selectTerrain } from "features/render";
 
 const transparentColor = [0, 0, 0, 0] as const;
 
@@ -13,6 +13,7 @@ export function useHandleClipping() {
         state: { view },
     } = useExplorerGlobals();
     const clipping = useAppSelector(selectClippingPlanes);
+    const terrain = useAppSelector(selectTerrain);
 
     useEffect(() => {
         if (!view) {
@@ -48,6 +49,7 @@ export function useHandleClipping() {
                     };
                 }),
             },
+            terrain: { asBackground: clipping.planes.length > 0 ? false : terrain.asBackground },
         });
-    }, [view, clipping]);
+    }, [view, clipping, terrain]);
 }

@@ -558,5 +558,6 @@
     "collapse": "Einklappen",
     "expand": "Erweitern",
     "openWidget": "Widget öffnen",
-    "crossSection": "Querschnitt"
+    "crossSection": "Querschnitt",
+    "alignCamera": "Kamera ausrichten"
 }

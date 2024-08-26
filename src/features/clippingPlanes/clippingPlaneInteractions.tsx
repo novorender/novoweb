@@ -1,5 +1,23 @@
-import { CheckBox, CheckBoxOutlineBlank, Delete, Height, Info, MoreVert } from "@mui/icons-material";
-import { Box, css, IconButton, ListItemIcon, ListItemText, MenuItem, styled, useTheme } from "@mui/material";
+import {
+    CenterFocusWeak,
+    CheckBox,
+    CheckBoxOutlineBlank,
+    ContentCut,
+    Delete,
+    Info,
+    MoreVert,
+} from "@mui/icons-material";
+import {
+    Box,
+    css,
+    IconButton,
+    IconButtonProps,
+    ListItemIcon,
+    ListItemText,
+    MenuItem,
+    styled,
+    useTheme,
+} from "@mui/material";
 import { Menu } from "@mui/material";
 import { View } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
@@ -175,9 +193,10 @@ function PlaneBox({
     const moveBtnRef = useRef<HTMLButtonElement>(null);
     const [isClose, setIsClose] = useState(false);
     const hasMouse = hasMouseSupport();
-    const rgb = vecToRgb(clipping.planes[index].color);
-    rgb.a = 1;
-    const color = rgbToHex(rgb);
+    const planeRgb = vecToRgb(clipping.planes[index].color);
+    planeRgb.a = 1;
+    const bgColor = rgbToHex(planeRgb);
+    const iconColor = rgbToHex(vecToRgb(clipping.planes[index].outline.color));
 
     useEffect(() => {
         function onPointerMove(e: PointerEvent) {
@@ -213,14 +232,15 @@ function PlaneBox({
             style={{ left: `${point[0]}px`, top: `${point[1]}px` }}
             id={getClippingPlaneAnchorId(index)}
         >
-            <StyledIconButton
+            <ClippingButton
                 size="small"
                 onPointerDown={(e) => handlePointerDown(e, index)}
                 ref={moveBtnRef}
-                sx={{ color }}
+                iconColor={iconColor}
+                bgColor={bgColor}
             >
-                <Height />
-            </StyledIconButton>
+                <ContentCut />
+            </ClippingButton>
             <PlaneMenu clipping={clipping} index={index} visible={movingPlaneIndex === -1 && (!hasMouse || isClose)} />
             <Box
                 data-offset
@@ -282,6 +302,11 @@ function PlaneMenu({
         closeMenu();
     };
 
+    const alignCamera = () => {
+        actions.alignCamera(view!, clipping.planes, index);
+        closeMenu();
+    };
+
     const deletePlane = () => {
         actions.deletePlane(view!, clipping.planes, index);
         closeMenu();
@@ -327,6 +352,12 @@ function PlaneMenu({
                     </ListItemIcon>
                     <ListItemText>{t("crossSection")}</ListItemText>
                 </MenuItem>
+                <MenuItem onClick={alignCamera}>
+                    <ListItemIcon>
+                        <CenterFocusWeak fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>{t("alignCamera")}</ListItemText>
+                </MenuItem>
                 <MenuItem onClick={() => toggleOutlines(!plane.outline.enabled)}>
                     <ListItemIcon>
                         {plane.outline.enabled ? (
@@ -360,6 +391,21 @@ function getPoints(view: View, planes: RenderState["clipping"]["planes"]) {
         point: points[i],
     }));
 }
+
+const ClippingButton = styled(IconButton, { shouldForwardProp: (prop) => prop !== "bgColor" && prop !== "iconColor" })<
+    IconButtonProps & { bgColor: string; iconColor: string }
+>(
+    ({ bgColor, iconColor }) => css`
+        background-color: ${bgColor};
+        color: ${iconColor};
+        opacity: 0.9;
+        transition: opacity 0.2s;
+        &:hover {
+            background-color: ${bgColor};
+            opacity: 1;
+        }
+    `,
+);
 
 const StyledIconButton = styled(IconButton)(
     ({ theme }) => css`

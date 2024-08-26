@@ -558,5 +558,6 @@
     "collapse": "Skjul",
     "expand": "Vis",
     "openWidget": "Åpne widget",
-    "crossSection": "Tverrsnitt"
+    "crossSection": "Tverrsnitt",
+    "alignCamera": "Juster kamera"
 }
