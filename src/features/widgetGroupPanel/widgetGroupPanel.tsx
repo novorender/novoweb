@@ -13,6 +13,7 @@ import {
     Tooltip,
     useTheme,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { HudPanel } from "components/hudPanel";
@@ -80,7 +81,7 @@ export function WidgetGroupPanel() {
                             <IconButton
                                 onClick={() =>
                                     dispatch(
-                                        explorerActions.setWidgetGroupPanelState({ ...state, expanded: !expanded })
+                                        explorerActions.setWidgetGroupPanelState({ ...state, expanded: !expanded }),
                                     )
                                 }
                             >
@@ -144,7 +145,9 @@ function Section({ groupKey }: { groupKey: FeatureGroupKey }) {
     const widgetSlot = useAppSelector(selectWidgetSlot);
     const canAddWidget = useAppSelector(selectCanAddWidget);
     const dispatch = useAppDispatch();
-    const { name, Icon } = featureGroups[groupKey];
+    const { t } = useTranslation();
+    const { nameKey, Icon } = featureGroups[groupKey];
+    const name = t(nameKey);
 
     const handleClick = () => {
         if (widgetSlot.open || canAddWidget) {
@@ -158,7 +161,6 @@ function Section({ groupKey }: { groupKey: FeatureGroupKey }) {
                 <IconButton size="large">
                     <Icon />
                 </IconButton>
-                {name}
             </SectionBox>
         </Tooltip>
     );
@@ -173,7 +175,7 @@ const SectionBox = styled(Box)(
         gap: ${theme.spacing(2)};
         font-weight: 600;
         cursor: pointer;
-    `
+    `,
 );
 
 function LogoBtn({ open, onClick }: { open: boolean; onClick: () => void }) {

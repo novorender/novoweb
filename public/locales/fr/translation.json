@@ -541,5 +541,22 @@
     "failedToSaveSettings": "Échec de l'enregistrement des paramètres",
     "settingsSuccessfullySaved": "Paramètres enregistrés avec succès",
     "switchTo3d": "Passer en 3D",
-    "switchTo2d": "Passer en 2D"
+    "switchTo2d": "Passer en 2D",
+    "filesAndAttributes": "Fichiers et attributs",
+    "integrations": "Intégrations",
+    "other": "Autre",
+    "longitudeShort": "Lon",
+    "latitudeShort": "Lat",
+    "altitudeShort": "Alt",
+    "coordinates": "Coordonnées",
+    "scale": "Échelle",
+    "measurements": "Mesures",
+    "renderTypes": "Types de rendu",
+    "noFavoriteWidgets1": "Aucun widget favori sélectionné. Choisissez vos favoris en cliquant sur l'icône",
+    "noFavoriteWidgets2": "dans le coin supérieur droit d'un widget.",
+    "noWidgets": "Aucun widget",
+    "collapse": "Réduire",
+    "expand": "Développer",
+    "openWidget": "Ouvrir le widget",
+    "crossSection": "Coupe transversale"
 }

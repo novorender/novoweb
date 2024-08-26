@@ -73,7 +73,7 @@ export function Root({
     const widgetGroups = sortedFeatureGroups.map((group) => {
         return {
             groupKey: group.key,
-            groupName: group.name,
+            groupName: t(group.nameKey),
             GroupIcon: group.Icon,
             widgets:
                 group.key === featureGroups.favorites.key
@@ -115,12 +115,12 @@ export function Root({
                                     <Box textAlign="center" color="grey" m={2}>
                                         {groupKey === featureGroups.favorites.key ? (
                                             <>
-                                                No favorite widgets selected. Choose your favorites by clicking the{" "}
-                                                <StarOutline sx={{ verticalAlign: "text-bottom" }} /> icon in the top
-                                                right corner of a widget.
+                                                {t("noFavoriteWidgets1") + " "}
+                                                <StarOutline sx={{ verticalAlign: "text-bottom" }} />{" "}
+                                                {" " + t("noFavoriteWidgets2")}
                                             </>
                                         ) : (
-                                            <>No widgets</>
+                                            <>{t("noWidgets")}</>
                                         )}
                                     </Box>
                                 ) : (

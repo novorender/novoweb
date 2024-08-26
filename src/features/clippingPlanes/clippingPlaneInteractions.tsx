@@ -4,6 +4,7 @@ import { Menu } from "@mui/material";
 import { View } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
@@ -44,7 +45,7 @@ export const ClippingPlaneInteractions = forwardRef(function Interactions(_props
                 const points = getPoints(view, clippingRef.current.planes);
                 for (const { point = dummyPoint, index } of points) {
                     const node = containerRef.current.querySelector(
-                        `#${getClippingPlaneAnchorId(index)}`
+                        `#${getClippingPlaneAnchorId(index)}`,
                     ) as HTMLElement;
                     if (node && point) {
                         node.style.setProperty("left", `${point[0]}px`);
@@ -53,7 +54,7 @@ export const ClippingPlaneInteractions = forwardRef(function Interactions(_props
                 }
             },
         }),
-        [view]
+        [view],
     );
 
     if (!view) {
@@ -255,6 +256,7 @@ function PlaneMenu({
     const {
         state: { view },
     } = useExplorerGlobals(false);
+    const { t } = useTranslation();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const dispatch = useAppDispatch();
     const actions = useClippingPlaneActions();
@@ -317,13 +319,13 @@ function PlaneMenu({
                     <ListItemIcon>
                         <Info fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText>Open widget</ListItemText>
+                    <ListItemText>{t("openWidget")}</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={swapCamera}>
                     <ListItemIcon>
                         <featuresConfig.orthoCam.Icon fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText>Cross section</ListItemText>
+                    <ListItemText>{t("crossSection")}</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={() => toggleOutlines(!plane.outline.enabled)}>
                     <ListItemIcon>
@@ -333,13 +335,13 @@ function PlaneMenu({
                             <CheckBoxOutlineBlank fontSize="small" />
                         )}
                     </ListItemIcon>
-                    <ListItemText>Outlines</ListItemText>
+                    <ListItemText>{t("outlines")}</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={deletePlane}>
                     <ListItemIcon>
                         <Delete fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText>Delete</ListItemText>
+                    <ListItemText>{t("delete")}</ListItemText>
                 </MenuItem>
             </Menu>
         </>
@@ -350,7 +352,7 @@ function getPoints(view: View, planes: RenderState["clipping"]["planes"]) {
     const planesWithAnchors = planes.map((plane, index) => ({ plane, index })).filter(({ plane }) => plane?.anchorPos);
     const points = getAnchorPos2d(
         view,
-        planesWithAnchors.map(({ plane }) => plane.anchorPos!)
+        planesWithAnchors.map(({ plane }) => plane.anchorPos!),
     );
     return planesWithAnchors.map(({ plane, index }, i) => ({
         plane,
@@ -365,5 +367,5 @@ const StyledIconButton = styled(IconButton)(
         &:hover {
             background-color: ${theme.palette.grey["200"]};
         }
-    `
+    `,
 );

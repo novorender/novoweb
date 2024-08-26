@@ -541,5 +541,22 @@
     "failedToSaveSettings": "Speichern der Einstellungen fehlgeschlagen",
     "settingsSuccessfullySaved": "Einstellungen erfolgreich gespeichert",
     "switchTo3d": "Wechsel zu 3D",
-    "switchTo2d": "Wechsel zu 2D"
+    "switchTo2d": "Wechsel zu 2D",
+    "filesAndAttributes": "Dateien und Attribute",
+    "integrations": "Integrationen",
+    "other": "Andere",
+    "longitudeShort": "Lon",
+    "latitudeShort": "Lat",
+    "altitudeShort": "Alt",
+    "coordinates": "Koordinaten",
+    "scale": "Maßstab",
+    "measurements": "Messungen",
+    "renderTypes": "Render-Typen",
+    "noFavoriteWidgets1": "Keine Lieblings-Widgets ausgewählt. Wählen Sie Ihre Favoriten, indem Sie auf das Symbol",
+    "noFavoriteWidgets2": "in der oberen rechten Ecke eines Widgets klicken.",
+    "noWidgets": "Keine Widgets",
+    "collapse": "Einklappen",
+    "expand": "Erweitern",
+    "openWidget": "Widget öffnen",
+    "crossSection": "Querschnitt"
 }

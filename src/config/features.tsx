@@ -70,68 +70,61 @@ export const featureTags = {
 export const featureGroups = {
     clipping: {
         key: "clipping",
-        name: "Clipping",
+        nameKey: "clipping",
         Icon: ContentCut,
         type: FeatureType.Group,
     },
     measure: {
         key: "measure",
-        name: "Measure",
+        nameKey: "measure",
         Icon: Straighten,
         type: FeatureType.Group,
     },
     filesAndAttributes: {
         key: "filesAndAttributes",
-        name: "Files and attributes",
+        nameKey: "filesAndAttributes",
         Icon: AccountTree,
         type: FeatureType.Group,
     },
     filter: {
         key: "filter",
-        name: "Filter",
+        nameKey: "filter",
         Icon: FilterAlt,
         type: FeatureType.Group,
     },
     integrations: {
         key: "integrations",
-        name: "Integrations",
+        nameKey: "integrations",
         Icon: Power,
         type: FeatureType.Group,
     },
     search: {
         key: "search",
-        name: "Search",
+        nameKey: "search",
         Icon: Search,
         type: FeatureType.Group,
     },
     settings: {
         key: "settings",
-        name: "Settings",
+        nameKey: "settings",
         Icon: Settings,
         type: FeatureType.Group,
     },
     other: {
         key: "other",
-        name: "Other",
+        nameKey: "other",
         Icon: Window,
         type: FeatureType.Group,
     },
     favorites: {
         key: "favorites",
-        name: "Favorites",
+        nameKey: "favorites",
         Icon: Star,
         type: FeatureType.Group,
     },
 } as const;
 
 export type FeatureGroupKey = keyof typeof featureGroups;
-
-export const favoritesVirtualGroup = {
-    key: "favorites",
-    name: "Favorites",
-    Icon: Star,
-    type: FeatureType.Group,
-} as const;
 
 export const featuresConfig = {
     omegaPims365: {

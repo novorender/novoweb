@@ -1,4 +1,5 @@
 import { ListItemIcon, ListItemText, MenuItem, MenuList } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
@@ -11,6 +12,7 @@ export function ClippingMenu({ onSelect }: { onSelect?: () => void }) {
     // const cameraType = useAppSelector(selectCameraType);
     // const selectingOrthoPoint = activePicker === Picker.OrthoPlane;
     const dispatch = useAppDispatch();
+    const { t } = useTranslation();
 
     const togglePicker = (picker: Picker) => {
         dispatch(renderActions.setPicker(picker === activePicker ? Picker.Object : picker));
@@ -26,7 +28,7 @@ export function ClippingMenu({ onSelect }: { onSelect?: () => void }) {
                         active={activePicker === Picker.ClippingPlane}
                     />
                 </ListItemIcon>
-                <ListItemText>Clipping plane</ListItemText>
+                <ListItemText>{t("clippingPlane")}</ListItemText>
             </MenuItem>
             {/* <MenuItem
                 onClick={() => {

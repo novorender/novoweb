@@ -541,5 +541,22 @@
     "failedToSaveSettings": "Failed to save settings",
     "settingsSuccessfullySaved": "Settings successfully saved",
     "switchTo3d": "Switch to 3D",
-    "switchTo2d": "Switch to 2D"
+    "switchTo2d": "Switch to 2D",
+    "filesAndAttributes": "Files and attributes",
+    "integrations": "Integrations",
+    "other": "Other",
+    "longitudeShort": "Lon",
+    "latitudeShort": "Lat",
+    "altitudeShort": "Alt",
+    "coordinates": "Coordinates",
+    "scale": "Scale",
+    "measurements": "Measurements",
+    "renderTypes": "Render types",
+    "noFavoriteWidgets1": "No favorite widgets selected. Choose your favorites by clicking the",
+    "noFavoriteWidgets2": "icon in the top right corner of a widget.",
+    "noWidgets": "No widgets",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "openWidget": "Open widget",
+    "crossSection": "Cross section"
 }

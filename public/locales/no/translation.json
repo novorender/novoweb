@@ -541,5 +541,22 @@
     "failedToSaveSettings": "Kunne ikke lagre innstillingene",
     "settingsSuccessfullySaved": "Innstillingene ble lagret",
     "switchTo3d": "Bytt til 3D",
-    "switchTo2d": "Bytt til 2D"
+    "switchTo2d": "Bytt til 2D",
+    "filesAndAttributes": "Filer og attributter",
+    "integrations": "Integrasjoner",
+    "other": "Annet",
+    "longitudeShort": "Lon",
+    "latitudeShort": "Lat",
+    "altitudeShort": "Alt",
+    "coordinates": "Koordinater",
+    "scale": "Skala",
+    "measurements": "Målinger",
+    "renderTypes": "Rendertyper",
+    "noFavoriteWidgets1": "Ingen favoritt-widgeter valgt. Velg dine favoritter ved å klikke på ikonet",
+    "noFavoriteWidgets2": "i øvre høyre hjørne av en widget.",
+    "noWidgets": "Ingen widgeter",
+    "collapse": "Skjul",
+    "expand": "Vis",
+    "openWidget": "Åpne widget",
+    "crossSection": "Tverrsnitt"
 }
