@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { HierarcicalObjectReference, ObjectData } from "@novorender/webgl-api";
 import { ChangeEvent, CSSProperties, forwardRef, MouseEventHandler, MutableRefObject, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList, FixedSizeListProps, ListOnScrollProps } from "react-window";
 
@@ -49,7 +50,7 @@ export const NodeList = forwardRef<FixedSizeList, Props>(
 
         const atLeastOneNodeHasMenu = useMemo(
             () => nodeProps.allowDownload && nodes.some(shouldShowNodeMenu),
-            [nodeProps.allowDownload, nodes]
+            [nodeProps.allowDownload, nodes],
         );
 
         return (
@@ -111,7 +112,7 @@ export const NodeList = forwardRef<FixedSizeList, Props>(
                 )}
             </AutoSizer>
         );
-    }
+    },
 );
 
 type NodeProps = {
@@ -124,6 +125,7 @@ type NodeProps = {
 } & ListItemProps;
 
 function Node({ node, parent, loading, canHaveMenu, setLoading, abortController, ...props }: NodeProps) {
+    const { t } = useTranslation();
     const theme = useTheme();
 
     const {
@@ -151,7 +153,11 @@ function Node({ node, parent, loading, canHaveMenu, setLoading, abortController,
         if (node.type === NodeType.Internal) {
             dispatch(renderActions.setMainObject(node.id));
         } else if (node.type === NodeType.Leaf) {
-            isSelected ? unSelect(node) : select(node);
+            if (isSelected) {
+                unSelect(node);
+            } else {
+                select(node);
+            }
         }
     };
 
@@ -225,7 +231,7 @@ function Node({ node, parent, loading, canHaveMenu, setLoading, abortController,
         try {
             try {
                 await getDescendants({ db, parentNode: node, abortSignal }).then((ids) =>
-                    dispatchHighlighted(highlightActions.remove(ids))
+                    dispatchHighlighted(highlightActions.remove(ids)),
                 );
             } catch {
                 await searchByParentPath({
@@ -299,7 +305,7 @@ function Node({ node, parent, loading, canHaveMenu, setLoading, abortController,
         try {
             try {
                 await getDescendants({ db, parentNode: node, abortSignal }).then((ids) =>
-                    dispatchHidden(hiddenActions.remove(ids))
+                    dispatchHidden(hiddenActions.remove(ids)),
                 );
             } catch {
                 await searchByParentPath({
@@ -412,7 +418,7 @@ function Node({ node, parent, loading, canHaveMenu, setLoading, abortController,
                         <ListItemIcon>
                             <Download fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Download</ListItemText>
+                        <ListItemText>{t("download")}</ListItemText>
                     </MenuItem>
                 </Menu>
             )}

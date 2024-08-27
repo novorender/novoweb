@@ -1,6 +1,7 @@
 import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, Typography, useTheme } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import { ScrollBox } from "components";
@@ -12,6 +13,7 @@ import { createOAuthStateString } from "utils/auth";
 import { getCode } from "../bimTrackApi";
 
 export function Login({ sceneId }: { sceneId: string }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const [loading, setLoading] = useState(false);
     const createBookmark = useCreateBookmark();
@@ -56,16 +58,16 @@ export function Login({ sceneId }: { sceneId: string }) {
                         loading={loading}
                         loadingIndicator={
                             <Box position={"relative"} display="flex" alignItems="center" minWidth={220}>
-                                Log in to {featuresConfig.bimTrack.name}
+                                {t("logInTo", { name: t(featuresConfig.bimTrack.nameKey) })}
                                 <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
                             </Box>
                         }
                     >
-                        Log in to {featuresConfig.bimTrack.name}
+                        {t("logInTo", { name: t(featuresConfig.bimTrack.nameKey) })}
                     </LoadingButton>
                 </Box>
                 <Typography textAlign={"center"} color={theme.palette.text.secondary}>
-                    Redirects to {featuresConfig.bimTrack.name} login page outside of Novorender.
+                    {t("redirectsTo", { name: t(featuresConfig.bimTrack.nameKey) })}
                 </Typography>
             </ScrollBox>
         </>

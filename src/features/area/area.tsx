@@ -1,6 +1,7 @@
 import { Add, DeleteSweep, Undo } from "@mui/icons-material";
 import { Box, Button, Checkbox, Divider, FormControlLabel } from "@mui/material";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { IosSwitch, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
@@ -17,6 +18,7 @@ export default function Area() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const [menuOpen, toggleMenu] = useToggle();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.area.key;
@@ -63,7 +65,7 @@ export default function Area() {
                                         }
                                     />
                                 }
-                                label={<Box fontSize={14}>Select</Box>}
+                                label={<Box fontSize={14}>{t("select")}</Box>}
                             />
                             <Button
                                 disabled={!points.length}
@@ -71,7 +73,7 @@ export default function Area() {
                                 color="grey"
                             >
                                 <Undo sx={{ mr: 1 }} />
-                                Undo
+                                {t("undo")}
                             </Button>
                             <Button
                                 onClick={() => dispatch(areaActions.newArea())}
@@ -79,7 +81,7 @@ export default function Area() {
                                 disabled={!points.length}
                             >
                                 <Add sx={{ mr: 1 }} />
-                                New
+                                {t("new")}
                             </Button>
                             <Button
                                 disabled={!points.length}
@@ -87,7 +89,7 @@ export default function Area() {
                                 color="grey"
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />
-                                Clear
+                                {t("clear")}
                             </Button>
                         </Box>
                     ) : null}
@@ -104,14 +106,17 @@ export default function Area() {
                                     onChange={() => dispatch(areaActions.toggleLockElevation())}
                                 />
                             }
-                            label={<Box fontSize={14}>Lock elevation</Box>}
+                            label={<Box fontSize={14}>{t("lockElevation")}</Box>}
                         />
                     </Box>
 
                     {area > 0 ? (
                         <>
                             <Divider sx={{ py: 0 }} />
-                            <Box p={1}>Area: {area.toFixed(3)} &#13217;</Box>
+                            <Box p={1}>
+                                {t("areaName")}
+                                {area.toFixed(3)} &#13217;
+                            </Box>
                         </>
                     ) : null}
                 </ScrollBox>

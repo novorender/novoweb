@@ -1,4 +1,5 @@
 import type { SpeedDialActionProps } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
@@ -13,7 +14,8 @@ type Props = SpeedDialActionProps & {
 };
 
 export function CameraSpeed({ position, ...speedDialProps }: Props) {
-    const { name } = featuresConfig["cameraSpeed"];
+    const { nameKey } = featuresConfig["cameraSpeed"];
+    const { t } = useTranslation();
     const level = useAppSelector(selectCurrentCameraSpeedLevel);
 
     const dispatch = useAppDispatch();
@@ -30,7 +32,7 @@ export function CameraSpeed({ position, ...speedDialProps }: Props) {
             data-test="camera-speed"
             FabProps={{ ...speedDialProps.FabProps, style: { ...position, position: "absolute" } }}
             onClick={handleClick}
-            title={`${name} - ${speed}`}
+            title={`${t(nameKey)} - ${speed}`}
             icon={<Icon />}
         />
     );

@@ -39,6 +39,7 @@ const Pims = lazy(() => import("features/pims/pims"));
 const Omega365 = lazy(() => import("features/omega365/omega365"));
 const Arcgis = lazy(() => import("features/arcgis/arcgis"));
 const Forms = lazy(() => import("features/forms/forms"));
+const Clash = lazy(() => import("features/clash/clash"));
 
 export function Widgets() {
     const maximized = useAppSelector(selectMaximized);
@@ -55,7 +56,7 @@ export function Widgets() {
                 dispatch(explorerActions.setWidgets(slots.slice(0, layout.widgets)));
             }
         },
-        [layout, slots, dispatch, maximized]
+        [layout, slots, dispatch, maximized],
     );
 
     useEffect(() => {
@@ -79,10 +80,10 @@ export function Widgets() {
                     maximized.length === 2
                         ? `"two one" "two one"`
                         : maximized.length === 1
-                        ? slots.indexOf(maximized[0]) === 0
-                            ? `"three one" "two one"`
-                            : `"three two" "three one"`
-                        : `"four two" "three one"`,
+                          ? slots.indexOf(maximized[0]) === 0
+                              ? `"three one" "two one"`
+                              : `"three two" "three one"`
+                          : `"four two" "three one"`,
             };
         } else if (layout.widgets === 2) {
             return {
@@ -251,6 +252,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             break;
         case featuresConfig.forms.key:
             Widget = Forms;
+            break;
+        case featuresConfig.clash.key:
+            Widget = Clash;
             break;
         default:
             return key;

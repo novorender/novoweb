@@ -39,7 +39,7 @@ export function useCrossSection() {
                 }
 
                 setObjects({ status: AsyncStatus.Success, data: fp });
-            } catch (e) {
+            } catch {
                 setObjects({ status: AsyncStatus.Error, msg: "An error occurred." });
             }
         }

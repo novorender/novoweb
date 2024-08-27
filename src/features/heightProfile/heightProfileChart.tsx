@@ -12,6 +12,7 @@ import { defaultStyles, TooltipWithBounds, useTooltip } from "@visx/tooltip";
 import { bisectLeft, max, min } from "d3-array";
 import { vec2 } from "gl-matrix";
 import { Fragment, MouseEvent, TouchEvent, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 export const epsilon = 1e-3;
 
@@ -34,6 +35,7 @@ export function HeightProfileChart({
     height: number;
     pts: Vec2[];
 }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const {
         showTooltip,
@@ -102,7 +104,7 @@ export function HeightProfileChart({
 
             const pt = vec2.lerp(vec2.create(), pt1, pt0, (getX(pt1) - x0) / (getX(pt1) - getX(pt0))) as [
                 number,
-                number
+                number,
             ];
             const rise = getY(pt1) - getY(pt0);
             const dist = getX(pt1) - getX(pt0);
@@ -115,7 +117,7 @@ export function HeightProfileChart({
                 tooltipTop: yScale(y),
             });
         },
-        [showTooltip, yScale, xScale, lengths, pts, xMin, xMax]
+        [showTooltip, yScale, xScale, lengths, pts, xMin, xMax],
     );
 
     return (
@@ -282,9 +284,18 @@ export function HeightProfileChart({
                             padding: theme.spacing(1),
                         }}
                     >
-                        <Typography>Length: {tooltipData.x.toFixed(3)}</Typography>
-                        <Typography>Elevation: {tooltipData.y.toFixed(3)} m</Typography>
-                        <Typography>Slope: {tooltipData.slope.toFixed(2) + "%"} m</Typography>
+                        <Typography>
+                            {t("lengthName")}
+                            {tooltipData.x.toFixed(3)}
+                        </Typography>
+                        <Typography>
+                            {t("elevationName")}
+                            {tooltipData.y.toFixed(3)} m
+                        </Typography>
+                        <Typography>
+                            {t("slopeName")}
+                            {tooltipData.slope.toFixed(2)}% m
+                        </Typography>
                     </TooltipWithBounds>
                 </div>
             )}

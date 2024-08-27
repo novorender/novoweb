@@ -1,5 +1,6 @@
 import { Box, Button, Typography, useTheme } from "@mui/material";
 import { FormEventHandler, useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { MemoryRouter, Route, Switch } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -113,7 +114,7 @@ export default function BimCollab() {
                 return "";
             }
         },
-        [getToken, refreshToken, sceneId, config]
+        [getToken, refreshToken, sceneId, config],
     );
 
     useEffect(() => {
@@ -184,7 +185,7 @@ export default function BimCollab() {
                 dispatch(bimCollabActions.setFilters({ [FilterType.AssignedTo]: [user.id] }));
             }
         },
-        [user, dispatch]
+        [user, dispatch],
     );
 
     return (
@@ -239,6 +240,7 @@ export default function BimCollab() {
 }
 
 function EnterBimCollabSpace({ error }: { error?: boolean }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const dispatch = useAppDispatch();
     const currentSpace = useAppSelector(selectSpace);
@@ -257,7 +259,7 @@ function EnterBimCollabSpace({ error }: { error?: boolean }) {
         <Box p={1} height={1} position="relative">
             <Box position="absolute" height={5} top={-5} width={1} boxShadow={theme.customShadows.widgetHeader} />
             <Typography variant="h5" sx={{ mt: 1, mb: 2 }}>
-                Connect to BIMcollab
+                {t("connectToBIMcollab")}
             </Typography>
             <form onSubmit={handleSubmit}>
                 <Box display="flex" alignItems="center">
@@ -273,7 +275,7 @@ function EnterBimCollabSpace({ error }: { error?: boolean }) {
                         sx={{ mr: 1 }}
                     />
                     <Button type="submit" variant="contained">
-                        Connect
+                        {t("connect")}
                     </Button>
                 </Box>
             </form>

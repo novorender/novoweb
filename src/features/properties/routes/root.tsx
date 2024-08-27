@@ -1,5 +1,6 @@
 import { ArrowDownward, ArrowUpward, ContentCopy, MoreVert, StarOutline, SwapVert } from "@mui/icons-material";
 import {
+    Alert,
     Box,
     Button,
     Checkbox,
@@ -26,6 +27,7 @@ import {
     useRef,
     useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
@@ -88,10 +90,13 @@ type SearchPattern = {
     exact?: boolean;
 };
 
+const MAX_PROPERTY_COUNT = 200;
+
 export function Root() {
     const {
         state: { db, view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const theme = useTheme();
 
     const sort = useAppSelector(selectPropertiesSort);
@@ -105,6 +110,7 @@ export function Root() {
     const [status, setStatus] = useState(Status.Initial);
     const [object, setObject] = useState<PropertiesObject>();
     const [abortController, abort] = useAbortController();
+    const [propertyLimitMessage, setPropertyLimitMessage] = useState("");
 
     const parentObject = object?.parent;
     const [_, parentObjectName] = parentObject?.base.find(([key]) => key === "Name") ?? [];
@@ -145,6 +151,7 @@ export function Root() {
 
         async function getObjectData(id: number) {
             setStatus(Status.Loading);
+            setPropertyLimitMessage("");
 
             const _objectData = await getObjectDataUtil({ db, id, view });
 
@@ -158,19 +165,37 @@ export function Root() {
                 ..._objectData,
                 properties: _objectData.properties.filter(([_prop, value]) => Boolean(value)),
             };
+
+            let newPropertyLimitMessage = "";
+            if (cleanedObjectData.properties.length > MAX_PROPERTY_COUNT) {
+                newPropertyLimitMessage = `Selected object has ${cleanedObjectData.properties.length} properties which is over ${MAX_PROPERTY_COUNT} limit. Not all properties are displayed.`;
+                cleanedObjectData.properties = cleanedObjectData.properties.slice(0, MAX_PROPERTY_COUNT);
+            }
             const parent = navigator.onLine
                 ? await searchFirstObjectAtPath({ db, path: getParentPath(_objectData.path) })
                 : undefined;
 
             if (parent) {
+                let parentProperties = parent.properties.filter(([_prop, value]) => Boolean(value));
+                if (parentProperties.length + cleanedObjectData.properties.length > MAX_PROPERTY_COUNT) {
+                    parentProperties = parentProperties.slice(
+                        0,
+                        Math.max(0, MAX_PROPERTY_COUNT - cleanedObjectData.properties.length),
+                    );
+                    if (!newPropertyLimitMessage) {
+                        newPropertyLimitMessage = `Not all parent properties are displayed because ${MAX_PROPERTY_COUNT} property limit reached.`;
+                    }
+                }
                 const parentPropertiesObject = createPropertiesObject({
                     ...parent,
-                    properties: parent.properties.filter(([_prop, value]) => Boolean(value)),
+                    properties: parentProperties,
                 });
                 setObject({ ...createPropertiesObject(cleanedObjectData), parent: parentPropertiesObject });
             } else {
                 setObject(createPropertiesObject(cleanedObjectData));
             }
+
+            setPropertyLimitMessage(newPropertyLimitMessage);
 
             setStatus(Status.Initial);
         }
@@ -255,7 +280,11 @@ export function Root() {
             abort();
             setStatus(Status.Initial);
 
-            event.target.checked ? handleCheck({ property, value, deep }) : handleUncheck(property);
+            if (event.target.checked) {
+                handleCheck({ property, value, deep });
+            } else {
+                handleUncheck(property);
+            }
         };
 
     return (
@@ -278,7 +307,7 @@ export function Root() {
                             }
                             label={
                                 <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                    Popup
+                                    {t("popup")}
                                 </Box>
                             }
                         />
@@ -291,7 +320,7 @@ export function Root() {
                         ) : (
                             <SwapVert fontSize="small" sx={{ mr: 1 }} />
                         )}
-                        Sort
+                        {t("sort")}
                     </Button>
                 </Box>
             </Box>
@@ -301,9 +330,10 @@ export function Root() {
                 </Box>
             ) : null}
             <ScrollBox pb={2} {...bindResizeHandlers()}>
-                {mainObject === undefined && <Box p={1}>Select an object to view properties.</Box>}
+                {mainObject === undefined && <Box p={1}>{t("selectAnObjectToViewProperties")}</Box>}
                 {mainObject !== undefined && object ? (
                     <>
+                        {propertyLimitMessage ? <Alert severity="warning">{propertyLimitMessage}</Alert> : null}
                         <PropertyList
                             object={object}
                             handleChange={handleCheckboxChange}
@@ -461,6 +491,8 @@ function PropertyItem({
     groupName?: string;
     resizing: MutableRefObject<boolean>;
 }) {
+    const { t } = useTranslation();
+
     const isUrl = value.startsWith("http");
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const starred = useAppSelector(selectStarredProperties);
@@ -565,14 +597,14 @@ function PropertyItem({
                         <MenuItem
                             onClick={() =>
                                 navigator.clipboard.writeText(
-                                    `${groupName ? `${groupName}/${property}` : property} ${value}`
+                                    `${groupName ? `${groupName}/${property}` : property} ${value}`,
                                 )
                             }
                         >
                             <ListItemIcon>
                                 <ContentCopy fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText>Copy property</ListItemText>
+                            <ListItemText>{t("copyProperty")}</ListItemText>
                         </MenuItem>
                         <MenuItem
                             onClick={() =>
@@ -582,13 +614,13 @@ function PropertyItem({
                             <ListItemIcon>
                                 <ContentCopy fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText>Copy property name</ListItemText>
+                            <ListItemText>{t("copyPropertyName")}</ListItemText>
                         </MenuItem>
                         <MenuItem onClick={() => navigator.clipboard.writeText(value)}>
                             <ListItemIcon>
                                 <ContentCopy fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText>Copy property value</ListItemText>
+                            <ListItemText>{t("copyPropertyValue")}</ListItemText>
                         </MenuItem>
                     </Menu>
                     <IconButton
@@ -654,6 +686,6 @@ function createPropertiesObject(object: ObjectData): PropertiesObject {
                 ["Description", object.description],
             ],
             grouped: {},
-        } as PropertiesObject
+        } as PropertiesObject,
     );
 }

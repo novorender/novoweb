@@ -2,6 +2,7 @@ import { AddCircle, Close, SearchOutlined } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, IconButton, Snackbar, Typography } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { FormEventHandler, useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { AdvancedSearchInputs, LinearProgress, ScrollBox, Switch, TextField } from "components";
@@ -13,7 +14,7 @@ import { AsyncState, AsyncStatus } from "types/misc";
 import { uniqueArray } from "utils/misc";
 import { searchDeepByPatterns } from "utils/search";
 
-const MAX_OBJECTS_COUNT = 2000;
+const MAX_OBJECTS_COUNT = 5000;
 
 export function AddObjects({
     onSave,
@@ -22,6 +23,7 @@ export function AddObjects({
     onSave: (objects: { searchPattern: string | SearchPattern[]; ids: ObjectId[] }) => void;
     objects?: { searchPattern: string | SearchPattern[]; ids: ObjectId[] };
 }) {
+    const { t } = useTranslation();
     const dispatchHighlighted = useDispatchHighlighted();
     const history = useHistory();
     const {
@@ -29,14 +31,14 @@ export function AddObjects({
     } = useExplorerGlobals(true);
 
     const [simpleInput, setSimpleInput] = useState(
-        typeof objects?.searchPattern === "string" ? objects.searchPattern : ""
+        typeof objects?.searchPattern === "string" ? objects.searchPattern : "",
     );
     const [advanced, toggleAdvanced] = useToggle(objects?.searchPattern ? Array.isArray(objects.searchPattern) : true);
 
     const [advancedInputs, setAdvancedInputs] = useState(
         objects && Array.isArray(objects.searchPattern)
             ? objects.searchPattern
-            : [{ property: "", value: "", exact: true }]
+            : [{ property: "", value: "", exact: true }],
     );
 
     const [focusedInputIdx, setFocusedInputIdx] = useState<number>(-1);
@@ -113,9 +115,7 @@ export function AddObjects({
 
             if (idCount === 0) {
                 setLimitSnackbarOpen(true);
-                setSnackbarMessage(
-                    `No objects found satisfying the search criteria. Ensure objects you're looking for have GUID property defined.`
-                );
+                setSnackbarMessage(t("noObjectsFound"));
             }
         } catch {
             return setStatus({
@@ -162,7 +162,7 @@ export function AddObjects({
             )}
             <ScrollBox p={1} pt={2} pb={3}>
                 <Typography fontWeight={600} mb={1}>
-                    Assign objects
+                    {t("assignObjects")}
                 </Typography>
                 <Box component="form" sx={{ mt: 1 }} onSubmit={handleSubmit}>
                     {advanced ? (
@@ -190,7 +190,7 @@ export function AddObjects({
                             control={<Switch name="advanced" checked={advanced} onChange={handleAdvancedToggled} />}
                             label={
                                 <Box ml={0.5} fontSize={14}>
-                                    Advanced
+                                    {t("advanced")}
                                 </Box>
                             }
                         />
@@ -207,7 +207,7 @@ export function AddObjects({
                                     }
                                 >
                                     <AddCircle />
-                                    <Box ml={0.5}>AND</Box>
+                                    <Box ml={0.5}>{t("and")}</Box>
                                 </Button>
                                 <Button
                                     color="grey"
@@ -228,13 +228,13 @@ export function AddObjects({
                                                               ? input.value.concat("")
                                                               : [input.value ?? "", ""],
                                                       }
-                                                    : input
-                                            )
+                                                    : input,
+                                            ),
                                         )
                                     }
                                 >
                                     <AddCircle />
-                                    <Box ml={0.5}>OR</Box>
+                                    <Box ml={0.5}>{t("or")}</Box>
                                 </Button>
                             </>
                         )}
@@ -249,7 +249,7 @@ export function AddObjects({
                             onClick={handleSearch}
                         >
                             <SearchOutlined />
-                            <Box ml={0.5}>Search</Box>
+                            <Box ml={0.5}>{t("search")}</Box>
                         </Button>
                     </Box>
                     <Box display="flex" mb={1}>
@@ -264,7 +264,7 @@ export function AddObjects({
                                 abort();
                             }}
                         >
-                            Cancel
+                            {t("cancel")}
                         </Button>
                         <Button
                             variant="contained"
@@ -273,7 +273,7 @@ export function AddObjects({
                             disabled={!ids.length || status !== AsyncStatus.Success || ids.length > MAX_OBJECTS_COUNT}
                             type="submit"
                         >
-                            Assign ({ids.length})
+                            {t("assign", { length: ids.length })}
                         </Button>
                     </Box>
                 </Box>

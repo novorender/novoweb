@@ -1,4 +1,5 @@
 import { Alert, Box, FormControl, InputLabel, MenuItem, Select, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
@@ -28,6 +29,7 @@ import {
 } from "../selectors";
 
 export function Root() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const isProjectV2 = useAppSelector(selectProjectIsV2);
     const profiles = useAppSelector(selectDeviationProfiles);
@@ -81,7 +83,7 @@ export function Root() {
                             <>
                                 {calculationStatus.status === DeviationCalculationStatus.Running ? (
                                     <Box p={2} pb={0}>
-                                        <Alert severity="info">Deviation calculation is in progress.</Alert>
+                                        <Alert severity="info">{t("deviationCalculationInProgress")}</Alert>
                                     </Box>
                                 ) : undefined}
 
@@ -89,7 +91,7 @@ export function Root() {
 
                                 <Box p={2}>
                                     <FormControl fullWidth>
-                                        <InputLabel id="select-profile-label">Select deviation profile</InputLabel>
+                                        <InputLabel id="select-profile-label">{t("selectDeviationProfile")}</InputLabel>
                                         <Select
                                             labelId="select-profile-label"
                                             id="select-profile"
@@ -127,7 +129,7 @@ export function Root() {
                                                         colors: { ...selectedProfile.colors!, colorStops },
                                                     },
                                                     setColorsForAll: !isProjectV2,
-                                                })
+                                                }),
                                             );
                                         }}
                                         disabled

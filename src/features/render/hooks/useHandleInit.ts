@@ -13,7 +13,8 @@ import {
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { GroupStatus, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
+import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
+import { fillGroupIds } from "features/deviations/utils";
 import { useSceneId } from "hooks/useSceneId";
 import { ProjectType } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
@@ -95,34 +96,47 @@ export function useHandleInit() {
                         tmZoneForCalc,
                         sceneData,
                         sceneConfig: octreeSceneConfig,
-                        initialCamera: sceneCamera ?? getDefaultCamera(projectV2?.bounds) ?? view.renderState.camera,
+                        initialCamera: sceneCamera ??
+                            getDefaultCamera(projectV2?.bounds) ?? {
+                                position: view.renderState.camera.position,
+                                rotation: view.renderState.camera.rotation,
+                                fov: view.renderState.camera.fov,
+                                kind: view.renderState.camera.kind,
+                            },
                         deviceProfile,
                     })
                 );
 
-                dispatchObjectGroups(
-                    objectGroupsActions.set(
-                        sceneData.objectGroups
-                            .filter((group) => group.id && group.search)
-                            .map((group) => ({
-                                name: group.name,
-                                id: group.id,
-                                grouping: group.grouping ?? "",
-                                color: group.color ?? ([1, 0, 0, 1] as VecRGBA),
-                                opacity: group.opacity ?? 0,
-                                search: group.search ?? [],
-                                includeDescendants: group.includeDescendants ?? true,
-                                status: group.selected
-                                    ? GroupStatus.Selected
-                                    : group.hidden
-                                    ? GroupStatus.Hidden
-                                    : GroupStatus.None,
-                                // NOTE(OLA): Pass IDs as undefined to be loaded when group is activated.
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                ids: group.ids ? new Set(group.ids) : (undefined as any),
-                            }))
-                    )
+                const groups: ObjectGroup[] = sceneData.objectGroups
+                    .filter((group) => group.id && group.search)
+                    .map((group) => ({
+                        name: group.name,
+                        id: group.id,
+                        grouping: group.grouping ?? "",
+                        color: group.color ?? ([1, 0, 0, 1] as VecRGBA),
+                        opacity: group.opacity ?? 0,
+                        search: group.search ?? [],
+                        includeDescendants: group.includeDescendants ?? true,
+                        status: group.selected
+                            ? GroupStatus.Selected
+                            : group.hidden
+                            ? GroupStatus.Hidden
+                            : group.frozen
+                            ? GroupStatus.Frozen
+                            : GroupStatus.None,
+                        // NOTE(OLA): Pass IDs as undefined to be loaded when group is activated.
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        ids: group.ids ? new Set(group.ids) : (undefined as any),
+                    }));
+
+                // Ensure frozen groups are loaded before rendering anything to not even put them into memory
+                // (some scenes on some devices may crash upon loading because there's too much data)
+                await fillGroupIds(
+                    sceneId,
+                    groups.filter((g) => g.status === GroupStatus.Frozen)
                 );
+
+                dispatchObjectGroups(objectGroupsActions.set(groups));
                 dispatchHighlighted(
                     highlightActions.setColor(sceneData.customProperties.highlights?.primary.color ?? [1, 0, 0, 1])
                 );
@@ -290,7 +304,7 @@ async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?:
 async function loadTmZoneForCalc(projectV2: ProjectInfo | undefined, tmZoneV1: string | undefined) {
     if (projectV2) {
         if (projectV2.epsg) {
-            const resp = await fetch(`https://epsg.io/${projectV2.epsg}.proj4`);
+            const resp = await fetch(`https://epsg.io/${projectV2.epsg}.wkt`);
             if (resp.ok) {
                 return resp.text();
             } else {

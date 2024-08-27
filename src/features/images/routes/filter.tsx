@@ -8,22 +8,23 @@ import {
     MenuItem,
     OutlinedInput,
     Select,
-    TextFieldProps,
     useTheme,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { format, isValid, parse } from "date-fns";
 import { FormEventHandler, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, ScrollBox, TextField } from "components";
+import { Divider, ScrollBox } from "components";
 import { rangeSearchDateFormat } from "config/app";
 
 import { imagesActions, selectImageFilter } from "../imagesSlice";
 import { ImageType } from "../types";
 
 export function Filter() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const dispatch = useAppDispatch();
@@ -41,7 +42,7 @@ export function Filter() {
                 dateFrom,
                 dateTo,
                 type,
-            })
+            }),
         );
 
         history.goBack();
@@ -62,12 +63,12 @@ export function Filter() {
                 </Box>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
-                    Back
+                    {t("back")}
                 </Button>
             </Box>
             <ScrollBox px={1} pt={2} pb={3} component="form" onSubmit={handleSubmit} onReset={handleReset}>
                 <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-                    <InputLabel id="image-type-label">Image type</InputLabel>
+                    <InputLabel id="image-type-label">{t("imageType")}</InputLabel>
                     <Select
                         labelId="image-type-label"
                         id="image-type"
@@ -78,13 +79,13 @@ export function Filter() {
                         name={"imageType"}
                     >
                         <MenuItem value={"all"}>
-                            <ListItemText>All</ListItemText>
+                            <ListItemText>{t("all")}</ListItemText>
                         </MenuItem>
                         <MenuItem value={ImageType.Panorama}>
-                            <ListItemText>Panorama</ListItemText>
+                            <ListItemText>{t("panorama")}</ListItemText>
                         </MenuItem>
                         <MenuItem value={ImageType.Flat}>
-                            <ListItemText>Flat</ListItemText>
+                            <ListItemText>{t("flat")}</ListItemText>
                         </MenuItem>
                     </Select>
                 </FormControl>
@@ -93,18 +94,16 @@ export function Filter() {
                         <DatePicker
                             label="Date from"
                             value={dateFrom ? parse(String(dateFrom), rangeSearchDateFormat, new Date()) : null}
-                            onChange={(newDate: Date | null, keyboardInput) =>
-                                setDateFrom(
-                                    newDate
-                                        ? isValid(newDate)
-                                            ? format(newDate, rangeSearchDateFormat)
-                                            : keyboardInput ?? ""
-                                        : ""
-                                )
+                            onChange={(newDate: Date | null) =>
+                                setDateFrom(newDate && isValid(newDate) ? format(newDate, rangeSearchDateFormat) : "")
                             }
-                            inputFormat={rangeSearchDateFormat}
-                            disableMaskedInput={true}
-                            renderInput={(params: TextFieldProps) => <TextField {...params} size="medium" />}
+                            format={rangeSearchDateFormat}
+                            slotProps={{
+                                textField: {
+                                    size: "medium",
+                                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setDateFrom(e.target.value),
+                                },
+                            }}
                         />
                     </FormControl>
                 </Box>
@@ -113,27 +112,25 @@ export function Filter() {
                         <DatePicker
                             label="Date to"
                             value={dateTo ? parse(String(dateTo), rangeSearchDateFormat, new Date()) : null}
-                            onChange={(newDate: Date | null, keyboardInput) =>
-                                setDateTo(
-                                    newDate
-                                        ? isValid(newDate)
-                                            ? format(newDate, rangeSearchDateFormat)
-                                            : keyboardInput ?? ""
-                                        : ""
-                                )
+                            onChange={(newDate: Date | null) =>
+                                setDateTo(newDate && isValid(newDate) ? format(newDate, rangeSearchDateFormat) : "")
                             }
-                            inputFormat={rangeSearchDateFormat}
-                            disableMaskedInput={true}
-                            renderInput={(params: TextFieldProps) => <TextField {...params} size="medium" />}
+                            format={rangeSearchDateFormat}
+                            slotProps={{
+                                textField: {
+                                    size: "medium",
+                                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setDateTo(e.target.value),
+                                },
+                            }}
                         />
                     </FormControl>
                 </Box>
                 <Box display="flex" justifyContent="space-between">
                     <Button variant="outlined" color="grey" type="reset">
-                        Reset
+                        {t("reset")}
                     </Button>
                     <Button sx={{ ml: 2 }} variant="contained" type="submit">
-                        Save
+                        {t("save")}
                     </Button>
                 </Box>
             </ScrollBox>

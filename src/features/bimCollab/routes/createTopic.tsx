@@ -10,12 +10,12 @@ import {
     MenuItem,
     OutlinedInput,
     Select,
-    TextFieldProps,
     useTheme,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { isValid, set } from "date-fns";
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
 import { Divider, IosSwitch, LinearProgress, ScrollBox, TextField, Tooltip } from "components";
@@ -33,6 +33,7 @@ import { IncludeViewpoint, NewViewpoint } from "../includeViewpoint";
 const today = new Date();
 
 export function CreateTopic() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
 
@@ -52,14 +53,14 @@ export function CreateTopic() {
         status: "",
         labels: [] as string[],
         priority: "",
-        deadline: "",
+        deadline: null as Date | null,
         assigned: "",
     });
     const { title, comment, type, area, stage, status, labels, priority, deadline, assigned } = fields;
     const [includeViewpoint, toggleIncludeViewpoint] = useToggle(true);
     const [viewpoint, setViewpoint] = useState<NewViewpoint>();
 
-    const handleInputChange = ({ name, value }: { name: string; value: string | string[] }) => {
+    const handleInputChange = ({ name, value }: { name: string; value: string | string[] | Date | null }) => {
         setFields((state) => ({ ...state, [name]: value }));
     };
 
@@ -79,7 +80,7 @@ export function CreateTopic() {
             priority,
             topic_type: type,
             topic_status: status,
-            due_date: deadline,
+            due_date: deadline && isValid(new Date(deadline)) ? deadline.toISOString() : "",
             assigned_to: assigned,
         };
         topic = Object.fromEntries(Object.entries(topic).filter(([_, value]) => value.length)) as typeof topic;
@@ -127,7 +128,7 @@ export function CreateTopic() {
             <Box display="flex" alignItems="center" boxShadow={theme.customShadows.widgetHeader}>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
-                    Back
+                    {t("back")}
                 </Button>
                 <Divider orientation="vertical" sx={{ height: "80%" }} />
                 <Tooltip title="Includes the current view state at the time this is enabled. Toggle to update.">
@@ -142,7 +143,7 @@ export function CreateTopic() {
                         }
                         label={
                             <Box fontSize={14} lineHeight={"24.5px"} fontWeight={500}>
-                                Include viewpoint
+                                {t("includeViewpoint")}
                             </Box>
                         }
                         labelPlacement="start"
@@ -180,7 +181,7 @@ export function CreateTopic() {
 
                         {areas && areas.length ? (
                             <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                                <InputLabel id="bcf-topic-area-label">Area</InputLabel>
+                                <InputLabel id="bcf-topic-area-label">{t("area")}</InputLabel>
                                 <Select
                                     labelId="bcf-topic-area-label"
                                     id="bcf-topic-area"
@@ -206,7 +207,7 @@ export function CreateTopic() {
                         ) : null}
 
                         <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                            <InputLabel id="bcf-topic-type-label">Type</InputLabel>
+                            <InputLabel id="bcf-topic-type-label">{t("type")}</InputLabel>
                             <Select
                                 labelId="bcf-topic-type-label"
                                 id="bcf-topic-type"
@@ -231,7 +232,7 @@ export function CreateTopic() {
                         </FormControl>
 
                         <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                            <InputLabel id="bcf-topic-priority-label">Priority</InputLabel>
+                            <InputLabel id="bcf-topic-priority-label">{t("priority")}</InputLabel>
                             <Select
                                 labelId="bcf-topic-priority-label"
                                 id="bcf-topic-priority"
@@ -256,7 +257,7 @@ export function CreateTopic() {
                         </FormControl>
 
                         <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                            <InputLabel id="bcf-topic-stage-label">Milestone</InputLabel>
+                            <InputLabel id="bcf-topic-stage-label">{t("milestone")}</InputLabel>
                             <Select
                                 labelId="bcf-topic-stage-label"
                                 id="bcf-topic-stage"
@@ -281,7 +282,7 @@ export function CreateTopic() {
                         </FormControl>
 
                         <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                            <InputLabel id="bcf-topic-status-label">Status</InputLabel>
+                            <InputLabel id="bcf-topic-status-label">{t("status")}</InputLabel>
                             <Select
                                 labelId="bcf-topic-status-label"
                                 id="bcf-topic-status"
@@ -306,7 +307,7 @@ export function CreateTopic() {
                         </FormControl>
 
                         <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                            <InputLabel id="bcf-topic-assigned-label">Assigned to</InputLabel>
+                            <InputLabel id="bcf-topic-assigned-label">{t("assignedTo")}</InputLabel>
                             <Select
                                 labelId="bcf-topic-assigned-label"
                                 id="bcf-topic-assigned"
@@ -333,24 +334,24 @@ export function CreateTopic() {
                         <FormControl size="small" sx={{ width: 1, mb: 2 }}>
                             <DatePicker
                                 label="Deadline"
-                                value={deadline || null}
+                                value={deadline}
                                 minDate={today}
                                 onChange={(newDate: Date | null) =>
                                     handleInputChange({
                                         name: "deadline",
-                                        value: newDate
-                                            ? isValid(newDate)
-                                                ? set(newDate, { hours: 0, minutes: 0, seconds: 0 }).toISOString()
-                                                : ""
-                                            : "",
+                                        value: newDate ? set(newDate, { hours: 0, minutes: 0, seconds: 0 }) : null,
                                     })
                                 }
-                                renderInput={(params: TextFieldProps) => <TextField {...params} size="small" />}
+                                slotProps={{
+                                    textField: {
+                                        size: "small",
+                                    },
+                                }}
                             />
                         </FormControl>
 
                         <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                            <InputLabel id="bcf-topic-labels-label">Labels</InputLabel>
+                            <InputLabel id="bcf-topic-labels-label">{t("labels")}</InputLabel>
                             <Select
                                 labelId="bcf-topic-labels-label"
                                 id="bcf-topic-labels"
@@ -380,7 +381,7 @@ export function CreateTopic() {
                                 disabled={disabled}
                                 onClick={() => history.goBack()}
                             >
-                                Cancel
+                                {t("cancel")}
                             </Button>
                             <Button
                                 sx={{ ml: 2 }}
@@ -389,7 +390,7 @@ export function CreateTopic() {
                                 type="submit"
                                 disabled={disabled || (includeViewpoint && !viewpoint)}
                             >
-                                Create issue
+                                {t("createIssue")}
                             </Button>
                         </Box>
                     </form>

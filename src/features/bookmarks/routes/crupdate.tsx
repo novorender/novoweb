@@ -1,5 +1,6 @@
 import { Autocomplete, Box, Button, Checkbox, FormControlLabel, useTheme } from "@mui/material";
 import { FormEventHandler, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -10,6 +11,7 @@ import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { BookmarkAccess, bookmarksActions, selectBookmarks } from "../bookmarksSlice";
 import { useCreateBookmark } from "../useCreateBookmark";
+import { createBookmarkImg } from "../utils";
 
 export function Crupdate() {
     const { id } = useParams<{ id?: string }>();
@@ -24,6 +26,7 @@ export function Crupdate() {
     const {
         state: { view, canvas },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const createBookmark = useCreateBookmark();
 
     const [name, setName] = useState(bmToEdit?.name ?? "");
@@ -35,7 +38,7 @@ export function Crupdate() {
             ? bmToEdit.explorerState
                 ? bmToEdit.explorerState.options.addToSelectionBasket
                 : bmToEdit.options?.addSelectedToSelectionBasket
-            : false
+            : false,
     );
     const [bmImg, setBmImg] = useState("");
 
@@ -50,7 +53,7 @@ export function Crupdate() {
             }
 
             return set;
-        }, new Set<string>())
+        }, new Set<string>()),
     )
         .filter((collection) => collection !== "")
         .sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
@@ -115,7 +118,7 @@ export function Crupdate() {
                           options: { addToSelectionBasket: addToSelectionBasket },
                       },
                   }
-                : bookmark
+                : bookmark,
         );
 
         dispatch(bookmarksActions.setBookmarks(newBookmarks));
@@ -187,14 +190,14 @@ export function Crupdate() {
                                     onChange={() => toggleAddToSelectionBasket()}
                                 />
                             }
-                            label={<Box mr={0.5}>Add selected to selection basket</Box>}
+                            label={<Box mr={0.5}>{t("addSelectedToSelectionBasket")}</Box>}
                         />
                     </Box>
                     {isAdmin ? (
                         <FormControlLabel
                             sx={{ mb: 2 }}
                             control={<Checkbox color="primary" checked={!personal} onChange={() => togglePersonal()} />}
-                            label={<Box mr={0.5}>Public</Box>}
+                            label={<Box mr={0.5}>{t("public")}</Box>}
                         />
                     ) : null}
                     <Box display="flex">
@@ -207,7 +210,7 @@ export function Crupdate() {
                             size="large"
                             sx={{ marginRight: 1 }}
                         >
-                            Cancel
+                            {t("cancel")}
                         </Button>
                         <Button
                             type="submit"
@@ -217,43 +220,11 @@ export function Crupdate() {
                             variant="contained"
                             size="large"
                         >
-                            {bmToEdit ? "Save" : "Add"} bookmark
+                            {bmToEdit ? t("save") : t("add")} {t("bookmark")}
                         </Button>
                     </Box>
                 </form>
             </ScrollBox>
         </>
     );
-}
-
-async function createBookmarkImg(canvas: HTMLCanvasElement): Promise<string> {
-    const width = canvas.width;
-    const height = canvas.height;
-    let dx = 0;
-    let dy = 0;
-
-    if (height / width < 0.7) {
-        dx = width - Math.round((height * 10) / 7);
-    } else {
-        dy = height - Math.round(width * 0.7);
-    }
-
-    const dist = document.createElement("canvas");
-    dist.height = 70;
-    dist.width = 100;
-    const ctx = dist.getContext("2d", { alpha: true, desynchronized: false })!;
-
-    ctx.drawImage(
-        canvas,
-        Math.round(dx / 2),
-        Math.round(dy / 2),
-        width - dx,
-        height - dy,
-        0,
-        0,
-        dist.width,
-        dist.height
-    );
-
-    return dist.toDataURL("image/jpeg");
 }

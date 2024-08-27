@@ -1,6 +1,7 @@
 import { MyLocation as MyLocationIcon } from "@mui/icons-material";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { vec3 } from "gl-matrix";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
@@ -26,6 +27,7 @@ import {
     selectCurrentLocation,
     selectGeolocationPositionCoords,
     selectLocationStatus,
+    selectMyLocationAutocenter,
     selectShowLocationMarker,
 } from "./myLocationSlice";
 
@@ -36,10 +38,12 @@ export default function MyLocation() {
     const {
         state: { view, scene },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const tmZone = useAppSelector(selectTmZoneForCalc);
     const currentLocation = useAppSelector(selectCurrentLocation);
     const showMarker = useAppSelector(selectShowLocationMarker);
+    const autocenter = useAppSelector(selectMyLocationAutocenter);
     const geoLocationCoords = useAppSelector(selectGeolocationPositionCoords);
     const status = useAppSelector(selectLocationStatus);
     const cameraType = useAppSelector(selectCameraType);
@@ -54,7 +58,7 @@ export default function MyLocation() {
                         position: currentLocation,
                         rotation: view.renderState.camera.rotation,
                     },
-                })
+                }),
             );
             return;
         }
@@ -78,7 +82,7 @@ export default function MyLocation() {
                     myLocationActions.setSatus({
                         status: LocationStatus.Error,
                         msg: "Your position is outside the scene's boundaries.",
-                    })
+                    }),
                 );
             } else {
                 dispatch(
@@ -88,7 +92,7 @@ export default function MyLocation() {
                             position,
                             rotation: view.renderState.camera.rotation,
                         },
-                    })
+                    }),
                 );
                 dispatch(myLocationActions.setSatus({ status: LocationStatus.Idle }));
             }
@@ -99,7 +103,7 @@ export default function MyLocation() {
                     altitude: geoPos.coords.altitude,
                     longitude: geoPos.coords.longitude,
                     latitude: geoPos.coords.latitude,
-                })
+                }),
             );
             dispatch(myLocationActions.setCurrentLocation(position));
         }
@@ -122,7 +126,7 @@ export default function MyLocation() {
                                 onClick={goToPos}
                                 color="grey"
                             >
-                                <MyLocationIcon fontSize="small" sx={{ mr: 1 }} /> Go to location
+                                <MyLocationIcon fontSize="small" sx={{ mr: 1 }} /> {t("goTo")}
                             </Button>
                             <FormControlLabel
                                 disabled={!tmZone}
@@ -132,12 +136,32 @@ export default function MyLocation() {
                                         size="medium"
                                         color="primary"
                                         checked={showMarker}
-                                        onChange={(_e, checked) =>
-                                            dispatch(myLocationActions.toggleShowMarker(checked))
-                                        }
+                                        onChange={(_e, checked) => {
+                                            dispatch(myLocationActions.toggleShowMarker(checked));
+                                            if (!checked) {
+                                                dispatch(myLocationActions.toggleAutocenter(false));
+                                            }
+                                        }}
                                     />
                                 }
-                                label={<Box fontSize={14}>Show marker</Box>}
+                                label={<Box fontSize={14}>{t("marker")}</Box>}
+                            />
+                            <FormControlLabel
+                                disabled={!tmZone}
+                                control={
+                                    <IosSwitch
+                                        size="medium"
+                                        color="primary"
+                                        checked={autocenter}
+                                        onChange={(_e, checked) => {
+                                            dispatch(myLocationActions.toggleAutocenter(checked));
+                                            if (checked) {
+                                                dispatch(myLocationActions.toggleShowMarker(true));
+                                            }
+                                        }}
+                                    />
+                                }
+                                label={<Box fontSize={14}>{t("center")}</Box>}
                             />
                         </Box>
                     ) : null}
@@ -159,12 +183,24 @@ export default function MyLocation() {
                     )}
                     {geoLocationCoords && (
                         <>
-                            <Box mb={1}>Accuracy: {geoLocationCoords.accuracy}m</Box>
-                            <Box mb={1}>Longitude: {geoLocationCoords.longitude}</Box>
-                            <Box mb={1}>Latitude: {geoLocationCoords.latitude}</Box>
-                            {geoLocationCoords.altitude && <Box mb={1}>Altitude: {geoLocationCoords.altitude}m</Box>}
+                            <Box mb={1}>{`${t("accuracy")} ${geoLocationCoords.accuracy} m`}</Box>
+                            <Box mb={1}>
+                                {t("longitude")}
+                                {geoLocationCoords.longitude}
+                            </Box>
+                            <Box mb={1}>
+                                {t("latitude")}
+                                {geoLocationCoords.latitude}
+                            </Box>
+                            {geoLocationCoords.altitude && (
+                                <Box mb={1}>{`${t("altitude")} ${geoLocationCoords.altitude} m`}</Box>
+                            )}
                             {currentLocation && (
-                                <Box mb={1}>Position: [{currentLocation.map((n) => Math.round(n)).join(", ")}]</Box>
+                                <Box mb={1}>
+                                    {t("positionCoords", {
+                                        coords: currentLocation.map((n) => Math.round(n)).join(", "),
+                                    })}
+                                </Box>
                             )}
                         </>
                     )}

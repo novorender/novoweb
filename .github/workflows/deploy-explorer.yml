@@ -1,99 +1,99 @@
 name: Test environment (new)
 
 on:
-  push:
-  workflow_dispatch:
+    push:
+    workflow_dispatch:
 
 env:
-  TEMPLATE_PATH: ./infrastructure/explorer.bicep
-  MODULE: web
-  APP: explorer
-  NODE_VERSION: "18.13.0" # set this to the node version to use
+    TEMPLATE_PATH: ./infrastructure/explorer.bicep
+    MODULE: web
+    APP: explorer
+    NODE_VERSION: "20.15.1" # set this to the node version to use
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
 
-      - name: Use Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v3
-        with:
-            node-version: ${{ env.NODE_VERSION }}
-      - name: npm build
-        run: |
-            npm ci
-            npm run build --if-present
+            - name: Use Node.js ${{ env.NODE_VERSION }}
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+            - name: npm build
+              run: |
+                  npm ci
+                  npm run build --if-present
 
-      - name: Remove node modules
-        run: |
-            rm -rf ./node_modules
+            - name: Remove node modules
+              run: |
+                  rm -rf ./node_modules
 
-      - name: Install server dependencies
-        run: |
-            (cd server && npm ci && mv ./node_modules ../node_modules)
+            - name: Install server dependencies
+              run: |
+                  (cd server && npm ci && mv ./node_modules ../node_modules)
 
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: app
-          path: .
+            - name: Upload artifact for deployment job
+              uses: actions/upload-artifact@v4
+              with:
+                  name: app
+                  path: .
 
-      - name: Display structure after build
-        if: always()
-        working-directory: ./${{ matrix.path }}
-        run: ls -R
+            - name: Display structure after build
+              if: always()
+              working-directory: ./${{ matrix.path }}
+              run: ls -R
 
-  deploy-infrastructure-test:
-    environment: test # github environment - for pipeline env settings
-    env:
-      environment: "test" # azure environment
-    runs-on: windows-latest
-    steps:
-      - name: Checkout infrastructure
-        uses: actions/checkout@v3
-
-      - name: Azure login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Infrastructure Deployment
-        uses: azure/arm-deploy@v1
-        with:
-          resourceGroupName: ${{ env.MODULE }}-${{ env.environment }}
-          subscriptionId: ${{ env.subscriptionId }}
-          template: ${{ env.TEMPLATE_PATH }}
-          parameters: 'environment=${{ env.environment }} moduleName=${{ env.MODULE }}'
-          failOnStdErr: false
-
-  deploy-software-test:
-    needs: [build, deploy-infrastructure-test]
-    environment: test
-    env:
-      environment: "test"
-    runs-on: windows-latest
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: app
-          
-      - name: Azure login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: "Deploy to Azure WebApp"
-        uses: azure/webapps-deploy@v2
-        with:
-            app-name: ${{ env.APP }}-wa-${{ env.environment }}
-            package: .
-            slot-name: staging
-            
-      - name: "Swap slots"
-        run: |
-          az webapp deployment slot swap --resource-group ${{ env.MODULE }}-${{ env.environment }} --name ${{ env.APP }}-wa-${{ env.environment }} --slot staging --target-slot production
+    deploy-infrastructure-test:
+        environment: test # github environment - for pipeline env settings
         env:
-          AZURE_WEBAPP_NAME: ${{ env.APP }}-wa-${{ env.environment }}
-          RESOURCE_GROUP: ${{ env.MODULE }}-${{ env.environment }}
+            environment: "test" # azure environment
+        runs-on: windows-latest
+        steps:
+            - name: Checkout infrastructure
+              uses: actions/checkout@v3
+
+            - name: Azure login
+              uses: azure/login@v1
+              with:
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+            - name: Infrastructure Deployment
+              uses: azure/arm-deploy@v1
+              with:
+                  resourceGroupName: ${{ env.MODULE }}-${{ env.environment }}
+                  subscriptionId: ${{ env.subscriptionId }}
+                  template: ${{ env.TEMPLATE_PATH }}
+                  parameters: "environment=${{ env.environment }} moduleName=${{ env.MODULE }}"
+                  failOnStdErr: false
+
+    deploy-software-test:
+        needs: [build, deploy-infrastructure-test]
+        environment: test
+        env:
+            environment: "test"
+        runs-on: windows-latest
+        steps:
+            - name: Download artifact from build job
+              uses: actions/download-artifact@v4
+              with:
+                  name: app
+
+            - name: Azure login
+              uses: azure/login@v1
+              with:
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+            - name: "Deploy to Azure WebApp"
+              uses: azure/webapps-deploy@v2
+              with:
+                  app-name: ${{ env.APP }}-wa-${{ env.environment }}
+                  package: .
+                  slot-name: staging
+
+            - name: "Swap slots"
+              run: |
+                  az webapp deployment slot swap --resource-group ${{ env.MODULE }}-${{ env.environment }} --name ${{ env.APP }}-wa-${{ env.environment }} --slot staging --target-slot production
+              env:
+                  AZURE_WEBAPP_NAME: ${{ env.APP }}-wa-${{ env.environment }}
+                  RESOURCE_GROUP: ${{ env.MODULE }}-${{ env.environment }}

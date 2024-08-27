@@ -10,13 +10,12 @@ import {
     OutlinedInput,
     Select,
     SelectChangeEvent,
-    TextField,
-    TextFieldProps,
     useTheme,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { isValid, set } from "date-fns";
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -34,6 +33,7 @@ import {
 } from "../bimTrackSlice";
 
 export function Filters() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const dispatch = useAppDispatch();
     const history = useHistory();
@@ -91,13 +91,13 @@ export function Filters() {
                 </Box>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
-                    Back
+                    {t("back")}
                 </Button>
             </Box>
             <ScrollBox p={1} pb={5} height={1} position="relative" sx={{ mt: 1, form: { width: 1 } }}>
                 <form onSubmit={handleSubmit} onReset={handleReset}>
                     <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <InputLabel id="bcf-topic-type-label">Type</InputLabel>
+                        <InputLabel id="bcf-topic-type-label">{t("type")}</InputLabel>
                         <Select
                             labelId="bcf-topic-type-label"
                             id="bcf-topic-type"
@@ -118,7 +118,7 @@ export function Filters() {
                         </Select>
                     </FormControl>
                     <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <InputLabel id="bcf-topic-label-label">Label</InputLabel>
+                        <InputLabel id="bcf-topic-label-label">{t("label")}</InputLabel>
                         <Select
                             labelId="bcf-topic-label-label"
                             id="bcf-topic-label"
@@ -139,7 +139,7 @@ export function Filters() {
                         </Select>
                     </FormControl>
                     <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <InputLabel id="bcf-topic-status-label">Status</InputLabel>
+                        <InputLabel id="bcf-topic-status-label">{t("status")}</InputLabel>
                         <Select
                             labelId="bcf-topic-status-label"
                             id="bcf-topic-status"
@@ -160,7 +160,7 @@ export function Filters() {
                         </Select>
                     </FormControl>
                     <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <InputLabel id="bcf-topic-priority-label">Priority</InputLabel>
+                        <InputLabel id="bcf-topic-priority-label">{t("priority")}</InputLabel>
                         <Select
                             labelId="bcf-topic-priority-label"
                             id="bcf-topic-priority"
@@ -183,7 +183,7 @@ export function Filters() {
 
                     {extensions.stage.length ? (
                         <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                            <InputLabel id="bcf-topic-stage-label">Phase</InputLabel>
+                            <InputLabel id="bcf-topic-stage-label">{t("phase")}</InputLabel>
                             <Select
                                 labelId="bcf-topic-stage-label"
                                 id="bcf-topic-stage"
@@ -212,7 +212,7 @@ export function Filters() {
                     ) : null}
 
                     <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <InputLabel id="bcf-topic-createdBy-label">Created by</InputLabel>
+                        <InputLabel id="bcf-topic-createdBy-label">{t("createdBy")}</InputLabel>
                         <Select
                             labelId="bcf-topic-createdBy-label"
                             id="bcf-topic-createdBy"
@@ -233,7 +233,7 @@ export function Filters() {
                         </Select>
                     </FormControl>
                     <FormControl size="small" sx={{ width: 1, mb: 2 }}>
-                        <InputLabel id="bcf-topic-assignedTo-label">Assigned To</InputLabel>
+                        <InputLabel id="bcf-topic-assignedTo-label">{t("assignedTo")}</InputLabel>
                         <Select
                             labelId="bcf-topic-assignedTo-label"
                             id="bcf-topic-assignedTo"
@@ -261,7 +261,7 @@ export function Filters() {
                     </FormControl>
                     <Box display="flex">
                         <FormControl size="small" sx={{ minWidth: 72, mb: 2, textAlign: "center", mr: 1 }}>
-                            <InputLabel id="bcf-topic-deadline-operator-label">Operator</InputLabel>
+                            <InputLabel id="bcf-topic-deadline-operator-label">{t("operator")}</InputLabel>
                             <Select
                                 labelId="bcf-topic-deadline-operator-label"
                                 id="bcf-topic-deadline-operator"
@@ -289,7 +289,11 @@ export function Filters() {
                         <FormControl size="small" sx={{ width: 1, mb: 2 }}>
                             <DatePicker
                                 label="Deadline"
-                                value={filters[FilterType.Deadline] || null}
+                                value={
+                                    isValid(new Date(filters[FilterType.Deadline]))
+                                        ? new Date(filters[FilterType.Deadline])
+                                        : null
+                                }
                                 onChange={(newDate: Date | null) =>
                                     setFilters((state) => ({
                                         ...state,
@@ -300,17 +304,21 @@ export function Filters() {
                                             : "",
                                     }))
                                 }
-                                renderInput={(params: TextFieldProps) => <TextField {...params} size="small" />}
+                                slotProps={{
+                                    textField: {
+                                        size: "small",
+                                    },
+                                }}
                             />
                         </FormControl>
                     </Box>
 
                     <Box display="flex" justifyContent="space-between" mb={2}>
                         <Button variant="outlined" color="grey" type="reset" fullWidth>
-                            Reset filter
+                            {t("resetFilter")}
                         </Button>
                         <Button sx={{ ml: 2 }} fullWidth variant="contained" type="submit">
-                            Save filter
+                            {t("saveFilter")}
                         </Button>
                     </Box>
                 </form>

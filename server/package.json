@@ -13,7 +13,7 @@
     },
     "dependencies": {
         "express": "^4.19.2",
-        "express-static-gzip": "^2.1.1",
-        "http-proxy-middleware": "^2.0.3"
+        "express-static-gzip": "^2.1.7",
+        "http-proxy-middleware": "^3.0.0"
     }
 }

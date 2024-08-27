@@ -1,5 +1,6 @@
-import { AddCircle, CheckCircle, MoreVert, Save, Visibility } from "@mui/icons-material";
+import { AcUnit, AddCircle, CheckCircle, MoreVert, Save, Visibility } from "@mui/icons-material";
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -19,6 +20,7 @@ import { Group, StyledCheckbox, StyledListItemButton } from "../group";
 import { selectLoadingIds, selectSaveStatus } from "../groupsSlice";
 
 export function GroupList() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
@@ -35,7 +37,7 @@ export function GroupList() {
             }
 
             return set;
-        }, new Set<string>())
+        }, new Set<string>()),
     ).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
 
     const singles = objectGroups
@@ -43,8 +45,13 @@ export function GroupList() {
         .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "accent" }));
 
     const isLoading = loadingIds || saveStatus === AsyncStatus.Loading;
-    const allSelected = objectGroups.every((group) => group.status === GroupStatus.Selected);
-    const allHidden = objectGroups.every((group) => group.status === GroupStatus.Hidden);
+    const allSelectedOrFrozen = objectGroups.every(
+        (group) => group.status === GroupStatus.Selected || group.status === GroupStatus.Frozen,
+    );
+    const allHiddenOrFrozen = objectGroups.every(
+        (group) => group.status === GroupStatus.Hidden || group.status === GroupStatus.Frozen,
+    );
+    const allFrozen = objectGroups.every((group) => group.status === GroupStatus.Frozen);
 
     return (
         <>
@@ -56,7 +63,7 @@ export function GroupList() {
                     <Box display="flex" justifyContent={"space-between"}>
                         <Button disabled={isLoading} color="grey" onClick={() => history.push("/create")}>
                             <AddCircle sx={{ mr: 1 }} />
-                            Add group
+                            {t("addGroup")}
                         </Button>
                         <Button
                             color="grey"
@@ -66,11 +73,11 @@ export function GroupList() {
                             }
                         >
                             <CheckCircle sx={{ mr: 1 }} />
-                            Group selected
+                            {t("groupSelected")}
                         </Button>
                         <Button disabled={isLoading} color="grey" onClick={() => history.push("/save")}>
                             <Save sx={{ mr: 1 }} />
-                            Save
+                            {t("save")}
                         </Button>
                     </Box>
                 </Box>
@@ -93,57 +100,70 @@ export function GroupList() {
                     disableRipple
                     disabled={isLoading}
                     onClick={() =>
-                        objectGroups.forEach((group) =>
-                            dispatchObjectGroups(
-                                objectGroupsActions.update(group.id, {
-                                    status: allSelected ? GroupStatus.None : GroupStatus.Selected,
-                                })
+                        objectGroups
+                            .filter((g) => g.status !== GroupStatus.Frozen)
+                            .forEach((group) =>
+                                dispatchObjectGroups(
+                                    objectGroupsActions.update(group.id, {
+                                        status: allSelectedOrFrozen ? GroupStatus.None : GroupStatus.Selected,
+                                    }),
+                                ),
                             )
-                        )
                     }
                 >
                     <Box display="flex" width={1} alignItems="center">
                         <Box flex={"1 1 100%"}>
                             <Typography color="textSecondary" noWrap={true}>
-                                Groups: {objectGroups.length}
+                                {t("groupsName")}
+                                {objectGroups.length}
                             </Typography>
                         </Box>
                         {objectGroups.length ? (
                             <>
-                                <StyledCheckbox
-                                    name="toggle all groups highlighting"
-                                    aria-label="toggle all groups highlighting"
-                                    size="small"
-                                    checked={allSelected}
-                                    disabled={isLoading}
-                                    onClick={(event) => event.stopPropagation()}
-                                    onChange={() =>
-                                        objectGroups.forEach((group) =>
-                                            dispatchObjectGroups(
-                                                objectGroupsActions.update(group.id, {
-                                                    status: allSelected ? GroupStatus.None : GroupStatus.Selected,
-                                                })
-                                            )
-                                        )
-                                    }
-                                />
+                                {allFrozen ? undefined : (
+                                    <StyledCheckbox
+                                        name="toggle all groups highlighting"
+                                        aria-label="toggle all groups highlighting"
+                                        size="small"
+                                        checked={allSelectedOrFrozen}
+                                        disabled={isLoading}
+                                        onClick={(event) => event.stopPropagation()}
+                                        onChange={() =>
+                                            objectGroups
+                                                .filter((g) => g.status !== GroupStatus.Frozen)
+                                                .forEach((group) =>
+                                                    dispatchObjectGroups(
+                                                        objectGroupsActions.update(group.id, {
+                                                            status: allSelectedOrFrozen
+                                                                ? GroupStatus.None
+                                                                : GroupStatus.Selected,
+                                                        }),
+                                                    ),
+                                                )
+                                        }
+                                    />
+                                )}
                                 <StyledCheckbox
                                     name="toggle all groups visibility"
                                     aria-label="toggle all groups visibility"
                                     size="small"
-                                    icon={<Visibility />}
+                                    icon={allFrozen ? <AcUnit /> : <Visibility />}
                                     checkedIcon={<Visibility color="disabled" />}
-                                    checked={allHidden}
-                                    disabled={isLoading}
+                                    checked={allFrozen ? false : allHiddenOrFrozen}
+                                    disabled={isLoading || allFrozen}
                                     onClick={(event) => event.stopPropagation()}
                                     onChange={() =>
-                                        objectGroups.forEach((group) =>
-                                            dispatchObjectGroups(
-                                                objectGroupsActions.update(group.id, {
-                                                    status: allHidden ? GroupStatus.None : GroupStatus.Hidden,
-                                                })
+                                        objectGroups
+                                            .filter((g) => g.status !== GroupStatus.Frozen)
+                                            .forEach((group) =>
+                                                dispatchObjectGroups(
+                                                    objectGroupsActions.update(group.id, {
+                                                        status: allHiddenOrFrozen
+                                                            ? GroupStatus.None
+                                                            : GroupStatus.Hidden,
+                                                    }),
+                                                ),
                                             )
-                                        )
                                     }
                                 />
                                 <Box flex="0 0 auto" visibility={"hidden"}>

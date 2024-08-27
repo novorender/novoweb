@@ -3,8 +3,9 @@ import { Fragment, SVGProps } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { sleep } from "utils/time";
 
-import { getOutlineLaser } from "./getOutlineLaser";
+import { getOutlineLaser, OutlineLaser } from "./getOutlineLaser";
 import { clippingOutlineLaserActions, selectOutlineLaserPlane, selectOutlineLasers } from "./outlineLaserSlice";
 
 const markerStyles = ({ theme }: { theme: Theme }) => css`
@@ -75,13 +76,50 @@ export function ClippingTracerInteractions() {
     const plane = useAppSelector(selectOutlineLaserPlane);
     const updateTracer = async (idx: number) => {
         const trace = outlineLaser[idx];
-        const newTrace = await getOutlineLaser(trace.laserPosition, view, plane?.rotation ?? 0);
+        let newTrace: OutlineLaser | undefined;
+        if (view) {
+            if (trace.laserPlanes && trace.laserPlanes.length > 0) {
+                view.modifyRenderState({
+                    outlines: {
+                        enabled: true,
+                        hidden: true,
+                        planes: trace.laserPlanes,
+                    },
+                });
+                await sleep(1000);
+                newTrace = await getOutlineLaser(
+                    trace.laserPosition,
+                    view,
+                    "outline",
+                    plane?.rotation ?? 0,
+                    trace.laserPlanes,
+                    1
+                );
+                view.modifyRenderState({
+                    outlines: {
+                        enabled: false,
+                        hidden: true,
+                        planes: [],
+                    },
+                });
+            } else {
+                if (plane) {
+                    newTrace = await getOutlineLaser(trace.laserPosition, view, "clipping", plane?.rotation ?? 0, [
+                        plane?.normalOffset,
+                    ]);
+                }
+            }
+        }
+
         if (newTrace) {
             if (trace.measurementX === undefined) {
                 newTrace.measurementX = undefined;
             }
             if (trace.measurementY === undefined) {
                 newTrace.measurementY = undefined;
+            }
+            if (trace.measurementZ === undefined) {
+                newTrace.measurementZ = undefined;
             }
             dispatch(clippingOutlineLaserActions.setLaser({ idx, trace: newTrace }));
         }
@@ -155,6 +193,41 @@ export function ClippingTracerInteractions() {
                                 <UpdateMarker
                                     id={`updateYTracer-${idx}`}
                                     name={`updateYTracer-${idx}`}
+                                    onClick={() => {
+                                        updateTracer(idx);
+                                    }}
+                                />
+                            )}
+                        </>
+                    ) : null}
+                    {trace.measurementZ ? (
+                        <>
+                            <ArrowMarker
+                                id={`zDownMarker-${idx}`}
+                                name={`zDownMarker-${idx}`}
+                                onClick={() => {
+                                    dispatch(clippingOutlineLaserActions.incrementLaserZDown(idx));
+                                }}
+                            />
+                            <ArrowMarker
+                                id={`zUpMarker-${idx}`}
+                                name={`zUpMarker-${idx}`}
+                                onClick={() => {
+                                    dispatch(clippingOutlineLaserActions.incrementLaserZUp(idx));
+                                }}
+                            />
+                            {trace.measurementZ.startIdx !== undefined ? (
+                                <RemoveMarker
+                                    id={`removeZTracer-${idx}`}
+                                    name={`removeZTracer-${idx}`}
+                                    onClick={() => {
+                                        dispatch(clippingOutlineLaserActions.removeMeasurementZ(idx));
+                                    }}
+                                />
+                            ) : (
+                                <UpdateMarker
+                                    id={`updateZTracer-${idx}`}
+                                    name={`updateZTracer-${idx}`}
                                     onClick={() => {
                                         updateTracer(idx);
                                     }}

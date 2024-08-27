@@ -87,10 +87,10 @@ declare module "@novorender/data-js-api" {
             area:
                 | {
                       /** @deprecated  Use only to read legacy bookmarks */
-                      points: [point: [number, number, number], normal: [number, number, number]][];
+                      points: [point: [number, number, number]][];
                   }
                 | {
-                      areas: { points: [number, number, number][]; normals: [number, number, number][] }[];
+                      areas: { points: [number, number, number][] }[];
                   };
             pointLine:
                 | {
@@ -160,6 +160,8 @@ declare module "@novorender/data-js-api" {
                       laserPosition: ReadonlyVec3;
                       measurementX?: { start: ReadonlyVec3; end: ReadonlyVec3 };
                       measurementY?: { start: ReadonlyVec3; end: ReadonlyVec3 };
+                      measurementZ?: { start: ReadonlyVec3; end: ReadonlyVec3 };
+                      laserPlanes?: ReadonlyVec4[];
                   }[];
               }
             | undefined;
@@ -180,6 +182,9 @@ declare module "@novorender/data-js-api" {
                     checked: boolean;
                 }[];
             }[];
+        };
+        forms?: {
+            alwaysShowMarkers: boolean;
         };
     };
 
@@ -244,5 +249,9 @@ declare module "@novorender/data-js-api" {
         background?: {
             color: Vec4;
         };
+    }
+
+    interface ObjectGroup {
+        frozen: boolean;
     }
 }

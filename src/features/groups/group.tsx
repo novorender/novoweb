@@ -1,4 +1,15 @@
-import { ColorLens, Delete, Edit, LibraryAdd, MoreVert, Opacity, Visibility, VisibilityOff } from "@mui/icons-material";
+import {
+    AcUnit,
+    ColorLens,
+    Delete,
+    Edit,
+    LibraryAdd,
+    MoreVert,
+    Opacity,
+    Visibility,
+    VisibilityOff,
+    WbSunny,
+} from "@mui/icons-material";
 import {
     Box,
     Checkbox,
@@ -14,6 +25,7 @@ import {
     Typography,
 } from "@mui/material";
 import { MouseEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -28,7 +40,7 @@ export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
         margin: 0;
         flex-grow: 0;
         padding: ${theme.spacing(0.5)} ${theme.spacing(4)} ${theme.spacing(0.5)} ${theme.spacing(1)};
-    `
+    `,
 );
 
 export const StyledCheckbox = styled(Checkbox)`
@@ -37,6 +49,7 @@ export const StyledCheckbox = styled(Checkbox)`
 `;
 
 export function Group({ group, disabled }: { group: ObjectGroup; disabled: boolean }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const match = useRouteMatch();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
@@ -69,13 +82,16 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
             <StyledListItemButton
                 disableRipple
                 disabled={disabled}
-                onClick={() =>
+                onClick={() => {
+                    if (group.status === GroupStatus.Frozen) {
+                        return;
+                    }
                     dispatchObjectGroups(
                         objectGroupsActions.update(group.id, {
                             status: selected ? GroupStatus.None : GroupStatus.Selected,
-                        })
-                    )
-                }
+                        }),
+                    );
+                }}
             >
                 <Box display="flex" width={1} alignItems="center">
                     <Box flex="1 1 auto" overflow="hidden">
@@ -84,39 +100,47 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                         </Tooltip>
                     </Box>
                     <Box flex="0 0 auto">
-                        <StyledCheckbox
-                            name="toggle group highlighting"
-                            aria-label="toggle group highlighting"
-                            size="small"
-                            checked={selected}
-                            disabled={disabled}
-                            onClick={(event) => event.stopPropagation()}
-                            onChange={() =>
-                                dispatchObjectGroups(
-                                    objectGroupsActions.update(group.id, {
-                                        status: selected ? GroupStatus.None : GroupStatus.Selected,
-                                    })
-                                )
-                            }
-                        />
+                        {group.status === GroupStatus.Frozen ? undefined : (
+                            <StyledCheckbox
+                                name="toggle group highlighting"
+                                aria-label="toggle group highlighting"
+                                size="small"
+                                checked={selected}
+                                disabled={disabled}
+                                onClick={(event) => event.stopPropagation()}
+                                onChange={() =>
+                                    dispatchObjectGroups(
+                                        objectGroupsActions.update(group.id, {
+                                            status: selected ? GroupStatus.None : GroupStatus.Selected,
+                                        }),
+                                    )
+                                }
+                            />
+                        )}
                     </Box>
                     <Box flex="0 0 auto">
                         <StyledCheckbox
                             name="toggle group visibility"
                             aria-label="toggle group visibility"
                             size="small"
-                            icon={<Visibility htmlColor={`rgba(${r}, ${g}, ${b}, ${Math.max(a ?? 0, 0.2)})`} />}
+                            icon={
+                                group.status === GroupStatus.Frozen ? (
+                                    <AcUnit />
+                                ) : (
+                                    <Visibility htmlColor={`rgba(${r}, ${g}, ${b}, ${Math.max(a ?? 0, 0.2)})`} />
+                                )
+                            }
                             checkedIcon={
                                 !group.opacity ? <VisibilityOff color="disabled" /> : <Visibility color="disabled" />
                             }
                             checked={hidden}
-                            disabled={disabled}
+                            disabled={disabled || group.status === GroupStatus.Frozen}
                             onClick={(event) => event.stopPropagation()}
                             onChange={() =>
                                 dispatchObjectGroups(
                                     objectGroupsActions.update(group.id, {
                                         status: hidden ? GroupStatus.None : GroupStatus.Hidden,
-                                    })
+                                    }),
                                 )
                             }
                         />
@@ -165,7 +189,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                       <ListItemIcon>
                                           <Edit fontSize="small" />
                                       </ListItemIcon>
-                                      <ListItemText>Edit</ListItemText>
+                                      <ListItemText>{t("edit")}</ListItemText>
                                   </MenuItem>,
                                   <MenuItem
                                       key="duplicate"
@@ -177,13 +201,13 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                       <ListItemIcon>
                                           <LibraryAdd fontSize="small" />
                                       </ListItemIcon>
-                                      <ListItemText>Duplicate</ListItemText>
+                                      <ListItemText>{t("duplicate")}</ListItemText>
                                   </MenuItem>,
                                   <MenuItem key="delete" onClick={() => history.push("/delete/" + group.id)}>
                                       <ListItemIcon>
                                           <Delete fontSize="small" />
                                       </ListItemIcon>
-                                      <ListItemText>Delete</ListItemText>
+                                      <ListItemText>{t("delete")}</ListItemText>
                                   </MenuItem>,
                               ]
                             : []
@@ -192,14 +216,39 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                 <ListItemIcon>
                                     <ColorLens sx={{ color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
                                 </ListItemIcon>
-                                <ListItemText>Color</ListItemText>
+                                <ListItemText>{t("color")}</ListItemText>
                             </MenuItem>,
                             <MenuItem key="opacity" onClick={() => history.replace(match.path + "/opacity")}>
                                 <ListItemIcon>
                                     <Opacity fontSize="small" />
                                 </ListItemIcon>
-                                <ListItemText>Hidden transparency</ListItemText>
-                            </MenuItem>
+                                <ListItemText>{t("hiddenTransparency")}</ListItemText>
+                            </MenuItem>,
+                            <MenuItem
+                                key="frozen"
+                                onClick={() => {
+                                    dispatchObjectGroups(
+                                        objectGroupsActions.update(group.id, {
+                                            status:
+                                                group.status === GroupStatus.Frozen
+                                                    ? GroupStatus.None
+                                                    : GroupStatus.Frozen,
+                                        }),
+                                    );
+                                    closeMenu();
+                                }}
+                            >
+                                <ListItemIcon>
+                                    {group.status === GroupStatus.Frozen ? (
+                                        <WbSunny fontSize="small" />
+                                    ) : (
+                                        <AcUnit fontSize="small" />
+                                    )}
+                                </ListItemIcon>
+                                <ListItemText>
+                                    {group.status === GroupStatus.Frozen ? "Unfreeze" : "Freeze"}
+                                </ListItemText>
+                            </MenuItem>,
                         )}
                     </Route>
                     <Route path={match.path + "/opacity"} exact>

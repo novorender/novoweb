@@ -2,6 +2,7 @@ import { Add, DeleteForever } from "@mui/icons-material";
 import { Autocomplete, Box, Button, IconButton, LinearProgress, TextField, useTheme } from "@mui/material";
 import { ParameterBounds } from "@novorender/api";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -28,6 +29,7 @@ export function CenterLineSection({
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const landXmlPaths = useAppSelector(selectLandXmlPaths);
     const followPath =
         landXmlPaths.status === AsyncStatus.Success
@@ -93,7 +95,7 @@ export function CenterLineSection({
                     size="large"
                     onClick={() => onChange({ ...centerLine, enabled: true })}
                 >
-                    <Add sx={{ mr: 1 }} /> Add center line
+                    <Add sx={{ mr: 1 }} /> {t("addCenterLine")}
                 </Button>
             </Box>
         );
@@ -101,7 +103,7 @@ export function CenterLineSection({
 
     return (
         <>
-            <SectionHeader>Select center line and start</SectionHeader>
+            <SectionHeader>{t("selectCenterLineAndStart")}</SectionHeader>
             <Box display="flex" alignItems="center" gap={1} mt={2}>
                 <Autocomplete
                     options={landXmlPaths.status === AsyncStatus.Success ? landXmlPaths.data : []}
@@ -129,7 +131,7 @@ export function CenterLineSection({
                 </IconButton>
             </Box>
 
-            <SectionHeader>Profile number range</SectionHeader>
+            <SectionHeader>{t("profileNumberRange")}</SectionHeader>
 
             {paramRange.status === AsyncStatus.Loading ? (
                 <Box position="relative">
