@@ -67,6 +67,7 @@ declare module "@novorender/data-js-api" {
                 outline?: {
                     enabled: boolean;
                 };
+                anchorPos?: [number, number, number];
             }[];
         };
         grid: {

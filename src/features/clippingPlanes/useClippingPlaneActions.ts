@@ -66,8 +66,10 @@ export function useClippingPlaneActions() {
                 .map((plane, idx) => ({ plane, idx }))
                 .filter(({ idx }) => idxList.includes(idx))
                 .map(({ plane, idx }) => {
-                    const originalAnchorPos = plane.anchorPos!;
-                    const originalAnchorPos2d = getAnchorPos2d(view, [originalAnchorPos])[0];
+                    const originalAnchorPos = plane.anchorPos;
+                    const originalAnchorPos2d = originalAnchorPos
+                        ? getAnchorPos2d(view, [originalAnchorPos])[0]
+                        : undefined;
                     const originalNormalOffset = plane.normalOffset;
                     const normal = vec3.fromValues(
                         originalNormalOffset[0],
@@ -136,12 +138,6 @@ export function useClippingPlaneActions() {
                         const diff = editedPlane.originalNormalOffset[3] - newValue;
                         const { normalOffset } = editedPlane;
                         normalOffset[3] = newValue;
-                        editedPlane.anchorPos = vec3.scaleAndAdd(
-                            vec3.create(),
-                            originalAnchorPos,
-                            vec3.fromValues(normalOffset[0], normalOffset[1], normalOffset[2]),
-                            newValue - originalNormalOffset[3],
-                        );
 
                         if (cameraType === CameraType.Orthographic && isParallelToCamera && !movedCameraToPlane) {
                             dispatch(renderActions.setClippingInEdit(true));
@@ -149,7 +145,14 @@ export function useClippingPlaneActions() {
                             movedCameraToPlane = true;
                         }
 
-                        if (anchor) {
+                        if (anchor && anchorPos && originalAnchorPos) {
+                            editedPlane.anchorPos = vec3.scaleAndAdd(
+                                vec3.create(),
+                                originalAnchorPos,
+                                vec3.fromValues(normalOffset[0], normalOffset[1], normalOffset[2]),
+                                newValue - originalNormalOffset[3],
+                            );
+
                             let pos2d: ReadonlyVec2 | undefined;
                             if (view.renderState.camera.kind === "orthographic" && isParallelToCamera) {
                                 if (originalAnchorPos2d) {
@@ -234,12 +237,14 @@ export function useClippingPlaneActions() {
                     }
 
                     for (const { offsetNode, anchor, anchorPos } of editedPlanes) {
-                        offsetNode?.style.setProperty("display", "none");
+                        if (anchorPos) {
+                            offsetNode?.style.setProperty("display", "none");
 
-                        const pos2d = getAnchorPos2d(view!, [anchorPos])[0];
-                        if (pos2d) {
-                            anchor.style.setProperty("left", `${pos2d[0]}px`);
-                            anchor.style.setProperty("top", `${pos2d[1]}px`);
+                            const pos2d = getAnchorPos2d(view!, [anchorPos])[0];
+                            if (pos2d) {
+                                anchor.style.setProperty("left", `${pos2d[0]}px`);
+                                anchor.style.setProperty("top", `${pos2d[1]}px`);
+                            }
                         }
                     }
                 },

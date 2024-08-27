@@ -746,7 +746,7 @@ export const renderSlice = createSlice({
                 ...clipping,
                 draw: false,
                 outlines: clipping.outlines !== undefined ? clipping.outlines : true,
-                planes: clipping.planes.map(({ normalOffset, color, outline }, idx) => ({
+                planes: clipping.planes.map(({ normalOffset, color, outline, anchorPos }, idx) => ({
                     normalOffset,
                     color: color ?? clippingPlaneColors[idx],
                     outline: {
@@ -754,6 +754,7 @@ export const renderSlice = createSlice({
                         color: clippingPlaneOutlineColors[idx],
                     },
                     baseW: normalOffset[3],
+                    anchorPos,
                 })),
             };
         });
