@@ -19,6 +19,7 @@ import { useSceneId } from "hooks/useSceneId";
 import { ProjectType } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { VecRGBA } from "utils/color";
+import { mixpanel } from "utils/mixpanel";
 import { sleep } from "utils/time";
 
 import { renderActions } from "../renderSlice";
@@ -82,6 +83,13 @@ export function useHandleInit() {
                 const projectIsV2 = Boolean(projectV2);
                 const tmZoneForCalc = await loadTmZoneForCalc(projectV2, sceneData.tmZone);
 
+                mixpanel?.register({ "Scene ID": sceneId, "Scene Org": sceneData.organization }, { persistent: false });
+                mixpanel?.track_pageview({
+                    "Scene ID": sceneId,
+                    "Scene Title": sceneData.title,
+                    "Scene Org": sceneData.organization,
+                });
+
                 const offlineWorkerState =
                     view.offline &&
                     (await view.manageOfflineStorage().catch((e) => {
@@ -120,10 +128,10 @@ export function useHandleInit() {
                         status: group.selected
                             ? GroupStatus.Selected
                             : group.hidden
-                            ? GroupStatus.Hidden
-                            : group.frozen
-                            ? GroupStatus.Frozen
-                            : GroupStatus.None,
+                              ? GroupStatus.Hidden
+                              : group.frozen
+                                ? GroupStatus.Frozen
+                                : GroupStatus.None,
                         // NOTE(OLA): Pass IDs as undefined to be loaded when group is activated.
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         ids: group.ids ? new Set(group.ids) : (undefined as any),
@@ -214,8 +222,8 @@ export function useHandleInit() {
                                 stack: e.stack
                                     ? e.stack
                                     : typeof e.cause === "string"
-                                    ? e.cause
-                                    : `${e.name}: ${e.message}`,
+                                      ? e.cause
+                                      : `${e.name}: ${e.message}`,
                             })
                         );
                     }

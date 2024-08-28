@@ -4,7 +4,7 @@ import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import enLocale from "date-fns/locale/en-GB";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { generatePath, Redirect, Route, Switch, useHistory, useLocation, useParams } from "react-router-dom";
 import { useRegisterSW } from "virtual:pwa-register/react";
@@ -13,9 +13,10 @@ import { dataApi } from "apis/dataV1";
 import { Loading } from "components";
 import { StorageKey } from "config/storage";
 import { Explorer } from "pages/explorer";
-import { authActions } from "slices/authSlice";
+import { authActions, User } from "slices/authSlice";
 import { explorerActions, selectConfig } from "slices/explorer";
 import { getOAuthState, getUser } from "utils/auth";
+import { initMixpanel, mixpanel } from "utils/mixpanel";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 
 import { useAppDispatch, useAppSelector } from "./redux-store-interactions";
@@ -71,17 +72,20 @@ export function App() {
                         }
                     });
 
+            let finalConfig = config;
             if (import.meta.env.MODE === "development") {
                 dataApi.serviceUrl = config.dataServerUrl;
             } else {
                 const cfg = await load();
                 if (cfg) {
                     dispatch(explorerActions.setConfig(cfg));
+                    finalConfig = cfg;
                 }
 
                 dataApi.serviceUrl = cfg?.dataServerUrl ?? config.dataServerUrl;
             }
 
+            initMixpanel(finalConfig.mixpanelToken);
             setConfigStatus(Status.Ready);
         }
 
@@ -109,6 +113,18 @@ export function App() {
             window.removeEventListener("offline", handleOffline);
         };
     }, [dispatch]);
+
+    const loggedIn = useCallback(
+        (accessToken: string, user: User) => {
+            mixpanel?.identify(user.user);
+            mixpanel?.people.set({
+                "User Org": user.organization,
+            });
+            dispatch(authActions.login({ accessToken, user }));
+            saveToStorage(StorageKey.AccessToken, accessToken);
+        },
+        [dispatch],
+    );
 
     const authenticating = useRef(false);
     useEffect(() => {
@@ -185,8 +201,7 @@ export function App() {
                                 expires: Date.now() + res.refresh_token_expires_in * 1000,
                             }),
                         );
-                        dispatch(authActions.login({ accessToken: res.access_token, user }));
-                        saveToStorage(StorageKey.AccessToken, res.access_token);
+                        loggedIn(res.access_token, user);
                     }
                 }
             } else {
@@ -236,8 +251,7 @@ export function App() {
                                 }),
                             );
 
-                            dispatch(authActions.login({ accessToken: res.access_token, user }));
-                            saveToStorage(StorageKey.AccessToken, res.access_token);
+                            loggedIn(res.access_token, user);
                         }
                     }
                 } catch {
@@ -247,7 +261,7 @@ export function App() {
 
             setAuthStatus(Status.Ready);
         }
-    }, [history, dispatch, authStatus, config, configStatus, useTokenFromUrl]);
+    }, [history, dispatch, authStatus, config, configStatus, useTokenFromUrl, loggedIn]);
 
     useEffect(() => {
         handleIframeAuth();
@@ -266,12 +280,11 @@ export function App() {
             const user = accessToken ? await getUser(accessToken) : undefined;
 
             if (accessToken && user) {
-                dispatch(authActions.login({ accessToken, user }));
-                saveToStorage(StorageKey.AccessToken, accessToken);
+                loggedIn(accessToken, user);
             }
             setAuthStatus(Status.Ready);
         }
-    }, [authStatus, configStatus, dispatch, useTokenFromUrl]);
+    }, [authStatus, configStatus, dispatch, useTokenFromUrl, loggedIn]);
 
     return (
         <>

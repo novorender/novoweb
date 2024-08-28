@@ -141,6 +141,7 @@ app.get("/config.json", (_req, res) => {
         dataV2ServerUrl: process.env.DATA_V2_SERVER_URL ?? "",
         authServerUrl: process.env.AUTH_SERVER_URL ?? "",
         assetsUrl: process.env.ASSETS_URL ?? "",
+        mixpanelToken: process.env.MIXPANEL_TOKEN ?? "",
     });
 });
 app.get("/*", function (_req, res) {
