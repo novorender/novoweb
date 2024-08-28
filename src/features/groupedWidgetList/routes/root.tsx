@@ -59,12 +59,23 @@ export function Root({
     const activeWidgets = useAppSelector(selectWidgets);
     const favoriteWidgets = useAppSelector(selectFavoriteWidgets);
     const isOnline = useAppSelector(selectIsOnline);
+    const scrollIntoViewTimeout = useRef<ReturnType<typeof setTimeout>>();
 
     useEffect(() => {
         if (expandedGroupKey) {
-            scrollBoxRef.current
-                ?.querySelector(`#widget-group-${expandedGroupKey}`)
-                ?.scrollIntoView({ behavior: "smooth" });
+            const groupNode = scrollBoxRef.current?.querySelector(`#widget-group-${expandedGroupKey}`);
+            if (groupNode) {
+                groupNode.scrollIntoView({ behavior: "smooth" });
+                if (scrollIntoViewTimeout.current) {
+                    clearTimeout(scrollIntoViewTimeout.current);
+                }
+                scrollIntoViewTimeout.current = setTimeout(() => {
+                    // Scroll one more time after panel expanded in case it's not in the view
+                    // We keep first scroll (before timer) because it's annoying if we have to wait 200ms every time
+                    groupNode.scrollIntoView({ behavior: "smooth" });
+                    scrollIntoViewTimeout.current = undefined;
+                }, 200);
+            }
         }
     }, [expandedGroupKey]);
 
