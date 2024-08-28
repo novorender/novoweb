@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Switch } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig, type WidgetKey } from "config/features";
 import { explorerActions, selectWidgets } from "slices/explorer";
+import { mixpanel } from "utils/mixpanel";
 
 import { Root } from "./routes/root";
 import { Tag } from "./routes/tag";
@@ -20,10 +21,12 @@ export default function WidgetList({ widgetKey, onSelect }: { widgetKey?: Widget
 
         if (!widgetKey) {
             onSelect();
+            mixpanel?.track("Opened Widget", { "Widget Key": key });
             return dispatch(explorerActions.addWidgetSlot(key));
         }
 
         onSelect();
+        mixpanel?.track("Opened Widget", { "Widget Key": key });
         dispatch(explorerActions.replaceWidgetSlot({ replace: widgetKey, key }));
     };
 

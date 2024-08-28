@@ -24,6 +24,7 @@
     },
     "devDependencies": {
         "@types/d3-array": "^3.0.3",
+        "@types/mixpanel-browser": "^2.50.0",
         "@types/node": "^22.1.0",
         "@types/papaparse": "^5.3.2",
         "@types/react": "^18.3.3",
@@ -80,6 +81,7 @@
         "i18next-browser-languagedetector": "^8.0.0",
         "i18next-http-backend": "^2.6.1",
         "js-md5": "^0.8.3",
+        "mixpanel-browser": "^2.55.1",
         "mqtt": "^4.3.7",
         "p-map": "^7.0.1",
         "papaparse": "^5.3.2",

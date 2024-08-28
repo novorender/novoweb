@@ -6,6 +6,7 @@ import { WidgetErrorBoundary, WidgetSkeleton } from "components";
 import { featuresConfig, WidgetKey } from "config/features";
 import { MenuWidget } from "features/menuWidget";
 import { explorerActions, selectIsOnline, selectMaximized, selectWidgetLayout, selectWidgets } from "slices/explorer";
+import { mixpanel } from "utils/mixpanel";
 
 const Properties = lazy(() => import("features/properties/properties"));
 const PropertiesTree = lazy(() => import("features/propertyTree/propertyTree"));
@@ -56,13 +57,14 @@ export function Widgets() {
                 dispatch(explorerActions.setWidgets(slots.slice(0, layout.widgets)));
             }
         },
-        [layout, slots, dispatch, maximized],
+        [layout, slots, dispatch, maximized]
     );
 
     useEffect(() => {
         if (!isOnline) {
             slots.forEach((slot) => {
                 if (!featuresConfig[slot].offline) {
+                    mixpanel?.track("Closed Widget", { "Widget Key": slot });
                     dispatch(explorerActions.removeWidgetSlot(slot));
                 }
             });

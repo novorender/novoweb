@@ -71,6 +71,7 @@ const initialState: State = {
         novorenderClientId: import.meta.env.REACT_APP_NOVORENDER_CLIENT_ID ?? "",
         novorenderClientSecret: import.meta.env.REACT_APP_NOVORENDER_CLIENT_SECRET ?? "",
         assetsUrl: import.meta.env.ASSETS_URL ?? "https://novorenderblobs.blob.core.windows.net/assets",
+        mixpanelToken: import.meta.env.REACT_APP_MIXPANEL_TOKEN ?? "",
     },
 };
 

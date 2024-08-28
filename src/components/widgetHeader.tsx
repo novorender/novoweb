@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Widget } from "config/features";
 import { explorerActions, selectMaximized, selectMinimized } from "slices/explorer";
+import { mixpanel } from "utils/mixpanel";
 
 import { Divider } from "./divider";
 
@@ -30,6 +31,7 @@ export function WidgetHeader({
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const handleClose = () => {
+        mixpanel?.track("Closed Widget", { "Widget Key": key });
         dispatch(explorerActions.removeWidgetSlot(key));
     };
 
