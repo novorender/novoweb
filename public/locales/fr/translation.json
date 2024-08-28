@@ -560,5 +560,13 @@
     "openWidget": "Ouvrir le widget",
     "crossSection": "Coupe transversale",
     "alignCamera": "Aligner la caméra",
-    "newDesign": "Nouveau design"
+    "newDesign": "Nouveau design",
+    "yourPositionIsOutsideSceneBoundaries": "Votre position est en dehors des limites de la scène.",
+    "weveChangedTheUx": "Nous avons modifié l'UX un peu pour rendre les choses plus faciles à utiliser.",
+    "youCan": "Vous pouvez",
+    "toggleLc": "basculer",
+    "betweenOldAndNewDesignForNowHere": "entre l'ancien et le nouveau design pour l'instant ici",
+    "orAnytimeIn": "ou à tout moment dans",
+    "betaFlagPath": "Widget Paramètres avancés → Fonctions → Beta",
+    "gotIt": "Compris"
 }

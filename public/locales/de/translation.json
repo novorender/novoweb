@@ -560,5 +560,13 @@
     "openWidget": "Widget öffnen",
     "crossSection": "Querschnitt",
     "alignCamera": "Kamera ausrichten",
-    "newDesign": "Neues design"
+    "newDesign": "Neues Design",
+    "yourPositionIsOutsideSceneBoundaries": "Ihre Position befindet sich außerhalb der Szenengrenzen.",
+    "weveChangedTheUx": "Wir haben das UX ein wenig geändert, um die Bedienung zu erleichtern.",
+    "youCan": "Sie können",
+    "toggleLc": "umschalten",
+    "betweenOldAndNewDesignForNowHere": "vorerst zwischen dem alten und neuen Design hier umschalten",
+    "orAnytimeIn": "oder jederzeit in",
+    "betaFlagPath": "Erweiterte Einstellungen Widget → Funktionen → Beta",
+    "gotIt": "Verstanden"
 }

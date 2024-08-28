@@ -560,5 +560,13 @@
     "openWidget": "Open widget",
     "crossSection": "Cross section",
     "alignCamera": "Align camera",
-    "newDesign": "New design"
+    "newDesign": "New design",
+    "yourPositionIsOutsideSceneBoundaries": "Your position is outside the scene's boundaries.",
+    "weveChangedTheUx": "We've changed the UX a bit to make things easier to use.",
+    "youCan": "You can",
+    "toggleLc": "toggle",
+    "betweenOldAndNewDesignForNowHere": "between old and new design for now here",
+    "orAnytimeIn": "or anytime in",
+    "betaFlagPath": "Adv. settings widget → Features → Beta",
+    "gotIt": "Got it"
 }

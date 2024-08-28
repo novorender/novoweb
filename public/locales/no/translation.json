@@ -560,5 +560,13 @@
     "openWidget": "Åpne widget",
     "crossSection": "Tverrsnitt",
     "alignCamera": "Juster kamera",
-    "newDesign": "Nytt design"
+    "newDesign": "Nytt design",
+    "yourPositionIsOutsideSceneBoundaries": "Din posisjon er utenfor scenens grenser.",
+    "weveChangedTheUx": "Vi har endret brukeropplevelsen litt for å gjøre det enklere å bruke.",
+    "youCan": "Du kan",
+    "toggleLc": "veksle",
+    "betweenOldAndNewDesignForNowHere": "mellom gammelt og nytt design for nå her",
+    "orAnytimeIn": "eller når som helst i",
+    "betaFlagPath": "Avansert innstillinger widget → Funksjoner → Beta",
+    "gotIt": "Skjønner"
 }

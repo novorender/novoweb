@@ -340,7 +340,7 @@ export const renderSlice = createSlice({
             }
 
             state.subtrees[action.payload.subtree] =
-                action.payload.newState ?? state.subtrees[action.payload.subtree] === SubtreeStatus.Shown
+                (action.payload.newState ?? state.subtrees[action.payload.subtree] === SubtreeStatus.Shown)
                     ? SubtreeStatus.Hidden
                     : SubtreeStatus.Shown;
         },
@@ -582,10 +582,10 @@ export const renderSlice = createSlice({
                         rotate === 1
                             ? "flight"
                             : orbit === 1
-                            ? pan === 2
-                                ? "cadRightPan"
-                                : "cadMiddlePan"
-                            : "special";
+                              ? pan === 2
+                                  ? "cadRightPan"
+                                  : "cadMiddlePan"
+                              : "special";
                 }
 
                 // background
@@ -808,7 +808,6 @@ function subtreesFromBookmark(
 const clippingPlaneColors: vec4[] = [
     [255, 255, 255],
     [37, 55, 70],
-    // [118, 134, 146],
     [214, 30, 92],
     [97, 94, 155],
     [225, 224, 0],
@@ -818,7 +817,6 @@ const clippingPlaneColors: vec4[] = [
 const clippingPlaneOutlineColors: vec3[] = [
     [0, 0, 0],
     [255, 88, 93],
-    // [97, 94, 155],
     [225, 224, 0],
     [118, 134, 146],
     [214, 30, 92],
