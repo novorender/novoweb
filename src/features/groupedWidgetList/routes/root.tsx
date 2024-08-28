@@ -10,6 +10,7 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -51,12 +52,21 @@ export function Root({
 }) {
     const theme = useTheme();
     const { t } = useTranslation();
+    const scrollBoxRef = useRef<HTMLDivElement | null>(null);
 
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const lockedWidgets = useAppSelector(selectLockedWidgets);
     const activeWidgets = useAppSelector(selectWidgets);
     const favoriteWidgets = useAppSelector(selectFavoriteWidgets);
     const isOnline = useAppSelector(selectIsOnline);
+
+    useEffect(() => {
+        if (expandedGroupKey) {
+            scrollBoxRef.current
+                ?.querySelector(`#widget-group-${expandedGroupKey}`)
+                ?.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [expandedGroupKey]);
 
     const sortAndFilterWidgets = (widgets: Widget[]) =>
         widgets
@@ -82,7 +92,7 @@ export function Root({
                           (widget) =>
                               (widget.type === FeatureType.Widget || widget.type === FeatureType.AdminWidget) &&
                               "groups" in widget &&
-                              widget.groups.includes(group.key as never),
+                              widget.groups.includes(group.key as never)
                       ),
         };
     });
@@ -96,7 +106,7 @@ export function Root({
                     position="absolute"
                 />
             </Box>
-            <WidgetBottomScrollBox flexGrow={1} py={2}>
+            <WidgetBottomScrollBox flexGrow={1} py={2} ref={scrollBoxRef}>
                 {widgetGroups.map(({ groupKey, groupName, GroupIcon, widgets }) => {
                     return (
                         <GroupAccordion
@@ -105,6 +115,7 @@ export function Root({
                             onChange={(_, newExpanded) => {
                                 setExpandedGroupKey(newExpanded ? (groupKey as FeatureGroupKey) : null);
                             }}
+                            id={`widget-group-${groupKey}`}
                         >
                             <GroupAccordionSummary>
                                 <GroupIcon />
@@ -170,7 +181,7 @@ const GroupAccordion = styled(Accordion)(
                 margin: 0;
             }
         }
-    `,
+    `
 );
 
 const GroupAccordionSummary = styled(AccordionSummary)(
@@ -186,5 +197,5 @@ const GroupAccordionSummary = styled(AccordionSummary)(
                 opacity: 0.2;
             }
         }
-    `,
+    `
 );

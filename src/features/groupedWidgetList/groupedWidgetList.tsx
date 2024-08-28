@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { FeatureGroupKey, featuresConfig, type WidgetKey } from "config/features";
@@ -21,6 +21,12 @@ export default function GroupedWidgetList({
     const [expandedGroupKey, setExpandedGroupKey] = useState(
         featureGroupKey || (config && "groups" in config && config.groups[0]) || null
     );
+
+    useEffect(() => {
+        if (featureGroupKey) {
+            setExpandedGroupKey(featureGroupKey);
+        }
+    }, [featureGroupKey]);
 
     const handleClick = (key: WidgetKey) => () => {
         const active = key !== widgetKey && activeWidgets.includes(key);

@@ -81,7 +81,7 @@ export function WidgetGroupPanel() {
                             <IconButton
                                 onClick={() =>
                                     dispatch(
-                                        explorerActions.setWidgetGroupPanelState({ ...state, expanded: !expanded }),
+                                        explorerActions.setWidgetGroupPanelState({ ...state, expanded: !expanded })
                                     )
                                 }
                             >
@@ -161,6 +161,7 @@ function Section({ groupKey }: { groupKey: FeatureGroupKey }) {
                 <IconButton size="large">
                     <Icon />
                 </IconButton>
+                {name}
             </SectionBox>
         </Tooltip>
     );
@@ -175,7 +176,7 @@ const SectionBox = styled(Box)(
         gap: ${theme.spacing(2)};
         font-weight: 600;
         cursor: pointer;
-    `,
+    `
 );
 
 function LogoBtn({ open, onClick }: { open: boolean; onClick: () => void }) {
