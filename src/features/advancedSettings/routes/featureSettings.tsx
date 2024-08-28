@@ -75,7 +75,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
         dispatch(
             explorerActions.setCanvasContextMenu({
                 features: checked ? keys.concat(key) : keys.filter((k) => k !== key),
-            }),
+            })
         );
     };
 
@@ -88,7 +88,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                     ? 0
                     : lockedWidgets.includes(a.key)
                       ? 100
-                      : -100),
+                      : -100)
         );
 
     return (
@@ -166,7 +166,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                             }
                                         />
                                     </Grid>
-                                ),
+                                )
                             )}
                         </Grid>
                     </AccordionDetails>
@@ -286,7 +286,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                         dispatch(
                                             explorerActions.setPrimaryMenu({
                                                 button5: e.target.value as ButtonKey,
-                                            }),
+                                            })
                                         );
                                     }}
                                     value={primaryMenu.button5}
@@ -321,7 +321,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                                     name={feature.key}
                                                     color="primary"
                                                     checked={enabledCanvasContextMenuFeatures.some(
-                                                        (enabled) => enabled === feature.key,
+                                                        (enabled) => enabled === feature.key
                                                     )}
                                                     onChange={(_e, checked) => {
                                                         toggleCanvasContextMenuFeature(feature.key, checked);
@@ -404,7 +404,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     control={<Switch checked={newDesign} onChange={toggleNewDesign} />}
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            New design
+                                            {t("newDesign")}
                                         </Box>
                                     }
                                 />

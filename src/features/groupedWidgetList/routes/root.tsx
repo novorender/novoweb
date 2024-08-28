@@ -119,7 +119,7 @@ export function Root({
                         >
                             <GroupAccordionSummary>
                                 <GroupIcon />
-                                <Typography sx={{ ml: 1 }}> {groupName}</Typography>
+                                <Typography sx={{ ml: 1 }}>{groupName}</Typography>
                             </GroupAccordionSummary>
                             <AccordionDetails>
                                 {widgets.length === 0 ? (

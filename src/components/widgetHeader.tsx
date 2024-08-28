@@ -23,7 +23,7 @@ export function WidgetHeader(props: {
     disableShadow?: boolean;
     WidgetMenu?: (props: MenuProps) => JSX.Element | null;
     menuOpen: boolean;
-    toggleMenu: () => void;
+    toggleMenu?: () => void;
 }) {
     const newDesign = useAppSelector(selectNewDesign);
 
@@ -47,7 +47,7 @@ function WidgetHeaderNew({
     disableShadow?: boolean;
     WidgetMenu?: (props: MenuProps) => JSX.Element | null;
     menuOpen: boolean;
-    toggleMenu: () => void;
+    toggleMenu?: () => void;
 }) {
     const { t } = useTranslation();
     const theme = useTheme();
@@ -92,7 +92,7 @@ function WidgetHeaderNew({
     return (
         <Box boxShadow={!disableShadow ? theme.customShadows.widgetHeader : undefined}>
             <Box p={1} display="flex" alignItems="center">
-                {!menuOpen && (
+                {!menuOpen && toggleMenu && (
                     <IconButton edge="start" size="small" onClick={toggleMenu} sx={{ mr: 1 }}>
                         <ChevronLeft fontSize="small" />
                     </IconButton>
