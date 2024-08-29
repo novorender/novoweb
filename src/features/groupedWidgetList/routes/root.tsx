@@ -91,22 +91,24 @@ export function Root({
 
     const sortedEnabledWidgets = sortAndFilterWidgets(enabledWidgets);
 
-    const widgetGroups = sortedFeatureGroups.map((group) => {
-        return {
-            groupKey: group.key,
-            groupName: t(group.nameKey),
-            GroupIcon: group.Icon,
-            widgets:
-                group.key === featureGroups.favorites.key
-                    ? sortedEnabledWidgets.filter((w) => favoriteWidgets.includes(w.key))
-                    : sortedEnabledWidgets.filter(
-                          (widget) =>
-                              (widget.type === FeatureType.Widget || widget.type === FeatureType.AdminWidget) &&
-                              "groups" in widget &&
-                              widget.groups.includes(group.key as never)
-                      ),
-        };
-    });
+    const widgetGroups = sortedFeatureGroups
+        .map((group) => {
+            return {
+                groupKey: group.key,
+                groupName: t(group.nameKey),
+                GroupIcon: group.Icon,
+                widgets:
+                    group.key === featureGroups.favorites.key
+                        ? sortedEnabledWidgets.filter((w) => favoriteWidgets.includes(w.key))
+                        : sortedEnabledWidgets.filter(
+                              (widget) =>
+                                  (widget.type === FeatureType.Widget || widget.type === FeatureType.AdminWidget) &&
+                                  "groups" in widget &&
+                                  widget.groups.includes(group.key as never),
+                          ),
+            };
+        })
+        .filter((g) => g.groupKey === "favorites" || g.widgets.length > 0);
 
     return (
         <>
@@ -192,7 +194,7 @@ const GroupAccordion = styled(Accordion)(
                 margin: 0;
             }
         }
-    `
+    `,
 );
 
 const GroupAccordionSummary = styled(AccordionSummary)(
@@ -208,5 +210,5 @@ const GroupAccordionSummary = styled(AccordionSummary)(
                 opacity: 0.2;
             }
         }
-    `
+    `,
 );

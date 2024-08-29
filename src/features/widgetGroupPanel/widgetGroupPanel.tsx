@@ -1,31 +1,46 @@
-import { ChevronLeft, ChevronRight } from "@mui/icons-material";
+import { ChevronLeft, ChevronRight, StarOutline } from "@mui/icons-material";
 import {
     Box,
+    BoxProps,
+    ClickAwayListener,
     css,
     Divider,
     FabProps,
     IconButton,
+    ListItemIcon,
+    ListItemText,
+    MenuItem,
+    Popper,
     SpeedDial,
     speedDialClasses,
     SpeedDialProps,
     Stack,
     styled,
     Tooltip,
+    Typography,
     useTheme,
 } from "@mui/material";
+import { t } from "i18next";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { HudPanel } from "components/hudPanel";
-import { FeatureGroupKey, featureGroups } from "config/features";
+import IconButtonExt from "components/iconButtonExt";
+import { FeatureGroupKey, featureGroups, FeatureType, Widget, WidgetKey } from "config/features";
 import { groupSorting } from "features/groupedWidgetList/sorting";
+import { sorting } from "features/widgetList/sorting";
 import NovorenderIcon from "media/icons/novorender-small.svg?react";
 import {
     explorerActions,
     selectCanAddWidget,
+    selectEnabledWidgets,
+    selectFavoriteWidgets,
     selectIsOnline,
+    selectLockedWidgets,
     selectWidgetGroupPanelState,
     selectWidgetLayout,
+    selectWidgets,
     selectWidgetSlot,
 } from "slices/explorer";
 
@@ -42,74 +57,185 @@ export function WidgetGroupPanel() {
     const layout = useAppSelector(selectWidgetLayout);
     const { open, expanded } = state;
     const dispatch = useAppDispatch();
+    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+    const [activeGroup, setActiveSection] = useState<FeatureGroupKey | null>(null);
+    const canAddWidget = useAppSelector(selectCanAddWidget);
+    const widgetSlot = useAppSelector(selectWidgetSlot);
+    const enabledWidgets = useAppSelector(selectEnabledWidgets);
+    const lockedWidgets = useAppSelector(selectLockedWidgets);
+    const favoriteWidgets = useAppSelector(selectFavoriteWidgets);
+
+    const closePopper = () => {
+        setAnchorEl(null);
+        setActiveSection(null);
+    };
+
+    const handleSectionClick = (e: React.MouseEvent<HTMLElement>, groupKey: FeatureGroupKey) => {
+        if (groupKey !== activeGroup) {
+            setActiveSection(groupKey);
+            // Use parent element as anchor, because if we expand the panel -
+            // anchor changes and tooltip flies away
+            setAnchorEl(e.currentTarget.closest("[data-section-box]") as HTMLElement);
+        } else {
+            closePopper();
+        }
+    };
+
+    const handleWidgetClick = (widgetKey: WidgetKey) => {
+        closePopper();
+        if (canAddWidget) {
+            dispatch(explorerActions.addWidgetSlot(widgetKey));
+            if (widgetSlot.open) {
+                dispatch(explorerActions.setWidgetSlot({ open: false, group: undefined }));
+            }
+        } else {
+            dispatch(
+                explorerActions.setSnackbarMessage({ msg: t("closeOneOfTheWidgetsToAddANewOne"), closeAfter: 5000 }),
+            );
+        }
+    };
+
+    const nonEmptyGroups = useMemo(() => {
+        return sortedFeatureGroups
+            .map((group) => {
+                const widgets =
+                    group.key === "favorites"
+                        ? favoriteWidgets.map((key) => enabledWidgets.find((w2) => w2.key === key)!).filter((w) => w)
+                        : enabledWidgets.filter(
+                              (widget) =>
+                                  (widget.type === FeatureType.Widget || widget.type === FeatureType.AdminWidget) &&
+                                  "groups" in widget &&
+                                  widget.groups.includes(group.key as never),
+                          );
+
+                const sortAndFilterWidgets = (widgets: Widget[]) =>
+                    widgets
+                        .filter((widget) => !lockedWidgets.includes(widget.key))
+                        .sort((a, b) => {
+                            const idxA = sorting.indexOf(a.key);
+                            const idxB = sorting.indexOf(b.key);
+
+                            return (idxA === -1 ? sorting.length : idxA) - (idxB === -1 ? sorting.length : idxB);
+                        });
+
+                return { group, widgets: sortAndFilterWidgets(widgets) };
+            })
+            .filter((e) => e.group.key === "favorites" || e.widgets.length > 0);
+    }, [enabledWidgets, lockedWidgets, favoriteWidgets]);
 
     return (
-        <Box
-            sx={{
-                zIndex: 1050,
-                pointerEvents: "none",
-                position: "absolute",
-                right: 0,
-                bottom: 0,
-                height: open ? `calc(100% - ${theme.spacing(layout.padWidgetsTop ? 9 : 0)})` : undefined,
-            }}
-        >
-            {open && (
-                <HudPanel
-                    sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        transition: "all 0.2s",
-                        pointerEvents: "auto",
-                        height: `calc(100% - ${theme.spacing(8)})`,
-                        mb: 8,
-                        borderBottomLeftRadius: 0,
-                        borderBottomRightRadius: 0,
-                    }}
-                >
-                    <Stack
-                        sx={{
-                            gap: 1,
-                            overflow: "hidden",
-                            width: expanded
-                                ? theme.spacing(theme.customSpacing.widgetGroupPanelExpandedWidth - 4)
-                                : theme.spacing(8),
-                            transition: "width 0.2s",
-                        }}
-                    >
-                        <Box display="flex" justifyContent="center">
-                            <IconButton
-                                onClick={() =>
-                                    dispatch(
-                                        explorerActions.setWidgetGroupPanelState({ ...state, expanded: !expanded })
-                                    )
-                                }
+        <ClickAwayListener onClickAway={closePopper}>
+            <Box
+                sx={{
+                    zIndex: 1060,
+                    pointerEvents: "none",
+                    position: "absolute",
+                    right: 0,
+                    bottom: 0,
+                    height: open ? (layout.padWidgetsTop ? `calc(100% - ${theme.spacing(9)})` : "100%") : undefined,
+                    display: "flex",
+                    flexDirection: "column",
+                }}
+            >
+                {open && (
+                    <>
+                        <HudPanel
+                            sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                transition: "all 0.2s",
+                                pointerEvents: "auto",
+                                flex: "auto",
+                                borderBottomLeftRadius: 0,
+                                borderBottomRightRadius: 0,
+                                position: "relative",
+                                overflow: "auto",
+                            }}
+                        >
+                            <Stack
+                                sx={{
+                                    gap: 1,
+                                    overflowX: "hidden",
+                                    width: expanded
+                                        ? theme.spacing(theme.customSpacing.widgetGroupPanelExpandedWidth - 4)
+                                        : theme.spacing(8),
+                                    transition: "width 0.2s",
+                                    position: "relative",
+                                    flex: "auto",
+                                }}
                             >
-                                {expanded ? <ChevronRight /> : <ChevronLeft />}
-                            </IconButton>
-                        </Box>
-                        <Divider sx={{ mt: -0.5 }} />
-                        {sortedFeatureGroups.map((g) => (
-                            <Section key={g.key} groupKey={g.key} />
-                        ))}
-                    </Stack>
-                    <BottomPanel />
-                </HudPanel>
-            )}
-            <Box position="relative">
-                <LogoBtn
-                    open={open}
-                    onClick={() => dispatch(explorerActions.setWidgetGroupPanelState({ ...state, open: !open }))}
-                />
+                                <Box display="flex" justifyContent="center">
+                                    <IconButton
+                                        onClick={() =>
+                                            dispatch(
+                                                explorerActions.setWidgetGroupPanelState({
+                                                    ...state,
+                                                    expanded: !expanded,
+                                                }),
+                                            )
+                                        }
+                                    >
+                                        {expanded ? <ChevronRight /> : <ChevronLeft />}
+                                    </IconButton>
+                                </Box>
+                                <Divider sx={{ mt: -0.5 }} />
+                                {nonEmptyGroups.map(({ group }) => (
+                                    <Section
+                                        key={group.key}
+                                        groupKey={group.key}
+                                        onClick={handleSectionClick}
+                                        active={group.key === activeGroup}
+                                        sidebarOpen={expanded}
+                                    />
+                                ))}
+                            </Stack>
+                        </HudPanel>
+                        <BottomPanel />
+
+                        <Popper
+                            open={anchorEl !== null}
+                            anchorEl={anchorEl}
+                            placement="left"
+                            disablePortal
+                            sx={{ zIndex: 1060, pointerEvents: "auto" }}
+                            modifiers={[
+                                // to avoid jumping when collapsing/expanding sidebar while the popper is open
+                                {
+                                    name: "computeStyles",
+                                    options: {
+                                        adaptive: false,
+                                    },
+                                },
+                            ]}
+                        >
+                            <HudPanel sx={{ mr: 2 }}>
+                                <SectionWidgets
+                                    groupKey={activeGroup}
+                                    onSelect={handleWidgetClick}
+                                    widgets={nonEmptyGroups.find((g) => g.group.key === activeGroup)?.widgets ?? []}
+                                />
+                            </HudPanel>
+                        </Popper>
+                    </>
+                )}
+                <Box position="relative">
+                    <LogoBtn
+                        open={open}
+                        onClick={() => {
+                            closePopper();
+                            dispatch(explorerActions.setWidgetGroupPanelState({ ...state, open: !open }));
+                        }}
+                    />
+                </Box>
             </Box>
-        </Box>
+        </ClickAwayListener>
     );
 }
 
 function BottomPanel() {
     // complicated margins/width/heights and wrappers around the panel and svg are all for good shadows
     return (
-        <Box sx={{ position: "absolute", display: "flex", height: "64px", bottom: 0, left: 0, width: "100%" }}>
+        <Box sx={{ flex: "0 0 64px", display: "flex", zIndex: 1050, pointerEvents: "auto" }}>
             <Box sx={{ flex: "auto", overflow: "hidden", ml: "-10px", mb: "-10px" }}>
                 <HudPanel
                     sx={{
@@ -141,43 +267,121 @@ function BottomPanel() {
     );
 }
 
-function Section({ groupKey }: { groupKey: FeatureGroupKey }) {
-    const widgetSlot = useAppSelector(selectWidgetSlot);
-    const canAddWidget = useAppSelector(selectCanAddWidget);
-    const dispatch = useAppDispatch();
+function Section({
+    groupKey,
+    onClick,
+    active,
+    sidebarOpen,
+}: {
+    groupKey: FeatureGroupKey;
+    onClick: (e: React.MouseEvent<HTMLElement>, groupKey: FeatureGroupKey) => void;
+    active: boolean;
+    sidebarOpen: boolean;
+}) {
     const { t } = useTranslation();
     const { nameKey, Icon } = featureGroups[groupKey];
     const name = t(nameKey);
 
-    const handleClick = () => {
-        if (widgetSlot.open || canAddWidget) {
-            dispatch(explorerActions.setWidgetSlot({ open: true, group: groupKey }));
-        }
-    };
-
     return (
-        <Tooltip title={name} placement="left">
-            <SectionBox onClick={handleClick}>
-                <IconButton size="large">
-                    <Icon />
-                </IconButton>
-                {name}
-            </SectionBox>
+        <Tooltip title={active ? "" : name} placement="left">
+            <Box data-section-box>
+                <SectionButton
+                    onClick={(e) => onClick(e, groupKey)}
+                    active={sidebarOpen && active}
+                    component={sidebarOpen ? "button" : "div"}
+                >
+                    {sidebarOpen ? (
+                        <Icon sx={{ ml: 1 }} />
+                    ) : (
+                        <IconButtonExt
+                            size="large"
+                            active={active}
+                            sx={sidebarOpen && active ? { background: "transparent" } : {}}
+                        >
+                            <Icon />
+                        </IconButtonExt>
+                    )}
+                    <Typography fontWeight={600}>{name}</Typography>
+                </SectionButton>
+            </Box>
         </Tooltip>
     );
 }
 
-const SectionBox = styled(Box)(
-    ({ theme }) => css`
+const SectionButton = styled(Box, { shouldForwardProp: (prop) => prop !== "active" })<BoxProps & { active: boolean }>(
+    ({ theme, active }) => css`
+        width: 100%;
         display: flex;
         align-items: center;
+        text-align: start;
+        border: 0;
         padding-right: ${theme.spacing(2)};
         padding-left: ${theme.spacing(1)};
         gap: ${theme.spacing(2)};
-        font-weight: 600;
         cursor: pointer;
-    `
+        min-height: 48px;
+        background: ${active ? theme.palette.primary.main : "transparent"};
+        transition: background 0.2s;
+        color: ${active ? theme.palette.primary.contrastText : theme.palette.action.active};
+        border-radius: ${theme.shape.borderRadius}px;
+
+        &:hover {
+            background: ${active ? theme.palette.primary.dark : "transparent"};
+        }
+    `,
 );
+
+function SectionWidgets({
+    groupKey,
+    onSelect,
+    widgets,
+}: {
+    groupKey: FeatureGroupKey | null;
+    onSelect: (widgetKey: WidgetKey) => void;
+    widgets: Widget[];
+}) {
+    const { t } = useTranslation();
+    const activeWidgets = useAppSelector(selectWidgets);
+    const isOnline = useAppSelector(selectIsOnline);
+
+    if (widgets.length === 0) {
+        return (
+            <Box textAlign="center" color="grey" m={2} width="240px">
+                {groupKey === featureGroups.favorites.key ? (
+                    <>
+                        {t("noFavoriteWidgets1") + " "}
+                        <StarOutline sx={{ verticalAlign: "text-bottom" }} /> {" " + t("noFavoriteWidgets2")}
+                    </>
+                ) : (
+                    <>{t("noWidgets")}</>
+                )}
+            </Box>
+        );
+    }
+
+    return (
+        <>
+            {widgets.map((widget) => {
+                const activeElsewhere = activeWidgets.includes(widget.key);
+                const unavailable = !isOnline && "offline" in widget && !widget.offline;
+                const { Icon } = widget;
+
+                return (
+                    <MenuItem
+                        key={widget.key}
+                        disabled={activeElsewhere || unavailable}
+                        onClick={() => onSelect(widget.key)}
+                    >
+                        <ListItemIcon>
+                            <Icon />
+                        </ListItemIcon>
+                        <ListItemText>{t(widget.nameKey)}</ListItemText>
+                    </MenuItem>
+                );
+            })}
+        </>
+    );
+}
 
 function LogoBtn({ open, onClick }: { open: boolean; onClick: () => void }) {
     const isOnline = useAppSelector(selectIsOnline);
