@@ -14,6 +14,7 @@ import {
     selectNewDesign,
     selectPositionedWidgets,
 } from "slices/explorer";
+import { mixpanel } from "utils/mixpanel";
 
 import { Divider } from "./divider";
 
@@ -223,6 +224,7 @@ function WidgetHeaderOld({
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const handleClose = () => {
+        mixpanel?.track("Closed Widget", { "Widget Key": key });
         dispatch(explorerActions.removeWidgetSlot(key));
     };
 

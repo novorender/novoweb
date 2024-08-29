@@ -21,6 +21,7 @@ import {
 import { PositionedWidgetState } from "slices/explorer/types";
 import { getNextSlotPos, getTakenWidgetSlotCount } from "slices/explorer/utils";
 import { compareStrings } from "utils/misc";
+import { mixpanel } from "utils/mixpanel";
 
 const Properties = lazy(() => import("features/properties/properties"));
 const PropertiesTree = lazy(() => import("features/propertyTree/propertyTree"));
@@ -93,7 +94,7 @@ function NewWidgets() {
                 dispatch(explorerActions.setWidgets(slots.slice(0, layout.widgets)));
             }
         },
-        [layout, slots, dispatch, maximized, maximizedHorizontal]
+        [layout, slots, dispatch, maximized, maximizedHorizontal],
     );
 
     useEffect(() => {
@@ -143,8 +144,8 @@ function NewWidgets() {
         widgetGroupPanelState.expanded && widgetGroupPanelState.open
             ? theme.customSpacing.widgetGroupPanelExpandedWidth
             : widgetGroupPanelState.open
-            ? 12
-            : 0;
+              ? 12
+              : 0;
     const maxWidgetGroupPanelWidth = 12;
 
     const getGridLayout = () => {
@@ -211,9 +212,13 @@ const WidgetBox = styled(Box)(
         flexdirection: column;
         alignitems: flex-end;
         justifycontent: flex-end;
-        transition: top 0.2s, left 0.2s, width 0.2s, height 0.2s;
+        transition:
+            top 0.2s,
+            left 0.2s,
+            width 0.2s,
+            height 0.2s;
         position: absolute;
-    `
+    `,
 );
 
 function OldWidgets() {
@@ -238,6 +243,7 @@ function OldWidgets() {
         if (!isOnline) {
             slots.forEach((slot) => {
                 if (!featuresConfig[slot].offline) {
+                    mixpanel?.track("Closed Widget", { "Widget Key": slot });
                     dispatch(explorerActions.removeWidgetSlot(slot));
                 }
             });

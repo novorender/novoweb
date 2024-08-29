@@ -19,6 +19,7 @@ import { useSceneId } from "hooks/useSceneId";
 import { ProjectType } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { VecRGBA } from "utils/color";
+import { mixpanel } from "utils/mixpanel";
 import { sleep } from "utils/time";
 
 import { renderActions } from "../renderSlice";
@@ -81,6 +82,13 @@ export function useHandleInit() {
                     .catch(() => undefined);
                 const projectIsV2 = Boolean(projectV2);
                 const tmZoneForCalc = await loadTmZoneForCalc(projectV2, sceneData.tmZone);
+
+                mixpanel?.register({ "Scene ID": sceneId, "Scene Org": sceneData.organization }, { persistent: false });
+                mixpanel?.track_pageview({
+                    "Scene ID": sceneId,
+                    "Scene Title": sceneData.title,
+                    "Scene Org": sceneData.organization,
+                });
 
                 const offlineWorkerState =
                     view.offline &&
