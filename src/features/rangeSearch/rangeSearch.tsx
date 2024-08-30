@@ -3,6 +3,7 @@ import { DatePicker } from "@mui/x-date-pickers";
 import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
 import { format, isValid, parse } from "date-fns";
 import { CSSProperties, FormEvent, useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ListOnScrollProps } from "react-window";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -28,6 +29,7 @@ export default function RangeSearch() {
     const {
         state: { db },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.rangeSearch.key;
@@ -156,7 +158,7 @@ export default function RangeSearch() {
                                                     setMin(
                                                         newDate && isValid(newDate)
                                                             ? format(newDate, rangeSearchDateFormat)
-                                                            : ""
+                                                            : "",
                                                     )
                                                 }
                                                 format={rangeSearchDateFormat}
@@ -179,7 +181,7 @@ export default function RangeSearch() {
                                                     setMax(
                                                         newDate && isValid(newDate)
                                                             ? format(newDate, rangeSearchDateFormat)
-                                                            : ""
+                                                            : "",
                                                     )
                                                 }
                                                 format={rangeSearchDateFormat}
@@ -217,7 +219,7 @@ export default function RangeSearch() {
                                 control={<Switch checked={dates} onChange={() => toggleDates()} />}
                                 label={
                                     <Box ml={0.5} fontSize={14}>
-                                        Dates
+                                        {t("dates")}
                                     </Box>
                                 }
                             />
@@ -232,7 +234,7 @@ export default function RangeSearch() {
                                     fullWidth
                                     sx={{ marginRight: 1 }}
                                 >
-                                    Cancel
+                                    {t("cancel")}
                                 </Button>
                                 <Button
                                     type="submit"
@@ -241,7 +243,7 @@ export default function RangeSearch() {
                                     color="primary"
                                     variant="contained"
                                 >
-                                    Search
+                                    {t("search")}
                                 </Button>
                             </Box>
                         </Box>
@@ -256,7 +258,7 @@ export default function RangeSearch() {
                     <ScrollBox flex={"1 1 100%"}>
                         {status === Status.Error ? (
                             <Box px={1} pt={1}>
-                                Something went wrong with the search.
+                                {t("searchError")}
                             </Box>
                         ) : searchResults ? (
                             <>

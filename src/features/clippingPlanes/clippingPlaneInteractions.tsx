@@ -1,9 +1,28 @@
-import { CheckBox, CheckBoxOutlineBlank, Delete, Height, Info, MoreVert } from "@mui/icons-material";
-import { Box, css, IconButton, ListItemIcon, ListItemText, MenuItem, styled, useTheme } from "@mui/material";
+import {
+    CenterFocusWeak,
+    CheckBox,
+    CheckBoxOutlineBlank,
+    ContentCut,
+    Delete,
+    Info,
+    MoreVert,
+} from "@mui/icons-material";
+import {
+    Box,
+    css,
+    IconButton,
+    IconButtonProps,
+    ListItemIcon,
+    ListItemText,
+    MenuItem,
+    styled,
+    useTheme,
+} from "@mui/material";
 import { Menu } from "@mui/material";
 import { View } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
@@ -44,7 +63,7 @@ export const ClippingPlaneInteractions = forwardRef(function Interactions(_props
                 const points = getPoints(view, clippingRef.current.planes);
                 for (const { point = dummyPoint, index } of points) {
                     const node = containerRef.current.querySelector(
-                        `#${getClippingPlaneAnchorId(index)}`
+                        `#${getClippingPlaneAnchorId(index)}`,
                     ) as HTMLElement;
                     if (node && point) {
                         node.style.setProperty("left", `${point[0]}px`);
@@ -53,7 +72,7 @@ export const ClippingPlaneInteractions = forwardRef(function Interactions(_props
                 }
             },
         }),
-        [view]
+        [view],
     );
 
     if (!view) {
@@ -71,7 +90,7 @@ export const ClippingPlaneInteractions = forwardRef(function Interactions(_props
         window.addEventListener("pointercancel", onPointerCancel);
         setMovingPlaneIndex(index);
 
-        const state = actions.movePlane(view, clipping.planes, index);
+        const state = actions.movePlanes(view, clipping.planes, [index]);
 
         const startPoint = vec2.fromValues(e.clientX, e.clientY);
         const plane = clipping.planes[index];
@@ -123,7 +142,7 @@ export const ClippingPlaneInteractions = forwardRef(function Interactions(_props
 
             if (Math.abs(step) >= 0.001) {
                 newOffset += step;
-                state.update(newOffset);
+                state.update([newOffset]);
             }
 
             posDragedFrom = posDragedTo;
@@ -174,9 +193,10 @@ function PlaneBox({
     const moveBtnRef = useRef<HTMLButtonElement>(null);
     const [isClose, setIsClose] = useState(false);
     const hasMouse = hasMouseSupport();
-    const rgb = vecToRgb(clipping.planes[index].color);
-    rgb.a = 1;
-    const color = rgbToHex(rgb);
+    const planeRgb = vecToRgb(clipping.planes[index].color);
+    planeRgb.a = 1;
+    const bgColor = rgbToHex(planeRgb);
+    const iconColor = rgbToHex(vecToRgb(clipping.planes[index].outline.color));
 
     useEffect(() => {
         function onPointerMove(e: PointerEvent) {
@@ -212,14 +232,15 @@ function PlaneBox({
             style={{ left: `${point[0]}px`, top: `${point[1]}px` }}
             id={getClippingPlaneAnchorId(index)}
         >
-            <StyledIconButton
+            <ClippingButton
                 size="small"
                 onPointerDown={(e) => handlePointerDown(e, index)}
                 ref={moveBtnRef}
-                sx={{ color }}
+                iconColor={iconColor}
+                bgColor={bgColor}
             >
-                <Height />
-            </StyledIconButton>
+                <ContentCut />
+            </ClippingButton>
             <PlaneMenu clipping={clipping} index={index} visible={movingPlaneIndex === -1 && (!hasMouse || isClose)} />
             <Box
                 data-offset
@@ -255,6 +276,7 @@ function PlaneMenu({
     const {
         state: { view },
     } = useExplorerGlobals(false);
+    const { t } = useTranslation();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const dispatch = useAppDispatch();
     const actions = useClippingPlaneActions();
@@ -277,6 +299,11 @@ function PlaneMenu({
 
     const swapCamera = () => {
         actions.swapCamera(view!, clipping.planes, index);
+        closeMenu();
+    };
+
+    const alignCamera = () => {
+        actions.alignCamera(view!, clipping.planes, index);
         closeMenu();
     };
 
@@ -317,13 +344,19 @@ function PlaneMenu({
                     <ListItemIcon>
                         <Info fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText>Open widget</ListItemText>
+                    <ListItemText>{t("openWidget")}</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={swapCamera}>
                     <ListItemIcon>
                         <featuresConfig.orthoCam.Icon fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText>Cross section</ListItemText>
+                    <ListItemText>{t("crossSection")}</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={alignCamera}>
+                    <ListItemIcon>
+                        <CenterFocusWeak fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>{t("alignCamera")}</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={() => toggleOutlines(!plane.outline.enabled)}>
                     <ListItemIcon>
@@ -333,13 +366,13 @@ function PlaneMenu({
                             <CheckBoxOutlineBlank fontSize="small" />
                         )}
                     </ListItemIcon>
-                    <ListItemText>Outlines</ListItemText>
+                    <ListItemText>{t("outlines")}</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={deletePlane}>
                     <ListItemIcon>
                         <Delete fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText>Delete</ListItemText>
+                    <ListItemText>{t("delete")}</ListItemText>
                 </MenuItem>
             </Menu>
         </>
@@ -350,7 +383,7 @@ function getPoints(view: View, planes: RenderState["clipping"]["planes"]) {
     const planesWithAnchors = planes.map((plane, index) => ({ plane, index })).filter(({ plane }) => plane?.anchorPos);
     const points = getAnchorPos2d(
         view,
-        planesWithAnchors.map(({ plane }) => plane.anchorPos!)
+        planesWithAnchors.map(({ plane }) => plane.anchorPos!),
     );
     return planesWithAnchors.map(({ plane, index }, i) => ({
         plane,
@@ -359,11 +392,26 @@ function getPoints(view: View, planes: RenderState["clipping"]["planes"]) {
     }));
 }
 
+const ClippingButton = styled(IconButton, { shouldForwardProp: (prop) => prop !== "bgColor" && prop !== "iconColor" })<
+    IconButtonProps & { bgColor: string; iconColor: string }
+>(
+    ({ bgColor, iconColor }) => css`
+        background-color: ${bgColor};
+        color: ${iconColor};
+        opacity: 0.9;
+        transition: opacity 0.2s;
+        &:hover {
+            background-color: ${bgColor};
+            opacity: 1;
+        }
+    `,
+);
+
 const StyledIconButton = styled(IconButton)(
     ({ theme }) => css`
         background-color: ${theme.palette.grey["50"]};
         &:hover {
             background-color: ${theme.palette.grey["200"]};
         }
-    `
+    `,
 );

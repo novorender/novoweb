@@ -1,4 +1,5 @@
 import { Box, CircularProgress, SpeedDialActionProps, Tooltip } from "@mui/material";
+import { t } from "i18next";
 import { useState } from "react";
 
 import { SpeedDialAction } from "components";
@@ -10,7 +11,7 @@ import { AsyncStatus } from "types/misc";
 type Props = SpeedDialActionProps;
 
 export function ClearView({ newDesign, ...props }: Props & { newDesign?: boolean }) {
-    const { name, Icon } = featuresConfig["clearView"];
+    const { nameKey, Icon } = featuresConfig["clearView"];
     const resetView = useResetView();
     const [status, setStatus] = useState(AsyncStatus.Initial);
 
@@ -24,7 +25,7 @@ export function ClearView({ newDesign, ...props }: Props & { newDesign?: boolean
 
     if (newDesign) {
         return (
-            <Tooltip title={name} placement="top">
+            <Tooltip title={t(nameKey)} placement="top">
                 <Box>
                     <IconButtonExt onClick={handleClick} loading={isLoading} disabled={isLoading}>
                         <Icon />
@@ -32,29 +33,29 @@ export function ClearView({ newDesign, ...props }: Props & { newDesign?: boolean
                 </Box>
             </Tooltip>
         );
-    } else {
-        return (
-            <SpeedDialAction
-                {...props}
-                data-test="clear-selection"
-                onClick={handleClick}
-                title={name}
-                icon={
-                    <Box
-                        width={1}
-                        height={1}
-                        position="relative"
-                        display="inline-flex"
-                        justifyContent="center"
-                        alignItems="center"
-                    >
-                        {status === AsyncStatus.Loading ? (
-                            <CircularProgress thickness={2.5} sx={{ position: "absolute" }} />
-                        ) : null}
-                        <Icon />
-                    </Box>
-                }
-            />
-        );
     }
+
+    return (
+        <SpeedDialAction
+            {...props}
+            data-test="clear-selection"
+            onClick={handleClick}
+            title={t(nameKey)}
+            icon={
+                <Box
+                    width={1}
+                    height={1}
+                    position="relative"
+                    display="inline-flex"
+                    justifyContent="center"
+                    alignItems="center"
+                >
+                    {status === AsyncStatus.Loading ? (
+                        <CircularProgress thickness={2.5} sx={{ position: "absolute" }} />
+                    ) : null}
+                    <Icon />
+                </Box>
+            }
+        />
+    );
 }

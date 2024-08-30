@@ -1,5 +1,6 @@
 import { vec3 } from "gl-matrix";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -16,6 +17,7 @@ export function useGoToMyLocation() {
     const {
         state: { view, scene },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const tmZone = useAppSelector(selectTmZoneForCalc);
     const currentLocation = useAppSelector(selectCurrentLocation);
@@ -55,7 +57,7 @@ export function useGoToMyLocation() {
                 dispatch(
                     myLocationActions.setSatus({
                         status: LocationStatus.Error,
-                        msg: "Your position is outside the scene's boundaries.",
+                        msg: t("yourPositionIsOutsideSceneBoundaries"),
                     })
                 );
             } else {
@@ -86,5 +88,5 @@ export function useGoToMyLocation() {
             dispatch(myLocationActions.setGeolocationPositionCoords(undefined));
             dispatch(myLocationActions.setSatus({ status: LocationStatus.Error, msg: error.message }));
         }
-    }, [dispatch, cameraType, currentLocation, scene.boundingSphere, showMarker, tmZone, view]);
+    }, [dispatch, cameraType, currentLocation, scene.boundingSphere, showMarker, tmZone, view, t]);
 }

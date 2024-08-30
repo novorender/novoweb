@@ -15,6 +15,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { FormEventHandler, SyntheticEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
@@ -49,6 +50,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const dispatch = useAppDispatch();
     const isAdminScene = useAppSelector(selectIsAdminScene);
@@ -61,15 +63,15 @@ export function Settings({ sceneId }: { sceneId: string }) {
 
     const { data: accessibleResources } = useGetAccessibleResourcesQuery(
         { accessToken: accessToken },
-        { skip: !accessToken }
+        { skip: !accessToken },
     );
 
     const [space, setSpace] = useState(
         currentSpace
             ? currentSpace
             : accessibleResources
-            ? accessibleResources.find((resource) => resource.name === config?.space) ?? accessibleResources[0]
-            : null
+              ? (accessibleResources.find((resource) => resource.name === config?.space) ?? accessibleResources[0])
+              : null,
     );
     const [project, setProject] = useState<Project | null>(currentProject ?? null);
     const [component, setComponent] = useState<Component | null>(currentComponent ?? null);
@@ -78,12 +80,12 @@ export function Settings({ sceneId }: { sceneId: string }) {
 
     const { data: projects, isFetching: isFetchingProjects } = useGetProjectsQuery(
         { space: space?.id ?? "", accessToken },
-        { skip: !space || !accessToken }
+        { skip: !space || !accessToken },
     );
 
     const { data: components, isFetching: isFetchingComponents } = useGetComponentsQuery(
         { space: space?.id ?? "", project: project?.key ?? "", accessToken },
-        { skip: !space || !accessToken || !project }
+        { skip: !space || !accessToken || !project },
     );
 
     const { data: issueTypes = [], isFetching: isFetchingIssuesTypes } = useGetBaseIssueTypesQuery(
@@ -92,7 +94,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
             projectId: project?.id ?? "",
             space: space?.id ?? "",
         },
-        { skip: !accessToken || !project || !space, refetchOnMountOrArgChange: true }
+        { skip: !accessToken || !project || !space, refetchOnMountOrArgChange: true },
     );
 
     const handleSpaceChange = (e: SyntheticEvent, value: Space | null) => {
@@ -174,13 +176,13 @@ export function Settings({ sceneId }: { sceneId: string }) {
                         color="grey"
                     >
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                 </Box>
             </Box>
             <ScrollBox p={1} component="form" onSubmit={handleSubmit}>
                 <Typography fontWeight={600} mb={2}>
-                    Settings
+                    {t("settings")}
                 </Typography>
                 <Autocomplete
                     sx={{ mb: 3 }}
@@ -233,7 +235,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                 />
 
                 <Accordion disabled={!project || isFetchingIssuesTypes} sx={{ mb: 2 }}>
-                    <AccordionSummary>Marker icons</AccordionSummary>
+                    <AccordionSummary>{t("markerIcons")}</AccordionSummary>
                     <AccordionDetails>
                         <List dense disablePadding>
                             {issueTypes.map((issueType) => (
@@ -268,7 +270,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                             history.goBack();
                         }}
                     >
-                        Cancel
+                        {t("cancel")}
                     </Button>
                     <LoadingButton
                         type="submit"
@@ -280,11 +282,12 @@ export function Settings({ sceneId }: { sceneId: string }) {
                         disabled={!space || !project || !component}
                         loadingIndicator={
                             <Box display="flex" alignItems="center">
-                                Save <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
+                                {t("save")}
+                                <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
                             </Box>
                         }
                     >
-                        Save
+                        {t("save")}
                     </LoadingButton>
                 </Box>
             </ScrollBox>

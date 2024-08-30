@@ -4,6 +4,7 @@ import { ClippingMode } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch } from "app/redux-store-interactions";
@@ -43,6 +44,7 @@ import {
 } from "../bimTrackApi";
 
 export function Topic() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
 
@@ -53,25 +55,29 @@ export function Topic() {
     const { data: extensions } = useGetProjectExtensionsQuery({ projectId });
     const { data: topic } = useGetTopicQuery(
         { projectId, topicId },
-        { refetchOnMountOrArgChange: true, refetchOnFocus: true }
+        { refetchOnMountOrArgChange: true, refetchOnFocus: true },
     );
     const { data: comments } = useGetCommentsQuery(
         { projectId, topicId },
-        { refetchOnMountOrArgChange: true, refetchOnFocus: true }
+        { refetchOnMountOrArgChange: true, refetchOnFocus: true },
     );
     const { data: viewpoints } = useGetViewpointsQuery(
         {
             projectId,
             topicId: topic?.guid ?? "",
         },
-        { skip: !topic || Boolean(topic.default_viewpoint_guid), refetchOnMountOrArgChange: true, refetchOnFocus: true }
+        {
+            skip: !topic || Boolean(topic.default_viewpoint_guid),
+            refetchOnMountOrArgChange: true,
+            refetchOnFocus: true,
+        },
     );
 
     const defaultViewpointId = topic?.default_viewpoint_guid
         ? topic.default_viewpoint_guid
         : viewpoints && viewpoints[0]
-        ? viewpoints[0].guid
-        : "";
+          ? viewpoints[0].guid
+          : "";
 
     const { data: snapshot } = useGetSnapshotQuery(
         {
@@ -79,7 +85,7 @@ export function Topic() {
             topicId: topic?.guid ?? "",
             viewpointId: defaultViewpointId,
         },
-        { skip: !topic || !defaultViewpointId }
+        { skip: !topic || !defaultViewpointId },
     );
 
     if (!topic || !comments) {
@@ -122,20 +128,20 @@ export function Topic() {
                 </Box>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
-                    Back
+                    {t("back")}
                 </Button>
 
                 {topicActions.includes("createComment") ? (
                     <Button component={Link} to={`/project/${projectId}/topic/${topicId}/new-comment`} color="grey">
                         <Add sx={{ mr: 1 }} />
-                        Add comment
+                        {t("addComment")}
                     </Button>
                 ) : null}
 
                 {topicStatuses.length ? (
                     <Button component={Link} to={`/project/${projectId}/topic/${topicId}/edit`} color="grey">
                         <Edit fontSize="small" sx={{ mr: 1 }} />
-                        Edit
+                        {t("edit")}
                     </Button>
                 ) : null}
             </Box>
@@ -153,42 +159,42 @@ export function Topic() {
                                 {topic.description}
                             </Typography>
                             <Box display="flex" justifyContent="space-between">
-                                <Typography variant="h6">Creator:</Typography>
+                                <Typography variant="h6">{t("creator")}</Typography>
                                 <Typography variant="h6" fontWeight={600}>
                                     {topic.creation_author}
                                 </Typography>
                             </Box>
                             <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
                             <Box display="flex" justifyContent="space-between">
-                                <Typography variant="h6">Status:</Typography>
+                                <Typography variant="h6">{t("statusName")}</Typography>
                                 <Typography variant="h6" fontWeight={600}>
                                     {topic.topic_status}
                                 </Typography>
                             </Box>
                             <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
                             <Box display="flex" justifyContent="space-between">
-                                <Typography variant="h6">Type:</Typography>
+                                <Typography variant="h6">{t("typeName")}</Typography>
                                 <Typography variant="h6" fontWeight={600}>
                                     {topic.topic_type}
                                 </Typography>
                             </Box>
                             <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
                             <Box display="flex" justifyContent="space-between">
-                                <Typography variant="h6">Priority:</Typography>
+                                <Typography variant="h6">{t("priorityName")}</Typography>
                                 <Typography variant="h6" fontWeight={600}>
                                     {topic.priority}
                                 </Typography>
                             </Box>
                             <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
                             <Box display="flex" justifyContent="space-between">
-                                <Typography variant="h6">Deadline:</Typography>
+                                <Typography variant="h6">{t("deadline")}</Typography>
                                 <Typography variant="h6" fontWeight={600}>
                                     {topic.due_date ? new Date(topic.due_date).toLocaleDateString("nb") : "Undecided"}
                                 </Typography>
                             </Box>
                             <Divider sx={{ mt: 1.5, mb: 1, color: theme.palette.grey[200] }} />
                             <Box display="flex" justifyContent="space-between">
-                                <Typography variant="h6">Labels:</Typography>
+                                <Typography variant="h6">{t("labelsName")}</Typography>
                                 <Typography variant="h6" fontWeight={600}>
                                     {topic.labels.join(", ")}
                                 </Typography>
@@ -238,6 +244,7 @@ function CommentListItem({
     const {
         state: { db },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const [modalOpen, toggleModal] = useToggle();
     const viewpointId = comment.viewpoint_guid || defaultViewpointId || "";
@@ -304,7 +311,7 @@ function CommentListItem({
                 renderActions.setCamera({
                     type: CameraType.Orthographic,
                     goTo: camera,
-                })
+                }),
             );
         }
 
@@ -315,7 +322,7 @@ function CommentListItem({
                     enabled: true,
                     mode: ClippingMode.union,
                     planes: planes.map((plane) => ({ normalOffset: plane, baseW: plane[3] })),
-                })
+                }),
             );
         } else {
             dispatch(renderActions.setClippingPlanes({ enabled: false, planes: [] }));
@@ -378,8 +385,10 @@ function CommentListItem({
                                         WebkitBoxOrient: "vertical",
                                     }}
                                 >
-                                    Date: {new Date(comment.date).toLocaleString("nb")} <br />
-                                    By: {comment.author}
+                                    {t("dateName")}
+                                    {new Date(comment.date).toLocaleString("nb")} <br />
+                                    {t("by")}
+                                    {comment.author}
                                 </Typography>
                             </div>
                         </Tooltip>
@@ -407,7 +416,7 @@ async function guidsToIds({ guids, db, abortSignal }: { guids: string[]; db: Obj
 
             return acc;
         },
-        [[]] as string[][]
+        [[]] as string[][],
     );
 
     const concurrentRequests = 5;
@@ -427,7 +436,7 @@ async function guidsToIds({ guids, db, abortSignal }: { guids: string[]; db: Obj
                         },
                     ],
                 }).catch(() => {});
-            })
+            }),
         );
 
         await sleep(1);

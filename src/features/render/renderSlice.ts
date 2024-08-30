@@ -340,7 +340,7 @@ export const renderSlice = createSlice({
             }
 
             state.subtrees[action.payload.subtree] =
-                action.payload.newState ?? state.subtrees[action.payload.subtree] === SubtreeStatus.Shown
+                (action.payload.newState ?? state.subtrees[action.payload.subtree] === SubtreeStatus.Shown)
                     ? SubtreeStatus.Hidden
                     : SubtreeStatus.Shown;
         },
@@ -582,10 +582,10 @@ export const renderSlice = createSlice({
                         rotate === 1
                             ? "flight"
                             : orbit === 1
-                            ? pan === 2
-                                ? "cadRightPan"
-                                : "cadMiddlePan"
-                            : "special";
+                              ? pan === 2
+                                  ? "cadRightPan"
+                                  : "cadMiddlePan"
+                              : "special";
                 }
 
                 // background
@@ -746,7 +746,7 @@ export const renderSlice = createSlice({
                 ...clipping,
                 draw: false,
                 outlines: clipping.outlines !== undefined ? clipping.outlines : true,
-                planes: clipping.planes.map(({ normalOffset, color, outline }, idx) => ({
+                planes: clipping.planes.map(({ normalOffset, color, outline, anchorPos }, idx) => ({
                     normalOffset,
                     color: color ?? clippingPlaneColors[idx],
                     outline: {
@@ -754,6 +754,7 @@ export const renderSlice = createSlice({
                         color: clippingPlaneOutlineColors[idx],
                     },
                     baseW: normalOffset[3],
+                    anchorPos,
                 })),
             };
         });
@@ -805,18 +806,22 @@ function subtreesFromBookmark(
 }
 
 const clippingPlaneColors: vec4[] = [
+    [255, 255, 255],
     [37, 55, 70],
-    [118, 134, 146],
     [214, 30, 92],
     [97, 94, 155],
     [225, 224, 0],
     [255, 88, 93],
-].map((v) => {
-    vec3.scale(v as vec3, v as vec3, 1 / 255);
-    return [v[0], v[1], v[2], 0.5];
-});
+].map((v) => [...vec3.scale(v as vec3, v as vec3, 1 / 255), 0.5]);
 
-const clippingPlaneOutlineColors = clippingPlaneColors.map((v) => [v[0], v[1], v[2]] as vec3);
+const clippingPlaneOutlineColors: vec3[] = [
+    [0, 0, 0],
+    [255, 88, 93],
+    [225, 224, 0],
+    [118, 134, 146],
+    [214, 30, 92],
+    [37, 55, 70],
+].map((v) => vec3.scale(v as vec3, v as vec3, 1 / 255));
 
 export const selectMainObject = (state: RootState) => state.render.mainObject;
 export const selectDefaultVisibility = (state: RootState) => state.render.defaultVisibility;

@@ -1,6 +1,7 @@
 import { Close, DeleteSweep, OpenInNew } from "@mui/icons-material";
 import { Box, Button, IconButton, List, Snackbar, snackbarContentClasses } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useGetPropertyTreeFavoritesQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -28,6 +29,7 @@ import { RootNode } from "./rootNode";
 import { propertyTreeActions, selectIsPropertyTreeLoading, selectPropertyTreeBookmarkState } from "./slice";
 
 export default function PropertyTree() {
+    const { t } = useTranslation();
     const [menuOpen, toggleMenu] = useToggle();
     const sceneId = useSceneId();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.propertyTree.key;
@@ -41,7 +43,7 @@ export default function PropertyTree() {
 
     const { data: favorites = [], isLoading: isLoadingFavorites } = useGetPropertyTreeFavoritesQuery(
         { projectId: sceneId },
-        { skip: !isV2 }
+        { skip: !isV2 },
     );
 
     const favoritesInitialized = useRef(false);
@@ -108,7 +110,7 @@ export default function PropertyTree() {
                         <Box display={"flex"} justifyContent={"flex-end"}>
                             <Button disabled={!canClear} onClick={clear} color="grey">
                                 <DeleteSweep sx={{ mr: 1 }} />
-                                Clear
+                                {t("clear")}
                             </Button>
                         </Box>
                     )}
@@ -126,7 +128,7 @@ export default function PropertyTree() {
                         expanded={favoritesExpanded}
                         onChange={(_evt, expanded) => toggleExpandFavorites(expanded)}
                     >
-                        <AccordionSummary>Favorites</AccordionSummary>
+                        <AccordionSummary>{t("favorites")}</AccordionSummary>
                         <AccordionDetails>
                             {favorites.length > 0 && (
                                 <List disablePadding>
@@ -144,7 +146,7 @@ export default function PropertyTree() {
                         </AccordionDetails>
                     </Accordion>
                     <Accordion defaultExpanded={true} slotProps={{ transition: { timeout: 200 } }}>
-                        <AccordionSummary>General</AccordionSummary>
+                        <AccordionSummary>{t("general")}</AccordionSummary>
                         <AccordionDetails>
                             <RootNode abortController={abortController} />
                         </AccordionDetails>

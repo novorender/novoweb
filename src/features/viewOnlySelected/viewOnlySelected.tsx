@@ -1,4 +1,5 @@
 import { Box, type SpeedDialActionProps, Tooltip } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
@@ -9,7 +10,8 @@ import { ObjectVisibility, renderActions, selectDefaultVisibility } from "featur
 type Props = SpeedDialActionProps;
 
 export function ViewOnlySelected({ newDesign, ...props }: Props & { newDesign?: boolean }) {
-    const { name, Icon } = featuresConfig["viewOnlySelected"];
+    const { nameKey, Icon } = featuresConfig["viewOnlySelected"];
+    const { t } = useTranslation();
     const currentVisibility = useAppSelector(selectDefaultVisibility);
 
     const dispatch = useAppDispatch();
@@ -29,7 +31,7 @@ export function ViewOnlySelected({ newDesign, ...props }: Props & { newDesign?: 
 
     if (newDesign) {
         return (
-            <Tooltip title={name} placement="top">
+            <Tooltip title={t(nameKey)} placement="top">
                 <Box>
                     <IconButtonExt
                         onClick={handleClick}
@@ -49,7 +51,7 @@ export function ViewOnlySelected({ newDesign, ...props }: Props & { newDesign?: 
             data-test="view-only-selected"
             active={currentVisibility !== ObjectVisibility.Neutral}
             onClick={handleClick}
-            title={name}
+            title={t(nameKey)}
             icon={<Icon />}
         />
     );

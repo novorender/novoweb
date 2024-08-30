@@ -1,6 +1,7 @@
 import { Close } from "@mui/icons-material";
 import { IconButton, Snackbar, Typography } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { dataApi } from "apis/dataV1";
 import { useAppSelector } from "app/redux-store-interactions";
@@ -19,7 +20,8 @@ enum Status {
 }
 
 export function ShareLink() {
-    const { Icon, name, offline } = featuresConfig.shareLink;
+    const { t } = useTranslation();
+    const { Icon, nameKey, offline } = featuresConfig.shareLink;
 
     const createBookmark = useCreateBookmark();
     const viewMode = useAppSelector(selectViewMode);
@@ -105,7 +107,7 @@ export function ShareLink() {
                 <IconButton disabled={disabled} size="large">
                     <Icon />
                 </IconButton>
-                <Typography>{name}</Typography>
+                <Typography>{t(nameKey)}</Typography>
             </WidgetMenuButtonWrapper>
         </>
     );

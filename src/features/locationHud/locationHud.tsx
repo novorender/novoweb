@@ -2,6 +2,7 @@ import { GpsFixed } from "@mui/icons-material";
 import { Box, IconButton, SvgIcon, Tooltip, useTheme } from "@mui/material";
 import { decomposeRotation } from "@novorender/api/web_app/controller/orientation";
 import { memo, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { HudPanel } from "components/hudPanel";
@@ -33,6 +34,7 @@ function CompassBtn() {
     const cameraState = useCameraState();
 
     const theme = useTheme();
+    const { t } = useTranslation();
     const navigationCube = useAppSelector(selectNavigationCube);
     const dispatch = useAppDispatch();
 
@@ -47,7 +49,7 @@ function CompassBtn() {
 
     return (
         <HudPanel sx={{ pointerEvents: "auto" }}>
-            <Tooltip title="Navigation cube" placement="bottom">
+            <Tooltip title={t("navigationCube")} placement="bottom">
                 <Box>
                     <IconButton
                         onClick={() => {
@@ -82,6 +84,7 @@ function MyLocationBtn() {
     const loading = status.status === LocationStatus.Loading;
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>();
     const dispatch = useAppDispatch();
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (status.status === LocationStatus.Error) {
@@ -98,7 +101,7 @@ function MyLocationBtn() {
 
     return (
         <HudPanel sx={{ pointerEvents: "auto" }}>
-            <Tooltip title="My location" placement="bottom">
+            <Tooltip title={t("myLocation")} placement="bottom">
                 <Box>
                     <IconButtonExt onClick={goToMyLocation} disabled={loading} loading={loading}>
                         <GpsFixed />
@@ -113,6 +116,7 @@ function CursorCoordinates() {
     const position = useLastPickSample()?.position;
     const tmZone = useAppSelector(selectTmZoneForCalc);
     const [showXyz, setShowXyz] = useState(false);
+    const { t } = useTranslation();
 
     let content: ReactNode;
     if (tmZone && !showXyz) {
@@ -130,15 +134,15 @@ function CursorCoordinates() {
 
             content = (
                 <>
-                    <Box>Lon</Box>
+                    <Box>{t("longitudeShort")}</Box>
                     <Box ml={1} minWidth="70px">
                         {lon}
                     </Box>
-                    <Box ml={2}>Lat</Box>
+                    <Box ml={2}>{t("latitudeShort")}</Box>
                     <Box ml={1} minWidth="70px">
                         {lat}
                     </Box>
-                    <Box ml={2}>Alt</Box>
+                    <Box ml={2}>{t("altitudeShort")}</Box>
                     <Box ml={1} minWidth="50px">
                         {alt}
                     </Box>
@@ -174,7 +178,7 @@ function CursorCoordinates() {
             sx={{ pointerEvents: "auto", cursor: tmZone ? "pointer" : undefined }}
             onClick={() => setShowXyz(!showXyz)}
         >
-            <Tooltip title="Coordinates" placement="bottom">
+            <Tooltip title={t("coordinates")} placement="bottom">
                 <Box display="flex" p={1}>
                     {content}
                 </Box>
@@ -188,6 +192,7 @@ function Scale() {
     const theme = useTheme();
     const isTopDown = useAppSelector(selectIsTopDown);
     const camera = useAppSelector(selectCamera);
+    const { t } = useTranslation();
 
     const scale = useMemo(() => {
         if (!cameraState || !camera || camera.type !== CameraType.Orthographic) {
@@ -207,7 +212,7 @@ function Scale() {
 
     return (
         <HudPanel sx={{ pointerEvents: "auto", px: 2, width: scale.px, position: "relative" }}>
-            <Tooltip title="Scale" placement="bottom">
+            <Tooltip title={t("scale")} placement="bottom">
                 <Box textAlign="center" width="100%" p={1}>
                     {formatLength(scale.width)}
                 </Box>

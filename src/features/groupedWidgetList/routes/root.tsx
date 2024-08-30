@@ -10,6 +10,8 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
+import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import { Accordion } from "components/accordion";
@@ -49,12 +51,33 @@ export function Root({
     setExpandedGroupKey: (group: FeatureGroupKey | null) => void;
 }) {
     const theme = useTheme();
+    const { t } = useTranslation();
+    const scrollBoxRef = useRef<HTMLDivElement | null>(null);
 
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const lockedWidgets = useAppSelector(selectLockedWidgets);
     const activeWidgets = useAppSelector(selectWidgets);
     const favoriteWidgets = useAppSelector(selectFavoriteWidgets);
     const isOnline = useAppSelector(selectIsOnline);
+    const scrollIntoViewTimeout = useRef<ReturnType<typeof setTimeout>>();
+
+    useEffect(() => {
+        if (expandedGroupKey) {
+            const groupNode = scrollBoxRef.current?.querySelector(`#widget-group-${expandedGroupKey}`);
+            if (groupNode) {
+                groupNode.scrollIntoView({ behavior: "smooth" });
+                if (scrollIntoViewTimeout.current) {
+                    clearTimeout(scrollIntoViewTimeout.current);
+                }
+                scrollIntoViewTimeout.current = setTimeout(() => {
+                    // Scroll one more time after panel expanded in case it's not in the view
+                    // We keep first scroll (before timer) because it's annoying if we have to wait 200ms every time
+                    groupNode.scrollIntoView({ behavior: "smooth" });
+                    scrollIntoViewTimeout.current = undefined;
+                }, 200);
+            }
+        }
+    }, [expandedGroupKey]);
 
     const sortAndFilterWidgets = (widgets: Widget[]) =>
         widgets
@@ -68,22 +91,24 @@ export function Root({
 
     const sortedEnabledWidgets = sortAndFilterWidgets(enabledWidgets);
 
-    const widgetGroups = sortedFeatureGroups.map((group) => {
-        return {
-            groupKey: group.key,
-            groupName: group.name,
-            GroupIcon: group.Icon,
-            widgets:
-                group.key === featureGroups.favorites.key
-                    ? sortedEnabledWidgets.filter((w) => favoriteWidgets.includes(w.key))
-                    : sortedEnabledWidgets.filter(
-                          (widget) =>
-                              (widget.type === FeatureType.Widget || widget.type === FeatureType.AdminWidget) &&
-                              "groups" in widget &&
-                              widget.groups.includes(group.key as never)
-                      ),
-        };
-    });
+    const widgetGroups = sortedFeatureGroups
+        .map((group) => {
+            return {
+                groupKey: group.key,
+                groupName: t(group.nameKey),
+                GroupIcon: group.Icon,
+                widgets:
+                    group.key === featureGroups.favorites.key
+                        ? sortedEnabledWidgets.filter((w) => favoriteWidgets.includes(w.key))
+                        : sortedEnabledWidgets.filter(
+                              (widget) =>
+                                  (widget.type === FeatureType.Widget || widget.type === FeatureType.AdminWidget) &&
+                                  "groups" in widget &&
+                                  widget.groups.includes(group.key as never),
+                          ),
+            };
+        })
+        .filter((g) => g.groupKey === "favorites" || g.widgets.length > 0);
 
     return (
         <>
@@ -94,7 +119,7 @@ export function Root({
                     position="absolute"
                 />
             </Box>
-            <WidgetBottomScrollBox flexGrow={1} py={2}>
+            <WidgetBottomScrollBox flexGrow={1} py={2} ref={scrollBoxRef}>
                 {widgetGroups.map(({ groupKey, groupName, GroupIcon, widgets }) => {
                     return (
                         <GroupAccordion
@@ -103,27 +128,28 @@ export function Root({
                             onChange={(_, newExpanded) => {
                                 setExpandedGroupKey(newExpanded ? (groupKey as FeatureGroupKey) : null);
                             }}
+                            id={`widget-group-${groupKey}`}
                         >
                             <GroupAccordionSummary>
                                 <GroupIcon />
-                                <Typography sx={{ ml: 1 }}> {groupName}</Typography>
+                                <Typography sx={{ ml: 1 }}>{groupName}</Typography>
                             </GroupAccordionSummary>
                             <AccordionDetails>
                                 {widgets.length === 0 ? (
                                     <Box textAlign="center" color="grey" m={2}>
                                         {groupKey === featureGroups.favorites.key ? (
                                             <>
-                                                No favorite widgets selected. Choose your favorites by clicking the{" "}
-                                                <StarOutline sx={{ verticalAlign: "text-bottom" }} /> icon in the top
-                                                right corner of a widget.
+                                                {t("noFavoriteWidgets1") + " "}
+                                                <StarOutline sx={{ verticalAlign: "text-bottom" }} />{" "}
+                                                {" " + t("noFavoriteWidgets2")}
                                             </>
                                         ) : (
-                                            <>No widgets</>
+                                            <>{t("noWidgets")}</>
                                         )}
                                     </Box>
                                 ) : (
                                     <Grid container wrap="wrap" spacing={1} data-test="widget-list">
-                                        {widgets.map(({ Icon, name, key, type, ...widget }) => {
+                                        {widgets.map(({ Icon, nameKey, key, type, ...widget }) => {
                                             const activeCurrent = key === currentWidget;
                                             const activeElsewhere = !activeCurrent && activeWidgets.includes(key);
                                             const unavailable = !isOnline && "offline" in widget && !widget.offline;
@@ -144,7 +170,7 @@ export function Root({
                                                             >
                                                                 <Icon />
                                                             </IconButton>
-                                                            <Typography textAlign={"center"}>{name}</Typography>
+                                                            <Typography textAlign={"center"}>{t(nameKey)}</Typography>
                                                         </WidgetMenuButtonWrapper>
                                                     )}
                                                 </Grid>
@@ -168,7 +194,7 @@ const GroupAccordion = styled(Accordion)(
                 margin: 0;
             }
         }
-    `
+    `,
 );
 
 const GroupAccordionSummary = styled(AccordionSummary)(
@@ -184,5 +210,5 @@ const GroupAccordionSummary = styled(AccordionSummary)(
                 opacity: 0.2;
             }
         }
-    `
+    `,
 );

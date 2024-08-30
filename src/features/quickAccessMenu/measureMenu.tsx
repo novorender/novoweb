@@ -1,4 +1,5 @@
 import { ListItemIcon, ListItemText, MenuItem } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
@@ -9,6 +10,7 @@ import { ActiveIcon } from "./activeIcon";
 export function MeasureMenu({ onSelect }: { onSelect?: () => void }) {
     const activePicker = useAppSelector(selectPicker);
     const dispatch = useAppDispatch();
+    const { t } = useTranslation();
 
     const togglePicker = (picker: Picker) => {
         dispatch(renderActions.setPicker(picker === activePicker ? Picker.Object : picker));
@@ -21,31 +23,31 @@ export function MeasureMenu({ onSelect }: { onSelect?: () => void }) {
                 <ListItemIcon>
                     <ActiveIcon Icon={featuresConfig.measure.Icon} active={activePicker === Picker.Measurement} />
                 </ListItemIcon>
-                <ListItemText>Measure</ListItemText>
+                <ListItemText>{t("measure")}</ListItemText>
             </MenuItem>
             <MenuItem onClick={() => togglePicker(Picker.Area)}>
                 <ListItemIcon>
                     <ActiveIcon Icon={featuresConfig.area.Icon} active={activePicker === Picker.Area} />
                 </ListItemIcon>
-                <ListItemText>Area</ListItemText>
+                <ListItemText>{t("area")}</ListItemText>
             </MenuItem>
             <MenuItem onClick={() => togglePicker(Picker.OutlineLaser)}>
                 <ListItemIcon>
                     <ActiveIcon Icon={featuresConfig.outlineLaser.Icon} active={activePicker === Picker.OutlineLaser} />
                 </ListItemIcon>
-                <ListItemText>Laser</ListItemText>
+                <ListItemText>{t("laser")}</ListItemText>
             </MenuItem>
             <MenuItem onClick={() => togglePicker(Picker.Manhole)}>
                 <ListItemIcon>
                     <ActiveIcon Icon={featuresConfig.manhole.Icon} active={activePicker === Picker.Manhole} />
                 </ListItemIcon>
-                <ListItemText>Manhole</ListItemText>
+                <ListItemText>{t("manhole")}</ListItemText>
             </MenuItem>
             <MenuItem onClick={() => togglePicker(Picker.PointLine)}>
                 <ListItemIcon>
                     <ActiveIcon Icon={featuresConfig.pointLine.Icon} active={activePicker === Picker.PointLine} />
                 </ListItemIcon>
-                <ListItemText>Point line</ListItemText>
+                <ListItemText>{t("pointLine")}</ListItemText>
             </MenuItem>
         </>
     );

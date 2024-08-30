@@ -7,7 +7,7 @@ export default function IconButtonExt({
 }: IconButtonProps & { loading?: boolean; active?: boolean }) {
     return (
         <StyledIconButton {...props}>
-            {loading ? <CircularProgress thickness={2.5} sx={{ position: "absolute" }} /> : null}
+            {loading && <CircularProgress thickness={2.5} sx={{ position: "absolute" }} />}
             {children}
         </StyledIconButton>
     );

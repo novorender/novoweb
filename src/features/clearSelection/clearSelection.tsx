@@ -1,4 +1,5 @@
 import { Box, IconButton, type SpeedDialActionProps, Tooltip } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
@@ -10,7 +11,8 @@ import { renderActions, selectMainObject } from "features/render";
 type Props = SpeedDialActionProps;
 
 export function ClearSelection({ newDesign, ...props }: Props & { newDesign?: boolean }) {
-    const { name, Icon } = featuresConfig["clearSelection"];
+    const { nameKey, Icon } = featuresConfig["clearSelection"];
+    const { t } = useTranslation();
     const { idArr: highlighted } = useHighlighted();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
@@ -30,7 +32,7 @@ export function ClearSelection({ newDesign, ...props }: Props & { newDesign?: bo
 
     if (newDesign) {
         return (
-            <Tooltip title={name} placement="top">
+            <Tooltip title={t(nameKey)} placement="top">
                 <Box>
                     <IconButton onClick={clear} disabled={disabled}>
                         <Icon />
@@ -38,16 +40,16 @@ export function ClearSelection({ newDesign, ...props }: Props & { newDesign?: bo
                 </Box>
             </Tooltip>
         );
-    } else {
-        return (
-            <SpeedDialAction
-                {...props}
-                data-test="clear-selection"
-                FabProps={{ disabled, ...props.FabProps }}
-                onClick={clear}
-                title={disabled ? undefined : name}
-                icon={<Icon />}
-            />
-        );
     }
+
+    return (
+        <SpeedDialAction
+            {...props}
+            data-test="clear-selection"
+            FabProps={{ disabled, ...props.FabProps }}
+            onClick={clear}
+            title={disabled ? undefined : t(nameKey)}
+            icon={<Icon />}
+        />
+    );
 }

@@ -4,6 +4,7 @@ import { AABB2 } from "@novorender/api/types/measure/worker/brep";
 import { BoundingSphere } from "@novorender/webgl-api";
 import { glMatrix, vec2, vec3 } from "gl-matrix";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
@@ -34,11 +35,12 @@ type Props = SpeedDialActionProps & {
 };
 
 export function FlyToSelected({ position, newDesign, ...speedDialProps }: Props & { newDesign?: boolean }) {
-    const { name, Icon } = featuresConfig.flyToSelected;
+    const { nameKey, Icon } = featuresConfig.flyToSelected;
     const highlighted = useHighlighted().idArr;
     const {
         state: { db, scene, view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const cameraType = useAppSelector(selectCameraType);
     const viewMode = useAppSelector(selectViewMode);
@@ -96,7 +98,7 @@ export function FlyToSelected({ position, newDesign, ...speedDialProps }: Props 
                         fov: sphere.radius * 2 * (1 + ORTHO_PADDING),
                         far: view.renderState.camera.far,
                     },
-                })
+                }),
             );
         };
 
@@ -174,7 +176,7 @@ export function FlyToSelected({ position, newDesign, ...speedDialProps }: Props 
                                 fov: zoomingParams.fov * (1 + ORTHO_PADDING),
                                 far: view.renderState.camera.far,
                             },
-                        })
+                        }),
                     );
                 }
             } else {
@@ -223,11 +225,10 @@ export function FlyToSelected({ position, newDesign, ...speedDialProps }: Props 
         return (
             <Tooltip open={Boolean(tooltipMessage)} title={tooltipMessage} placement="top">
                 <Box>
-                    <Tooltip title={name} placement="top">
+                    <Tooltip title={t(nameKey)} placement="top">
                         <Box>
                             <IconButtonExt
                                 onClick={handleClick}
-                                title={disabled ? undefined : name}
                                 disabled={disabled}
                                 loading={status === Status.Loading}
                             >
@@ -250,7 +251,7 @@ export function FlyToSelected({ position, newDesign, ...speedDialProps }: Props 
                 style: { ...position, position: "absolute" },
             }}
             onClick={handleClick}
-            title={disabled ? undefined : name}
+            title={disabled ? undefined : t(nameKey)}
             icon={
                 <Tooltip open={Boolean(tooltipMessage)} title={tooltipMessage} placement="top">
                     <Box

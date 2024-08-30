@@ -1,5 +1,6 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { HudPanel } from "components/hudPanel";
 
@@ -10,6 +11,7 @@ const LocalStorageKey = "newDesignAccepted";
 export function NewDesignPopup() {
     const toggleNewDesign = useToggleNewDesign();
     const [accepted, setAccepted] = useState(localStorage.getItem(LocalStorageKey) === "true");
+    const { t } = useTranslation();
 
     if (accepted) {
         return null;
@@ -53,21 +55,21 @@ export function NewDesignPopup() {
                     }}
                 >
                     <Typography fontWeight={600} mb={2} fontSize={20}>
-                        New design
+                        {t("newDesign")}
                     </Typography>
-                    <Typography>We've changed the UX a bit to make things easier to use.</Typography>
+                    <Typography>{t("weveChangedTheUx")}</Typography>
                     <Typography>
-                        You can{" "}
+                        {t("youCan") + " "}
                         <Button variant="text" onClick={toggleNewDesign}>
-                            toggle
+                            {t("toggleLc")}
                         </Button>{" "}
-                        between old and new design for now here
+                        {t("betweenOldAndNewDesignForNowHere")}
                         <br />
-                        or anytime in <strong>Adv. settings widget → Features → Beta</strong>.
+                        {t("orAnytimeIn")} <strong>{t("betaFlagPath")}</strong>.
                     </Typography>
                     <Box display="flex" justifyContent="center" mt={2}>
                         <Button variant="outlined" onClick={accept}>
-                            Got it
+                            {t("gotIt")}
                         </Button>
                     </Box>
                 </HudPanel>

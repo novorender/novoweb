@@ -82,6 +82,7 @@ export type State = {
         novorenderClientId: string;
         novorenderClientSecret: string;
         assetsUrl: string;
+        mixpanelToken: string;
     };
     newDesign: boolean;
     canUseNewDesign: boolean;

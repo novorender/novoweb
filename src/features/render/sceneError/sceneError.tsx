@@ -2,6 +2,7 @@ import { LoadingButton } from "@mui/lab";
 import { Alert, Box, CircularProgress, Paper, Typography, useTheme } from "@mui/material";
 import { packageVersion as webglApiVersion } from "@novorender/api";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { dataApi } from "apis/dataV1";
 import { useAppSelector } from "app/redux-store-interactions";
@@ -18,6 +19,7 @@ import { selectSceneStatus } from "../renderSlice";
 import { ErrorKind } from "./types";
 
 export function SceneError() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const sceneId = useSceneId();
     const status = useAppSelector(selectSceneStatus);
@@ -59,7 +61,7 @@ export function SceneError() {
                 window.location.assign(loginUrl);
             }
         },
-        [sceneId, config]
+        [sceneId, config],
     );
 
     useEffect(
@@ -71,7 +73,7 @@ export function SceneError() {
             setLoading(true);
             loginRedirect();
         },
-        [redirect, sceneId, loginRedirect]
+        [redirect, sceneId, loginRedirect],
     );
 
     const switchUser = () => {
@@ -101,53 +103,47 @@ export function SceneError() {
                     <Box>
                         <Typography paragraph variant="h4" component="h1" align="center">
                             {error === ErrorKind.NOT_AUTHORIZED
-                                ? "Unable to access scene"
+                                ? t("notAuthorized")
                                 : error === ErrorKind.UNKNOWN_ERROR
-                                ? "An error occurred"
-                                : error === ErrorKind.OFFLINE_UNAVAILABLE
-                                ? `Offline scene not found`
-                                : error === ErrorKind.INVALID_SCENE
-                                ? `Scene not found`
-                                : error === ErrorKind.DELETED_SCENE
-                                ? "Deleted scene"
-                                : "Unable to load scene"}
+                                  ? t("unknownError")
+                                  : error === ErrorKind.OFFLINE_UNAVAILABLE
+                                    ? t("offlineUnavailable")
+                                    : error === ErrorKind.INVALID_SCENE
+                                      ? t("invalidScene")
+                                      : error === ErrorKind.DELETED_SCENE
+                                        ? t("deletedScene")
+                                        : t("unableToLoadScene")}
                         </Typography>
                         <Alert severity="warning" sx={{ mb: 2 }}>
                             {error === ErrorKind.NOT_AUTHORIZED && user && (
                                 <>
-                                    You are currently logged in as <em>{user.user}</em> and do not have acces to the
-                                    scene with id <em>{sceneId}</em>.
+                                    {t("loggedInAs")}
+                                    <em>{user.user}</em> {t("noAccessToScene")}
+                                    <em>{sceneId}</em>.
                                 </>
                             )}
-                            {error === ErrorKind.LEGACY_BINARY_FORMAT && (
-                                <>There is an issue with this scene. Please contact support.</>
-                            )}
+                            {error === ErrorKind.LEGACY_BINARY_FORMAT && <>{t("sceneIssue")}</>}
                             {error === ErrorKind.UNKNOWN_ERROR && (
                                 <>
-                                    Failed to download the scene. Please try again later.
+                                    {t("failedToDownloadTheScene")}
                                     <br />
                                     <br />
-                                    Make sure you are using an up to date version of either Safari or a Chromium based
-                                    browser such as Chrome or Edge.
+                                    {t("unsupportedBrowser")}
                                 </>
                             )}
                             {error === ErrorKind.OFFLINE_UNAVAILABLE && (
                                 <>
-                                    The scene with id <em>{sceneId}</em> has not been downloaded for your device and
-                                    browser.
+                                    {t("sceneWithId")}
+                                    <em>{sceneId}</em> {t("notDownloaded")}
                                 </>
                             )}
                             {error === ErrorKind.INVALID_SCENE && (
                                 <>
-                                    The scene with id <em>{sceneId}</em> does not exist.
+                                    {t("theSceneWithId")}
+                                    <em>{sceneId}</em> {t("notExist")}
                                 </>
                             )}
-                            {error === ErrorKind.DELETED_SCENE && (
-                                <>
-                                    The scene has been deleted. If this was done by mistake please contact support and
-                                    we will try to recover it.
-                                </>
-                            )}
+                            {error === ErrorKind.DELETED_SCENE && <>{t("sceneDeleted")}</>}
                         </Alert>
 
                         {error === ErrorKind.NOT_AUTHORIZED && user ? (
@@ -163,17 +159,17 @@ export function SceneError() {
                                     loading={loading}
                                     loadingIndicator={
                                         <Box position={"relative"} display="flex" alignItems="center" minWidth={75}>
-                                            Switch user
+                                            {t("switchUser")}
                                             <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
                                         </Box>
                                     }
                                 >
-                                    Switch user
+                                    {t("switchUser")}
                                 </LoadingButton>
                             </Box>
                         ) : (
                             <Accordion>
-                                <AccordionSummary>Details</AccordionSummary>
+                                <AccordionSummary>{t("details")}</AccordionSummary>
                                 <AccordionDetails>
                                     <Box p={1}>
                                         <>

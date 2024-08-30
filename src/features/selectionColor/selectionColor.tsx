@@ -1,6 +1,7 @@
 import type { SpeedDialActionProps } from "@mui/material";
 import { MouseEvent, useState } from "react";
 import type { ColorResult } from "react-color";
+import { useTranslation } from "react-i18next";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
@@ -11,7 +12,8 @@ import { rgbToVec } from "utils/color";
 type Props = SpeedDialActionProps;
 
 export function SelectionColor(props: Props) {
-    const { name, Icon } = featuresConfig["selectionColor"];
+    const { t } = useTranslation();
+    const { nameKey, Icon } = featuresConfig["selectionColor"];
 
     const { color } = useHighlighted();
     const dispatch = useDispatchHighlighted();
@@ -34,7 +36,7 @@ export function SelectionColor(props: Props) {
                 data-test="selection-color"
                 active={open}
                 onClick={toggleColorPicker}
-                title={name}
+                title={t(nameKey)}
                 icon={<Icon />}
             />
             <ColorPicker

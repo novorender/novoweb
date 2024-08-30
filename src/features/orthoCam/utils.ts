@@ -31,10 +31,12 @@ export function getSnapToPlaneParams({
     planeIdx,
     view,
     anchorPos,
+    offset,
 }: {
     planeIdx: number;
     view: View;
     anchorPos?: ReadonlyVec3;
+    offset?: number;
 }): {
     position: vec3;
     rotation: quat;
@@ -47,6 +49,9 @@ export function getSnapToPlaneParams({
     let position: ReadonlyVec3;
     if (anchorPos) {
         position = vec3.clone(anchorPos);
+        if (offset) {
+            vec3.scaleAndAdd(position, position, dir, offset);
+        }
     } else {
         const planePoint = vec3.scaleAndAdd(vec3.create(), vec3.create(), dir, p[3]);
         const v = vec3.sub(vec3.create(), view.renderState.camera.position, planePoint);

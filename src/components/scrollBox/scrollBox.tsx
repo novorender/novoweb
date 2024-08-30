@@ -1,6 +1,7 @@
 import { Box, BoxProps, css, styled, Theme } from "@mui/material";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import { BoxTypeMap } from "@mui/system";
+import { ForwardedRef, forwardRef } from "react";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import { selectNewDesign } from "slices/explorer";
@@ -21,8 +22,11 @@ const ScrollBoxWidthBottomBorderRadius = styled(ScrollBox)(
 /**
  * Whenever ScrollBox is in the widget bottom - to avoid messing with widget bottom border radius
  */
-export function WidgetBottomScrollBox(props: BoxProps) {
+export const WidgetBottomScrollBox = forwardRef(function WidgetBottomScrollBox(
+    props: BoxProps,
+    ref: ForwardedRef<HTMLDivElement>
+) {
     const newDesign = useAppSelector(selectNewDesign);
 
-    return newDesign ? <ScrollBoxWidthBottomBorderRadius {...props} /> : <ScrollBox {...props} />;
-}
+    return newDesign ? <ScrollBoxWidthBottomBorderRadius {...props} ref={ref} /> : <ScrollBox {...props} ref={ref} />;
+});

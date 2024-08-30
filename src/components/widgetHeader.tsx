@@ -1,6 +1,7 @@
 import { ChevronLeft, Close, CropSquare, Height, Minimize, MoreVert, Star, StarOutline } from "@mui/icons-material";
 import { Box, IconButton, MenuProps, SvgIcon, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { MouseEvent, ReactNode, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Widget, WidgetKey } from "config/features";
@@ -13,6 +14,7 @@ import {
     selectNewDesign,
     selectPositionedWidgets,
 } from "slices/explorer";
+import { mixpanel } from "utils/mixpanel";
 
 import { Divider } from "./divider";
 
@@ -22,7 +24,7 @@ export function WidgetHeader(props: {
     disableShadow?: boolean;
     WidgetMenu?: (props: MenuProps) => JSX.Element | null;
     menuOpen: boolean;
-    toggleMenu: () => void;
+    toggleMenu?: () => void;
 }) {
     const newDesign = useAppSelector(selectNewDesign);
 
@@ -34,7 +36,7 @@ export function WidgetHeader(props: {
 }
 
 function WidgetHeaderNew({
-    widget: { name, Icon, key },
+    widget: { nameKey, Icon, key },
     children,
     disableShadow,
     WidgetMenu,
@@ -46,8 +48,9 @@ function WidgetHeaderNew({
     disableShadow?: boolean;
     WidgetMenu?: (props: MenuProps) => JSX.Element | null;
     menuOpen: boolean;
-    toggleMenu: () => void;
+    toggleMenu?: () => void;
 }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
     const minimized = useAppSelector(selectMinimized) === key;
@@ -90,7 +93,7 @@ function WidgetHeaderNew({
     return (
         <Box boxShadow={!disableShadow ? theme.customShadows.widgetHeader : undefined}>
             <Box p={1} display="flex" alignItems="center">
-                {!menuOpen && (
+                {!menuOpen && toggleMenu && (
                     <IconButton edge="start" size="small" onClick={toggleMenu} sx={{ mr: 1 }}>
                         <ChevronLeft fontSize="small" />
                     </IconButton>
@@ -113,7 +116,7 @@ function WidgetHeaderNew({
                 <Typography
                     variant="h6"
                     component="h2"
-                    title={name}
+                    title={t(nameKey)}
                     sx={{
                         whiteSpace: "nowrap",
                         overflow: "hidden",
@@ -122,7 +125,7 @@ function WidgetHeaderNew({
                         lineHeight: 1.5,
                     }}
                 >
-                    {name}
+                    {t(nameKey)}
                 </Typography>
                 {!menuOpen && (
                     <IconButton
@@ -201,7 +204,7 @@ function ExpansionButtons({ widgetKey }: { widgetKey: WidgetKey }) {
 }
 
 function WidgetHeaderOld({
-    widget: { name, Icon, key },
+    widget: { nameKey, Icon, key },
     children,
     disableShadow,
     WidgetMenu,
@@ -211,6 +214,7 @@ function WidgetHeaderOld({
     disableShadow?: boolean;
     WidgetMenu?: (props: MenuProps) => JSX.Element | null;
 }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
     const maximized = useAppSelector(selectMaximized).includes(key);
@@ -220,6 +224,7 @@ function WidgetHeaderOld({
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const handleClose = () => {
+        mixpanel?.track("Closed Widget", { "Widget Key": key });
         dispatch(explorerActions.removeWidgetSlot(key));
     };
 
@@ -266,7 +271,7 @@ function WidgetHeaderOld({
                         <Icon />
                     </SvgIcon>
                     <Typography variant="h6" component="h2">
-                        {name}
+                        {t(nameKey)}
                     </Typography>
                 </Box>
                 <Box ml="auto">

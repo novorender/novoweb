@@ -1,6 +1,8 @@
 import { Cameraswitch, Delete } from "@mui/icons-material";
-import { Box, IconButton, Slider, Typography } from "@mui/material";
+import { Box, css, IconButton, Slider, styled, switchClasses, Typography } from "@mui/material";
 import { SyntheticEvent, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { SwitchProps } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import { IosSwitch } from "components";
@@ -14,6 +16,7 @@ export default function Planes() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const [sliders, setSliders] = useState([] as number[]);
     const { planes, outlines } = useAppSelector(selectClippingPlanes);
     const actions = useClippingPlaneActions();
@@ -27,11 +30,11 @@ export default function Planes() {
 
     const handleSliderChange = (idx: number) => (_event: Event, newValue: number | number[]) => {
         if (!movingPlaneControl.current) {
-            movingPlaneControl.current = actions.movePlane(view, planes, idx);
+            movingPlaneControl.current = actions.movePlanes(view, planes, [idx]);
         }
 
         const newVal = typeof newValue === "number" ? newValue : newValue[0];
-        movingPlaneControl.current.update(-newVal);
+        movingPlaneControl.current.update([-newVal]);
         setSliders((_state) => {
             const state = [..._state];
             state[idx] = newVal;
@@ -67,16 +70,14 @@ export default function Planes() {
         <>
             {planes.length === sliders.length &&
                 planes.map((plane, idx) => {
-                    const rgb = vecToRgb(plane.color);
-                    rgb.a = 1;
-                    const color = rgbToHex(rgb);
                     const outlineEnabled = plane.outline.enabled && outlines;
+
+                    const outlineColor = vecToRgb(plane.outline.color);
+                    const textColor = rgbToHex(outlineColor);
 
                     return (
                         <Box mb={2} key={idx} display="flex" alignItems="center" gap={1}>
-                            <Box flex="0 0 80px" sx={{ color }}>
-                                Plane {idx + 1}
-                            </Box>
+                            <Box flex="0 0 80px">{`${t("plane")} ${idx + 1}`}</Box>
                             <Slider
                                 min={-plane.baseW - 20}
                                 max={-plane.baseW + 20}
@@ -87,9 +88,10 @@ export default function Planes() {
                                 sx={{ flex: "auto" }}
                             />
                             <Box position="relative">
-                                <IosSwitch
+                                <OutlineSwitch
                                     size="medium"
                                     color="primary"
+                                    toggleColor={textColor}
                                     checked={outlineEnabled}
                                     disabled={!outlines}
                                     onChange={() => handleToggleOutlines(idx, !plane.outline.enabled)}
@@ -105,7 +107,7 @@ export default function Planes() {
                                         textAlign: "center",
                                     }}
                                 >
-                                    Outline
+                                    {t("outlines")}
                                 </Typography>
                             </Box>
                             <IconButton onClick={() => handleCameraSwap(idx)} sx={{ flex: 1 }}>
@@ -120,3 +122,15 @@ export default function Planes() {
         </>
     );
 }
+
+const OutlineSwitch = styled(IosSwitch, { shouldForwardProp: (prop) => prop !== "toggleColor" })<
+    SwitchProps & { toggleColor: string }
+>(
+    ({ toggleColor }) => css`
+        & .${switchClasses.switchBase} {
+            &.${switchClasses.checked} {
+                color: ${toggleColor};
+            }
+        }
+    `,
+);

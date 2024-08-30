@@ -19,6 +19,7 @@ import { useSceneId } from "hooks/useSceneId";
 import { ProjectType } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { VecRGBA } from "utils/color";
+import { mixpanel } from "utils/mixpanel";
 import { sleep } from "utils/time";
 
 import { renderActions } from "../renderSlice";
@@ -74,13 +75,20 @@ export function useHandleInit() {
                     url,
                     parentSceneId,
                     "index.json",
-                    new AbortController().signal
+                    new AbortController().signal,
                 );
                 const projectV2 = await getProject({ projectId: sceneId })
                     .unwrap()
                     .catch(() => undefined);
                 const projectIsV2 = Boolean(projectV2);
                 const tmZoneForCalc = await loadTmZoneForCalc(projectV2, sceneData.tmZone);
+
+                mixpanel?.register({ "Scene ID": sceneId, "Scene Org": sceneData.organization }, { persistent: false });
+                mixpanel?.track_pageview({
+                    "Scene ID": sceneId,
+                    "Scene Title": sceneData.title,
+                    "Scene Org": sceneData.organization,
+                });
 
                 const offlineWorkerState =
                     view.offline &&
@@ -96,9 +104,15 @@ export function useHandleInit() {
                         tmZoneForCalc,
                         sceneData,
                         sceneConfig: octreeSceneConfig,
-                        initialCamera: sceneCamera ?? getDefaultCamera(projectV2?.bounds) ?? view.renderState.camera,
+                        initialCamera: sceneCamera ??
+                            getDefaultCamera(projectV2?.bounds) ?? {
+                                position: view.renderState.camera.position,
+                                rotation: view.renderState.camera.rotation,
+                                fov: view.renderState.camera.fov,
+                                kind: view.renderState.camera.kind,
+                            },
                         deviceProfile,
-                    })
+                    }),
                 );
 
                 const groups: ObjectGroup[] = sceneData.objectGroups
@@ -114,10 +128,10 @@ export function useHandleInit() {
                         status: group.selected
                             ? GroupStatus.Selected
                             : group.hidden
-                            ? GroupStatus.Hidden
-                            : group.frozen
-                            ? GroupStatus.Frozen
-                            : GroupStatus.None,
+                              ? GroupStatus.Hidden
+                              : group.frozen
+                                ? GroupStatus.Frozen
+                                : GroupStatus.None,
                         // NOTE(OLA): Pass IDs as undefined to be loaded when group is activated.
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         ids: group.ids ? new Set(group.ids) : (undefined as any),
@@ -127,18 +141,18 @@ export function useHandleInit() {
                 // (some scenes on some devices may crash upon loading because there's too much data)
                 await fillGroupIds(
                     sceneId,
-                    groups.filter((g) => g.status === GroupStatus.Frozen)
+                    groups.filter((g) => g.status === GroupStatus.Frozen),
                 );
 
                 dispatchObjectGroups(objectGroupsActions.set(groups));
                 dispatchHighlighted(
-                    highlightActions.setColor(sceneData.customProperties.highlights?.primary.color ?? [1, 0, 0, 1])
+                    highlightActions.setColor(sceneData.customProperties.highlights?.primary.color ?? [1, 0, 0, 1]),
                 );
                 dispatchHighlightCollections(
                     highlightCollectionsActions.setColor(
                         HighlightCollection.SecondaryHighlight,
-                        sceneData.customProperties.highlights?.secondary.color ?? [1, 1, 0, 1]
-                    )
+                        sceneData.customProperties.highlights?.secondary.color ?? [1, 1, 0, 1],
+                    ),
                 );
 
                 window.document.title = `${sceneData.title} - Novorender`;
@@ -150,7 +164,7 @@ export function useHandleInit() {
                                     width: entry.contentRect.width,
                                     height: entry.contentRect.height,
                                 },
-                            })
+                            }),
                         );
                     }
                 });
@@ -162,7 +176,7 @@ export function useHandleInit() {
                         view: view,
                         scene: octreeSceneConfig,
                         offlineWorkerState,
-                    })
+                    }),
                 );
 
                 await sleep(2000);
@@ -174,22 +188,22 @@ export function useHandleInit() {
 
                     if (error === "Not authorized") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.NOT_AUTHORIZED })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.NOT_AUTHORIZED }),
                         );
                     } else if (error === "Scene not found") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.INVALID_SCENE })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.INVALID_SCENE }),
                         );
                     } else if (error === "Scene deleted") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.DELETED_SCENE })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.DELETED_SCENE }),
                         );
                     } else {
                         dispatch(
                             renderActions.setSceneStatus({
                                 status: AsyncStatus.Error,
                                 msg: navigator.onLine ? ErrorKind.UNKNOWN_ERROR : ErrorKind.OFFLINE_UNAVAILABLE,
-                            })
+                            }),
                         );
                     }
                 } else if (e instanceof Error) {
@@ -198,7 +212,7 @@ export function useHandleInit() {
                             renderActions.setSceneStatus({
                                 status: AsyncStatus.Error,
                                 msg: ErrorKind.LEGACY_BINARY_FORMAT,
-                            })
+                            }),
                         );
                     } else {
                         dispatch(
@@ -208,9 +222,9 @@ export function useHandleInit() {
                                 stack: e.stack
                                     ? e.stack
                                     : typeof e.cause === "string"
-                                    ? e.cause
-                                    : `${e.name}: ${e.message}`,
-                            })
+                                      ? e.cause
+                                      : `${e.name}: ${e.message}`,
+                            }),
                         );
                     }
                 }
@@ -292,6 +306,7 @@ async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?:
     const imports = await View.downloadImports({ baseUrl: url });
     const view = new View(canvas, deviceProfile, imports);
     view.controllers.flight.input.mouseMoveSensitivity = 4;
+    view.controllers.flight.input.disableWheelOnShift = true;
     return view;
 }
 

@@ -2,6 +2,7 @@ import { AddCircle, ArrowBack, Close, FlightTakeoff, OpenInNew, Room } from "@mu
 import { Box, Button, IconButton, Snackbar, Typography, useTheme } from "@mui/material";
 import { format, parse } from "date-fns";
 import { Fragment, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
@@ -39,6 +40,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
     const {
         state: { canvas },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const createBookmark = useCreateBookmark();
     const [editIssue] = useEditIssueMutation();
@@ -65,23 +67,23 @@ export function Issue({ sceneId }: { sceneId: string }) {
         {
             key,
         },
-        { skip: !key, refetchOnMountOrArgChange: true }
+        { skip: !key, refetchOnMountOrArgChange: true },
     );
 
     const { data: permissions = [] } = useGetPermissionsQuery(
         {
             project: project?.key ?? "",
         },
-        { skip: !project }
+        { skip: !project },
     );
 
     const { data: thumbnail, isFetching: isFetchingThumbnail } = useGetAttachmentThumbnailQuery(
         { id: imageAttachmentId },
-        { skip: !imageAttachmentId }
+        { skip: !imageAttachmentId },
     );
     const { data: fullImage, isFetching: isFetchingFullImage } = useGetAttachmentContentQuery(
         { id: imageAttachmentId },
-        { skip: !imageAttachmentId || !modalOpen }
+        { skip: !imageAttachmentId || !modalOpen },
     );
 
     useEffect(() => {
@@ -125,7 +127,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
 
         try {
             const bookmark = (await dataApi.getBookmarks(sceneId, { group: bookmarkId })).find(
-                (bm) => bm.id === bookmarkId
+                (bm) => bm.id === bookmarkId,
             );
 
             if (!bookmark) {
@@ -231,7 +233,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                         color="grey"
                     >
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     {space && (
                         <Button
@@ -241,7 +243,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                             color="grey"
                         >
                             <OpenInNew sx={{ mr: 1 }} />
-                            Jira
+                            {t("jira")}
                         </Button>
                     )}
                     <Button
@@ -255,7 +257,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                         onClick={handleUpdate}
                     >
                         <Room sx={{ mr: 1 }} />
-                        Set position
+                        {t("setPosition")}
                     </Button>
                     {bookmarkId && (
                         <Button
@@ -264,7 +266,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                             color="grey"
                         >
                             <FlightTakeoff sx={{ mr: 1 }} />
-                            Go to
+                            {t("goTo")}
                         </Button>
                     )}
                 </Box>
@@ -282,7 +284,10 @@ export function Issue({ sceneId }: { sceneId: string }) {
             )}
 
             {(isErrorIssue && !issue) || (!isLoadingIssue && !issue) ? (
-                <>An error occurred while loading issue {key}</>
+                <>
+                    {t("anErrorOccurredWhileLoadingIssue")}
+                    {key}
+                </>
             ) : (
                 issue &&
                 !isFetchingThumbnail && (
@@ -306,7 +311,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                             {issue.fields.summary}
                         </Typography>
 
-                        <Typography fontWeight={600}>Description:</Typography>
+                        <Typography fontWeight={600}>{t("description")}</Typography>
                         <Box mb={2}>
                             {(issue.fields.description?.content ?? [])?.map((doc, idx: number) => {
                                 if (doc.type === "paragraph") {
@@ -332,7 +337,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                                                     } else {
                                                         return null;
                                                     }
-                                                }
+                                                },
                                             )}
                                         </Typography>
                                     );
@@ -342,18 +347,18 @@ export function Issue({ sceneId }: { sceneId: string }) {
                             })}
                         </Box>
 
-                        <Typography fontWeight={600}>Status:</Typography>
+                        <Typography fontWeight={600}>{t("statusName")}</Typography>
                         <Box mb={2}>{issue.fields.status ? issue.fields.status.name : "None"}</Box>
 
-                        <Typography fontWeight={600}>Assignee:</Typography>
+                        <Typography fontWeight={600}>{t("assignee")}</Typography>
                         <Box mb={2}>{issue.fields.assignee ? issue.fields.assignee.displayName : "Unassigned"}</Box>
 
-                        <Typography fontWeight={600}>Reporter:</Typography>
+                        <Typography fontWeight={600}>{t("reporter")}</Typography>
                         <Box mb={2}>{issue.fields.reporter ? issue.fields.reporter.displayName : "None"}</Box>
 
                         {issue.fields.duedate && (
                             <>
-                                <Typography fontWeight={600}>Due date:</Typography>
+                                <Typography fontWeight={600}>{t("dueDate")}</Typography>
                                 <Box mb={2}>
                                     {issue.fields.duedate
                                         ? format(parse(issue.fields.duedate, "yyyy-MM-dd", new Date()), "MMM dd, yyyy")
@@ -363,11 +368,11 @@ export function Issue({ sceneId }: { sceneId: string }) {
                         )}
 
                         <Box display="flex" justifyContent="space-between" alignItems="center">
-                            <Typography fontWeight={600}>Comments:</Typography>
+                            <Typography fontWeight={600}>{t("comments")}</Typography>
                             {permissions.includes("ADD_COMMENTS") && (
                                 <Button onClick={() => history.push(`/createComment/${key}`)} color="grey">
                                     <AddCircle sx={{ mr: 1 }} />
-                                    Add
+                                    {t("add")}
                                 </Button>
                             )}
                         </Box>
@@ -377,10 +382,10 @@ export function Issue({ sceneId }: { sceneId: string }) {
                                       <Fragment key={comment.id}>
                                           <Box>
                                               <Typography component="em">
-                                                  {comment.author.displayName} -{" "}
+                                                  {comment.author.displayName} {"- "}
                                                   {format(
                                                       new Date(comment.updated ?? comment.created),
-                                                      "dd.MM.yyyy - HH:mm"
+                                                      "dd.MM.yyyy - HH:mm",
                                                   )}
                                               </Typography>
                                               {(comment.body.content ?? [])?.map((doc, idx: number) => {
@@ -393,7 +398,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
                                                               ).map((pc, pcIdx: number) => {
                                                                   if (pc.type === "text") {
                                                                       const link = pc.marks?.find(
-                                                                          (mark) => mark.type === "link"
+                                                                          (mark) => mark.type === "link",
                                                                       );
                                                                       if (link?.attrs?.href) {
                                                                           return (

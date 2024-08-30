@@ -1,6 +1,7 @@
 import { ChevronRight, SpaceDashboard } from "@mui/icons-material";
 import { Box, Divider, IconButton, Tooltip, useTheme } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import { HudPanel } from "components/hudPanel";
@@ -19,6 +20,7 @@ import { selectWidgetGroupPanelState } from "slices/explorer";
 
 export function PrimaryMenuNew() {
     const theme = useTheme();
+    const { t } = useTranslation();
     const [open, toggle] = useToggle(true);
     const panelRef = useRef<HTMLDivElement | null>(null);
     const widgetGroupPanelState = useAppSelector(selectWidgetGroupPanelState);
@@ -43,8 +45,8 @@ export function PrimaryMenuNew() {
         widgetGroupPanelState.expanded && widgetGroupPanelState.open
             ? theme.customSpacing.widgetGroupPanelExpandedWidth
             : widgetGroupPanelState.open
-            ? 12
-            : 0;
+              ? 12
+              : 0;
 
     return (
         <Box
@@ -72,7 +74,7 @@ export function PrimaryMenuNew() {
                     pointerEvents: "auto",
                 }}
             >
-                <Tooltip title={open ? "Collapse" : "Expand"} placement="top">
+                <Tooltip title={open ? t("collapse") : t("expand")} placement="top">
                     <Box>
                         <IconButton onClick={handleToggle}>{open ? <ChevronRight /> : <SpaceDashboard />}</IconButton>
                     </Box>

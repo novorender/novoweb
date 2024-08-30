@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { DuoMeasurementValues } from "@novorender/api";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -29,6 +30,7 @@ import { useFollowPathFromIds } from "../useFollowPathFromIds";
 import { usePathMeasureObjects } from "../usePathMeasureObjects";
 
 export function PathList() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory<{ prevPath?: string }>();
     const {
@@ -104,7 +106,7 @@ export function PathList() {
                                     }}
                                 />
                             }
-                            label={<Box fontSize={14}>Entity</Box>}
+                            label={<Box fontSize={14}>{t("entity")}</Box>}
                         />
                         <Button
                             disabled={!canFollowSelected}
@@ -121,7 +123,7 @@ export function PathList() {
                             }}
                             color="grey"
                         >
-                            Follow
+                            {t("follow")}
                             <ArrowForward sx={{ ml: 1 }} />
                         </Button>
                     </Box>
@@ -135,7 +137,7 @@ export function PathList() {
 
             {canUseCylinderOptions ? (
                 <ScrollBox p={1} pt={2} pb={2}>
-                    <InputLabel sx={{ color: "text.primary" }}>Follow from: </InputLabel>
+                    <InputLabel sx={{ color: "text.primary" }}>{t("followFrom")}</InputLabel>
                     <Select
                         fullWidth
                         name="pivot"
@@ -190,8 +192,8 @@ export function PathList() {
                                                     ) {
                                                         dispatch(
                                                             followPathActions.setProfile(
-                                                                duoMeasure.measureInfoB.parameter.toFixed(3)
-                                                            )
+                                                                duoMeasure.measureInfoB.parameter.toFixed(3),
+                                                            ),
                                                         );
                                                         initPos = false;
                                                     }
