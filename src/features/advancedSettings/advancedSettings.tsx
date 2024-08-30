@@ -2,6 +2,7 @@ import { Close, Save } from "@mui/icons-material";
 import { Box, Button, IconButton, List, ListItemButton, Snackbar, useTheme } from "@mui/material";
 import { quat, vec3 } from "gl-matrix";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
@@ -64,6 +65,7 @@ export default function AdvancedSettings() {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.advancedSettings.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.advancedSettings.key);
@@ -122,7 +124,7 @@ export default function AdvancedSettings() {
                         canvas: {
                             primary: {
                                 features: canvasCtxMenu.filter(
-                                    (feature) => canvasContextMenuConfig[feature] !== undefined
+                                    (feature) => canvasContextMenuConfig[feature] !== undefined,
                                 ),
                             },
                         },
@@ -173,7 +175,7 @@ export default function AdvancedSettings() {
                     customProperties: {
                         initialCameraState: cameraState,
                     },
-                })
+                }),
             );
         } catch (e) {
             console.warn(e);
@@ -189,7 +191,7 @@ export default function AdvancedSettings() {
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
-                    widget={{ ...featuresConfig.advancedSettings, name: "Advanced settings" }}
+                    widget={{ ...featuresConfig.advancedSettings, nameKey: "advancedSettings" }}
                     disableShadow
                 />
 
@@ -211,7 +213,7 @@ export default function AdvancedSettings() {
                         open={showSnackbar}
                         onClose={() => setStatus(Status.Idle)}
                         message={
-                            status === Status.SaveError ? "Failed to save settings" : "Settings successfully saved"
+                            status === Status.SaveError ? t("failedToSaveSettings") : t("settingsSuccessfullySaved")
                         }
                         action={
                             <IconButton
@@ -273,6 +275,7 @@ export default function AdvancedSettings() {
 
 function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const theme = useTheme();
+    const { t } = useTranslation();
 
     return (
         <>
@@ -283,7 +286,7 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                 <Box display="flex" justifyContent="flex-end">
                     <Button sx={{ ml: "auto" }} onClick={() => save()} color="grey" disabled={saving}>
                         <Save sx={{ mr: 1 }} />
-                        Save
+                        {t("save")}
                     </Button>
                 </Box>
             </Box>
@@ -295,13 +298,13 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
             <ScrollBox height={1} mt={1} pb={3} display="flex" flexDirection="column">
                 <List disablePadding>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/scene">
-                        Scene
+                        {t("scene")}
                     </ListItemButton>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/features">
-                        Features
+                        {t("features")}
                     </ListItemButton>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/project">
-                        Project
+                        {t("project")}
                     </ListItemButton>
                     <ListItemButton
                         sx={{ pl: 1, fontWeight: 600 }}
@@ -309,19 +312,19 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                         component={Link}
                         to="/objectSelection"
                     >
-                        Object selection
+                        {t("objectSelection")}
                     </ListItemButton>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/clipping">
-                        Clipping
+                        {t("clipping")}
                     </ListItemButton>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/camera">
-                        Camera
+                        {t("camera")}
                     </ListItemButton>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/render">
-                        Render
+                        {t("render")}
                     </ListItemButton>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/performance">
-                        Performance
+                        {t("performance")}
                     </ListItemButton>
                 </List>
             </ScrollBox>
@@ -330,7 +333,7 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
 }
 
 function subtreesToHide(
-    subtrees: Record<Subtree, SubtreeStatus>
+    subtrees: Record<Subtree, SubtreeStatus>,
 ): NonNullable<NonNullable<CustomProperties["explorerProjectState"]>["renderSettings"]>["hide"] {
     return {
         terrain: subtrees.terrain === SubtreeStatus.Hidden,

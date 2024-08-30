@@ -51,7 +51,7 @@ export function MeasureCanvas({
 
     const drawProductCacheRef = useRef(new Map<string, DrawProduct | undefined>());
     const resultsDrawProductCacheRef = useRef(
-        new Map<number, { product: DrawProduct | undefined; activeAxis: ActiveAxis }>()
+        new Map<number, { product: DrawProduct | undefined; activeAxis: ActiveAxis }>(),
     );
 
     const updateId = useRef(0);
@@ -89,9 +89,9 @@ export function MeasureCanvas({
                                 drawProductCache.set(objId, product);
                                 return product;
                             }
-                        })
-                    )
-                )
+                        }),
+                    ),
+                ),
             ),
             Promise.all(
                 measure.duoMeasurementValues.map(async (measurement, i) => {
@@ -118,7 +118,7 @@ export function MeasureCanvas({
                         });
                         return { product, activeAxis };
                     }
-                })
+                }),
             ),
         ]);
 
@@ -185,12 +185,12 @@ export function MeasureCanvas({
                             removePos[i] = vec2.add(
                                 vec2.create(),
                                 vec2.scaleAndAdd(vec2.create(), start, dir, 0.5),
-                                offset
+                                offset,
                             );
                             infoPos[i] = vec2.add(
                                 vec2.create(),
                                 vec2.scaleAndAdd(vec2.create(), start, dir, (dist / 2 + 25) / dist),
-                                offset
+                                offset,
                             );
                         }
 
@@ -278,7 +278,7 @@ export function MeasureCanvas({
 
                     return axes;
                 },
-                { long: new Map() as RemoveAxisMap, short: new Map() as RemoveAxisMap }
+                { long: new Map() as RemoveAxisMap, short: new Map() as RemoveAxisMap },
             );
 
             removeAxis.push(Object.fromEntries(axes.long.size ? axes.long : axes.short));
@@ -302,13 +302,13 @@ export function MeasureCanvas({
                 if (key.startsWith(prefix)) {
                     dispatch(
                         deviationsActions.setClosestToCenterFollowPathPoint(
-                            findClosestPointToScreenCenter(product, window.innerWidth, window.innerHeight)
-                        )
+                            findClosestPointToScreenCenter(product, window.innerWidth, window.innerHeight),
+                        ),
                     );
                     return;
                 }
             }
-        } catch (ex) {
+        } catch {
             console.warn("Error updating closest centerline point to screen center");
         }
     }, [dispatch, followPath]);
@@ -378,7 +378,7 @@ async function getDrawMeasureEntity(view: View, entity?: DrawableEntity, setting
 function drawMeasureObjects(
     products: Map<string, DrawProduct | undefined>,
     context2D: CanvasRenderingContext2D,
-    camSettings: CameraState
+    camSettings: CameraState,
 ) {
     products.forEach((product) => {
         if (product) {
@@ -393,7 +393,7 @@ function drawMeasureObjects(
                     complexCylinder: true,
                 },
                 3,
-                { type: "default" }
+                { type: "default" },
             );
         }
     });
@@ -402,7 +402,7 @@ function drawMeasureObjects(
 function drawDuoResults(
     resultDraw: Map<number, { product: DrawProduct | undefined; activeAxis: ActiveAxis }>,
     context2D: CanvasRenderingContext2D,
-    camSettings: CameraState
+    camSettings: CameraState,
 ) {
     for (const [_id, { product, activeAxis }] of resultDraw) {
         if (product && product.objects.length === 1) {
@@ -443,7 +443,7 @@ function drawDuoResults(
                                 3,
                                 {
                                     type: "centerOfLine",
-                                }
+                                },
                             );
                         }
                         break;
@@ -456,7 +456,7 @@ function drawDuoResults(
                             3,
                             {
                                 type: "centerOfLine",
-                            }
+                            },
                         );
                         break;
                     case "x-axis":

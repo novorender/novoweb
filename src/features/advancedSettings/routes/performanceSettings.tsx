@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { getDeviceProfile, GPUTier } from "@novorender/api";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -21,6 +22,7 @@ import { Divider, ScrollBox, TextField } from "components";
 import { renderActions, selectDebugStats, selectDeviceProfile } from "features/render";
 
 export function PerformanceSettings() {
+    const { t } = useTranslation();
     const history = useHistory();
     const theme = useTheme();
     const dispatch = useAppDispatch();
@@ -75,7 +77,7 @@ export function PerformanceSettings() {
                 },
                 framerateTarget: Number(framerateTarget),
                 renderResolution: Number(renderResolution),
-            })
+            }),
         );
     };
 
@@ -85,12 +87,12 @@ export function PerformanceSettings() {
                 encodeURI(
                     `${window.location.origin}${
                         window.location.pathname
-                    }?debug=true&debugDeviceProfile=${JSON.stringify(deviceProfile)}`
+                    }?debug=true&debugDeviceProfile=${JSON.stringify(deviceProfile)}`,
                 ),
             ],
             {
                 type: "text/plain",
-            }
+            },
         );
 
         try {
@@ -129,21 +131,21 @@ export function PerformanceSettings() {
                 <Box display="flex" justifyContent="space-between">
                     <Button onClick={() => history.goBack()} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <Button sx={{ ml: "auto" }} onClick={handleDelete} color="grey">
                         <DeleteSweep sx={{ mr: 1 }} />
-                        Delete local
+                        {t("deleteLocal")}
                     </Button>
                     <Button sx={{ ml: "auto" }} onClick={handleSave} color="grey">
                         <Save sx={{ mr: 1 }} />
-                        Save local
+                        {t("saveLocal")}
                     </Button>
                 </Box>
             </Box>
             <ScrollBox height={1} px={1} mt={1} mb={4}>
                 <Typography pt={1} variant="h6" fontWeight={600}>
-                    Performance settings
+                    {t("performanceSettings")}
                 </Typography>
                 <Divider sx={{ my: 1 }} />
                 {debugStats.enabled && (
@@ -285,7 +287,7 @@ export function PerformanceSettings() {
                         }
                         label={
                             <Box mr={0.5} sx={{ userSelect: "none" }}>
-                                Outline
+                                {t("outline")}
                             </Box>
                         }
                     />
@@ -295,7 +297,7 @@ export function PerformanceSettings() {
 
                 <Button variant="outlined" onClick={handleShare} color="grey">
                     <Share sx={{ mr: 1 }} fontSize={"small"} />
-                    Share
+                    {t("share")}
                 </Button>
             </ScrollBox>
         </>

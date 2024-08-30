@@ -1,9 +1,11 @@
 import { Box, Table, TableBody, TableHead, TableRow } from "@mui/material";
 import { ReadonlyVec3, vec3 } from "gl-matrix";
+import { useTranslation } from "react-i18next";
 
 import { TableCell } from "./tableCell";
 
 export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: ReadonlyVec3 }) {
+    const { t } = useTranslation();
     const delta = vec3.sub(vec3.create(), end, start);
 
     return (
@@ -30,7 +32,7 @@ export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: Rea
             </TableHead>
             <TableBody>
                 <TableRow>
-                    <TableCell>Start (m)</TableCell>
+                    <TableCell>{t("startM")}</TableCell>
                     {start.map((v, idx) => (
                         <TableCell key={idx} align="right">
                             {v.toFixed(3)}
@@ -38,7 +40,7 @@ export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: Rea
                     ))}
                 </TableRow>
                 <TableRow>
-                    <TableCell>End (m)</TableCell>
+                    <TableCell>{t("endM")}</TableCell>
                     {end.map((v, idx) => (
                         <TableCell key={idx} align="right">
                             {v.toFixed(3)}
@@ -46,7 +48,7 @@ export function MeasurementTable({ start, end }: { start: ReadonlyVec3; end: Rea
                     ))}
                 </TableRow>
                 <TableRow>
-                    <TableCell bold>Difference (m)</TableCell>
+                    <TableCell bold>{t("differenceM")}</TableCell>
                     <TableCell bold align="right">
                         {Math.abs(delta[0]).toFixed(3)}
                     </TableCell>

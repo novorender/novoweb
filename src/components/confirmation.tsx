@@ -1,5 +1,6 @@
 import { LoadingButton } from "@mui/lab";
 import { Box, BoxProps, Button, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export function Confirmation({
     title,
@@ -20,6 +21,7 @@ export function Confirmation({
     headerShadow?: boolean;
 }) {
     const theme = useTheme();
+    const { t } = useTranslation();
 
     return (
         <>
@@ -55,7 +57,7 @@ export function Confirmation({
                         onClick={onCancel}
                         disabled={loading}
                     >
-                        Cancel
+                        {t("cancel")}
                     </Button>
                     <LoadingButton
                         fullWidth

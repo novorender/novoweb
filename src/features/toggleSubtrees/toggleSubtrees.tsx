@@ -1,6 +1,7 @@
 import { Grain, LineAxis, PictureAsPdf, Terrain, Token } from "@mui/icons-material";
 import { IconButton, Menu, SpeedDialActionProps, Typography } from "@mui/material";
 import { MouseEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction, WidgetMenuButtonWrapper } from "components";
@@ -9,7 +10,8 @@ import { renderActions, selectSubtrees, selectViewMode, SubtreeStatus } from "fe
 import { ViewMode } from "types/misc";
 
 export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {
-    const { name, Icon } = featuresConfig["toggleSubtrees"];
+    const { t } = useTranslation();
+    const { nameKey, Icon } = featuresConfig["toggleSubtrees"];
     const subtrees = useAppSelector(selectSubtrees);
     const viewMode = useAppSelector(selectViewMode);
     const dispatch = useAppDispatch();
@@ -40,7 +42,7 @@ export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {
                     ...speedDialProps.FabProps,
                 }}
                 onClick={openMenu}
-                title={name}
+                title={t(nameKey)}
                 icon={<Icon />}
             />
             <Menu
@@ -61,7 +63,7 @@ export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {
                             <IconButton size="large" color="primary">
                                 <Token />
                             </IconButton>
-                            <Typography>Mesh</Typography>
+                            <Typography>{t("mesh")}</Typography>
                         </WidgetMenuButtonWrapper>
                     </li>
                 ) : null}
@@ -75,7 +77,7 @@ export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {
                             <IconButton size="large" color="primary">
                                 <LineAxis />
                             </IconButton>
-                            <Typography>Lines</Typography>
+                            <Typography>{t("lines")}</Typography>
                         </WidgetMenuButtonWrapper>
                     </li>
                 ) : null}
@@ -89,7 +91,7 @@ export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {
                             <IconButton size="large" color="primary">
                                 <Terrain />
                             </IconButton>
-                            <Typography>Terrain</Typography>
+                            <Typography>{t("terrain")}</Typography>
                         </WidgetMenuButtonWrapper>
                     </li>
                 ) : null}
@@ -103,7 +105,7 @@ export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {
                             <IconButton size="large" color="primary">
                                 <Grain />
                             </IconButton>
-                            <Typography>Points</Typography>
+                            <Typography>{t("points")}</Typography>
                         </WidgetMenuButtonWrapper>
                     </li>
                 ) : null}
@@ -117,7 +119,7 @@ export function ToggleSubtrees(speedDialProps: SpeedDialActionProps) {
                             <IconButton size="large" color="primary">
                                 <PictureAsPdf />
                             </IconButton>
-                            <Typography>PDF</Typography>
+                            <Typography>{t("pdf")}</Typography>
                         </WidgetMenuButtonWrapper>
                     </li>
                 ) : null}

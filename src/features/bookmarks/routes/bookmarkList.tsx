@@ -1,6 +1,7 @@
 import { AddCircle, FilterAlt, Save } from "@mui/icons-material";
 import { Box, Button, List, Typography, useTheme } from "@mui/material";
 import { MouseEvent, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
@@ -30,6 +31,7 @@ import { FilterMenu } from "../filterMenu";
 const filterMenuId = "bm-filter-menu";
 
 export function BookmarkList() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const sceneId = useSceneId();
@@ -50,7 +52,7 @@ export function BookmarkList() {
         function filterBookmarks() {
             setFilteredBookmarks(applyFilters(bookmarks, filters));
         },
-        [bookmarks, filters]
+        [bookmarks, filters],
     );
 
     const openFilters = (e: MouseEvent<HTMLButtonElement>) => {
@@ -72,14 +74,14 @@ export function BookmarkList() {
                       bookmarks
                           .filter((bm) => bm.access !== BookmarkAccess.Personal)
                           .map(({ access: _access, ...bm }) => bm),
-                      { personal: false }
+                      { personal: false },
                   )
                 : Promise.resolve(true);
 
             const personalBmks = dataApi.saveBookmarks(
                 sceneId,
                 bookmarks.filter((bm) => bm.access === BookmarkAccess.Personal).map(({ access: _access, ...bm }) => bm),
-                { personal: true }
+                { personal: true },
             );
 
             const [savedPublic, savedPersonal] = await Promise.all([publicBmks, personalBmks]);
@@ -95,7 +97,7 @@ export function BookmarkList() {
                 bookmarksActions.setSaveStatus({
                     status: AsyncStatus.Error,
                     msg: "An error occurred while saving bookmarks.",
-                })
+                }),
             );
         }
     };
@@ -108,7 +110,7 @@ export function BookmarkList() {
             }
 
             return set;
-        }, new Set<string>())
+        }, new Set<string>()),
     ).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
 
     const singles = filteredBookmarks
@@ -133,7 +135,7 @@ export function BookmarkList() {
                                 aria-expanded={Boolean(filterMenuAnchor)}
                             >
                                 <FilterAlt sx={{ mr: 1 }} />
-                                Filters
+                                {t("filters")}
                             </Button>
                             {user ? (
                                 <>
@@ -143,11 +145,11 @@ export function BookmarkList() {
                                         disabled={disableModifications || viewMode === ViewMode.Panorama}
                                     >
                                         <AddCircle sx={{ mr: 1 }} />
-                                        Add bookmark
+                                        {t("addBookmark")}
                                     </Button>
                                     <Button color="grey" onClick={handleSave} disabled={disableModifications}>
                                         <Save sx={{ mr: 1 }} />
-                                        Save
+                                        {t("save")}
                                     </Button>
                                 </>
                             ) : null}
@@ -164,11 +166,11 @@ export function BookmarkList() {
                 {bookmarksStatus === AsyncStatus.Error && (
                     <>
                         <Typography p={1} mb={3}>
-                            An error occurred while loading bookmarks.
+                            {t("errorLoadingBookmarks")}
                         </Typography>
                         <Box display={"flex"} justifyContent={"center"}>
                             <Button onClick={() => dispatch(bookmarksActions.setInitStatus(AsyncStatus.Initial))}>
-                                Try again
+                                {t("tryAgain")}
                             </Button>
                         </Box>
                     </>

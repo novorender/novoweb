@@ -1,15 +1,17 @@
 import { Close, CropSquare, Minimize, MoreVert } from "@mui/icons-material";
 import { Box, IconButton, MenuProps, SvgIcon, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { MouseEvent, ReactNode, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Widget } from "config/features";
 import { explorerActions, selectMaximized, selectMinimized } from "slices/explorer";
+import { mixpanel } from "utils/mixpanel";
 
 import { Divider } from "./divider";
 
 export function WidgetHeader({
-    widget: { name, Icon, key },
+    widget: { nameKey, Icon, key },
     children,
     disableShadow,
     WidgetMenu,
@@ -19,6 +21,7 @@ export function WidgetHeader({
     disableShadow?: boolean;
     WidgetMenu?: (props: MenuProps) => JSX.Element | null;
 }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
     const maximized = useAppSelector(selectMaximized).includes(key);
@@ -28,6 +31,7 @@ export function WidgetHeader({
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const handleClose = () => {
+        mixpanel?.track("Closed Widget", { "Widget Key": key });
         dispatch(explorerActions.removeWidgetSlot(key));
     };
 
@@ -74,7 +78,7 @@ export function WidgetHeader({
                         <Icon />
                     </SvgIcon>
                     <Typography variant="h6" component="h2">
-                        {name}
+                        {t(nameKey)}
                     </Typography>
                 </Box>
                 <Box ml="auto">

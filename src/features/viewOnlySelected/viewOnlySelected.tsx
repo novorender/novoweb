@@ -1,4 +1,5 @@
 import type { SpeedDialActionProps } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
@@ -8,7 +9,8 @@ import { ObjectVisibility, renderActions, selectDefaultVisibility } from "featur
 type Props = SpeedDialActionProps;
 
 export function ViewOnlySelected(props: Props) {
-    const { name, Icon } = featuresConfig["viewOnlySelected"];
+    const { nameKey, Icon } = featuresConfig["viewOnlySelected"];
+    const { t } = useTranslation();
     const currentVisibility = useAppSelector(selectDefaultVisibility);
 
     const dispatch = useAppDispatch();
@@ -32,7 +34,7 @@ export function ViewOnlySelected(props: Props) {
             data-test="view-only-selected"
             active={currentVisibility !== ObjectVisibility.Neutral}
             onClick={handleClick}
-            title={name}
+            title={t(nameKey)}
             icon={<Icon />}
         />
     );

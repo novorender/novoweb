@@ -1,6 +1,7 @@
 import { OpenInNew } from "@mui/icons-material";
 import { LinearProgress, useTheme } from "@mui/material";
 import { Box, Link, Table, TableBody, TableCell, TableRow } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import { ScrollBox } from "components";
@@ -26,6 +27,7 @@ export default function FeatureInfo() {
 }
 
 function AttrList() {
+    const { t } = useTranslation();
     const featureInfo = useAppSelector(selectArcgisSelectedFeatureInfo);
     const { data: layerQueryResp, isFetching } = useQueryLayerQuery(
         {
@@ -38,13 +40,13 @@ function AttrList() {
                 returnGeometry: false,
             },
         },
-        { skip: !featureInfo }
+        { skip: !featureInfo },
     );
 
     if (!featureInfo) {
         return (
             <Box textAlign="center" m={2}>
-                Select feature to see the attributes
+                {t("selectFeatureToSeeTheAttributes")}
             </Box>
         );
     }
@@ -62,7 +64,7 @@ function AttrList() {
     if (!attrs) {
         return (
             <Box textAlign="center" m={2}>
-                Selected feature not found
+                {t("selectedFeatureNotFound")}
             </Box>
         );
     }
@@ -72,7 +74,7 @@ function AttrList() {
     if (attrList.length === 0) {
         return (
             <Box textAlign="center" m={2}>
-                Selected object doesn't have attributes
+                {t("selectedObjectDoesn'THaveAttributes")}
             </Box>
         );
     }
@@ -92,7 +94,7 @@ function AttrList() {
                 <Table>
                     <TableBody>
                         <TableRow>
-                            <TableCell>Layer</TableCell>
+                            <TableCell>{t("layer")}</TableCell>
                             <TableCell>
                                 <Box display="flex" alignItems="center" gap={1}>
                                     {featureInfo.layer.name}

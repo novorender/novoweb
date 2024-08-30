@@ -1,5 +1,6 @@
 import { Box, CircularProgress, SpeedDialActionProps } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { SpeedDialAction } from "components";
 import { featuresConfig } from "config/features";
@@ -15,9 +16,10 @@ enum Status {
     Loading,
 }
 
-const { name, Icon } = featuresConfig["home"];
+const { nameKey, Icon } = featuresConfig["home"];
 
 export function Home({ position, ...speedDialProps }: Props) {
+    const { t } = useTranslation();
     const [status, setStatus] = useState(Status.Initial);
     const disabled = status === Status.Loading;
     const resetView = useResetView();
@@ -38,7 +40,7 @@ export function Home({ position, ...speedDialProps }: Props) {
                 style: { ...position, position: "absolute" },
             }}
             onClick={handleClick}
-            title={name}
+            title={t(nameKey)}
             icon={
                 <Box
                     width={1}

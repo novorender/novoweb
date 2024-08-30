@@ -1,5 +1,6 @@
 import { Close } from "@mui/icons-material";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { LogoSpeedDial, WidgetContainer } from "components";
 import WidgetList from "features/widgetList/widgetList";
@@ -7,6 +8,7 @@ import { useToggle } from "hooks/useToggle";
 import NovorenderIcon from "media/icons/novorender-small.svg?react";
 
 export function MenuWidget() {
+    const { t } = useTranslation();
     const theme = useTheme();
 
     const [open, toggle] = useToggle(false);
@@ -21,7 +23,7 @@ export function MenuWidget() {
                                 style={{ fill: theme.palette.primary.main, marginRight: theme.spacing(1) }}
                             />
                             <Typography variant="body1" component="h2">
-                                Functions
+                                {t("functions")}
                             </Typography>
                         </Box>
                         <Box ml="auto">

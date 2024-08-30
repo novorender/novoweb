@@ -6,6 +6,7 @@ import { WidgetErrorBoundary, WidgetSkeleton } from "components";
 import { featuresConfig, WidgetKey } from "config/features";
 import { MenuWidget } from "features/menuWidget";
 import { explorerActions, selectIsOnline, selectMaximized, selectWidgetLayout, selectWidgets } from "slices/explorer";
+import { mixpanel } from "utils/mixpanel";
 
 const Properties = lazy(() => import("features/properties/properties"));
 const PropertiesTree = lazy(() => import("features/propertyTree/propertyTree"));
@@ -63,6 +64,7 @@ export function Widgets() {
         if (!isOnline) {
             slots.forEach((slot) => {
                 if (!featuresConfig[slot].offline) {
+                    mixpanel?.track("Closed Widget", { "Widget Key": slot });
                     dispatch(explorerActions.removeWidgetSlot(slot));
                 }
             });
@@ -80,10 +82,10 @@ export function Widgets() {
                     maximized.length === 2
                         ? `"two one" "two one"`
                         : maximized.length === 1
-                        ? slots.indexOf(maximized[0]) === 0
-                            ? `"three one" "two one"`
-                            : `"three two" "three one"`
-                        : `"four two" "three one"`,
+                          ? slots.indexOf(maximized[0]) === 0
+                              ? `"three one" "two one"`
+                              : `"three two" "three one"`
+                          : `"four two" "three one"`,
             };
         } else if (layout.widgets === 2) {
             return {

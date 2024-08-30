@@ -1,5 +1,6 @@
 import { Add, DeleteForever } from "@mui/icons-material";
 import { Box, Button, IconButton, TextField } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { TunnelInfoGroup } from "../deviationTypes";
 import { getActiveErrorText, SubprofileGroupErrors, updateFormField } from "../validation";
@@ -16,6 +17,8 @@ export function TunnelInfoSection({
     disabled?: boolean;
     errors: SubprofileGroupErrors;
 }) {
+    const { t } = useTranslation();
+
     if (!tunnelInfo.enabled) {
         if (disabled) {
             return null;
@@ -29,7 +32,7 @@ export function TunnelInfoSection({
                     size="large"
                     onClick={() => onChange({ ...tunnelInfo, enabled: true })}
                 >
-                    <Add sx={{ mr: 1 }} /> Add tunnel height
+                    <Add sx={{ mr: 1 }} /> {t("addTunnelHeight")}
                 </Button>
             </Box>
         );
@@ -37,7 +40,7 @@ export function TunnelInfoSection({
 
     return (
         <>
-            <SectionHeader>Tunnel info</SectionHeader>
+            <SectionHeader>{t("tunnelInfo")}</SectionHeader>
             <Box display="flex" alignItems="center" gap={1} mt={2}>
                 <TextField
                     fullWidth

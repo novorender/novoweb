@@ -11,6 +11,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { type FormEvent, Fragment, MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -40,6 +41,7 @@ import { selectAccessToken, selectConfig } from "slices/explorer";
 import { FormItem } from "./formItem";
 
 export function LocationInstance() {
+    const { t } = useTranslation();
     const { templateId, formId } = useParams<{ templateId: TemplateId; formId: FormId }>();
     const theme = useTheme();
     const history = useHistory();
@@ -96,7 +98,7 @@ export function LocationInstance() {
                     rotation: currentForm.rotation,
                     scale: currentForm.scale,
                     updated: false,
-                })
+                }),
             );
         }
     }, [templateId, formId, currentForm, dispatchFormsGlobals]);
@@ -140,7 +142,7 @@ export function LocationInstance() {
                                     id: formId,
                                     templateId,
                                 },
-                            ])
+                            ]),
                         );
                     }
                     updateForm({
@@ -199,7 +201,7 @@ export function LocationInstance() {
                         Pragma: "no-cache",
                         Expires: "0",
                     },
-                }
+                },
             );
 
             if (!response.ok) {
@@ -254,7 +256,7 @@ export function LocationInstance() {
                             value: null,
                         };
                 }
-            })
+            }),
         );
         setIsUpdated(true);
         closeMenu();
@@ -268,7 +270,7 @@ export function LocationInstance() {
                 setIsUpdated(true);
             }
         },
-        [setTitle]
+        [setTitle],
     );
 
     const handleFlyTo = useCallback(() => {
@@ -290,7 +292,7 @@ export function LocationInstance() {
             dispatch(formsActions.setSelectedFormId(undefined));
             history.goBack();
         },
-        [sceneId, templateId, formId, deleteForm, dispatch, history]
+        [sceneId, templateId, formId, deleteForm, dispatch, history],
     );
 
     return isDeleting ? (
@@ -312,11 +314,11 @@ export function LocationInstance() {
                     <Box display="flex" justifyContent="space-between">
                         <Button color="grey" onClick={handleBack}>
                             <ArrowBack sx={{ mr: 1 }} />
-                            Back
+                            {t("back")}
                         </Button>
                         <Button color="grey" onClick={handleFlyTo}>
                             <FlightTakeoff sx={{ mr: 1 }} />
-                            Fly to
+                            {t("flyTo")}
                         </Button>
                         <>
                             <IconButton edge="start" size="small" onClick={openMenu} sx={{ mr: 1 }}>
@@ -327,19 +329,19 @@ export function LocationInstance() {
                                     <ListItemIcon>
                                         <Download fontSize="small" />
                                     </ListItemIcon>
-                                    <ListItemText>Export as PDF</ListItemText>
+                                    <ListItemText>{t("exportAsPDF")}</ListItemText>
                                 </MenuItem>
                                 <MenuItem onClick={() => setIsDeleting(true)}>
                                     <ListItemIcon>
                                         <Delete fontSize="small" />
                                     </ListItemIcon>
-                                    <ListItemText>Delete</ListItemText>
+                                    <ListItemText>{t("delete")}</ListItemText>
                                 </MenuItem>
                                 <MenuItem onClick={handleClearClick}>
                                     <ListItemIcon>
                                         <Clear fontSize="small" />
                                     </ListItemIcon>
-                                    <ListItemText>Clear</ListItemText>
+                                    <ListItemText>{t("clear")}</ListItemText>
                                 </MenuItem>
                             </Menu>
                         </>

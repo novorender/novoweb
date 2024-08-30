@@ -1,6 +1,7 @@
 import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, Typography, useTheme } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import { ScrollBox } from "components";
@@ -12,6 +13,7 @@ import { createOAuthStateString } from "utils/auth";
 import { jiraIdentityServer } from "../jiraApi";
 
 export function Login({ sceneId }: { sceneId: string }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const [loading, setLoading] = useState(false);
     const createBookmark = useCreateBookmark();
@@ -65,15 +67,16 @@ export function Login({ sceneId }: { sceneId: string }) {
                         loading={loading}
                         loadingIndicator={
                             <Box display="flex" alignItems="center">
-                                Log in to Jira <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
+                                {t("logInToJira")}
+                                <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
                             </Box>
                         }
                     >
-                        Log in to Jira
+                        {t("logInToJira")}
                     </LoadingButton>
                 </Box>
                 <Typography textAlign={"center"} color={theme.palette.text.secondary}>
-                    Redirects to Jira login page outside of Novorender.
+                    {t("redirectsToJira")}
                 </Typography>
             </ScrollBox>
         </>

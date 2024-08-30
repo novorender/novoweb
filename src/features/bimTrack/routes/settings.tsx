@@ -2,6 +2,7 @@ import { ArrowBack } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
 import { Autocomplete, Box, Button, CircularProgress, debounce, Typography, useTheme } from "@mui/material";
 import { FormEventHandler, SyntheticEvent, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
@@ -23,6 +24,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const dispatch = useAppDispatch();
     const isAdminScene = useAppSelector(selectIsAdminScene);
@@ -43,7 +45,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
         { token: accessToken.status === AsyncStatus.Success ? accessToken.data : "", server },
         {
             skip: accessToken.status !== AsyncStatus.Success || !serverIsValidUrl,
-        }
+        },
     );
 
     const debouncedSetServer = useMemo(
@@ -53,7 +55,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                 setProject("");
                 setServer(value);
             }, 500),
-        []
+        [],
     );
 
     const handleProjectChange = (_e: SyntheticEvent, value: string | null) => {
@@ -94,7 +96,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
 
             dataApi.putScene(updated);
         } catch {
-            console.warn(`Failed to save ${featuresConfig.bimTrack.name} settings.`);
+            console.warn(`Failed to save ${t(featuresConfig.bimTrack.nameKey)} settings.`);
         }
 
         history.push(`/${project}/topics`);
@@ -109,13 +111,13 @@ export function Settings({ sceneId }: { sceneId: string }) {
                 <Box display="flex">
                     <Button onClick={() => history.goBack()} disabled={!project} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                 </Box>
             </Box>
             <ScrollBox p={1} component="form" onSubmit={handleSubmit}>
                 <Typography fontWeight={600} mb={2}>
-                    Settings
+                    {t("settings")}
                 </Typography>
                 <TextField
                     helperText={
@@ -155,8 +157,8 @@ export function Settings({ sceneId }: { sceneId: string }) {
                                 projectsError
                                     ? "An error occured while loading projects. Is the server URL correct?"
                                     : !serverIsValidUrl && Boolean(server.trim())
-                                    ? "The server URL is invalid."
-                                    : undefined
+                                      ? "The server URL is invalid."
+                                      : undefined
                             }
                             label="Project"
                             required
@@ -174,7 +176,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                             history.goBack();
                         }}
                     >
-                        Cancel
+                        {t("cancel")}
                     </Button>
                     <LoadingButton
                         type="submit"
@@ -186,11 +188,12 @@ export function Settings({ sceneId }: { sceneId: string }) {
                         disabled={!project}
                         loadingIndicator={
                             <Box display="flex" alignItems="center">
-                                Save <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
+                                {t("save")}
+                                <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
                             </Box>
                         }
                     >
-                        Save
+                        {t("save")}
                     </LoadingButton>
                 </Box>
             </ScrollBox>
@@ -202,7 +205,7 @@ function isValidUrl(str: string): boolean {
     try {
         new URL(str.trim());
         return true;
-    } catch (e) {
+    } catch {
         return false;
     }
 }

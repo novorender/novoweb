@@ -3,6 +3,7 @@ import { Box, Button, Checkbox, IconButton, ListItemButton, Snackbar, Typography
 import { ObjectData } from "@novorender/webgl-api";
 import { unparse } from "papaparse";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 
@@ -20,6 +21,7 @@ export function CsvExport() {
     const {
         state: { db },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const basket = useSelectionBasket().idArr;
@@ -63,13 +65,13 @@ export function CsvExport() {
                             uniqueArray<string>(
                                 nodes.reduce((prev, current) => {
                                     prev.push(
-                                        ...current.properties.map(([key]) => key).filter((key) => key !== "GUID")
+                                        ...current.properties.map(([key]) => key).filter((key) => key !== "GUID"),
                                     );
                                     return prev;
-                                }, [] as string[])
-                            ).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }))
+                                }, [] as string[]),
+                            ).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" })),
                         )
-                        .map((property) => [property, true])
+                        .map((property) => [property, true]),
                 );
             } catch (e) {
                 if (!abortSignal.aborted) {
@@ -137,11 +139,11 @@ export function CsvExport() {
                 <Box display="flex" justifyContent={"space-between"}>
                     <Button onClick={() => history.goBack()} color="grey" sx={{ mr: 3 }}>
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <Button onClick={handleExport} disabled={!filename || !objects} color="grey">
                         <Download sx={{ mr: 1 }} />
-                        Download
+                        {t("download")}
                     </Button>
                 </Box>
             </Box>
@@ -189,22 +191,22 @@ export function CsvExport() {
                 </Box>
             </Box>
             <Box mt={1} px={1} display="flex" justifyContent="space-between" alignItems="center">
-                <Typography fontWeight={600}>Properties</Typography>
+                <Typography fontWeight={600}>{t("properties")}</Typography>
                 <Box>
                     <Button
                         onClick={() =>
                             setProperties((state) =>
-                                state.map((property, idx) => (idx === 0 ? [property[0], true] : [property[0], false]))
+                                state.map((property, idx) => (idx === 0 ? [property[0], true] : [property[0], false])),
                             )
                         }
                     >
-                        Unselect all
+                        {t("unselectAll")}
                     </Button>
                     <Button
                         sx={{ ml: 2 }}
                         onClick={() => setProperties((state) => state.map((property) => [property[0], true]))}
                     >
-                        Select all
+                        {t("selectAll")}
                     </Button>
                 </Box>
             </Box>
