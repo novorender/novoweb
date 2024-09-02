@@ -569,5 +569,11 @@
     "orAnytimeIn": "oder jederzeit in",
     "betaFlagPath": "Erweiterte Einstellungen Widget → Funktionen → Beta",
     "gotIt": "Verstanden",
-    "closeOneOfTheWidgetsToAddANewOne": "Schließen Sie eines der Widgets, um ein neues hinzuzufügen"
+    "closeOneOfTheWidgetsToAddANewOne": "Schließen Sie eines der Widgets, um ein neues hinzuzufügen",
+    "closeOrResizeTheWidgetToAddANewOne": "Schließen oder ändern Sie die Größe des Widgets, um ein neues hinzuzufügen",
+    "closeTheWidgetToAddANewOne": "Schließen Sie das Widget, um ein neues hinzuzufügen",
+    "closeOrResizeOneOfTheWidgetsToAddANewOne": "Schließen oder ändern Sie die Größe eines der Widgets, um ein neues hinzuzufügen",
+    "doNotShowAgainUppercase": "NICHT MEHR ANZEIGEN",
+    "press": "Drücken Sie",
+    "toExitCurrentSelectionMode": "um den aktuellen Auswahlmodus zu beenden"
 }

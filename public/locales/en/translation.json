@@ -569,5 +569,11 @@
     "orAnytimeIn": "or anytime in",
     "betaFlagPath": "Adv. settings widget → Features → Beta",
     "gotIt": "Got it",
-    "closeOneOfTheWidgetsToAddANewOne": "Close one of the widgets to add a new one"
+    "closeOneOfTheWidgetsToAddANewOne": "Close one of the widgets to add a new one",
+    "closeOrResizeTheWidgetToAddANewOne": "Close or resize the widget to add a new one",
+    "closeTheWidgetToAddANewOne": "Close the widget to add a new one",
+    "closeOrResizeOneOfTheWidgetsToAddANewOne": "Close or resize one of the widgets to add a new one",
+    "doNotShowAgainUppercase": "DO NOT SHOW AGAIN",
+    "press": "Press",
+    "toExitCurrentSelectionMode": "to exit current selection mode"
 }

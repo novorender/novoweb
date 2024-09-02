@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, StarOutline } from "@mui/icons-material";
+import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 import {
     Box,
     BoxProps,
@@ -20,7 +20,6 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { t } from "i18next";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -30,18 +29,16 @@ import IconButtonExt from "components/iconButtonExt";
 import { FeatureGroupKey, featureGroups, FeatureType, Widget, WidgetKey } from "config/features";
 import { groupSorting } from "features/groupedWidgetList/sorting";
 import { sorting } from "features/widgetList/sorting";
+import { useOpenWidget } from "hooks/useOpenWidget";
 import NovorenderIcon from "media/icons/novorender-small.svg?react";
 import {
     explorerActions,
-    selectCanAddWidget,
     selectEnabledWidgets,
-    selectFavoriteWidgets,
     selectIsOnline,
     selectLockedWidgets,
     selectWidgetGroupPanelState,
     selectWidgetLayout,
     selectWidgets,
-    selectWidgetSlot,
 } from "slices/explorer";
 
 const sortedFeatureGroups = Object.values(featureGroups).sort((a, b) => {
@@ -59,11 +56,9 @@ export function WidgetGroupPanel() {
     const dispatch = useAppDispatch();
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const [activeGroup, setActiveSection] = useState<FeatureGroupKey | null>(null);
-    const canAddWidget = useAppSelector(selectCanAddWidget);
-    const widgetSlot = useAppSelector(selectWidgetSlot);
     const enabledWidgets = useAppSelector(selectEnabledWidgets);
     const lockedWidgets = useAppSelector(selectLockedWidgets);
-    const favoriteWidgets = useAppSelector(selectFavoriteWidgets);
+    const openWidget = useOpenWidget();
 
     const closePopper = () => {
         setAnchorEl(null);
@@ -83,30 +78,18 @@ export function WidgetGroupPanel() {
 
     const handleWidgetClick = (widgetKey: WidgetKey) => {
         closePopper();
-        if (canAddWidget) {
-            dispatch(explorerActions.addWidgetSlot(widgetKey));
-            if (widgetSlot.open) {
-                dispatch(explorerActions.setWidgetSlot({ open: false, group: undefined }));
-            }
-        } else {
-            dispatch(
-                explorerActions.setSnackbarMessage({ msg: t("closeOneOfTheWidgetsToAddANewOne"), closeAfter: 5000 }),
-            );
-        }
+        openWidget(widgetKey);
     };
 
     const nonEmptyGroups = useMemo(() => {
         return sortedFeatureGroups
             .map((group) => {
-                const widgets =
-                    group.key === "favorites"
-                        ? favoriteWidgets.map((key) => enabledWidgets.find((w2) => w2.key === key)!).filter((w) => w)
-                        : enabledWidgets.filter(
-                              (widget) =>
-                                  (widget.type === FeatureType.Widget || widget.type === FeatureType.AdminWidget) &&
-                                  "groups" in widget &&
-                                  widget.groups.includes(group.key as never),
-                          );
+                const widgets = enabledWidgets.filter(
+                    (widget) =>
+                        (widget.type === FeatureType.Widget || widget.type === FeatureType.AdminWidget) &&
+                        "groups" in widget &&
+                        widget.groups.includes(group.key as never),
+                );
 
                 const sortAndFilterWidgets = (widgets: Widget[]) =>
                     widgets
@@ -120,8 +103,8 @@ export function WidgetGroupPanel() {
 
                 return { group, widgets: sortAndFilterWidgets(widgets) };
             })
-            .filter((e) => e.group.key === "favorites" || e.widgets.length > 0);
-    }, [enabledWidgets, lockedWidgets, favoriteWidgets]);
+            .filter((e) => e.widgets.length > 0);
+    }, [enabledWidgets, lockedWidgets]);
 
     return (
         <ClickAwayListener onClickAway={closePopper}>
@@ -210,7 +193,6 @@ export function WidgetGroupPanel() {
                         >
                             <HudPanel sx={{ mr: 2 }}>
                                 <SectionWidgets
-                                    groupKey={activeGroup}
                                     onSelect={handleWidgetClick}
                                     widgets={nonEmptyGroups.find((g) => g.group.key === activeGroup)?.widgets ?? []}
                                 />
@@ -331,33 +313,10 @@ const SectionButton = styled(Box, { shouldForwardProp: (prop) => prop !== "activ
     `,
 );
 
-function SectionWidgets({
-    groupKey,
-    onSelect,
-    widgets,
-}: {
-    groupKey: FeatureGroupKey | null;
-    onSelect: (widgetKey: WidgetKey) => void;
-    widgets: Widget[];
-}) {
+function SectionWidgets({ onSelect, widgets }: { onSelect: (widgetKey: WidgetKey) => void; widgets: Widget[] }) {
     const { t } = useTranslation();
     const activeWidgets = useAppSelector(selectWidgets);
     const isOnline = useAppSelector(selectIsOnline);
-
-    if (widgets.length === 0) {
-        return (
-            <Box textAlign="center" color="grey" m={2} width="240px">
-                {groupKey === featureGroups.favorites.key ? (
-                    <>
-                        {t("noFavoriteWidgets1") + " "}
-                        <StarOutline sx={{ verticalAlign: "text-bottom" }} /> {" " + t("noFavoriteWidgets2")}
-                    </>
-                ) : (
-                    <>{t("noWidgets")}</>
-                )}
-            </Box>
-        );
-    }
 
     return (
         <>

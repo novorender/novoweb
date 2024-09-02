@@ -98,6 +98,12 @@ export function useCanvasEventHandlers({
             overrideKind: undefined,
         });
 
+    const pickerRef = useRef(picker);
+    if (picker !== pickerRef.current) {
+        hideSvgCursor();
+    }
+    pickerRef.current = picker;
+
     const clippingPlaneCommitTimer = useRef<ReturnType<typeof setTimeout>>();
     const moveClippingPlanes = (delta: number) => {
         if (!view || cameraType === CameraType.Orthographic) {
@@ -335,18 +341,18 @@ export function useCanvasEventHandlers({
                                 const tolerance = applyCameraDistanceToMeasureTolerance(
                                     result.position,
                                     view.renderState.camera.position,
-                                    measureHoverSettings
+                                    measureHoverSettings,
                                 );
                                 hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
                                     result.objectId,
                                     result.position,
                                     tolerance,
-                                    allowGeneratedParametric.enabled
+                                    allowGeneratedParametric.enabled,
                                 );
                             }
                             vec2.copy(
                                 previous2dSnapPos.current,
-                                vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
+                                vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY),
                             );
                         } else {
                             checkResetHover();
@@ -387,7 +393,7 @@ export function useCanvasEventHandlers({
                             const tolerance = applyCameraDistanceToMeasureTolerance(
                                 result.position,
                                 view.renderState.camera.position,
-                                measureHoverSettings
+                                measureHoverSettings,
                             );
 
                             // TODO consider better way to download brep
@@ -395,7 +401,7 @@ export function useCanvasEventHandlers({
                                 result.objectId,
                                 result.position,
                                 tolerance,
-                                allowGeneratedParametric.enabled
+                                allowGeneratedParametric.enabled,
                             );
 
                             if (shouldStop()) {
@@ -408,10 +414,9 @@ export function useCanvasEventHandlers({
                                 return;
                             }
 
-                            svg?.querySelector("#cursor line, #cursor path")?.setAttribute(
-                                "stroke",
-                                getColor(hoverEnt, result)
-                            );
+                            svg
+                                ?.querySelector("#cursor line, #cursor path")
+                                ?.setAttribute("stroke", getColor(hoverEnt, result));
                             downloadHoveredBrepTimer.current = undefined;
                         }, 500);
 
@@ -484,7 +489,7 @@ export function useCanvasEventHandlers({
                         mouseX: e.nativeEvent.offsetX,
                         mouseY: e.nativeEvent.offsetY,
                         data: { deviation: measurement.deviation },
-                    })
+                    }),
                 );
             } else {
                 dispatch(renderActions.setStamp(null));
