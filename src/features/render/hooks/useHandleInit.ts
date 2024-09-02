@@ -1,6 +1,7 @@
 import { DeviceProfile, getDeviceProfile, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { getGPUTier } from "detect-gpu";
+import { ReadonlyVec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
 import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
@@ -24,7 +25,7 @@ import { sleep } from "utils/time";
 
 import { renderActions } from "../renderSlice";
 import { ErrorKind } from "../sceneError";
-import { getDefaultCamera, loadScene } from "../utils";
+import { getDefaultCamera, loadScene, tm2LatLon } from "../utils";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
@@ -75,13 +76,13 @@ export function useHandleInit() {
                     url,
                     parentSceneId,
                     "index.json",
-                    new AbortController().signal
+                    new AbortController().signal,
                 );
                 const projectV2 = await getProject({ projectId: sceneId })
                     .unwrap()
                     .catch(() => undefined);
                 const projectIsV2 = Boolean(projectV2);
-                const tmZoneForCalc = await loadTmZoneForCalc(projectV2, sceneData.tmZone);
+                const tmZoneForCalc = await loadTmZoneForCalc(projectV2, sceneData.tmZone, octreeSceneConfig.center);
 
                 mixpanel?.register({ "Scene ID": sceneId, "Scene Org": sceneData.organization }, { persistent: false });
                 mixpanel?.track_pageview({
@@ -112,7 +113,7 @@ export function useHandleInit() {
                                 kind: view.renderState.camera.kind,
                             },
                         deviceProfile,
-                    })
+                    }),
                 );
 
                 const groups: ObjectGroup[] = sceneData.objectGroups
@@ -141,18 +142,18 @@ export function useHandleInit() {
                 // (some scenes on some devices may crash upon loading because there's too much data)
                 await fillGroupIds(
                     sceneId,
-                    groups.filter((g) => g.status === GroupStatus.Frozen)
+                    groups.filter((g) => g.status === GroupStatus.Frozen),
                 );
 
                 dispatchObjectGroups(objectGroupsActions.set(groups));
                 dispatchHighlighted(
-                    highlightActions.setColor(sceneData.customProperties.highlights?.primary.color ?? [1, 0, 0, 1])
+                    highlightActions.setColor(sceneData.customProperties.highlights?.primary.color ?? [1, 0, 0, 1]),
                 );
                 dispatchHighlightCollections(
                     highlightCollectionsActions.setColor(
                         HighlightCollection.SecondaryHighlight,
-                        sceneData.customProperties.highlights?.secondary.color ?? [1, 1, 0, 1]
-                    )
+                        sceneData.customProperties.highlights?.secondary.color ?? [1, 1, 0, 1],
+                    ),
                 );
 
                 window.document.title = `${sceneData.title} - Novorender`;
@@ -164,7 +165,7 @@ export function useHandleInit() {
                                     width: entry.contentRect.width,
                                     height: entry.contentRect.height,
                                 },
-                            })
+                            }),
                         );
                     }
                 });
@@ -176,7 +177,7 @@ export function useHandleInit() {
                         view: view,
                         scene: octreeSceneConfig,
                         offlineWorkerState,
-                    })
+                    }),
                 );
 
                 await sleep(2000);
@@ -188,22 +189,22 @@ export function useHandleInit() {
 
                     if (error === "Not authorized") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.NOT_AUTHORIZED })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.NOT_AUTHORIZED }),
                         );
                     } else if (error === "Scene not found") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.INVALID_SCENE })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.INVALID_SCENE }),
                         );
                     } else if (error === "Scene deleted") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.DELETED_SCENE })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.DELETED_SCENE }),
                         );
                     } else {
                         dispatch(
                             renderActions.setSceneStatus({
                                 status: AsyncStatus.Error,
                                 msg: navigator.onLine ? ErrorKind.UNKNOWN_ERROR : ErrorKind.OFFLINE_UNAVAILABLE,
-                            })
+                            }),
                         );
                     }
                 } else if (e instanceof Error) {
@@ -212,7 +213,7 @@ export function useHandleInit() {
                             renderActions.setSceneStatus({
                                 status: AsyncStatus.Error,
                                 msg: ErrorKind.LEGACY_BINARY_FORMAT,
-                            })
+                            }),
                         );
                     } else {
                         dispatch(
@@ -224,7 +225,7 @@ export function useHandleInit() {
                                     : typeof e.cause === "string"
                                       ? e.cause
                                       : `${e.name}: ${e.message}`,
-                            })
+                            }),
                         );
                     }
                 }
@@ -309,14 +310,40 @@ async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?:
     return view;
 }
 
-async function loadTmZoneForCalc(projectV2: ProjectInfo | undefined, tmZoneV1: string | undefined) {
+async function loadTmZoneForCalc(
+    projectV2: ProjectInfo | undefined,
+    tmZoneV1: string | undefined,
+    sceneCenter: ReadonlyVec3,
+) {
     if (projectV2) {
         if (projectV2.epsg) {
-            const resp = await fetch(`https://epsg.io/${projectV2.epsg}.wkt`);
-            if (resp.ok) {
-                return resp.text();
+            // Try to use either .wkt or .proj4
+            // Some conversions don't work in WKT, probably because proj4 doesn't support newer WKT versions
+            // And some conversions don't work in proj4, because they require downloading additional
+            const respWkt = await fetch(`https://epsg.io/${projectV2.epsg}.wkt`);
+            if (respWkt.ok) {
+                try {
+                    const wkt = await respWkt.text();
+                    const converted = tm2LatLon({
+                        tmZone: wkt,
+                        coords: sceneCenter,
+                    });
+                    if (!Number.isNaN(converted.latitude) && !Number.isNaN(converted.longitude)) {
+                        return wkt;
+                    }
+                } catch (ex) {
+                    console.warn("Error using WKT string for coordinate conversion, use proj4 instead", ex);
+                }
             } else {
-                console.warn(resp.text());
+                console.warn(await respWkt.text());
+            }
+
+            // WKT failed, try proj4
+            const respProj = await fetch(`https://epsg.io/${projectV2.epsg}.proj4`);
+            if (respProj.ok) {
+                return await respProj.text();
+            } else {
+                console.warn(await respProj.text());
             }
         }
     } else {
