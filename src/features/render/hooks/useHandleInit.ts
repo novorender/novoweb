@@ -335,7 +335,7 @@ async function loadTmZoneForCalc(
                     console.warn("Error using WKT string for coordinate conversion, use proj4 instead", ex);
                 }
             } else {
-                console.warn(respWkt.text());
+                console.warn(await respWkt.text());
             }
 
             // WKT failed, try proj4
@@ -343,7 +343,7 @@ async function loadTmZoneForCalc(
             if (respProj.ok) {
                 return await respProj.text();
             } else {
-                console.warn(respProj.text());
+                console.warn(await respProj.text());
             }
         }
     } else {
