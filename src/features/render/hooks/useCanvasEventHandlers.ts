@@ -125,7 +125,7 @@ export function useCanvasEventHandlers({
                         color: plane.color ? [...plane.color] : [0, 1, 0, 1],
                         baseW: plane.normalOffset[3],
                         normalOffset: [...plane.normalOffset],
-                        outline: clippingPlanes.planes[i].outline,
+                        outline: clippingPlanes.planes[i]?.outline,
                     })),
                 }),
             );
