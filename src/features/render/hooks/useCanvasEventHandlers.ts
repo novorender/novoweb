@@ -107,6 +107,7 @@ export function useCanvasEventHandlers({
             clipping: {
                 planes: view.renderState.clipping.planes.map((plane) => ({
                     ...plane,
+                    outline: { enabled: false },
                     normalOffset: [
                         plane.normalOffset[0],
                         plane.normalOffset[1],
@@ -120,12 +121,13 @@ export function useCanvasEventHandlers({
         clippingPlaneCommitTimer.current = setTimeout(() => {
             dispatch(
                 renderActions.setClippingPlanes({
-                    planes: view.renderState.clipping.planes.map((plane) => ({
+                    planes: view.renderState.clipping.planes.map((plane, i) => ({
                         color: plane.color ? [...plane.color] : [0, 1, 0, 1],
                         baseW: plane.normalOffset[3],
                         normalOffset: [...plane.normalOffset],
+                        outline: clippingPlanes.planes[i]?.outline,
                     })),
-                })
+                }),
             );
         }, 100);
     };

@@ -307,6 +307,7 @@ async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?:
     const imports = await View.downloadImports({ baseUrl: url });
     const view = new View(canvas, deviceProfile, imports);
     view.controllers.flight.input.mouseMoveSensitivity = 4;
+    view.controllers.flight.input.disableWheelOnShift = true;
     return view;
 }
 
