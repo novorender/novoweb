@@ -10,7 +10,7 @@ import { CadCamera, SceneConfig, Subtrees, SubtreeStatus } from "./types";
 
 export function getSubtrees(
     hidden: NonNullable<NonNullable<CustomProperties["explorerProjectState"]>["renderSettings"]>["hide"],
-    subtrees: string[]
+    subtrees: string[],
 ): Subtrees {
     return {
         terrain: subtrees.includes("terrain")
@@ -141,7 +141,7 @@ export async function loadScene(id: string): Promise<[SceneConfig, CadCamera | u
                                   cfg.camera.referenceCoordSys[8],
                                   cfg.camera.referenceCoordSys[9],
                                   cfg.camera.referenceCoordSys[10],
-                              ])
+                              ]),
                           ),
                           fov: cfg.camera.fieldOfView,
                       }
@@ -177,7 +177,7 @@ function getBackgroundColor(color: vec4 | undefined): vec4 {
 export function applyCameraDistanceToMeasureTolerance(
     position: ReadonlyVec3,
     cameraPos: ReadonlyVec3,
-    settings: SnapTolerance
+    settings: SnapTolerance,
 ): SnapTolerance {
     const newObjectThreshold = vec3.dist(position, cameraPos);
     const hoverScale = Math.min(Math.max(newObjectThreshold, 0.15), 100);

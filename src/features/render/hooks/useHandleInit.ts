@@ -1,6 +1,7 @@
 import { DeviceProfile, getDeviceProfile, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { getGPUTier } from "detect-gpu";
+import { ReadonlyVec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
 import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
@@ -24,7 +25,7 @@ import { sleep } from "utils/time";
 
 import { renderActions } from "../renderSlice";
 import { ErrorKind } from "../sceneError";
-import { getDefaultCamera, loadScene } from "../utils";
+import { getDefaultCamera, loadScene, tm2LatLon } from "../utils";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
@@ -81,7 +82,7 @@ export function useHandleInit() {
                     .unwrap()
                     .catch(() => undefined);
                 const projectIsV2 = Boolean(projectV2);
-                const tmZoneForCalc = await loadTmZoneForCalc(projectV2, sceneData.tmZone);
+                const tmZoneForCalc = await loadTmZoneForCalc(projectV2, sceneData.tmZone, octreeSceneConfig.center);
 
                 mixpanel?.register({ "Scene ID": sceneId, "Scene Org": sceneData.organization }, { persistent: false });
                 mixpanel?.track_pageview({
@@ -310,14 +311,40 @@ async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?:
     return view;
 }
 
-async function loadTmZoneForCalc(projectV2: ProjectInfo | undefined, tmZoneV1: string | undefined) {
+async function loadTmZoneForCalc(
+    projectV2: ProjectInfo | undefined,
+    tmZoneV1: string | undefined,
+    sceneCenter: ReadonlyVec3,
+) {
     if (projectV2) {
         if (projectV2.epsg) {
-            const resp = await fetch(`https://epsg.io/${projectV2.epsg}.wkt`);
-            if (resp.ok) {
-                return resp.text();
+            // Try to use either .wkt or .proj4
+            // Some conversions don't work in WKT, probably because proj4 doesn't support newer WKT versions
+            // And some conversions don't work in proj4, because they require downloading additional
+            const respWkt = await fetch(`https://epsg.io/${projectV2.epsg}.wkt`);
+            if (respWkt.ok) {
+                try {
+                    const wkt = await respWkt.text();
+                    const converted = tm2LatLon({
+                        tmZone: wkt,
+                        coords: sceneCenter,
+                    });
+                    if (!Number.isNaN(converted.latitude) && !Number.isNaN(converted.longitude)) {
+                        return wkt;
+                    }
+                } catch (ex) {
+                    console.warn("Error using WKT string for coordinate conversion, use proj4 instead", ex);
+                }
             } else {
-                console.warn(resp.text());
+                console.warn(await respWkt.text());
+            }
+
+            // WKT failed, try proj4
+            const respProj = await fetch(`https://epsg.io/${projectV2.epsg}.proj4`);
+            if (respProj.ok) {
+                return await respProj.text();
+            } else {
+                console.warn(await respProj.text());
             }
         }
     } else {
