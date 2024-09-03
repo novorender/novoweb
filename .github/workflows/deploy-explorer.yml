@@ -2,6 +2,8 @@ name: Test environment (new)
 
 on:
     push:
+        tags-ignore:
+            - "**"
     workflow_dispatch:
 
 env:
