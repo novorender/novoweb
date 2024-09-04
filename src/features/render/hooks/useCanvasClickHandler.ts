@@ -513,6 +513,7 @@ export function useCanvasClickHandler({
                         normalOffset: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
                         baseW: w,
                         rotation,
+                        anchorPos: result?.position,
                     })
                 );
                 break;

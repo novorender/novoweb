@@ -33,7 +33,13 @@ export default function Arcgis() {
     return (
         <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.arcgis} disableShadow />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    WidgetMenu={WidgetMenu}
+                    widget={featuresConfig.arcgis}
+                    disableShadow
+                />
 
                 <ArcgisSnackbar />
 

@@ -23,7 +23,13 @@ export default function Properties() {
     return (
         <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader WidgetMenu={WidgetMenu} disableShadow widget={featuresConfig.properties} />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    WidgetMenu={WidgetMenu}
+                    disableShadow
+                    widget={featuresConfig.properties}
+                />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection="column"

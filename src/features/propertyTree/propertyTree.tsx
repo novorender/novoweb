@@ -11,7 +11,7 @@ import {
     AccordionSummary,
     LinearProgress,
     LogoSpeedDial,
-    ScrollBox,
+    WidgetBottomScrollBox,
     WidgetContainer,
     WidgetHeader,
 } from "components";
@@ -100,7 +100,12 @@ export default function PropertyTree() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.propertyTree} disableShadow={menuOpen}>
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.propertyTree}
+                    disableShadow={menuOpen}
+                >
                     {!menuOpen && !minimized && (
                         <Box display={"flex"} justifyContent={"flex-end"}>
                             <Button disabled={!canClear} onClick={clear} color="grey">
@@ -115,7 +120,7 @@ export default function PropertyTree() {
                         <LinearProgress />
                     </Box>
                 )}
-                <ScrollBox display={!menuOpen && !minimized ? "block" : "none"} height={1} pt={1} pb={2}>
+                <WidgetBottomScrollBox display={!menuOpen && !minimized ? "block" : "none"} height={1} pt={1} pb={2}>
                     <Accordion
                         slotProps={{ transition: { timeout: 200 } }}
                         disabled={!favorites.length}
@@ -146,7 +151,7 @@ export default function PropertyTree() {
                             <RootNode abortController={abortController} />
                         </AccordionDetails>
                     </Accordion>
-                </ScrollBox>
+                </WidgetBottomScrollBox>
 
                 {[AsyncStatus.Success, AsyncStatus.Error].includes(groupsCreationStatus) && (
                     <Snackbar

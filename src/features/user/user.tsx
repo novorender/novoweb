@@ -39,7 +39,12 @@ export default function User() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={{ ...featuresConfig.user, nameKey: "user" }} disableShadow={menuOpen} />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={{ ...featuresConfig.user, nameKey: "user" }}
+                    disableShadow={menuOpen}
+                />
                 {loading && (
                     <Box>
                         <LinearProgress />

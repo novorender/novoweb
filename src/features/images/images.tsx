@@ -19,7 +19,12 @@ export default function Images() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.images} disableShadow />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.images}
+                    disableShadow
+                />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexGrow={1}

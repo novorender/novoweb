@@ -236,3 +236,23 @@ export function projectV1ZoneNameToEpsg(tmZone: string) {
 export function compareStrings(s1: string, s2: string) {
     return s1 < s2 ? -1 : s1 > s2 ? 1 : 0;
 }
+
+export function formatLength(l: number) {
+    if (l >= 10_000) {
+        return `${(l / 1_000).toFixed(0)} km`;
+    } else if (l >= 1_000) {
+        return `${(l / 1_000).toFixed(1)} km`;
+    } else if (l >= 1) {
+        return `${l.toFixed(0)} m`;
+    } else if (l >= 0.01) {
+        return `${(l * 100).toFixed(0)} cm`;
+    } else if (l >= 0.001) {
+        return `${(l * 1000).toFixed(0)} mm`;
+    } else {
+        return `${(l * 1000).toFixed(3)} mm`;
+    }
+}
+
+export function hasMouseSupport() {
+    return matchMedia("(pointer:fine)").matches;
+}

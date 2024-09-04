@@ -31,7 +31,13 @@ export default function Forms() {
     return (
         <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.forms} disableShadow={!menuOpen} />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    WidgetMenu={WidgetMenu}
+                    widget={featuresConfig.forms}
+                    disableShadow={!menuOpen}
+                />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection="column"

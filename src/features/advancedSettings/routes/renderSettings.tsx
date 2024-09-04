@@ -5,7 +5,15 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
+import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    Divider,
+    LinearProgress,
+    Switch,
+    WidgetBottomScrollBox,
+} from "components";
 import {
     renderActions,
     selectAdvanced,
@@ -68,7 +76,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} mt={1} pb={3}>
+            <WidgetBottomScrollBox height={1} mt={1} pb={3}>
                 <Typography p={1} pb={0} variant="h6" fontWeight={600}>
                     {t("renderSettings")}
                 </Typography>
@@ -441,7 +449,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         </Box>
                     </AccordionDetails>
                 </Accordion>
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }

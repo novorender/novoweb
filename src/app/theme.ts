@@ -17,23 +17,43 @@ declare module "@mui/material" {
 declare module "@mui/material/styles/createTheme" {
     interface Theme {
         customBreakPoints: {
+            width: {
+                lg2: number;
+            };
             height: {
                 sm: number;
             };
         };
+        customSpacing: {
+            hudPadding: number;
+            widgetGroupPanelExpandedWidth: number;
+        };
         customShadows: {
             widgetHeader: string;
+        };
+        customShape: {
+            hudPanelBorderRadius: number;
         };
     }
 
     interface ThemeOptions {
         customBreakPoints: {
+            width: {
+                lg2: number;
+            };
             height: {
                 sm: number;
             };
         };
+        customSpacing: {
+            hudPadding: number;
+            widgetGroupPanelExpandedWidth: number;
+        };
         customShadows: {
             widgetHeader: string;
+        };
+        customShape: {
+            hudPanelBorderRadius: number;
         };
     }
 }
@@ -44,7 +64,7 @@ let theme = createTheme({
             xs: 0,
             sm: 767,
             md: 1175,
-            lg: 1280,
+            lg: 1440,
             xl: 2840,
         },
     },
@@ -93,7 +113,17 @@ let theme = createTheme({
     customShadows: {
         widgetHeader: "0px 5px 5px rgba(0, 0, 0, 0.05)",
     },
+    customShape: {
+        hudPanelBorderRadius: 16,
+    },
+    customSpacing: {
+        hudPadding: 2,
+        widgetGroupPanelExpandedWidth: 28,
+    },
     customBreakPoints: {
+        width: {
+            lg2: 1700,
+        },
         height: {
             sm: 849.95,
         },

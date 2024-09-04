@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, LinearProgress, ScrollBox, TextField } from "components";
+import { Divider, LinearProgress, TextField, WidgetBottomScrollBox } from "components";
 import {
     HighlightCollection,
     highlightCollectionsActions,
@@ -70,7 +70,7 @@ export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} px={1} mt={1} pb={3}>
+            <WidgetBottomScrollBox height={1} px={1} mt={1} pb={3}>
                 <Typography pt={1} variant="h6" fontWeight={600}>
                     {t("objectSelectionSettings")}
                 </Typography>
@@ -148,7 +148,7 @@ export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<
                         }
                     }}
                 />
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }

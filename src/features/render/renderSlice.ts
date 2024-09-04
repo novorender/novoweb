@@ -9,7 +9,7 @@ import {
 import type { Bookmark } from "@novorender/data-js-api";
 import type { EnvironmentDescription } from "@novorender/webgl-api";
 import { createAction, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { quat, vec3, vec4 } from "gl-matrix";
+import { quat, ReadonlyVec3, vec3, vec4 } from "gl-matrix";
 
 import type { RootState } from "app";
 import type { ProjectType } from "slices/explorer";
@@ -77,8 +77,10 @@ const initialState = {
             color: vec4;
             outline: {
                 enabled: boolean;
+                color: vec3;
             };
             rotation?: number;
+            anchorPos?: ReadonlyVec3;
         }[],
     },
     grid: {
@@ -338,7 +340,7 @@ export const renderSlice = createSlice({
             }
 
             state.subtrees[action.payload.subtree] =
-                action.payload.newState ?? state.subtrees[action.payload.subtree] === SubtreeStatus.Shown
+                (action.payload.newState ?? state.subtrees[action.payload.subtree] === SubtreeStatus.Shown)
                     ? SubtreeStatus.Hidden
                     : SubtreeStatus.Shown;
         },
@@ -355,8 +357,10 @@ export const renderSlice = createSlice({
             state.clipping = mergeRecursive(state.clipping, action.payload);
             state.clipping.planes = state.clipping.planes.map((plane, idx) => ({
                 ...plane,
+                color: clippingPlaneColors[idx],
                 outline: {
                     enabled: plane.outline ? plane.outline.enabled : idx === 0,
+                    color: clippingPlaneOutlineColors[idx],
                 },
             }));
         },
@@ -373,8 +377,11 @@ export const renderSlice = createSlice({
             if (state.clipping.planes.length < 6) {
                 state.clipping.planes.push({
                     ...action.payload,
-                    color: [0, 1, 0, 0.2],
-                    outline: { enabled: !state.clipping.planes.length },
+                    color: clippingPlaneColors[state.clipping.planes.length],
+                    outline: {
+                        enabled: !state.clipping.planes.length,
+                        color: clippingPlaneOutlineColors[state.clipping.planes.length],
+                    },
                 });
             }
         },
@@ -575,10 +582,10 @@ export const renderSlice = createSlice({
                         rotate === 1
                             ? "flight"
                             : orbit === 1
-                            ? pan === 2
-                                ? "cadRightPan"
-                                : "cadMiddlePan"
-                            : "special";
+                              ? pan === 2
+                                  ? "cadRightPan"
+                                  : "cadMiddlePan"
+                              : "special";
                 }
 
                 // background
@@ -739,13 +746,15 @@ export const renderSlice = createSlice({
                 ...clipping,
                 draw: false,
                 outlines: clipping.outlines !== undefined ? clipping.outlines : true,
-                planes: clipping.planes.map(({ normalOffset, color, outline }, idx) => ({
+                planes: clipping.planes.map(({ normalOffset, color, outline, anchorPos }, idx) => ({
                     normalOffset,
-                    color,
+                    color: color ?? clippingPlaneColors[idx],
                     outline: {
                         enabled: outline ? outline.enabled : idx === 0,
+                        color: clippingPlaneOutlineColors[idx],
                     },
                     baseW: normalOffset[3],
+                    anchorPos,
                 })),
             };
         });
@@ -795,6 +804,24 @@ function subtreesFromBookmark(
 
     return subtrees;
 }
+
+const clippingPlaneColors: vec4[] = [
+    [255, 255, 255],
+    [37, 55, 70],
+    [214, 30, 92],
+    [97, 94, 155],
+    [225, 224, 0],
+    [255, 88, 93],
+].map((v) => [...vec3.scale(v as vec3, v as vec3, 1 / 255), 0.5]);
+
+const clippingPlaneOutlineColors: vec3[] = [
+    [0, 0, 0],
+    [255, 88, 93],
+    [225, 224, 0],
+    [118, 134, 146],
+    [214, 30, 92],
+    [37, 55, 70],
+].map((v) => vec3.scale(v as vec3, v as vec3, 1 / 255));
 
 export const selectMainObject = (state: RootState) => state.render.mainObject;
 export const selectDefaultVisibility = (state: RootState) => state.render.defaultVisibility;

@@ -124,7 +124,12 @@ export default function OrthoCam() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.orthoCam} disableShadow={menuOpen}>
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.orthoCam}
+                    disableShadow={menuOpen}
+                >
                     {!menuOpen && !minimized ? (
                         <Box mx={-1} display="flex" justifyContent="space-between">
                             <Button

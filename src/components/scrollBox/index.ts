@@ -1,2 +1,2 @@
-export { ScrollBox } from "./scrollBox";
+export { ScrollBox, WidgetBottomScrollBox } from "./scrollBox";
 export { withCustomScrollbar } from "./withCustomScrollbar";

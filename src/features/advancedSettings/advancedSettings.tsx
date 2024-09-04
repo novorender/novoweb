@@ -7,7 +7,14 @@ import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
 import { useAppSelector } from "app/redux-store-interactions";
-import { Divider, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import {
+    Divider,
+    LinearProgress,
+    LogoSpeedDial,
+    WidgetBottomScrollBox,
+    WidgetContainer,
+    WidgetHeader,
+} from "components";
 import { canvasContextMenuConfig } from "config/canvasContextMenu";
 import { featuresConfig, FeatureType } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -191,6 +198,8 @@ export default function AdvancedSettings() {
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
                     widget={{ ...featuresConfig.advancedSettings, nameKey: "advancedSettings" }}
                     disableShadow
                 />
@@ -295,7 +304,7 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} mt={1} pb={3} display="flex" flexDirection="column">
+            <WidgetBottomScrollBox height={1} mt={1} pb={3} display="flex" flexDirection="column">
                 <List disablePadding>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/scene">
                         {t("scene")}
@@ -327,7 +336,7 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                         {t("performance")}
                     </ListItemButton>
                 </List>
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }

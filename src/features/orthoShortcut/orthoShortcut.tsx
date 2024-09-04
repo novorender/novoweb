@@ -1,4 +1,4 @@
-import type { SpeedDialActionProps } from "@mui/material";
+import { Box, IconButton, type SpeedDialActionProps, Tooltip } from "@mui/material";
 import { vec3 } from "gl-matrix";
 import { useTranslation } from "react-i18next";
 
@@ -9,12 +9,15 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { getTopDownParams, selectDefaultTopDownElevation, selectTopDownSnapToAxis } from "features/orthoCam";
 import { getSnapToPlaneParams } from "features/orthoCam/utils";
 import { CameraType, renderActions, selectCameraType, selectClippingPlanes } from "features/render";
+import TwoDIcon from "media/icons/2d.svg?react";
+import ThreeDIcon from "media/icons/3d.svg?react";
 
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
+    newDesign?: boolean;
 };
 
-export function OrthoShortcut({ position, ...speedDialProps }: Props) {
+export function OrthoShortcut({ position, newDesign, ...speedDialProps }: Props) {
     const { t } = useTranslation();
     const { nameKey, Icon } = featuresConfig["orthoShortcut"];
     const {
@@ -71,6 +74,18 @@ export function OrthoShortcut({ position, ...speedDialProps }: Props) {
             }
         }
     };
+
+    if (newDesign) {
+        return (
+            <Tooltip title={cameraType === CameraType.Orthographic ? t("switchTo3d") : t("switchTo2d")} placement="top">
+                <Box>
+                    <IconButton onClick={handleClick}>
+                        {cameraType === CameraType.Orthographic ? <ThreeDIcon /> : <TwoDIcon />}
+                    </IconButton>
+                </Box>
+            </Tooltip>
+        );
+    }
 
     return (
         <SpeedDialAction

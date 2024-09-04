@@ -36,7 +36,13 @@ export default function BimTrack() {
         <>
             <MemoryRouter>
                 <WidgetContainer minimized={minimized} maximized={maximized}>
-                    <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.bimTrack} disableShadow />
+                    <WidgetHeader
+                        menuOpen={menuOpen}
+                        toggleMenu={toggleMenu}
+                        WidgetMenu={WidgetMenu}
+                        widget={featuresConfig.bimTrack}
+                        disableShadow
+                    />
                     <Box
                         display={menuOpen || minimized ? "none" : "flex"}
                         flexGrow={1}

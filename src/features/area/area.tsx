@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { IosSwitch, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import { IosSwitch, LogoSpeedDial, WidgetBottomScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { Picker, renderActions, selectPicker } from "features/render";
@@ -51,7 +51,12 @@ export default function Area() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.area} disableShadow={menuOpen}>
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.area}
+                    disableShadow={menuOpen}
+                >
                     {!menuOpen && !minimized ? (
                         <Box display="flex" justifyContent="space-between">
                             <FormControlLabel
@@ -94,7 +99,7 @@ export default function Area() {
                         </Box>
                     ) : null}
                 </WidgetHeader>
-                <ScrollBox flexDirection="column" display={menuOpen || minimized ? "none" : "flex"}>
+                <WidgetBottomScrollBox flexDirection="column" display={menuOpen || minimized ? "none" : "flex"}>
                     <Box px={1} pt={1}>
                         <FormControlLabel
                             control={
@@ -119,7 +124,7 @@ export default function Area() {
                             </Box>
                         </>
                     ) : null}
-                </ScrollBox>
+                </WidgetBottomScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.area.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />

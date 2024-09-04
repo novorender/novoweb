@@ -196,6 +196,7 @@ export type CustomProperties = {
         ditio?: boolean;
         jira?: boolean;
         xsiteManage?: boolean;
+        newUx?: boolean;
     };
     generatedParametricData?: boolean;
     // NOTE(OLA): Legacy properties below

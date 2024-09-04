@@ -12,9 +12,9 @@ import {
     AccordionSummary,
     Divider,
     LinearProgress,
-    ScrollBox,
     Switch,
     TextField,
+    WidgetBottomScrollBox,
 } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ColorPicker } from "features/colorPicker";
@@ -105,7 +105,7 @@ export function SceneSettings({
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} mt={1} pb={3}>
+            <WidgetBottomScrollBox height={1} mt={1} pb={3}>
                 <Typography p={1} pb={0} variant="h6" fontWeight={600}>
                     {t("sceneSettings")}
                 </Typography>
@@ -244,7 +244,7 @@ export function SceneSettings({
                         {t("saveDefaultCameraPosition")}
                     </Button>
                 </Box>
-            </ScrollBox>
+            </WidgetBottomScrollBox>
             <ColorPicker
                 open={Boolean(colorPickerAnchor)}
                 anchorEl={colorPickerAnchor}

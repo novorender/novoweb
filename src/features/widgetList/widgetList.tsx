@@ -1,14 +1,28 @@
 import { MemoryRouter, Route, Switch } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { featuresConfig, type WidgetKey } from "config/features";
-import { explorerActions, selectWidgets } from "slices/explorer";
+import { FeatureGroupKey, featuresConfig, type WidgetKey } from "config/features";
+import GroupedWidgetList from "features/groupedWidgetList/groupedWidgetList";
+import { explorerActions, selectNewDesign, selectWidgets } from "slices/explorer";
 import { mixpanel } from "utils/mixpanel";
 
 import { Root } from "./routes/root";
 import { Tag } from "./routes/tag";
 
-export default function WidgetList({ widgetKey, onSelect }: { widgetKey?: WidgetKey; onSelect: () => void }) {
+export default function WidgetList(props: {
+    widgetKey?: WidgetKey;
+    featureGroupKey?: FeatureGroupKey;
+    onSelect: () => void;
+}) {
+    const newDesign = useAppSelector(selectNewDesign);
+    if (newDesign) {
+        return <GroupedWidgetList {...props} />;
+    } else {
+        return <WidgetListInner {...props} />;
+    }
+}
+
+function WidgetListInner({ widgetKey, onSelect }: { widgetKey?: WidgetKey; onSelect: () => void }) {
     const activeWidgets = useAppSelector(selectWidgets);
     const dispatch = useAppDispatch();
 

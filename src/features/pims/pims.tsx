@@ -156,7 +156,7 @@ export default function Pims() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.omegaPims365} />
+                <WidgetHeader menuOpen={menuOpen} toggleMenu={toggleMenu} widget={featuresConfig.omegaPims365} />
                 {!apiKey && !minimized && !menuOpen ? (
                     status !== AsyncStatus.Success ? (
                         <Box>
