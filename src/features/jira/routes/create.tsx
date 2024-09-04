@@ -672,11 +672,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                             onChange={(newDate: Date | null) => {
                                                 setFormValues((state) => ({
                                                     ...state,
-                                                    duedate: newDate
-                                                        ? isValid(newDate)
-                                                            ? newDate.toISOString()
-                                                            : ""
-                                                        : "",
+                                                    duedate: newDate && isValid(newDate) ? newDate : null,
                                                 }));
                                             }}
                                             slotProps={{
