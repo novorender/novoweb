@@ -3,8 +3,6 @@ import { BaseQueryFn, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from "@re
 import { type RootState } from "app/store";
 import { selectConfig } from "slices/explorer";
 
-import { AuthScope } from "./authTypes";
-
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: "",
     prepareHeaders: (headers, { getState }) => {
@@ -24,7 +22,7 @@ export function getDataV2DynamicBaseQuery(suffix = "") {
     const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
         args,
         api,
-        extraOptions
+        extraOptions,
     ) => {
         const baseUrl = selectConfig(api.getState() as RootState).dataV2ServerUrl + suffix;
         if (!baseUrl) {
@@ -44,21 +42,4 @@ export function getDataV2DynamicBaseQuery(suffix = "") {
     };
 
     return dynamicBaseQuery;
-}
-
-export function authScopeToString(scope: AuthScope) {
-    return (
-        "/" +
-        [
-            scope.organizationId ? `org/${scope.organizationId.toLowerCase()}` : null,
-            scope.projectId
-                ? scope.sceneId && scope.projectId !== scope.sceneId
-                    ? `project/${scope.projectId}:${scope.sceneId}`
-                    : `project/${scope.projectId}`
-                : null,
-            scope.resourceId && scope.resourceType ? `${scope.resourceType}/${scope.resourceId}` : null,
-        ]
-            .filter((e) => e)
-            .join("/")
-    );
 }

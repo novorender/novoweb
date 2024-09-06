@@ -10,7 +10,7 @@ import { DeviationProjectConfig } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
 import { Permission } from "./permissions";
 import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
-import { authScopeToString, getDataV2DynamicBaseQuery } from "./utils";
+import { getDataV2DynamicBaseQuery } from "./utils";
 
 export const dataV2Api = createApi({
     reducerPath: "dataV2",
@@ -38,7 +38,7 @@ export const dataV2Api = createApi({
             invalidatesTags: ["PropertyTreeFavorites"],
             async onQueryStarted({ favorites, projectId }, { dispatch, queryFulfilled }) {
                 const patchResult = dispatch(
-                    dataV2Api.util.updateQueryData("getPropertyTreeFavorites", { projectId }, () => favorites)
+                    dataV2Api.util.updateQueryData("getPropertyTreeFavorites", { projectId }, () => favorites),
                 );
                 try {
                     await queryFulfilled;
@@ -112,12 +112,12 @@ export const dataV2Api = createApi({
         getFlatPermissions: builder.query<PermissionInfo[], void>({
             query: () => "/permissions/flat",
         }),
-        checkPermissions: builder.query<Permission[], { scope: string | AuthScope; permissions: Permission[] }>({
+        checkPermissions: builder.query<Permission[], { scope: AuthScope; permissions: Permission[] }>({
             query: ({ scope, permissions }) => ({
                 url: "/roles/check-permissions",
                 method: "POST",
                 body: {
-                    scope: typeof scope === "string" ? scope : authScopeToString(scope),
+                    scope,
                     permissionIds: permissions,
                 },
             }),

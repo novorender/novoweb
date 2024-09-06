@@ -24,8 +24,9 @@ export function useRefreshProjectPermissions() {
         // TODO debounce?
         async function refresh() {
             if (!document.hidden) {
+                const viewerSceneId = projectId === sceneId ? undefined : sceneId;
                 const permissions = await checkPermissions({
-                    scope: { organizationId: org, projectId, sceneId },
+                    scope: { organizationId: org, projectId, viewerSceneId },
                     permissions: Object.values(Permission),
                 }).unwrap();
                 dispatch(explorerActions.setProjectPermissions(permissions));

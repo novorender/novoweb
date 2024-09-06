@@ -10,9 +10,9 @@ export type PermissionInfo = {
 export type AuthScope = {
     organizationId?: string;
     projectId?: string;
-    resourceId?: string;
+    resourcePath?: string;
     resourceType?: ResourceType;
-    sceneId?: string;
+    viewerSceneId?: string;
 };
 
 export enum ResourceType {
