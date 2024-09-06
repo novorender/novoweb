@@ -575,5 +575,6 @@
     "closeOrResizeOneOfTheWidgetsToAddANewOne": "Close or resize one of the widgets to add a new one",
     "doNotShowAgainUppercase": "DO NOT SHOW AGAIN",
     "press": "Press",
-    "toExitCurrentSelectionMode": "to exit current selection mode"
+    "toExitCurrentSelectionMode": "to exit current selection mode",
+    "copiedToClipboard": "Copied to clipboard"
 }

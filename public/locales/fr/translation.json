@@ -575,5 +575,6 @@
     "closeOrResizeOneOfTheWidgetsToAddANewOne": "Fermez ou redimensionnez l'un des widgets pour en ajouter un nouveau",
     "doNotShowAgainUppercase": "NE PLUS AFFICHER",
     "press": "Appuyez sur",
-    "toExitCurrentSelectionMode": "pour quitter le mode de sélection actuel"
+    "toExitCurrentSelectionMode": "pour quitter le mode de sélection actuel",
+    "copiedToClipboard": "Copié dans le presse-papiers"
 }
