@@ -1,16 +1,16 @@
 import { Close } from "@mui/icons-material";
-import { IconButton, Snackbar, Typography } from "@mui/material";
+import { IconButton, ListItemIcon, ListItemText, MenuItem, Snackbar, Typography } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { dataApi } from "apis/dataV1";
-import { useAppSelector } from "app/redux-store-interactions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { WidgetMenuButtonWrapper } from "components/widgetMenuButtonWrapper";
 import { featuresConfig } from "config/features";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
 import { selectViewMode } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
-import { selectIsOnline } from "slices/explorer";
+import { explorerActions, selectIsOnline } from "slices/explorer";
 import { ViewMode } from "types/misc";
 
 enum Status {
@@ -19,7 +19,7 @@ enum Status {
     Success,
 }
 
-export function ShareLink() {
+export function ShareLink({ asMenuItem, onClick }: { asMenuItem?: boolean; onClick?: () => void }) {
     const { t } = useTranslation();
     const { Icon, nameKey, offline } = featuresConfig.shareLink;
 
@@ -27,6 +27,7 @@ export function ShareLink() {
     const viewMode = useAppSelector(selectViewMode);
     const isOnline = useAppSelector(selectIsOnline);
     const sceneId = useSceneId();
+    const dispatch = useAppDispatch();
 
     const [status, setStatus] = useState(Status.Initial);
 
@@ -76,8 +77,24 @@ export function ShareLink() {
             ]);
         }
 
-        setStatus(Status.Success);
+        if (asMenuItem) {
+            dispatch(explorerActions.setSnackbarMessage({ msg: t("copiedToClipboard") }));
+        } else {
+            setStatus(Status.Success);
+        }
+        onClick?.();
     };
+
+    if (asMenuItem) {
+        return (
+            <MenuItem disabled={disabled} onClick={createLink}>
+                <ListItemIcon>
+                    <Icon />
+                </ListItemIcon>
+                <ListItemText>{t(nameKey)}</ListItemText>
+            </MenuItem>
+        );
+    }
 
     return (
         <>
@@ -87,7 +104,7 @@ export function ShareLink() {
                 autoHideDuration={2500}
                 open={status === Status.Success}
                 onClose={() => setStatus(Status.Initial)}
-                message="Copied to clipboard"
+                message={t("copiedToClipboard")}
                 action={
                     <IconButton
                         size="small"

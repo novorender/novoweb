@@ -26,8 +26,9 @@ import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { HudPanel } from "components/hudPanel";
 import IconButtonExt from "components/iconButtonExt";
-import { FeatureGroupKey, featureGroups, FeatureType, Widget, WidgetKey } from "config/features";
+import { FeatureGroupKey, featureGroups, featuresConfig, FeatureType, Widget, WidgetKey } from "config/features";
 import { groupSorting } from "features/groupedWidgetList/sorting";
+import { ShareLink } from "features/shareLink";
 import { sorting } from "features/widgetList/sorting";
 import { useOpenWidget } from "hooks/useOpenWidget";
 import NovorenderIcon from "media/icons/novorender-small.svg?react";
@@ -78,7 +79,9 @@ export function WidgetGroupPanel() {
 
     const handleWidgetClick = (widgetKey: WidgetKey) => {
         closePopper();
-        openWidget(widgetKey);
+        if (widgetKey !== featuresConfig.shareLink.key) {
+            openWidget(widgetKey);
+        }
     };
 
     const nonEmptyGroups = useMemo(() => {
@@ -324,6 +327,10 @@ function SectionWidgets({ onSelect, widgets }: { onSelect: (widgetKey: WidgetKey
                 const activeElsewhere = activeWidgets.includes(widget.key);
                 const unavailable = !isOnline && "offline" in widget && !widget.offline;
                 const { Icon } = widget;
+
+                if (widget.key === featuresConfig.shareLink.key) {
+                    return <ShareLink key={widget.key} asMenuItem onClick={() => onSelect(widget.key)} />;
+                }
 
                 return (
                     <MenuItem
