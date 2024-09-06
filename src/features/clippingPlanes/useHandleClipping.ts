@@ -35,13 +35,13 @@ export function useHandleClipping() {
                         Math.abs(
                             vec3.dot(
                                 cameraDir,
-                                vec3.fromValues(plane.normalOffset[0], plane.normalOffset[1], plane.normalOffset[2])
-                            )
+                                vec3.fromValues(plane.normalOffset[0], plane.normalOffset[1], plane.normalOffset[2]),
+                            ),
                         ) > 0.999;
 
                     return {
                         ...plane,
-                        color: isParallelToCamera ? transparentColor : plane.color,
+                        color: isParallelToCamera || !plane.showPlane ? transparentColor : plane.color,
                         outline: {
                             enabled: clipping.outlines ? plane.outline.enabled : false,
                             lineColor: plane.outline.color,
@@ -49,7 +49,7 @@ export function useHandleClipping() {
                     };
                 }),
             },
-            terrain: { asBackground: clipping.planes.length > 0 ? false : terrain.asBackground },
+            terrain: { asBackground: clipping.planes.some((p) => p.showPlane) ? false : terrain.asBackground },
         });
     }, [view, clipping, terrain]);
 }
