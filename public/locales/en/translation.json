@@ -576,5 +576,7 @@
     "doNotShowAgainUppercase": "DO NOT SHOW AGAIN",
     "press": "Press",
     "toExitCurrentSelectionMode": "to exit current selection mode",
-    "copiedToClipboard": "Copied to clipboard"
+    "copiedToClipboard": "Copied to clipboard",
+    "showPlane": "Show plane",
+    "hidePlane": "Hide plane"
 }

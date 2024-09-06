@@ -64,6 +64,7 @@ declare module "@novorender/data-js-api" {
             planes: {
                 normalOffset: [number, number, number, number];
                 color: [number, number, number, number];
+                showPlane: boolean;
                 outline?: {
                     enabled: boolean;
                 };

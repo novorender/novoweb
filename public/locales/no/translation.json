@@ -576,5 +576,7 @@
     "doNotShowAgainUppercase": "IKKE VIS IGJEN",
     "press": "Trykk på",
     "toExitCurrentSelectionMode": "for å avslutte gjeldende valgmodus",
-    "copiedToClipboard": "Kopiert til utklippstavlen"
+    "copiedToClipboard": "Kopiert til utklippstavlen",
+    "showPlane": "Vis plan",
+    "hidePlane": "Skjul plan"
 }

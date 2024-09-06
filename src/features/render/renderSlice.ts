@@ -75,6 +75,7 @@ const initialState = {
             normalOffset: vec4;
             baseW: number;
             color: vec4;
+            showPlane: boolean;
             outline: {
                 enabled: boolean;
                 color: vec3;
@@ -238,7 +239,7 @@ export const selectBookmark = createAction(
     (payload: NonNullable<Bookmark["explorerState"]>, view: View) => ({
         payload,
         meta: { view },
-    })
+    }),
 );
 
 export const renderSlice = createSlice({
@@ -366,7 +367,7 @@ export const renderSlice = createSlice({
         },
         addClippingPlane: (
             state,
-            action: PayloadAction<Omit<State["clipping"]["planes"][number], "color" | "outline">>
+            action: PayloadAction<Omit<State["clipping"]["planes"][number], "color" | "outline">>,
         ) => {
             if (vec3.exactEquals(action.payload.normalOffset.slice(0, 3) as Vec3, [0, 0, 0])) {
                 return state;
@@ -474,7 +475,7 @@ export const renderSlice = createSlice({
         },
         setGeneratedParametricData: (
             state,
-            action: PayloadAction<RecursivePartial<State["generatedParametricData"]>>
+            action: PayloadAction<RecursivePartial<State["generatedParametricData"]>>,
         ) => {
             state.generatedParametricData = mergeRecursive(state.generatedParametricData, action.payload);
         },
@@ -506,16 +507,16 @@ export const renderSlice = createSlice({
                 state.cameraDefaults.pinhole = camera.pinhole;
                 state.cameraDefaults.orthographic = mergeRecursive(
                     state.cameraDefaults.orthographic,
-                    camera.orthographic
+                    camera.orthographic,
                 );
             } else {
                 state.cameraDefaults.pinhole.clipping.far = Math.max(
                     (sceneData.camera as { far?: number })?.far ?? 0,
-                    1000
+                    1000,
                 );
                 state.cameraDefaults.pinhole.clipping.near = Math.max(
                     (sceneData.camera as { near?: number })?.near ?? 0,
-                    0.1
+                    0.1,
                 );
                 state.cameraDefaults.orthographic.topDownElevation = props.defaultTopDownElevation;
                 state.cameraDefaults.orthographic.usePointerLock =
@@ -623,7 +624,7 @@ export const renderSlice = createSlice({
             } else {
                 state.subtrees = getSubtrees(
                     { terrain: false, triangles: false, points: false, documents: false, lines: false },
-                    sceneConfig.subtrees ?? ["triangles"]
+                    sceneConfig.subtrees ?? ["triangles"],
                 );
             }
         });
@@ -654,7 +655,7 @@ export const renderSlice = createSlice({
             }
 
             const availableSubtrees = Object.keys(state.subtrees).filter(
-                (key) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable
+                (key) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable,
             );
 
             if (props.explorerProjectState?.renderSettings) {
@@ -746,9 +747,10 @@ export const renderSlice = createSlice({
                 ...clipping,
                 draw: false,
                 outlines: clipping.outlines !== undefined ? clipping.outlines : true,
-                planes: clipping.planes.map(({ normalOffset, color, outline, anchorPos }, idx) => ({
+                planes: clipping.planes.map(({ normalOffset, color, outline, anchorPos, showPlane }, idx) => ({
                     normalOffset,
                     color: color ?? clippingPlaneColors[idx],
+                    showPlane: showPlane ?? false,
                     outline: {
                         enabled: outline ? outline.enabled : idx === 0,
                         color: clippingPlaneOutlineColors[idx],
@@ -763,7 +765,7 @@ export const renderSlice = createSlice({
 
 function subtreesFromBookmark(
     current: State["subtrees"],
-    bm: NonNullable<Bookmark["explorerState"]>["subtrees"]
+    bm: NonNullable<Bookmark["explorerState"]>["subtrees"],
 ): State["subtrees"] {
     const subtrees = { ...current };
 
