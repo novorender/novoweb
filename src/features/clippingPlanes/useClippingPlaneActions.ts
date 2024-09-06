@@ -194,7 +194,8 @@ export function useClippingPlaneActions() {
                                         outline: { enabled: false },
                                         normalOffset,
                                         color:
-                                            cameraType === CameraType.Orthographic && isParallelToCamera
+                                            (cameraType === CameraType.Orthographic && isParallelToCamera) ||
+                                            !p.showPlane
                                                 ? [0, 0, 0, 0]
                                                 : p.color,
                                     };
@@ -287,6 +288,17 @@ export function useClippingPlaneActions() {
         [dispatch],
     );
 
+    const toggleShowPlane = useCallback(
+        (planes: RenderState["clipping"]["planes"], idx: number, enabled: boolean) => {
+            dispatch(
+                renderActions.setClippingPlanes({
+                    planes: planes.map((p, i) => (i === idx ? { ...p, showPlane: enabled } : p)),
+                }),
+            );
+        },
+        [dispatch],
+    );
+
     const alignCamera = useCallback(
         (view: View, planes: RenderState["clipping"]["planes"], idx: number) => {
             const { position, rotation } = getSnapToPlaneParams({
@@ -305,7 +317,7 @@ export function useClippingPlaneActions() {
         [dispatch],
     );
 
-    return { swapCamera, deletePlane, movePlanes, toggleOutlines, alignCamera };
+    return { swapCamera, deletePlane, movePlanes, toggleOutlines, toggleShowPlane, alignCamera };
 }
 
 export interface MovingPlaneControl {

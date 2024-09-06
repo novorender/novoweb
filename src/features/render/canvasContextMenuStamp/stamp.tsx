@@ -254,6 +254,7 @@ function Selection() {
                 baseW: w,
                 rotation,
                 anchorPos: position,
+                showPlane: false,
             }),
         );
 

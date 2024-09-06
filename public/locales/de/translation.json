@@ -575,5 +575,7 @@
     "closeOrResizeOneOfTheWidgetsToAddANewOne": "Schließen oder ändern Sie die Größe eines der Widgets, um ein neues hinzuzufügen",
     "doNotShowAgainUppercase": "NICHT MEHR ANZEIGEN",
     "press": "Drücken Sie",
-    "toExitCurrentSelectionMode": "um den aktuellen Auswahlmodus zu beenden"
+    "toExitCurrentSelectionMode": "um den aktuellen Auswahlmodus zu beenden",
+    "showPlane": "Ebene anzeigen",
+    "hidePlane": "Ebene ausblenden"
 }

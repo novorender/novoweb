@@ -575,5 +575,7 @@
     "closeOrResizeOneOfTheWidgetsToAddANewOne": "Lukk eller endre størrelsen på en av widgetene for å legge til en ny",
     "doNotShowAgainUppercase": "IKKE VIS IGJEN",
     "press": "Trykk på",
-    "toExitCurrentSelectionMode": "for å avslutte gjeldende valgmodus"
+    "toExitCurrentSelectionMode": "for å avslutte gjeldende valgmodus",
+    "showPlane": "Vis plan",
+    "hidePlane": "Skjul plan"
 }
