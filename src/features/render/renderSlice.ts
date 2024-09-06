@@ -223,7 +223,7 @@ type State = typeof initialState;
 
 export const initScene = createAction<{
     projectType: ProjectType;
-    projectV2Info: ProjectInfo | null;
+    projectV2Info: ProjectInfo;
     tmZoneForCalc: string | undefined;
     sceneData: Omit<SceneConfig, "db" | "url">;
     sceneConfig: OctreeSceneConfig;

@@ -2,6 +2,7 @@ import { ObjectGroup } from "@novorender/data-js-api";
 
 import { CustomProperties } from "types/project";
 
+import { AuthScope } from "./authTypes";
 import { Permission } from "./permissions";
 
 export type ProjectInfo = {
@@ -33,4 +34,11 @@ export type EpsgEntry = { id: string; name: string };
 export type SceneData = {
     customProperties: CustomProperties;
     objectGroups: ObjectGroup[];
+};
+
+export type Role = {
+    id: string;
+    name: string;
+    description: string;
+    scope: AuthScope;
 };

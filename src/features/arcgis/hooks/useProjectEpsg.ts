@@ -12,7 +12,7 @@ export function useProjectEpsg() {
 
     const tmZone = useAppSelector((state) => selectProjectSettings(state).tmZone);
 
-    let result = projectInfoV2?.epsg;
+    let result: string | undefined = projectInfoV2.epsg;
 
     if (tmZone && !result) {
         result = projectV1ZoneNameToEpsg(tmZone);

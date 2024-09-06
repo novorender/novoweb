@@ -195,6 +195,7 @@
     "user": "Benutzer",
     "userName": "Benutzer:",
     "role": "Rolle:",
+    "roles": "Rollen:",
     "organization": "Organisation:",
     "logIn": "Anmelden",
     "unsupportedOS": "Nicht unterstützte {{os}}-Version",

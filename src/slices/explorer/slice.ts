@@ -35,7 +35,7 @@ const initialState: State = {
     sceneType: SceneType.Viewer,
     userRole: UserRole.Viewer,
     projectType: ProjectType.V1,
-    projectV2Info: null,
+    projectV2Info: null!,
     tmZoneForCalc: undefined as string | undefined, // for project v1 - tmZone, for project v2 - proj4 def from epsg.io
     requireConsent: false,
     organization: "",

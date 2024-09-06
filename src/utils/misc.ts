@@ -86,7 +86,7 @@ export function capitalize(str: string): string {
 export async function createCanvasSnapshot(
     canvas: HTMLCanvasElement,
     maxWidth: number,
-    maxHeight: number
+    maxHeight: number,
 ): Promise<string | undefined> {
     let { width, height } = canvas;
 
@@ -128,7 +128,7 @@ export async function createCanvasSnapshot(
                     resizeQuality: "high",
                 });
                 ctx?.drawImage(bitmap, 0, 0);
-            })
+            }),
         );
 
         return dist.toDataURL("image/png");
@@ -255,4 +255,8 @@ export function formatLength(l: number) {
 
 export function hasMouseSupport() {
     return matchMedia("(pointer:fine)").matches;
+}
+
+export function capitalizeFirst(s: string) {
+    return s ? s[0].toUpperCase() + s.slice(1) : s;
 }

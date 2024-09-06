@@ -127,7 +127,7 @@ export function useHandleInit() {
                 dispatch(
                     renderActions.initScene({
                         projectType: projectIsV2 ? ProjectType.V2 : ProjectType.V1,
-                        projectV2Info: projectV2 ? { ...projectV2, permissions } : null,
+                        projectV2Info: { ...projectV2, permissions },
                         tmZoneForCalc,
                         sceneData,
                         sceneConfig: octreeSceneConfig,

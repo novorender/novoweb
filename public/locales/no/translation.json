@@ -195,6 +195,7 @@
     "user": "Bruker",
     "userName": "Bruker:",
     "role": "Rolle:",
+    "roles": "Roller:",
     "organization": "Organisasjon:",
     "logIn": "Logg inn",
     "unsupportedOS": "Ikke-støttet {{os}}-versjon",
