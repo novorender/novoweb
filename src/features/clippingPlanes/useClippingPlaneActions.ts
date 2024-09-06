@@ -288,13 +288,12 @@ export function useClippingPlaneActions() {
         [dispatch],
     );
 
-    const toggleShowPlane = useCallback(
+    const setShowPlane = useCallback(
         (planes: RenderState["clipping"]["planes"], idx: number, enabled: boolean) => {
-            dispatch(
-                renderActions.setClippingPlanes({
-                    planes: planes.map((p, i) => (i === idx ? { ...p, showPlane: enabled } : p)),
-                }),
-            );
+            const newPlanes = [...planes];
+            newPlanes[idx] = { ...newPlanes[idx], showPlane: enabled };
+
+            dispatch(renderActions.setClippingPlanes({ planes: newPlanes }));
         },
         [dispatch],
     );
@@ -317,7 +316,7 @@ export function useClippingPlaneActions() {
         [dispatch],
     );
 
-    return { swapCamera, deletePlane, movePlanes, toggleOutlines, toggleShowPlane, alignCamera };
+    return { swapCamera, deletePlane, movePlanes, toggleOutlines, setShowPlane, alignCamera };
 }
 
 export interface MovingPlaneControl {

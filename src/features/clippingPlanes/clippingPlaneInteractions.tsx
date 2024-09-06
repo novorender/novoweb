@@ -317,8 +317,8 @@ function PlaneMenu({
         closeMenu();
     };
 
-    const toggleShowPlane = (enabled: boolean) => {
-        actions.toggleShowPlane(clipping.planes, index, enabled);
+    const setShowPlane = (showPlane: boolean) => {
+        actions.setShowPlane(clipping.planes, index, showPlane);
         closeMenu();
     };
 
@@ -373,7 +373,7 @@ function PlaneMenu({
                     </ListItemIcon>
                     <ListItemText>{t("outlines")}</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={() => toggleShowPlane(!plane.showPlane)}>
+                <MenuItem onClick={() => setShowPlane(!plane.showPlane)}>
                     <ListItemIcon>
                         {plane.showPlane ? <CheckBox fontSize="small" /> : <CheckBoxOutlineBlank fontSize="small" />}
                     </ListItemIcon>
