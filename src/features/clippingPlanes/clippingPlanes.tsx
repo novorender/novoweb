@@ -1,6 +1,7 @@
 import { DeleteSweep } from "@mui/icons-material";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { IosSwitch, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
@@ -13,6 +14,7 @@ import { selectMaximized, selectMinimized } from "slices/explorer";
 import Planes from "./planes";
 
 export default function ClippingPlanes() {
+    const { t } = useTranslation();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.clippingPlanes.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.clippingPlanes.key);
@@ -40,7 +42,12 @@ export default function ClippingPlanes() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.clippingPlanes} disableShadow={menuOpen}>
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.clippingPlanes}
+                    disableShadow={menuOpen}
+                >
                     {!menuOpen && !minimized ? (
                         <>
                             <Box mt={1} mb={1} display="flex" justifyContent="space-between">
@@ -54,13 +61,13 @@ export default function ClippingPlanes() {
                                             onChange={() =>
                                                 dispatch(
                                                     renderActions.setPicker(
-                                                        selecting ? Picker.Object : Picker.ClippingPlane
-                                                    )
+                                                        selecting ? Picker.Object : Picker.ClippingPlane,
+                                                    ),
                                                 )
                                             }
                                         />
                                     }
-                                    label={<Box>Select</Box>}
+                                    label={<Box>{t("select")}</Box>}
                                 />
                                 <FormControlLabel
                                     sx={{ marginLeft: 0 }}
@@ -73,7 +80,7 @@ export default function ClippingPlanes() {
                                             }
                                         />
                                     }
-                                    label={<Box>Outlines</Box>}
+                                    label={<Box>{t("outlines")}</Box>}
                                 />
                                 <Button
                                     onClick={() => {
@@ -83,7 +90,7 @@ export default function ClippingPlanes() {
                                     disabled={!planes.length}
                                 >
                                     <DeleteSweep sx={{ mr: 1 }} />
-                                    Clear
+                                    {t("clear")}
                                 </Button>
                             </Box>
                         </>

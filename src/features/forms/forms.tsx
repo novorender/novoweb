@@ -1,6 +1,7 @@
 import { Settings as SettingsIcon } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { PropsWithChildren, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { MemoryRouter, Route, Switch, SwitchProps, useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -30,7 +31,13 @@ export default function Forms() {
     return (
         <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.forms} disableShadow={!menuOpen} />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    WidgetMenu={WidgetMenu}
+                    widget={featuresConfig.forms}
+                    disableShadow={!menuOpen}
+                />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection="column"
@@ -101,7 +108,7 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
                 dispatchHighlighted(highlightActions.resetColor());
             }
         },
-        [dispatch, history.location.pathname, dispatchHighlightCollections, dispatchHighlighted]
+        [dispatch, history.location.pathname, dispatchHighlightCollections, dispatchHighlighted],
     );
 
     useGoToSelectedForm();
@@ -110,6 +117,7 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
 }
 
 function WidgetMenu(props: MenuProps) {
+    const { t } = useTranslation();
     const history = useHistory();
 
     return (
@@ -123,7 +131,7 @@ function WidgetMenu(props: MenuProps) {
                 <ListItemIcon>
                     <SettingsIcon fontSize="small" />
                 </ListItemIcon>
-                <ListItemText>Settings</ListItemText>
+                <ListItemText>{t("settings")}</ListItemText>
             </MenuItem>
         </Menu>
     );

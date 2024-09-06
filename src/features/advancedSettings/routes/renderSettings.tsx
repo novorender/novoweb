@@ -1,10 +1,19 @@
 import { ArrowBack, Save } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, Slider, Typography, useTheme } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
+import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    Divider,
+    LinearProgress,
+    Switch,
+    WidgetBottomScrollBox,
+} from "components";
 import {
     renderActions,
     selectAdvanced,
@@ -19,6 +28,7 @@ import { selectUser } from "slices/authSlice";
 export function RenderSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();
     const theme = useTheme();
+    const { t } = useTranslation();
 
     const dispatch = useAppDispatch();
     const user = useAppSelector(selectUser);
@@ -53,11 +63,11 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 <Box display="flex" justifyContent="space-between">
                     <Button onClick={() => history.goBack()} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <Button sx={{ ml: "auto" }} onClick={save} color="grey" disabled={saving}>
                         <Save sx={{ mr: 1 }} />
-                        Save
+                        {t("save")}
                     </Button>
                 </Box>
             </Box>
@@ -66,9 +76,9 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} mt={1} pb={3}>
+            <WidgetBottomScrollBox height={1} mt={1} pb={3}>
                 <Typography p={1} pb={0} variant="h6" fontWeight={600}>
-                    Render settings
+                    {t("renderSettings")}
                 </Typography>
                 <Divider sx={{ my: 1 }} />
                 <Box p={1} display="flex" flexDirection="column">
@@ -85,7 +95,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Anti-aliasing (MSAA)
+                                {t("antiAliasing")}
                             </Box>
                         }
                     />
@@ -102,7 +112,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Toon outlines
+                                {t("toonOutlines")}
                             </Box>
                         }
                     />
@@ -120,7 +130,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Toon outline each object
+                                {t("toonOutlineEachObject")}
                             </Box>
                         }
                     />
@@ -135,14 +145,14 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         dispatch(
                                             renderActions.setAdvanced({
                                                 debug: { showNodeBounds: checked },
-                                            })
+                                            }),
                                         )
                                     }
                                 />
                             }
                             label={
                                 <Box ml={1} fontSize={16}>
-                                    Show node bounds
+                                    {t("showNodeBounds")}
                                 </Box>
                             }
                         />
@@ -152,7 +162,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 <Divider sx={{ borderColor: theme.palette.grey[300], mb: 2 }} />
                 {showMeshSettings ? (
                     <Accordion>
-                        <AccordionSummary>Mesh</AccordionSummary>
+                        <AccordionSummary>{t("mesh")}</AccordionSummary>
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
                                 <FormControlLabel
@@ -168,7 +178,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Show
+                                            {t("show")}
                                         </Box>
                                     }
                                 />
@@ -214,7 +224,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 ) : null}
                 {showPointSettings ? (
                     <Accordion>
-                        <AccordionSummary>Points</AccordionSummary>
+                        <AccordionSummary>{t("points")}</AccordionSummary>
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
                                 <FormControlLabel
@@ -228,7 +238,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Show
+                                            {t("show")}
                                         </Box>
                                     }
                                 />
@@ -242,7 +252,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                             flexShrink: 0,
                                         }}
                                     >
-                                        Point size (pixels)
+                                        {t("pointSize")}
                                     </Typography>
                                     <Slider
                                         sx={{ mx: 2, flex: "1 1 100%" }}
@@ -266,7 +276,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                             flexShrink: 0,
                                         }}
                                     >
-                                        Max point size
+                                        {t("maxPointSize")}
                                     </Typography>
                                     <Slider
                                         sx={{ mx: 2, flex: "1 1 100%" }}
@@ -292,7 +302,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                             flexShrink: 0,
                                         }}
                                     >
-                                        Tolerance factor
+                                        {t("toleranceFactor")}
                                     </Typography>
                                     <Slider
                                         sx={{ mx: 2, flex: "1 1 100%" }}
@@ -307,7 +317,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         onChangeCommitted={(_evt, value) =>
                                             !Array.isArray(value)
                                                 ? dispatch(
-                                                      renderActions.setPoints({ size: { toleranceFactor: value } })
+                                                      renderActions.setPoints({ size: { toleranceFactor: value } }),
                                                   )
                                                 : undefined
                                         }
@@ -319,7 +329,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 ) : null}
                 {showLineSettings ? (
                     <Accordion>
-                        <AccordionSummary>Lines</AccordionSummary>
+                        <AccordionSummary>{t("lines")}</AccordionSummary>
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
                                 <FormControlLabel
@@ -333,7 +343,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Show
+                                            {t("show")}
                                         </Box>
                                     }
                                 />
@@ -343,7 +353,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 ) : null}
                 {showTerrainSettings ? (
                     <Accordion>
-                        <AccordionSummary>Terrain</AccordionSummary>
+                        <AccordionSummary>{t("terrain")}</AccordionSummary>
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
                                 <FormControlLabel
@@ -357,7 +367,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Show
+                                            {t("show")}
                                         </Box>
                                     }
                                 />
@@ -374,7 +384,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Render as background
+                                            {t("renderAsBackground")}
                                         </Box>
                                     }
                                 />
@@ -384,7 +394,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 ) : null}
                 {showDocumentSettings ? (
                     <Accordion>
-                        <AccordionSummary>PDF</AccordionSummary>
+                        <AccordionSummary>{t("pdf")}</AccordionSummary>
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
                                 <FormControlLabel
@@ -398,7 +408,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Show
+                                            {t("show")}
                                         </Box>
                                     }
                                 />
@@ -407,7 +417,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                     </Accordion>
                 ) : null}
                 <Accordion>
-                    <AccordionSummary>Light</AccordionSummary>
+                    <AccordionSummary>{t("light")}</AccordionSummary>
                     <AccordionDetails>
                         <Box p={1} display="flex" flexDirection="column">
                             <Box display="flex" alignItems="center">
@@ -417,7 +427,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         flexShrink: 0,
                                     }}
                                 >
-                                    Light exposure
+                                    {t("lightExposure")}
                                 </Typography>
                                 <Slider
                                     sx={{ mx: 2, flex: "1 1 100%" }}
@@ -439,7 +449,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         </Box>
                     </AccordionDetails>
                 </Accordion>
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }

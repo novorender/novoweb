@@ -1,5 +1,6 @@
 import { ArrowBack } from "@mui/icons-material";
 import { Box, Button, Grid, IconButton, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -18,6 +19,7 @@ export function Tag({
     currentWidget: WidgetKey | undefined;
     handleClick: (key: WidgetKey) => () => void;
 }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const { tag } = useParams<{ tag?: FeatureTagKey }>();
@@ -35,7 +37,7 @@ export function Tag({
                 </Box>
                 <Button onClick={() => history.replace("/")} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
-                    Back
+                    {t("back")}
                 </Button>
             </Box>
             <ScrollBox flexGrow={1} px={1} py={2}>
@@ -44,7 +46,9 @@ export function Tag({
                         enabledWidgets
                             .filter(
                                 (widget) =>
-                                    !lockedWidgets.includes(widget.key) && "tags" in widget && widget.tags.includes(tag)
+                                    !lockedWidgets.includes(widget.key) &&
+                                    "tags" in widget &&
+                                    widget.tags.includes(tag),
                             )
                             .sort((a, b) => {
                                 const idxA = sorting.indexOf(a.key);
@@ -52,7 +56,7 @@ export function Tag({
 
                                 return (idxA === -1 ? sorting.length : idxA) - (idxB === -1 ? sorting.length : idxB);
                             })
-                            .map(({ Icon, name, key, offline }) => {
+                            .map(({ Icon, nameKey, key, offline }) => {
                                 const activeCurrent = key === currentWidget;
                                 const activeElsewhere = !activeCurrent && activeWidgets.includes(key);
                                 const unavailable = !isOnline && !offline;
@@ -67,7 +71,7 @@ export function Tag({
                                             <IconButton disabled={activeElsewhere || unavailable} size="large">
                                                 <Icon />
                                             </IconButton>
-                                            <Typography textAlign={"center"}>{name}</Typography>
+                                            <Typography textAlign={"center"}>{t(nameKey)}</Typography>
                                         </WidgetMenuButtonWrapper>
                                     </Grid>
                                 );

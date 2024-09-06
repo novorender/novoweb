@@ -1,10 +1,11 @@
 import { ArrowBack, ColorLens, Save } from "@mui/icons-material";
 import { Box, Button, Typography, useTheme } from "@mui/material";
 import { MouseEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, LinearProgress, ScrollBox, TextField } from "components";
+import { Divider, LinearProgress, TextField, WidgetBottomScrollBox } from "components";
 import {
     HighlightCollection,
     highlightCollectionsActions,
@@ -17,6 +18,7 @@ import { renderActions, selectSecondaryHighlightProperty } from "features/render
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const theme = useTheme();
     const dispatch = useAppDispatch();
@@ -55,11 +57,11 @@ export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<
                 <Box display="flex" justifyContent="space-between">
                     <Button onClick={() => history.goBack()} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <Button sx={{ ml: "auto" }} onClick={() => save()} color="grey" disabled={saving}>
                         <Save sx={{ mr: 1 }} />
-                        Save
+                        {t("save")}
                     </Button>
                 </Box>
             </Box>
@@ -68,13 +70,13 @@ export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} px={1} mt={1} pb={3}>
+            <WidgetBottomScrollBox height={1} px={1} mt={1} pb={3}>
                 <Typography pt={1} variant="h6" fontWeight={600}>
-                    Object selection settings
+                    {t("objectSelectionSettings")}
                 </Typography>
                 <Divider sx={{ my: 1 }} />
                 <Typography fontWeight={600} mb={1}>
-                    Primary
+                    {t("primary")}
                 </Typography>
                 <Button variant="outlined" color="grey" onClick={toggleColorPicker("primary")}>
                     <ColorLens
@@ -82,16 +84,16 @@ export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<
                             mr: 1,
                             color: `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, ${Math.max(
                                 primaryRgb.a ?? 1,
-                                0.25
+                                0.25,
                             )})`,
                         }}
                         fontSize="small"
                     />
-                    Primary highlight color
+                    {t("primaryHighlightColor")}
                 </Button>
                 <Divider sx={{ my: 1 }} />
                 <Typography fontWeight={600} mb={1}>
-                    Secondary
+                    {t("secondary")}
                 </Typography>
 
                 <TextField
@@ -105,7 +107,7 @@ export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<
                         dispatch(
                             renderActions.setSecondaryHighlight({
                                 property: secondaryHighlightInputValue,
-                            })
+                            }),
                         )
                     }
                 />
@@ -116,12 +118,12 @@ export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<
                             mr: 1,
                             color: `rgba(${secondaryRgb.r}, ${secondaryRgb.g}, ${secondaryRgb.b}, ${Math.max(
                                 secondaryRgb.a ?? 1,
-                                0.25
+                                0.25,
                             )})`,
                         }}
                         fontSize="small"
                     />
-                    Secondary highlight color
+                    {t("secondaryHighlightColor")}
                 </Button>
 
                 <ColorPicker
@@ -141,12 +143,12 @@ export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<
                             dispatchHighlighted(highlightActions.setColor(rgba));
                         } else {
                             dispatchHighlightCollections(
-                                highlightCollectionsActions.setColor(HighlightCollection.SecondaryHighlight, rgba)
+                                highlightCollectionsActions.setColor(HighlightCollection.SecondaryHighlight, rgba),
                             );
                         }
                     }}
                 />
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }

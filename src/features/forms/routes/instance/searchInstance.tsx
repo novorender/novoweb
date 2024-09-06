@@ -12,6 +12,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { Fragment, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
 import { Permission } from "apis/dataV2/permissions";
@@ -33,6 +34,7 @@ import { determineHighlightCollection, toFormFields, toFormItems } from "../../u
 import { FormItem } from "./formItem";
 
 export function SearchInstance() {
+    const { t } = useTranslation();
     const { objectGuid, formId } = useParams<{ objectGuid: FormObjectGuid; formId: FormId }>();
     const theme = useTheme();
     const history = useHistory();
@@ -65,7 +67,7 @@ export function SearchInstance() {
 
     const objectId = useMemo(
         () => (history.location?.state as { objectId?: number })?.objectId,
-        [history.location.state]
+        [history.location.state],
     );
 
     useEffect(() => {
@@ -112,8 +114,8 @@ export function SearchInstance() {
                             highlightCollectionsActions.move(
                                 determineHighlightCollection(form as Form),
                                 determineHighlightCollection(res.data),
-                                [objectId!]
-                            )
+                                [objectId!],
+                            ),
                         );
                     });
                 }
@@ -166,7 +168,7 @@ export function SearchInstance() {
                         Pragma: "no-cache",
                         Expires: "0",
                     },
-                }
+                },
             );
 
             if (!response.ok) {
@@ -223,7 +225,7 @@ export function SearchInstance() {
                             value: null,
                         };
                 }
-            })
+            }),
         );
         setIsUpdated(true);
         closeMenu();
@@ -247,13 +249,13 @@ export function SearchInstance() {
                     <Box display="flex" justifyContent="space-between">
                         <Button color="grey" onClick={handleBackClick}>
                             <ArrowBack sx={{ mr: 1 }} />
-                            Back
+                            {t("back")}
                         </Button>
                         {items?.length ? (
                             <>
                                 <Button color="grey" onClick={handleFlyTo}>
                                     <FlightTakeoff sx={{ mr: 1 }} />
-                                    Fly to
+                                    {t("flyTo")}
                                 </Button>
                                 <>
                                     <IconButton edge="start" size="small" onClick={openMenu} sx={{ mr: 1 }}>
@@ -264,13 +266,13 @@ export function SearchInstance() {
                                             <ListItemIcon>
                                                 <Download fontSize="small" />
                                             </ListItemIcon>
-                                            <ListItemText>Export as PDF</ListItemText>
+                                            <ListItemText>{t("exportAsPDF")}</ListItemText>
                                         </MenuItem>
                                         <MenuItem onClick={handleClearClick} disabled={!canEdit}>
                                             <ListItemIcon>
                                                 <Clear fontSize="small" />
                                             </ListItemIcon>
-                                            <ListItemText>Clear</ListItemText>
+                                            <ListItemText>{t("clear")}</ListItemText>
                                         </MenuItem>
                                     </Menu>
                                 </>
@@ -288,7 +290,7 @@ export function SearchInstance() {
                 <Typography fontWeight={600} mb={2}>
                     {form?.title}
                 </Typography>
-                {items?.length === 0 && <Typography px={0}>Selected object doesn't have any forms.</Typography>}
+                {items?.length === 0 && <Typography px={0}>{t("objectHasNoForms")}</Typography>}
                 {items?.map((item, idx, array) => {
                     return (
                         <Fragment key={item.id}>

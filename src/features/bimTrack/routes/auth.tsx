@@ -1,5 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Redirect, useHistory } from "react-router-dom";
 
 import { Permission } from "apis/dataV2/permissions";
@@ -17,6 +18,7 @@ import { bimTrackActions, selectAccessToken, selectBimTrackConfig } from "../bim
 
 let getTokensRequestInitialized = false;
 export function Auth() {
+    const { t } = useTranslation();
     const history = useHistory();
     const accessToken = useAppSelector(selectAccessToken);
     const dispatch = useAppDispatch();
@@ -50,7 +52,7 @@ export function Auth() {
                 const res = await getToken({ code, config: explorerConfig })
                     .unwrap()
                     .catch((e) => {
-                        console.warn(`${featuresConfig.bimTrack.name} authentication failed`, e);
+                        console.warn(`${t(featuresConfig.bimTrack.nameKey)} authentication failed`, e);
                         return undefined;
                     });
 
@@ -58,8 +60,8 @@ export function Auth() {
                     dispatch(
                         bimTrackActions.setAccessToken({
                             status: AsyncStatus.Error,
-                            msg: `An error occurred while authenticating with ${featuresConfig.bimTrack.name}`,
-                        })
+                            msg: `An error occurred while authenticating with ${t(featuresConfig.bimTrack.nameKey)}`,
+                        }),
                     );
                     return;
                 }
@@ -72,7 +74,7 @@ export function Auth() {
                     bimTrackActions.setAccessToken({
                         status: AsyncStatus.Success,
                         data: res.access_token,
-                    })
+                    }),
                 );
 
                 return res.access_token;
@@ -102,13 +104,13 @@ export function Auth() {
                     bimTrackActions.setAccessToken({
                         status: AsyncStatus.Success,
                         data: res.access_token,
-                    })
+                    }),
                 );
             } else {
                 history.replace("/login");
             }
         }
-    }, [accessToken, dispatch, explorerConfig, getToken, history, refreshToken]);
+    }, [accessToken, dispatch, explorerConfig, getToken, history, refreshToken, t]);
 
     return !hasFinished(accessToken) ? (
         <Box position="relative">
@@ -120,7 +122,7 @@ export function Auth() {
         canManage ? (
             <Redirect to="/settings" />
         ) : (
-            <ErrorMsg>{`${featuresConfig.bimTrack.name} has not yet been set up for this project.`}</ErrorMsg>
+            <ErrorMsg>{`${t(featuresConfig.bimTrack.nameKey)} has not yet been set up for this project.`}</ErrorMsg>
         )
     ) : (
         <Redirect to={`/${config.project}/topics`} />

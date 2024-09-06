@@ -12,6 +12,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { FormEventHandler, Fragment, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
@@ -57,6 +58,7 @@ type PimsDocument = {
 
 const coClassVariants = ["CoClass/CoClass code", "CoClass/CoClass", "CoClass/coClassCode"];
 export default function Pims() {
+    const { t } = useTranslation();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.omegaPims365.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.omegaPims365.key);
@@ -87,7 +89,7 @@ export default function Pims() {
 
             dispatch(pimsActions.setStatus(AsyncStatus.Loading));
             const test = await fetch(
-                `/omega365/api/rest/Novorender/EksportObjektDokumentLink?q={'Merke':'NOVORENDER_LOGIN_TEST'}`
+                `/omega365/api/rest/Novorender/EksportObjektDokumentLink?q={'Merke':'NOVORENDER_LOGIN_TEST'}`,
             );
 
             if (test.ok) {
@@ -126,12 +128,12 @@ export default function Pims() {
             try {
                 const docs = await fetch(
                     `/omega365/api/rest/Novorender/EksportObjektDokumentLink?q={'Merke':'${encodeURIComponent(
-                        omegaId.replaceAll("#", "")
+                        omegaId.replaceAll("#", ""),
                     )}'}`,
                     {
                         headers: { authorization: `Basic ${apiKey}` },
                         signal: abortSignal,
-                    }
+                    },
                 )
                     .then((r) => r.json())
                     .then((r) => r._items);
@@ -154,7 +156,7 @@ export default function Pims() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.omegaPims365} />
+                <WidgetHeader menuOpen={menuOpen} toggleMenu={toggleMenu} widget={featuresConfig.omegaPims365} />
                 {!apiKey && !minimized && !menuOpen ? (
                     status !== AsyncStatus.Success ? (
                         <Box>
@@ -186,7 +188,7 @@ export default function Pims() {
                                         </Box>
                                     ) : !documents.data.length ? (
                                         <Box p={1} pt={2}>
-                                            Found no documents attached to the selected object.
+                                            {t("noDocsForObject")}
                                         </Box>
                                     ) : (
                                         <DocumentList documents={documents.data} />
@@ -204,21 +206,25 @@ export default function Pims() {
 }
 
 function DocumentList({ documents }: { documents: PimsDocument[] }) {
+    const { t } = useTranslation();
     const [organisedDocs] = useState(() =>
         Object.values(
-            documents.reduce((prev, doc) => {
-                if (
-                    prev[doc.Dokumenttype] &&
-                    !prev[doc.Dokumenttype].find((_doc) => _doc.Dokument_ID === doc.Dokument_ID)
-                ) {
-                    prev[doc.Dokumenttype].push(doc);
-                } else {
-                    prev[doc.Dokumenttype] = [doc];
-                }
+            documents.reduce(
+                (prev, doc) => {
+                    if (
+                        prev[doc.Dokumenttype] &&
+                        !prev[doc.Dokumenttype].find((_doc) => _doc.Dokument_ID === doc.Dokument_ID)
+                    ) {
+                        prev[doc.Dokumenttype].push(doc);
+                    } else {
+                        prev[doc.Dokumenttype] = [doc];
+                    }
 
-                return prev;
-            }, {} as { [k: string]: PimsDocument[] })
-        )
+                    return prev;
+                },
+                {} as { [k: string]: PimsDocument[] },
+            ),
+        ),
     );
 
     return (
@@ -232,19 +238,19 @@ function DocumentList({ documents }: { documents: PimsDocument[] }) {
                                 <Fragment key={doc.Dokument_ID}>
                                     <Box>
                                         <Box display="flex" mb={0.5}>
-                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>Title:</Box>
+                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>{t("title")}</Box>
                                             <Box>{doc.DokumentTittel}</Box>
                                         </Box>
                                         <Box display="flex" mb={1}>
-                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>ID:</Box>
+                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>{t("idName")}</Box>
                                             <Box>{doc.Dokument_ID}</Box>
                                         </Box>
                                         <Box display="flex" mx={-1}>
                                             <Button color="grey" sx={{ mr: 2 }} href={doc.ProfilUrl} target="_blank">
-                                                <OpenInNew sx={{ mr: 1 }} /> Omega365
+                                                <OpenInNew sx={{ mr: 1 }} /> {t("omega365")}
                                             </Button>
                                             <Button sx={{ mr: 1 }} href={doc.FilUrl} target="_blank">
-                                                <Download /> Download
+                                                <Download /> {t("download")}
                                             </Button>
                                         </Box>
                                     </Box>
@@ -262,6 +268,7 @@ function DocumentList({ documents }: { documents: PimsDocument[] }) {
 }
 
 function Login() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
@@ -282,7 +289,7 @@ function Login() {
             `/omega365/api/rest/Novorender/EksportObjektDokumentLink?q={'Merke':'NOVORENDER_LOGIN_TEST'}`,
             {
                 headers: { authorization: `Basic ${key}` },
-            }
+            },
         );
 
         if (test.ok) {
@@ -301,7 +308,7 @@ function Login() {
             />
             <ScrollBox component="form" onSubmit={handleSubmit} p={1} pt={2}>
                 <FormControl fullWidth sx={{ mb: 1 }}>
-                    <label htmlFor="omega365-username">Username</label>
+                    <label htmlFor="omega365-username">{t("username")}</label>
                     <OutlinedInput
                         id="omega365-username"
                         required
@@ -319,7 +326,7 @@ function Login() {
                 </FormControl>
 
                 <FormControl fullWidth>
-                    <label htmlFor="omega365-password">Password</label>
+                    <label htmlFor="omega365-password">{t("password")}</label>
                     <OutlinedInput
                         id="omega365-password"
                         required
@@ -347,7 +354,7 @@ function Login() {
                 </FormControl>
 
                 <Typography color={"red"} mt={2} visibility={status === AsyncStatus.Error ? "visible" : "hidden"}>
-                    Invalid login credentials.
+                    {t("invalidLoginCredentials")}
                 </Typography>
 
                 <Box mt={2}>
@@ -360,11 +367,12 @@ function Login() {
                         loading={status === AsyncStatus.Loading}
                         loadingIndicator={
                             <Box display="flex" alignItems="center">
-                                Logging in <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
+                                {t("loggingIn")}
+                                <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
                             </Box>
                         }
                     >
-                        Log in to Omega365
+                        {t("logInToOmega365")}
                     </LoadingButton>
                 </Box>
             </ScrollBox>

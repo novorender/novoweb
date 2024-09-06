@@ -1,6 +1,7 @@
 import { Add, DeleteSweep } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, ListSubheader, MenuItem, OutlinedInput, Select } from "@mui/material";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { IosSwitch, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
@@ -20,6 +21,7 @@ export default function Measure() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.measure.key;
@@ -61,7 +63,12 @@ export default function Measure() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader disableShadow={menuOpen} widget={featuresConfig.measure}>
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    disableShadow={menuOpen}
+                    widget={featuresConfig.measure}
+                >
                     {!menuOpen && !minimized ? (
                         <Box display="flex" justifyContent="space-between" alignItems="center">
                             <FormControlLabel
@@ -73,12 +80,12 @@ export default function Measure() {
                                         checked={selecting}
                                         onChange={() =>
                                             dispatch(
-                                                renderActions.setPicker(selecting ? Picker.Object : Picker.Measurement)
+                                                renderActions.setPicker(selecting ? Picker.Object : Picker.Measurement),
                                             )
                                         }
                                     />
                                 }
-                                label={<Box fontSize={14}>Select</Box>}
+                                label={<Box fontSize={14}>{t("select")}</Box>}
                             />
                             <Select
                                 sx={{ width: "auto", minWidth: 110, lineHeight: "normal" }}
@@ -88,12 +95,12 @@ export default function Measure() {
                                 value={snapKind}
                                 onChange={(event) =>
                                     onSelectSettingsChange(
-                                        event.target.value as "all" | "point" | "curve" | "surface" | "clippingOutline"
+                                        event.target.value as "all" | "point" | "curve" | "surface" | "clippingOutline",
                                     )
                                 }
                                 input={<OutlinedInput fullWidth />}
                             >
-                                <ListSubheader>Snap to</ListSubheader>
+                                <ListSubheader>{t("snapTo")}</ListSubheader>
                                 {snapKinds.map((opt) => (
                                     <MenuItem
                                         key={opt.val}
@@ -110,7 +117,7 @@ export default function Measure() {
                                 disabled={!currentEntities.length}
                             >
                                 <Add sx={{ mr: 1 }} />
-                                New
+                                {t("new")}
                             </Button>
                             <Button
                                 onClick={() => {
@@ -121,7 +128,7 @@ export default function Measure() {
                                 disabled={!currentEntities.length}
                             >
                                 <DeleteSweep sx={{ mr: 1 }} />
-                                Clear
+                                {t("clear")}
                             </Button>
                         </Box>
                     ) : null}

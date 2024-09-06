@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { BoundingSphere } from "@novorender/api";
 import { CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 import ReactVirtualizedAutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
@@ -52,6 +53,7 @@ export default function ClashList() {
     const {
         state: { view, db },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
@@ -115,7 +117,7 @@ export default function ClashList() {
                                 name: getObjectNameFromPath(obj.path),
                                 sphere: obj.bounds?.sphere,
                             },
-                        ])
+                        ]),
                     ),
                 });
             } catch (ex) {
@@ -130,14 +132,14 @@ export default function ClashList() {
         dispatchHighlightCollections(
             highlightCollectionsActions.setIds(
                 HighlightCollection.ClashObjects1,
-                clashes.map((c) => c.objIds[0])
-            )
+                clashes.map((c) => c.objIds[0]),
+            ),
         );
         dispatchHighlightCollections(
             highlightCollectionsActions.setIds(
                 HighlightCollection.ClashObjects2,
-                clashes.map((c) => c.objIds[1])
-            )
+                clashes.map((c) => c.objIds[1]),
+            ),
         );
     }, [dispatchHighlightCollections, profile]);
 
@@ -196,13 +198,13 @@ export default function ClashList() {
             dispatch(clashActions.setSelectedClash(clash));
 
             dispatchHighlightCollections(
-                highlightCollectionsActions.setIds(HighlightCollection.ClashObjects1, clash ? [clash.objIds[0]] : [])
+                highlightCollectionsActions.setIds(HighlightCollection.ClashObjects1, clash ? [clash.objIds[0]] : []),
             );
             dispatchHighlightCollections(
-                highlightCollectionsActions.setIds(HighlightCollection.ClashObjects2, clash ? [clash.objIds[1]] : [])
+                highlightCollectionsActions.setIds(HighlightCollection.ClashObjects2, clash ? [clash.objIds[1]] : []),
             );
         },
-        [dispatch, dispatchHighlightCollections]
+        [dispatch, dispatchHighlightCollections],
     );
 
     const handleObjectClick = useCallback(
@@ -215,7 +217,7 @@ export default function ClashList() {
                 flyTo({ sphere: obj.sphere });
             }
         },
-        [flyTo, selectClash]
+        [flyTo, selectClash],
     );
 
     const handlePointClick = useCallback(
@@ -232,7 +234,7 @@ export default function ClashList() {
 
             selectClash(clash);
         },
-        [flyTo, selectClash]
+        [flyTo, selectClash],
     );
 
     const Row = useMemo(() => {
@@ -292,7 +294,7 @@ export default function ClashList() {
                 <Box display="flex" justifyContent={"space-between"}>
                     <Button color="grey" onClick={() => history.push("/")}>
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                 </Box>
             </Box>
@@ -303,7 +305,7 @@ export default function ClashList() {
                 </Box>
             ) : !profile ? (
                 <Box color="grey" m={4} textAlign="center">
-                    Profile not found
+                    {t("profileNotFound")}
                 </Box>
             ) : objectMap.status === AsyncStatus.Error ? (
                 <Box color="grey" m={4} textAlign="center">
@@ -316,7 +318,7 @@ export default function ClashList() {
                     </Typography>
                     <Box mx={2} mt={2}>
                         <FormControl fullWidth variant="outlined">
-                            <InputLabel htmlFor="clash-filter">Filter</InputLabel>
+                            <InputLabel htmlFor="clash-filter">{t("filter")}</InputLabel>
                             <OutlinedInput
                                 id="clash-filter"
                                 value={filterDraft}

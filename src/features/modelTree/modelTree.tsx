@@ -2,6 +2,7 @@ import { ContentCopy } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FixedSizeList, ListOnScrollProps } from "react-window";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -47,6 +48,7 @@ export default function ModelTree() {
     const {
         state: { db, view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.modelTree.key;
@@ -97,8 +99,8 @@ export default function ModelTree() {
         const isSamePath = !currentDepth
             ? false
             : currentNode.type === NodeType.Internal || currentNode.type === "root"
-            ? currentNode.path === currentDepth.path
-            : getParentPath(currentNode.path) === currentDepth.path;
+              ? currentNode.path === currentDepth.path
+              : getParentPath(currentNode.path) === currentDepth.path;
 
         if (isSamePath) {
             if (currentNode.type === NodeType.Leaf && currentDepth) {
@@ -112,7 +114,7 @@ export default function ModelTree() {
                                   ...state,
                                   nodes: [currentNode, ...state.nodes],
                               }
-                            : state
+                            : state,
                     );
                 } else if (!isLoadingMore.current) {
                     // add one because we include parent node in list too
@@ -133,8 +135,8 @@ export default function ModelTree() {
                 node.type === NodeType.Internal
                     ? node
                     : node.type === rootNode.type
-                    ? undefined
-                    : await searchFirstObjectAtPath({ db, path: parentPath });
+                      ? undefined
+                      : await searchFirstObjectAtPath({ db, path: parentPath });
 
             try {
                 const iterator = db.search({ parentPath, descentDepth: 1, full: true }, undefined);
@@ -175,12 +177,13 @@ export default function ModelTree() {
                           nodes: [
                               ...state.nodes,
                               ...nodesToAdd.filter(
-                                  (newNode) => currentDepth.nodes.find((_node) => _node.id === newNode.id) === undefined
+                                  (newNode) =>
+                                      currentDepth.nodes.find((_node) => _node.id === newNode.id) === undefined,
                               ),
                           ],
                           iterator: done ? undefined : state.iterator,
                       }
-                    : state
+                    : state,
             );
         } catch {
             // nada
@@ -235,6 +238,8 @@ export default function ModelTree() {
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
                     disableShadow
                     widget={featuresConfig.modelTree}
                     WidgetMenu={(props) => (
@@ -254,7 +259,7 @@ export default function ModelTree() {
                                         <ListItemIcon>
                                             <ContentCopy fontSize="small" />
                                         </ListItemIcon>
-                                        <ListItemText>Copy current path</ListItemText>
+                                        <ListItemText>{t("copyCurrentPath")}</ListItemText>
                                     </>
                                 </MenuItem>
                             </div>

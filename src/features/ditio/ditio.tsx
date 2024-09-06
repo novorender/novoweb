@@ -1,6 +1,7 @@
 import { SettingsRounded } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { PropsWithChildren, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
     MemoryRouter,
     Redirect,
@@ -40,7 +41,13 @@ export default function Ditio() {
     return (
         <MemoryRouter initialEntries={["/", lastViewedPath]} initialIndex={1}>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.ditio} disableShadow />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    WidgetMenu={WidgetMenu}
+                    widget={featuresConfig.ditio}
+                    disableShadow
+                />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexGrow={1}
@@ -130,6 +137,7 @@ function WidgetMenu(props: MenuProps) {
 }
 
 function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const match = useRouteMatch();
 
@@ -149,7 +157,7 @@ function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
                     <ListItemIcon>
                         <SettingsRounded />
                     </ListItemIcon>
-                    <ListItemText>Settings</ListItemText>
+                    <ListItemText>{t("settings")}</ListItemText>
                 </>
             </MenuItem>
         </div>

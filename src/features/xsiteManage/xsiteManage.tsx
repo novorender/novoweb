@@ -1,6 +1,7 @@
 import { Logout, SettingsRounded } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { PropsWithChildren, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation, useRouteMatch } from "react-router-dom";
 
 import { Permission } from "apis/dataV2/permissions";
@@ -40,7 +41,13 @@ export default function XsiteManage() {
     return (
         <MemoryRouter initialEntries={["/machines", lastViewedPath]} initialIndex={1}>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.xsiteManage} disableShadow />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    WidgetMenu={WidgetMenu}
+                    widget={featuresConfig.xsiteManage}
+                    disableShadow
+                />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection="column"
@@ -104,6 +111,7 @@ function WidgetMenu(props: MenuProps) {
 }
 
 function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const dispatch = useAppDispatch();
 
@@ -124,7 +132,7 @@ function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
                     <ListItemIcon>
                         <Logout />
                     </ListItemIcon>
-                    <ListItemText>Log out</ListItemText>
+                    <ListItemText>{t("logOut")}</ListItemText>
                 </>
             </MenuItem>
         </div>
@@ -132,6 +140,7 @@ function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
 }
 
 function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const match = useRouteMatch();
 
@@ -154,7 +163,7 @@ function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
                     <ListItemIcon>
                         <SettingsRounded />
                     </ListItemIcon>
-                    <ListItemText>Settings</ListItemText>
+                    <ListItemText>{t("settings")}</ListItemText>
                 </>
             </MenuItem>
         </div>

@@ -21,7 +21,7 @@ export function getParentPath(path: string): string {
 }
 
 export function extractObjectIds<T extends { id: number } = HierarcicalObjectReference>(
-    objects: { id: number }[]
+    objects: { id: number }[],
 ): T["id"][] {
     return objects.map((obj) => obj.id);
 }
@@ -35,7 +35,7 @@ export function getObjectNameFromPath(path: string): string {
 export function getFilePathFromObjectPath(objectPath: string): string | null {
     //https://novorender.com/formats-integrations/
     const match = objectPath.match(
-        /^(?<path>.+\.(dem|dwg|dxf|ifc|xml|kof|nwd|obj|pdms|rvm|step|stp|wms|wmts|pts|las|laz|e57|jpg|jpeg|tif|tiff|pdf))/i
+        /^(?<path>.+\.(dem|dwg|dxf|ifc|xml|kof|nwd|obj|pdms|rvm|step|stp|wms|wmts|pts|las|laz|e57|jpg|jpeg|tif|tiff|pdf))/i,
     )?.groups;
 
     if (!match || !match.path) {
@@ -48,7 +48,7 @@ export function getFilePathFromObjectPath(objectPath: string): string | null {
 export async function getObjectMetadataRotation(
     view: View,
     db: ObjectDB,
-    objectId: ObjectId
+    objectId: ObjectId,
 ): Promise<quat | undefined> {
     const metadata = await (view.data ? view.data.getObjectMetaData(objectId) : db.getObjectMetdata(objectId));
 
@@ -70,7 +70,7 @@ export async function getObjectMetadataRotation(
             parentPath: descendantPath,
             full: true,
         },
-        undefined
+        undefined,
     );
 
     for await (const object of objects) {
@@ -118,7 +118,7 @@ export async function objIdsToTotalBoundingSphere({
               abortSignal,
           })
         : (await Promise.all(ids.slice(-50).map((id) => getObjectData({ db, id, view })))).filter(
-              (obj): obj is ObjectData => obj !== undefined
+              (obj): obj is ObjectData => obj !== undefined,
           );
 
     return getTotalBoundingSphere(nodes, { flip });
@@ -126,7 +126,7 @@ export async function objIdsToTotalBoundingSphere({
 
 export function getTotalBoundingSphere(
     nodes: HierarcicalObjectReference[],
-    options?: { flip?: boolean }
+    options?: { flip?: boolean },
 ): BoundingSphere | undefined {
     const spheres: BoundingSphere[] = [];
 
@@ -174,7 +174,7 @@ export function getPropertyDisplayName(property: string): string {
 
     try {
         decoded = decodeURIComponent(property);
-    } catch (e) {
+    } catch {
         console.warn(`Failed to decode property "${property}".`);
     }
 

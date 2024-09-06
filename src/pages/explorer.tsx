@@ -2,10 +2,12 @@ import { SearchPattern } from "@novorender/webgl-api";
 import { ReactNode, useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { CameraStateProvider } from "contexts/cameraState";
 import { ExplorerGlobalsProvider, useExplorerGlobals } from "contexts/explorerGlobals";
 import { HiddenProvider } from "contexts/hidden";
 import { HighlightCollectionsProvider } from "contexts/highlightCollections";
 import { HighlightedProvider } from "contexts/highlighted";
+import { LastPickSampleProvider } from "contexts/lastPickSample";
 import { ObjectGroupsProvider } from "contexts/objectGroups";
 import { SelectionBasketProvider } from "contexts/selectionBasket";
 import { Consent } from "features/consent";
@@ -86,7 +88,11 @@ function ContextProviders({ children }: { children: ReactNode }) {
                     <HiddenProvider>
                         <SelectionBasketProvider>
                             <FormsGlobalsProvider>
-                                <ObjectGroupsProvider>{children}</ObjectGroupsProvider>
+                                <CameraStateProvider>
+                                    <LastPickSampleProvider>
+                                        <ObjectGroupsProvider>{children}</ObjectGroupsProvider>
+                                    </LastPickSampleProvider>
+                                </CameraStateProvider>
                             </FormsGlobalsProvider>
                         </SelectionBasketProvider>
                     </HiddenProvider>

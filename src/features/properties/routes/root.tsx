@@ -27,6 +27,7 @@ import {
     useRef,
     useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -37,8 +38,8 @@ import {
     Divider,
     IosSwitch,
     LinearProgress,
-    ScrollBox,
     Tooltip,
+    WidgetBottomScrollBox,
 } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
@@ -97,6 +98,7 @@ export function Root() {
     const {
         state: { db, view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const theme = useTheme();
 
     const sort = useAppSelector(selectPropertiesSort);
@@ -180,7 +182,7 @@ export function Root() {
                 if (parentProperties.length + cleanedObjectData.properties.length > MAX_PROPERTY_COUNT) {
                     parentProperties = parentProperties.slice(
                         0,
-                        Math.max(0, MAX_PROPERTY_COUNT - cleanedObjectData.properties.length)
+                        Math.max(0, MAX_PROPERTY_COUNT - cleanedObjectData.properties.length),
                     );
                     if (!newPropertyLimitMessage) {
                         newPropertyLimitMessage = `Not all parent properties are displayed because ${MAX_PROPERTY_COUNT} property limit reached.`;
@@ -280,7 +282,11 @@ export function Root() {
             abort();
             setStatus(Status.Initial);
 
-            event.target.checked ? handleCheck({ property, value, deep }) : handleUncheck(property);
+            if (event.target.checked) {
+                handleCheck({ property, value, deep });
+            } else {
+                handleUncheck(property);
+            }
         };
 
     return (
@@ -303,7 +309,7 @@ export function Root() {
                             }
                             label={
                                 <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                    Popup
+                                    {t("popup")}
                                 </Box>
                             }
                         />
@@ -316,7 +322,7 @@ export function Root() {
                         ) : (
                             <SwapVert fontSize="small" sx={{ mr: 1 }} />
                         )}
-                        Sort
+                        {t("sort")}
                     </Button>
                 </Box>
             </Box>
@@ -325,8 +331,8 @@ export function Root() {
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox pb={2} {...bindResizeHandlers()}>
-                {mainObject === undefined && <Box p={1}>Select an object to view properties.</Box>}
+            <WidgetBottomScrollBox pb={2} {...bindResizeHandlers()}>
+                {mainObject === undefined && <Box p={1}>{t("selectAnObjectToViewProperties")}</Box>}
                 {mainObject !== undefined && object ? (
                     <>
                         {propertyLimitMessage ? <Alert severity="warning">{propertyLimitMessage}</Alert> : null}
@@ -359,7 +365,7 @@ export function Root() {
                         ) : null}
                     </>
                 ) : null}
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }
@@ -487,6 +493,8 @@ function PropertyItem({
     groupName?: string;
     resizing: MutableRefObject<boolean>;
 }) {
+    const { t } = useTranslation();
+
     const isUrl = value.startsWith("http");
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     // TODO properties:manage?
@@ -594,14 +602,14 @@ function PropertyItem({
                         <MenuItem
                             onClick={() =>
                                 navigator.clipboard.writeText(
-                                    `${groupName ? `${groupName}/${property}` : property} ${value}`
+                                    `${groupName ? `${groupName}/${property}` : property} ${value}`,
                                 )
                             }
                         >
                             <ListItemIcon>
                                 <ContentCopy fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText>Copy property</ListItemText>
+                            <ListItemText>{t("copyProperty")}</ListItemText>
                         </MenuItem>
                         <MenuItem
                             onClick={() =>
@@ -611,13 +619,13 @@ function PropertyItem({
                             <ListItemIcon>
                                 <ContentCopy fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText>Copy property name</ListItemText>
+                            <ListItemText>{t("copyPropertyName")}</ListItemText>
                         </MenuItem>
                         <MenuItem onClick={() => navigator.clipboard.writeText(value)}>
                             <ListItemIcon>
                                 <ContentCopy fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText>Copy property value</ListItemText>
+                            <ListItemText>{t("copyPropertyValue")}</ListItemText>
                         </MenuItem>
                     </Menu>
                     <IconButton
@@ -683,6 +691,6 @@ function createPropertiesObject(object: ObjectData): PropertiesObject {
                 ["Description", object.description],
             ],
             grouped: {},
-        } as PropertiesObject
+        } as PropertiesObject,
     );
 }

@@ -1,5 +1,6 @@
 import { Settings } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { matchPath, MemoryRouter, Route, Switch, useHistory, useLocation } from "react-router-dom";
 
 import { Permission } from "apis/dataV2/permissions";
@@ -24,7 +25,13 @@ export default function Properties() {
     return (
         <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader WidgetMenu={WidgetMenu} disableShadow widget={featuresConfig.properties} />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    WidgetMenu={WidgetMenu}
+                    disableShadow
+                    widget={featuresConfig.properties}
+                />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection="column"
@@ -48,6 +55,7 @@ export default function Properties() {
 }
 
 function WidgetMenu(props: MenuProps) {
+    const { t } = useTranslation();
     const history = useHistory();
     const location = useLocation();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
@@ -78,7 +86,7 @@ function WidgetMenu(props: MenuProps) {
                 <ListItemIcon>
                     <Settings fontSize="small" />
                 </ListItemIcon>
-                <ListItemText>Settings</ListItemText>
+                <ListItemText>{t("settings")}</ListItemText>
             </MenuItem>
         </Menu>
     );

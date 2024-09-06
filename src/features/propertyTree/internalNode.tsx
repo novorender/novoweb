@@ -21,6 +21,7 @@ import {
 } from "@mui/material";
 import pMap from "p-map";
 import { FocusEvent, MouseEvent, MutableRefObject, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useGetPropertyTreeFavoritesQuery, useSetPropertyTreeFavoritesMutation } from "apis/dataV2/dataV2Api";
 import { Permission } from "apis/dataV2/permissions";
@@ -58,6 +59,7 @@ export function InternalNode({
     const {
         state: { db, view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const sceneId = useSceneId();
     const dispatchGroups = useDispatchObjectGroups();
 
@@ -81,7 +83,7 @@ export function InternalNode({
 
     const { data, isLoading: isLoadingNodeData } = useGetPropertiesQuery(
         { assetUrl: getAssetUrl(view, "").toString(), path },
-        { skip: !expanded && !isFavorited }
+        { skip: !expanded && !isFavorited },
     );
 
     const containsLeaves = data && "values" in data;
@@ -94,7 +96,7 @@ export function InternalNode({
 
             setLeafColors(data.values.map((_val, i) => colors[i % colors.length]));
         },
-        [data, containsLeaves]
+        [data, containsLeaves],
     );
 
     const stopPropagation = (evt: MouseEvent | FocusEvent) => {
@@ -135,11 +137,11 @@ export function InternalNode({
                             group: group as PropertyTreeGroup,
                             property: path,
                             value: val,
-                        })
+                        }),
                     );
                     await sleep(20);
                 },
-                { concurrency: 1, signal: abortSignal }
+                { concurrency: 1, signal: abortSignal },
             );
         } catch (e) {
             if (!abortSignal.aborted) {
@@ -152,7 +154,7 @@ export function InternalNode({
 
     const search = async (
         value: string,
-        abortSignal: AbortSignal
+        abortSignal: AbortSignal,
     ): Promise<(Omit<PropertyTreeGroup, "color"> & { color?: VecRGBA }) | undefined> => {
         if (abortSignal.aborted) {
             return;
@@ -250,7 +252,7 @@ export function InternalNode({
 
                     await sleep(20);
                 },
-                { concurrency: 1, signal: abortSignal }
+                { concurrency: 1, signal: abortSignal },
             );
         } catch (e) {
             if (!abortSignal.aborted) {
@@ -413,7 +415,7 @@ export function InternalNode({
                     <ListItemIcon>
                         <Folder fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText>Save to groups</ListItemText>
+                    <ListItemText>{t("saveToGroups")}</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={toggleFavorite} disabled={!isV2}>
                     <ListItemIcon>

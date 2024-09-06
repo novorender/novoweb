@@ -2,6 +2,7 @@ import { DeviceProfile, getDeviceProfile, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { SearchOptions } from "@novorender/webgl-api";
 import { getGPUTier } from "detect-gpu";
+import { ReadonlyVec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
 import { useLazyCheckPermissionsQuery, useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
@@ -21,11 +22,12 @@ import { useSceneId } from "hooks/useSceneId";
 import { ProjectType, selectConfig } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { VecRGBA } from "utils/color";
+import { mixpanel } from "utils/mixpanel";
 import { sleep } from "utils/time";
 
 import { renderActions } from "../renderSlice";
 import { ErrorKind } from "../sceneError";
-import { getDefaultCamera, loadScene } from "../utils";
+import { getDefaultCamera, loadScene, tm2LatLon } from "../utils";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
@@ -72,6 +74,7 @@ export function useHandleInit() {
 
             try {
                 const [{ url: _url, db, ...sceneData }, sceneCamera] = await loadScene(sceneId);
+                const { projectId } = sceneData;
 
                 const projectV2 = await getProject({ projectId: sceneId })
                     .unwrap()
@@ -81,20 +84,8 @@ export function useHandleInit() {
                         }
                         throw e;
                     });
-                const { projectId } = sceneData;
 
                 const projectIsV2 = Boolean(projectV2);
-                const [tmZoneForCalc, permissions] = await Promise.all([
-                    loadTmZoneForCalc(projectV2, sceneData.tmZone),
-                    checkPermissions({
-                        scope: {
-                            organizationId: sceneData.organization,
-                            projectId,
-                            viewerSceneId: sceneId === projectId ? undefined : sceneId,
-                        },
-                        permissions: Object.values(Permission),
-                    }).unwrap(),
-                ]);
 
                 const url = new URL(_url);
                 const parentSceneId = url.pathname.replaceAll("/", "");
@@ -105,6 +96,25 @@ export function useHandleInit() {
                     "index.json",
                     new AbortController().signal,
                 );
+
+                const [tmZoneForCalc, permissions] = await Promise.all([
+                    loadTmZoneForCalc(projectV2, sceneData.tmZone, octreeSceneConfig.center),
+                    checkPermissions({
+                        scope: {
+                            organizationId: sceneData.organization,
+                            projectId,
+                            viewerSceneId: sceneId === projectId ? undefined : sceneId,
+                        },
+                        permissions: Object.values(Permission),
+                    }).unwrap(),
+                ]);
+
+                mixpanel?.register({ "Scene ID": sceneId, "Scene Org": sceneData.organization }, { persistent: false });
+                mixpanel?.track_pageview({
+                    "Scene ID": sceneId,
+                    "Scene Title": sceneData.title,
+                    "Scene Org": sceneData.organization,
+                });
 
                 const offlineWorkerState =
                     view.offline &&
@@ -121,7 +131,13 @@ export function useHandleInit() {
                         tmZoneForCalc,
                         sceneData,
                         sceneConfig: octreeSceneConfig,
-                        initialCamera: sceneCamera ?? getDefaultCamera(projectV2?.bounds) ?? view.renderState.camera,
+                        initialCamera: sceneCamera ??
+                            getDefaultCamera(projectV2?.bounds) ?? {
+                                position: view.renderState.camera.position,
+                                rotation: view.renderState.camera.rotation,
+                                fov: view.renderState.camera.fov,
+                                kind: view.renderState.camera.kind,
+                            },
                         deviceProfile,
                     }),
                 );
@@ -322,17 +338,44 @@ async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?:
     const imports = await View.downloadImports({ baseUrl: url });
     const view = new View(canvas, deviceProfile, imports);
     view.controllers.flight.input.mouseMoveSensitivity = 4;
+    view.controllers.flight.input.disableWheelOnShift = true;
     return view;
 }
 
-async function loadTmZoneForCalc(projectV2: ProjectInfo | undefined, tmZoneV1: string | undefined) {
+async function loadTmZoneForCalc(
+    projectV2: ProjectInfo | undefined,
+    tmZoneV1: string | undefined,
+    sceneCenter: ReadonlyVec3,
+) {
     if (projectV2) {
         if (projectV2.epsg) {
-            const resp = await fetch(`https://epsg.io/${projectV2.epsg}.wkt`);
-            if (resp.ok) {
-                return resp.text();
+            // Try to use either .wkt or .proj4
+            // Some conversions don't work in WKT, probably because proj4 doesn't support newer WKT versions
+            // And some conversions don't work in proj4, because they require downloading additional
+            const respWkt = await fetch(`https://epsg.io/${projectV2.epsg}.wkt`);
+            if (respWkt.ok) {
+                try {
+                    const wkt = await respWkt.text();
+                    const converted = tm2LatLon({
+                        tmZone: wkt,
+                        coords: sceneCenter,
+                    });
+                    if (!Number.isNaN(converted.latitude) && !Number.isNaN(converted.longitude)) {
+                        return wkt;
+                    }
+                } catch (ex) {
+                    console.warn("Error using WKT string for coordinate conversion, use proj4 instead", ex);
+                }
             } else {
-                console.warn(resp.text());
+                console.warn(await respWkt.text());
+            }
+
+            // WKT failed, try proj4
+            const respProj = await fetch(`https://epsg.io/${projectV2.epsg}.proj4`);
+            if (respProj.ok) {
+                return await respProj.text();
+            } else {
+                console.warn(await respProj.text());
             }
         }
     } else {

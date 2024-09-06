@@ -1,6 +1,7 @@
 import { FilterAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, ListItemButton, Typography, useTheme } from "@mui/material";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, Redirect, useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 
@@ -24,6 +25,7 @@ import {
 } from "../../slice";
 
 export function Feed() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
 
@@ -60,7 +62,7 @@ export function Feed() {
                         sx={{ height: 5, width: 1, mt: "-5px" }}
                         position="absolute"
                     />
-                    <Typography p={1}>{featuresConfig.ditio.name} has not been set up for this project.</Typography>
+                    <Typography p={1}>{t("notSetUpForProject", { name: t(featuresConfig.ditio.nameKey) })}</Typography>
                 </>
             );
         }
@@ -81,7 +83,7 @@ export function Feed() {
                     <Box display="flex" justifyContent={"space-between"}>
                         <Button component={Link} to={`/feed/filters`} color="grey">
                             <FilterAlt sx={{ mr: 1 }} />
-                            Filters
+                            {t("filters")}
                         </Button>
                         <FormControlLabel
                             control={
@@ -94,7 +96,7 @@ export function Feed() {
                             }
                             label={
                                 <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                    Feed
+                                    {t("feed")}
                                 </Box>
                             }
                         />
@@ -109,7 +111,7 @@ export function Feed() {
                             }
                             label={
                                 <Box fontSize={14} sx={{ userSelect: "none" }}>
-                                    Machines
+                                    {t("machines")}
                                 </Box>
                             }
                         />
@@ -121,7 +123,7 @@ export function Feed() {
                     <LinearProgress />
                 </Box>
             ) : !feed ? (
-                <Typography p={1}>Unable to load feed.</Typography>
+                <Typography p={1}>{t("unableToLoadFeed")}</Typography>
             ) : !feed.length ? (
                 <Box flex={"1 1 100%"}>
                     <Box
@@ -132,14 +134,14 @@ export function Feed() {
                         alignItems="center"
                         flexDirection="column"
                     >
-                        Found no posts
+                        {t("foundNoPosts")}
                         {filtersEnabled ? (
                             <Button
                                 sx={{ mt: 2 }}
                                 variant="contained"
                                 onClick={() => dispatch(ditioActions.resetFilters())}
                             >
-                                Reset filters
+                                {t("resetFilters")}
                             </Button>
                         ) : null}
                     </Box>
@@ -178,7 +180,7 @@ export function Feed() {
                                                 }}
                                                 onMouseEnter={() => {
                                                     dispatch(
-                                                        ditioActions.setHoveredEntity({ kind: "post", id: post.id })
+                                                        ditioActions.setHoveredEntity({ kind: "post", id: post.id }),
                                                     );
                                                 }}
                                                 onMouseLeave={() => {
@@ -205,7 +207,7 @@ export function Feed() {
                                                             <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
                                                                 {post.isAlert ? (
                                                                     <Box component="span" color="red">
-                                                                        !{" "}
+                                                                        {"! "}
                                                                     </Box>
                                                                 ) : null}
                                                                 {post.taskDescription}
@@ -225,7 +227,7 @@ export function Feed() {
                                                         <Typography noWrap variant="body1" sx={{ fontWeight: 600 }}>
                                                             {post.isAlert ? (
                                                                 <Box component="span" color="red">
-                                                                    !{" "}
+                                                                    {"! "}
                                                                 </Box>
                                                             ) : null}
                                                             {post.taskDescription}

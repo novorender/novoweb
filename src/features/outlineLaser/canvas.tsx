@@ -53,9 +53,11 @@ export function OutlineLaserCanvas({
                 translateInteraction(svg.children.namedItem(`leftMarker-${i}`), l, rot + 90);
                 translateInteraction(svg.children.namedItem(`rightMarker-${i}`), r, rot - 90);
 
-                laser.measurementX?.start
-                    ? translateInteraction(svg.children.namedItem(`updateXTracer-${i}`), getActionPos(l, r))
-                    : translateInteraction(svg.children.namedItem(`removeXTracer-${i}`), getActionPos(l, r));
+                if (laser.measurementX?.start) {
+                    translateInteraction(svg.children.namedItem(`updateXTracer-${i}`), getActionPos(l, r));
+                } else {
+                    translateInteraction(svg.children.namedItem(`removeXTracer-${i}`), getActionPos(l, r));
+                }
             }
 
             if (yPts) {
@@ -72,9 +74,11 @@ export function OutlineLaserCanvas({
                 }
                 translateInteraction(svg.children.namedItem(`downMarker-${i}`), d, rot + 90);
                 translateInteraction(svg.children.namedItem(`upMarker-${i}`), u, rot - 90);
-                laser.measurementY?.start
-                    ? translateInteraction(svg.children.namedItem(`updateYTracer-${i}`), getActionPos(d, u))
-                    : translateInteraction(svg.children.namedItem(`removeYTracer-${i}`), getActionPos(d, u));
+                if (laser.measurementY?.start) {
+                    translateInteraction(svg.children.namedItem(`updateYTracer-${i}`), getActionPos(d, u));
+                } else {
+                    translateInteraction(svg.children.namedItem(`removeYTracer-${i}`), getActionPos(d, u));
+                }
             }
 
             if (zPts) {
@@ -91,9 +95,11 @@ export function OutlineLaserCanvas({
                 }
                 translateInteraction(svg.children.namedItem(`zDownMarker-${i}`), d, rot + 90);
                 translateInteraction(svg.children.namedItem(`zUpMarker-${i}`), u, rot - 90);
-                laser.measurementY?.start
-                    ? translateInteraction(svg.children.namedItem(`updateZTracer-${i}`), getActionPos(d, u))
-                    : translateInteraction(svg.children.namedItem(`removeZTracer-${i}`), getActionPos(d, u));
+                if (laser.measurementY?.start) {
+                    translateInteraction(svg.children.namedItem(`updateZTracer-${i}`), getActionPos(d, u));
+                } else {
+                    translateInteraction(svg.children.namedItem(`removeZTracer-${i}`), getActionPos(d, u));
+                }
             }
         });
     }, [ctx, canvas, view, outlineLasers, svg]);
@@ -166,8 +172,8 @@ const renderTrace = ({
                 2,
                 {
                     type: "default",
-                }
-            )
-        )
+                },
+            ),
+        ),
     );
 };

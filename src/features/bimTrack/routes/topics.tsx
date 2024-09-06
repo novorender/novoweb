@@ -2,6 +2,7 @@ import { Add, ArrowBack, FilterAlt } from "@mui/icons-material";
 import { Box, Button, ListItem, Typography, useTheme } from "@mui/material";
 import { isAfter, isSameDay, parseISO } from "date-fns";
 import { CSSProperties, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useHistory, useParams } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 
@@ -29,6 +30,7 @@ import {
 } from "../bimTrackSlice";
 
 export function Topics() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const filters = useAppSelector(selectFilters);
@@ -41,7 +43,7 @@ export function Topics() {
     const { data: extensions } = useGetProjectExtensionsQuery({ projectId });
     const { data: topics = [] as Topic[], isLoading: loadingTopics } = useGetTopicsQuery(
         { projectId },
-        { refetchOnFocus: true }
+        { refetchOnFocus: true },
     );
     const { data: user } = useGetCurrentUserQuery();
     const filteredTopics = applyFilters(topics, filters, filterModifiers);
@@ -52,7 +54,7 @@ export function Topics() {
                 dispatch(bimTrackActions.setFilters({ [FilterType.AssignedTo]: [user.id] }));
             }
         },
-        [user, dispatch, filterIsInitialized]
+        [user, dispatch, filterIsInitialized],
     );
 
     if (!project || loadingTopics || !filterIsInitialized) {
@@ -73,30 +75,30 @@ export function Topics() {
                 </Box>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
-                    Back
+                    {t("back")}
                 </Button>
                 {projectActions.includes("createTopic") ? (
                     <Button component={Link} to={`/project/${projectId}/new-topic`} color="grey">
                         <Add sx={{ mr: 1 }} />
-                        Create new issue
+                        {t("createNewIssue")}
                     </Button>
                 ) : null}
                 <Button component={Link} to={`/project/${projectId}/filter`} color="grey">
                     <FilterAlt sx={{ mr: 1 }} />
-                    Filter issues
+                    {t("filterIssues")}
                 </Button>
             </Box>
             <Box py={1} height={1} display="flex" flexDirection="column">
                 <Box sx={{ px: 1, my: 1 }}>
                     <Typography variant="body2">
-                        Showing {filteredTopics.length} of {topics.length} issues
+                        {t("showingIssues", { count: filteredTopics.length, total: topics.length })}
                     </Typography>
                 </Box>
                 {!filteredTopics.length && topics.length ? (
                     <Box flex={"1 1 100%"}>
                         <Box width={1} mt={4} display="flex" justifyContent="center">
                             <Button variant="contained" onClick={() => dispatch(bimTrackActions.resetFilters())}>
-                                Clear filters
+                                {t("clearFilters")}
                             </Button>
                         </Box>
                     </Box>
@@ -132,6 +134,7 @@ export function Topics() {
 }
 
 function TopicListItem({ topic, projectId, style }: { topic: Topic; projectId: string; style: CSSProperties }) {
+    const { t } = useTranslation();
     const theme = useTheme();
 
     const { data: viewpoints } = useGetViewpointsQuery(
@@ -139,7 +142,7 @@ function TopicListItem({ topic, projectId, style }: { topic: Topic; projectId: s
             projectId,
             topicId: topic.guid,
         },
-        { skip: Boolean(topic.default_viewpoint_guid) }
+        { skip: Boolean(topic.default_viewpoint_guid) },
     );
 
     const { data: thumbnail } = useGetSnapshotQuery(
@@ -149,10 +152,10 @@ function TopicListItem({ topic, projectId, style }: { topic: Topic; projectId: s
             viewpointId: topic.default_viewpoint_guid
                 ? topic.default_viewpoint_guid
                 : viewpoints && viewpoints[0]
-                ? viewpoints[0].guid
-                : "",
+                  ? viewpoints[0].guid
+                  : "",
         },
-        { skip: (!viewpoints || !viewpoints[0]) && !topic.default_viewpoint_guid }
+        { skip: (!viewpoints || !viewpoints[0]) && !topic.default_viewpoint_guid },
     );
 
     const has3dPos = Boolean(viewpoints?.filter((vp) => vp.perspective_camera || vp.orthogonal_camera).length);
@@ -213,8 +216,10 @@ function TopicListItem({ topic, projectId, style }: { topic: Topic; projectId: s
                                     WebkitBoxOrient: "vertical",
                                 }}
                             >
-                                Priority: {topic.priority} <br />
-                                Status: {topic.topic_status}
+                                {t("priorityName")}
+                                {topic.priority} <br />
+                                {t("statusName")}
+                                {topic.topic_status}
                             </Typography>
                         </div>
                     </Tooltip>

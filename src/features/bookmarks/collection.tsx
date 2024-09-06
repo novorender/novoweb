@@ -1,6 +1,7 @@
 import { Clear, Edit, MoreVert } from "@mui/icons-material";
 import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { MouseEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { Permission } from "apis/dataV2/permissions";
@@ -14,6 +15,7 @@ import { bookmarksActions, ExtendedBookmark, selectIsCollectionExpanded } from "
 
 export function Collection({ collection, bookmarks }: { collection: string; bookmarks: ExtendedBookmark[] }) {
     const history = useHistory();
+    const { t } = useTranslation();
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
     const canManage = checkPermission(Permission.BookmarkManage) ?? isAdmin;
@@ -43,7 +45,7 @@ export function Collection({ collection, bookmarks }: { collection: string; book
             }
 
             return set;
-        }, new Set<string>())
+        }, new Set<string>()),
     ).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
 
     const name = collection.split("/").pop() ?? "";
@@ -92,7 +94,7 @@ export function Collection({ collection, bookmarks }: { collection: string; book
                         <ListItemIcon>
                             <Edit fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Rename</ListItemText>
+                        <ListItemText>{t("rename")}</ListItemText>
                     </MenuItem>
                     <MenuItem
                         onClick={() => {
@@ -108,9 +110,9 @@ export function Collection({ collection, bookmarks }: { collection: string; book
                                                   ...bookmark,
                                                   grouping: bookmark.grouping?.replace(regExp, "$1").replace(/\/$/, ""),
                                               }
-                                            : bookmark
-                                    )
-                                )
+                                            : bookmark,
+                                    ),
+                                ),
                             );
 
                             dispatch(bookmarksActions.closeCollection(collection));
@@ -119,7 +121,7 @@ export function Collection({ collection, bookmarks }: { collection: string; book
                         <ListItemIcon>
                             <Clear fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Ungroup</ListItemText>
+                        <ListItemText>{t("ungroup")}</ListItemText>
                     </MenuItem>
                 </Menu>
             </AccordionSummary>

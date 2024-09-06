@@ -3,7 +3,7 @@ import { type HierarcicalObjectReference, type ObjectData, type ObjectId } from 
 
 import { HighlightCollection } from "contexts/highlightCollections";
 import { searchByPatterns } from "utils/search";
-import { sleep } from "utils/time";
+import { sleep, toLocalISOString } from "utils/time";
 
 import {
     DateTimeItem,
@@ -84,7 +84,7 @@ export async function idsToObjects({
 
             return acc;
         },
-        [[]] as string[][]
+        [[]] as string[][],
     );
 
     const concurrentRequests = 5;
@@ -100,9 +100,15 @@ export async function idsToObjects({
                     abortSignal,
                     callback,
                     full: true,
-                    searchPatterns: [{ property: "id", value: batch, exact: true }],
+                    searchPatterns: [
+                        {
+                            property: "id",
+                            value: batch,
+                            exact: true,
+                        },
+                    ],
                 }).catch(() => {});
-            })
+            }),
         );
 
         await sleep(1);
@@ -174,7 +180,7 @@ export async function mapGuidsToIds({
 
             return acc;
         },
-        [[]] as string[][]
+        [[]] as string[][],
     );
 
     const concurrentRequests = 5;
@@ -205,7 +211,7 @@ export async function mapGuidsToIds({
                     ],
                     full: true,
                 }).catch(() => {});
-            })
+            }),
         );
 
         await sleep(1);
@@ -262,7 +268,10 @@ function toFormField(item: FormItem): FormField {
             type: "select",
             label: item.title,
             required: item.required,
-            options: item.options.map((option) => ({ label: option, value: option })),
+            options: item.options.map((option) => ({
+                label: option,
+                value: option,
+            })),
             ...(item.id ? { id: item.id } : {}),
             ...(item.value?.length ? { value: item.value } : item.value === null ? { value: [] } : {}),
         };
@@ -273,7 +282,10 @@ function toFormField(item: FormItem): FormField {
             multiple: true,
             label: item.title,
             required: item.required,
-            options: item.options.map((option) => ({ label: option, value: option })),
+            options: item.options.map((option) => ({
+                label: option,
+                value: option,
+            })),
             ...(item.id ? { id: item.id } : {}),
             ...(item.value?.length ? { value: item.value } : { value: [] }),
         };
@@ -290,12 +302,12 @@ function toFormField(item: FormItem): FormField {
         return {
             type: item.type as FormItemType.Date | FormItemType.Time | FormItemType.DateTime,
             label: item.title,
-            value: (item.value as Date)?.toISOString(),
+            value: toLocalISOString(item.value as Date),
             required: item.required,
             readonly: (item as DateTimeItem).readonly,
-            defaultValue: (item as DateTimeItem).defaultValue?.toISOString(),
-            min: (item as DateTimeItem).min?.toISOString(),
-            max: (item as DateTimeItem).max?.toISOString(),
+            defaultValue: toLocalISOString((item as DateTimeItem).defaultValue),
+            min: toLocalISOString((item as DateTimeItem).min),
+            max: toLocalISOString((item as DateTimeItem).max),
             step: (item as DateTimeItem).step,
             ...(item.id ? { id: item.id } : {}),
         };

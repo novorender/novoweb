@@ -63,7 +63,7 @@ export function useSaveDeviationConfig() {
                     msg += ". Group updates won't be reflected until you rerun the calculation.";
                 }
                 dispatch(deviationsActions.setSaveStatus({ status: AsyncStatus.Success, data: msg }));
-            } catch (ex) {
+            } catch {
                 dispatch(deviationsActions.setSaveStatus({ status: AsyncStatus.Error, msg: "Failed to save changes" }));
             }
         },
@@ -77,7 +77,7 @@ export function useSaveDeviationConfig() {
             setDeviationProfiles,
             objectGroups,
             saveCustomProperties,
-        ]
+        ],
     );
 }
 
@@ -113,7 +113,7 @@ async function saveExplorerSettings({
 export async function updateObjectIds(
     fillGroupIds: (groups: ObjectGroup[]) => Promise<void>,
     uiConfig: UiDeviationConfig,
-    objectGroups: ObjectGroup[]
+    objectGroups: ObjectGroup[],
 ): Promise<UiDeviationConfig> {
     const uniqueGroupIds = new Set<string>();
     for (const profile of uiConfig.profiles) {

@@ -3,6 +3,7 @@ import { Box, Button, FormControl, FormControlLabel, useTheme } from "@mui/mater
 import { DatePicker } from "@mui/x-date-pickers";
 import { isValid, set } from "date-fns";
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -11,6 +12,7 @@ import { Divider, ScrollBox, Switch as SwitchInput } from "components";
 import { ditioActions, FilterType, initialFilters, selectFilters } from "../../slice";
 
 export function Filters() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const dispatch = useAppDispatch();
@@ -39,7 +41,7 @@ export function Filters() {
                 </Box>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
-                    Back
+                    {t("back")}
                 </Button>
             </Box>
             <ScrollBox
@@ -76,7 +78,7 @@ export function Filters() {
                         }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Posts
+                                {t("posts")}
                             </Box>
                         }
                     />
@@ -103,7 +105,7 @@ export function Filters() {
                         }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Alerts
+                                {t("alerts")}
                             </Box>
                         }
                     />
@@ -161,10 +163,10 @@ export function Filters() {
 
                 <Box display="flex" justifyContent="space-between" mb={2}>
                     <Button variant="outlined" color="grey" type="reset" fullWidth>
-                        Reset filter
+                        {t("resetFilter")}
                     </Button>
                     <Button sx={{ ml: 2 }} fullWidth variant="contained" type="submit">
-                        Save filter
+                        {t("saveFilter")}
                     </Button>
                 </Box>
             </ScrollBox>

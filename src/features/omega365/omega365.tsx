@@ -1,6 +1,7 @@
 import { Download, OpenInNew } from "@mui/icons-material";
 import { Box, Button, useTheme } from "@mui/material";
 import { Fragment, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useGetOmega365DocumentLinksQuery, useIsOmega365ConfiguredForProjectQuery } from "apis/dataV2/dataV2Api";
 import { Omega365Document } from "apis/dataV2/omega365Types";
@@ -24,6 +25,7 @@ import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorer";
 
 export default function Omega365() {
+    const { t } = useTranslation();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.omega365.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.omega365.key);
@@ -34,18 +36,23 @@ export default function Omega365() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.omega365} disableShadow />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.omega365}
+                    disableShadow
+                />
                 {minimized || menuOpen ? null : isFetching ? (
                     <Box>
                         <LinearProgress />
                     </Box>
                 ) : isError ? (
                     <Box p={1} pt={2}>
-                        An error occured while loading Omega365 configuration for the project.
+                        {t("omega365ConfigError")}
                     </Box>
                 ) : data?.configured === false ? (
                     <Box p={1} pt={2}>
-                        Omega365 integration is not configured for this project.
+                        {t("omega365NoIntegration")}
                     </Box>
                 ) : data?.configured === true ? (
                     <DcoumentLoader projectId={projectId} menuOpen={menuOpen} minimized={minimized} />
@@ -66,6 +73,7 @@ function DcoumentLoader({
     menuOpen: boolean;
     minimized: boolean;
 }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const mainObject = useAppSelector(selectMainObject);
     const isObjectSelected = typeof mainObject === "number";
@@ -94,11 +102,11 @@ function DcoumentLoader({
                 <Box display="flex" justifyContent="flex-end" m={0.5}>
                     {objectDetailsHref && mainObject && !isFetching ? (
                         <Button color="grey" href={objectDetailsHref} target="_blank">
-                            Object details
+                            {t("objectDetails")}
                         </Button>
                     ) : (
                         <Button color="grey" disabled>
-                            Object details
+                            {t("objectDetails")}
                         </Button>
                     )}
                 </Box>
@@ -106,7 +114,7 @@ function DcoumentLoader({
 
             {!isObjectSelected ? (
                 <Box p={1} pt={2}>
-                    Select an object to see associated documents.
+                    {t("selectObject")}
                 </Box>
             ) : isFetching ? (
                 <Box>
@@ -122,11 +130,11 @@ function DcoumentLoader({
                 >
                     {isError ? (
                         <Box p={1} pt={2}>
-                            An error occured while loading Omega365 configuration for the project.
+                            {t("omega365ConfigError")}
                         </Box>
                     ) : documents?.length === 0 ? (
                         <Box p={1} pt={2}>
-                            Found no documents attached to the selected object.
+                            {t("noDocsForObject")}
                         </Box>
                     ) : (
                         <DocumentList documents={documents || []} />
@@ -138,23 +146,27 @@ function DcoumentLoader({
 }
 
 function DocumentList({ documents }: { documents: Omega365Document[] }) {
+    const { t } = useTranslation();
     const organisedDocs = useMemo(
         () =>
             Object.values(
-                documents.reduce((prev, doc) => {
-                    if (
-                        prev[doc.documentType] &&
-                        !prev[doc.documentType].find((_doc) => _doc.document_ID === doc.document_ID)
-                    ) {
-                        prev[doc.documentType].push(doc);
-                    } else {
-                        prev[doc.documentType] = [doc];
-                    }
+                documents.reduce(
+                    (prev, doc) => {
+                        if (
+                            prev[doc.documentType] &&
+                            !prev[doc.documentType].find((_doc) => _doc.document_ID === doc.document_ID)
+                        ) {
+                            prev[doc.documentType].push(doc);
+                        } else {
+                            prev[doc.documentType] = [doc];
+                        }
 
-                    return prev;
-                }, {} as { [k: string]: Omega365Document[] })
+                        return prev;
+                    },
+                    {} as { [k: string]: Omega365Document[] },
+                ),
             ),
-        [documents]
+        [documents],
     );
 
     return (
@@ -168,19 +180,20 @@ function DocumentList({ documents }: { documents: Omega365Document[] }) {
                                 <Fragment key={doc.document_ID}>
                                     <Box>
                                         <Box display="flex" mb={0.5}>
-                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>Title:</Box>
+                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>{t("title")}</Box>
                                             <Box>{doc.documentTitle}</Box>
                                         </Box>
                                         <Box display="flex" mb={1}>
-                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>ID:</Box>
+                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>{t("idName")}</Box>
                                             <Box>{doc.document_ID}</Box>
                                         </Box>
                                         <Box display="flex" mx={-1}>
                                             <Button color="grey" sx={{ mr: 2 }} href={doc.profileURL} target="_blank">
-                                                <OpenInNew sx={{ mr: 1 }} /> Omega365
+                                                <OpenInNew sx={{ mr: 1 }} />
+                                                {t("omega365")}
                                             </Button>
                                             <Button sx={{ mr: 1 }} href={doc.fileURL} target="_blank">
-                                                <Download /> Download
+                                                <Download /> {t("download")}
                                             </Button>
                                         </Box>
                                     </Box>

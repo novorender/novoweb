@@ -4,9 +4,11 @@ import { AABB2 } from "@novorender/api/types/measure/worker/brep";
 import { BoundingSphere } from "@novorender/webgl-api";
 import { glMatrix, vec2, vec3 } from "gl-matrix";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
+import IconButtonExt from "components/iconButtonExt";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHighlighted } from "contexts/highlighted";
@@ -32,12 +34,13 @@ type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
 };
 
-export function FlyToSelected({ position, ...speedDialProps }: Props) {
-    const { name, Icon } = featuresConfig.flyToSelected;
+export function FlyToSelected({ position, newDesign, ...speedDialProps }: Props & { newDesign?: boolean }) {
+    const { nameKey, Icon } = featuresConfig.flyToSelected;
     const highlighted = useHighlighted().idArr;
     const {
         state: { db, scene, view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const cameraType = useAppSelector(selectCameraType);
     const viewMode = useAppSelector(selectViewMode);
@@ -95,7 +98,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
                         fov: sphere.radius * 2 * (1 + ORTHO_PADDING),
                         far: view.renderState.camera.far,
                     },
-                })
+                }),
             );
         };
 
@@ -173,7 +176,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
                                 fov: zoomingParams.fov * (1 + ORTHO_PADDING),
                                 far: view.renderState.camera.far,
                             },
-                        })
+                        }),
                     );
                 }
             } else {
@@ -217,6 +220,27 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
     };
 
     const disabled = !highlighted.length;
+
+    if (newDesign) {
+        return (
+            <Tooltip open={Boolean(tooltipMessage)} title={tooltipMessage} placement="top">
+                <Box>
+                    <Tooltip title={t(nameKey)} placement="top">
+                        <Box>
+                            <IconButtonExt
+                                onClick={handleClick}
+                                disabled={disabled}
+                                loading={status === Status.Loading}
+                            >
+                                <Icon />
+                            </IconButtonExt>
+                        </Box>
+                    </Tooltip>
+                </Box>
+            </Tooltip>
+        );
+    }
+
     return (
         <SpeedDialAction
             {...speedDialProps}
@@ -227,7 +251,7 @@ export function FlyToSelected({ position, ...speedDialProps }: Props) {
                 style: { ...position, position: "absolute" },
             }}
             onClick={handleClick}
-            title={disabled ? undefined : name}
+            title={disabled ? undefined : t(nameKey)}
             icon={
                 <Tooltip open={Boolean(tooltipMessage)} title={tooltipMessage} placement="top">
                     <Box

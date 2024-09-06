@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
@@ -29,6 +30,7 @@ type Option = {
 };
 
 export function ProjectSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const theme = useTheme();
     const isV2 = useAppSelector(selectProjectIsV2);
@@ -52,9 +54,9 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                     ({
                         zone,
                         epsg: projectV1ZoneNameToEpsg(zone),
-                    } as Option)
+                    }) as Option,
             ),
-        []
+        [],
     );
 
     let options: Option[];
@@ -78,11 +80,11 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                 <Box display="flex" justifyContent="space-between">
                     <Button onClick={() => history.goBack()} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <Button sx={{ ml: "auto" }} onClick={() => save()} color="grey" disabled={saving || isV2}>
                         <Save sx={{ mr: 1 }} />
-                        Save
+                        {t("save")}
                     </Button>
                 </Box>
             </Box>
@@ -93,7 +95,7 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
             ) : null}
             <ScrollBox height={1} px={1} mt={1} pb={3}>
                 <Typography pt={1} variant="h6" fontWeight={600}>
-                    Project settings
+                    {t("projectSettings")}
                 </Typography>
                 <Divider sx={{ my: 1, mb: 2 }} />
                 <Autocomplete
@@ -117,12 +119,12 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                             helperText={
                                 isV2 ? (
                                     <>
-                                        You can edit TM Zone in{" "}
+                                        {t("editTimezoneIn")}{" "}
                                         <Link
                                             href={`${projectsUrl}/org/${org}?modalContext=edit&projectId=${projectId}`}
                                             target="_blank"
                                         >
-                                            Projects
+                                            {t("projects")}
                                         </Link>
                                     </>
                                 ) : null
