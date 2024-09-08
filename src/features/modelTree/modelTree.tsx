@@ -1,308 +1,184 @@
-import { ContentCopy } from "@mui/icons-material";
-import { Box, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
-import { HierarcicalObjectReference } from "@novorender/webgl-api";
+import { Close, DeleteSweep } from "@mui/icons-material";
+import { Box, Button, FormControlLabel, IconButton, Snackbar, snackbarContentClasses } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FixedSizeList, ListOnScrollProps } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
 
-import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
+import { useGetModelTreeFavoritesQuery } from "apis/dataV2/dataV2Api";
+import { useAppSelector } from "app/redux-store-interactions";
+import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    IosSwitch,
+    LinearProgress,
+    LogoSpeedDial,
+    WidgetBottomScrollBox,
+    WidgetContainer,
+    WidgetHeader,
+} from "components";
 import { featuresConfig } from "config/features";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { Breadcrumbs } from "features/breadcrumbs";
-import { NodeList } from "features/nodeList/nodeList";
-import { renderActions, selectMainObject } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
+import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorer";
-import { NodeType } from "types/misc";
-import { getParentPath } from "utils/objectData";
-import { getObjectData, iterateAsync, searchFirstObjectAtPath } from "utils/search";
+import { selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
+import { secondsToMs } from "utils/time";
 
-enum Status {
-    Ready,
-    Loading,
-}
-
-type TreeLevel = {
-    nodes: HierarcicalObjectReference[];
-    path: string;
-    parentNode: HierarcicalObjectReference | undefined;
-    iterator: AsyncIterableIterator<HierarcicalObjectReference> | undefined;
-};
-
-const rootNode = {
-    type: "root",
-    name: "Scene",
-    path: "",
-    id: "root",
-} as const;
-
-type RootNode = typeof rootNode;
+import { selectIsModelTreeLoading } from "./slice";
 
 export default function ModelTree() {
-    const mainObject = useAppSelector(selectMainObject);
-    const dispatch = useAppDispatch();
-
-    const {
-        state: { db, view },
-    } = useExplorerGlobals(true);
     const { t } = useTranslation();
-
+    const sceneId = useSceneId();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.modelTree.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.modelTree.key);
-    const [status, setStatus] = useState(Status.Loading);
-    const [currentDepth, setCurrentDepth] = useState<TreeLevel>();
-    const [currentNode, setCurrentNode] = useState<HierarcicalObjectReference | RootNode>();
 
-    const [abortController, abort] = useAbortController();
-    const isLoadingMore = useRef(false);
-    const listRef = useRef<FixedSizeList>(null);
-    const listElRef = useRef<HTMLElement | null>(null);
+    const [abortController] = useAbortController();
 
-    useEffect(() => {
-        abort();
-    }, [mainObject, abort]);
+    const slowLoadingTimeoutId = useRef(0);
+    const [slowLoading, setSlowLoading] = useState(true);
 
-    useEffect(() => {
-        init();
+    const isV2 = useAppSelector(selectProjectIsV2);
+    const isLoading = useAppSelector(selectIsModelTreeLoading);
 
-        async function init() {
-            if (mainObject === undefined) {
-                setCurrentNode(rootNode);
-                return setStatus(Status.Ready);
-            }
+    const { data: favorites = [], isLoading: isLoadingFavorites } = useGetModelTreeFavoritesQuery(
+        { projectId: sceneId },
+        { skip: !isV2 },
+    );
 
-            setStatus(Status.Loading);
+    const favoritesInitialized = useRef(false);
+    const [favoritesExpanded, toggleExpandFavorites] = useToggle(favorites.length > 0);
 
-            try {
-                const obj = await getObjectData({ db, id: mainObject, view });
-
-                if (!obj) {
-                    return setStatus(Status.Ready);
-                }
-
-                setCurrentNode(obj);
-            } catch {
-                setStatus(Status.Ready);
-            }
-        }
-    }, [mainObject, db, setStatus, setCurrentNode, view]);
+    const [fileLevel, setFileLevel] = useToggle();
 
     useEffect(() => {
-        if (!currentNode) {
+        if (isLoadingFavorites || favoritesInitialized.current) {
             return;
         }
 
-        const isSamePath = !currentDepth
-            ? false
-            : currentNode.type === NodeType.Internal || currentNode.type === "root"
-              ? currentNode.path === currentDepth.path
-              : getParentPath(currentNode.path) === currentDepth.path;
+        if (favorites.length) {
+            toggleExpandFavorites(true);
+        }
 
-        if (isSamePath) {
-            if (currentNode.type === NodeType.Leaf && currentDepth) {
-                const indexInCurrentList = currentDepth.nodes.findIndex((_node) => _node.id === currentNode.id);
-                const shouldPreprendCurrentList = indexInCurrentList === -1 && currentNode.type === NodeType.Leaf;
+        favoritesInitialized.current = true;
+    }, [isLoadingFavorites, favorites, toggleExpandFavorites]);
 
-                if (shouldPreprendCurrentList) {
-                    setCurrentDepth((state) =>
-                        state
-                            ? {
-                                  ...state,
-                                  nodes: [currentNode, ...state.nodes],
-                              }
-                            : state,
-                    );
-                } else if (!isLoadingMore.current) {
-                    // add one because we include parent node in list too
-                    listRef.current?.scrollToItem(indexInCurrentList + 1);
-                }
+    useEffect(() => {
+        if (!isLoading) {
+            setSlowLoading(false);
+            return;
+        }
+
+        if (slowLoadingTimeoutId.current) {
+            window.clearTimeout(slowLoadingTimeoutId.current);
+        }
+
+        slowLoadingTimeoutId.current = window.setTimeout(() => {
+            setSlowLoading(true);
+        }, secondsToMs(10));
+
+        return () => {
+            if (slowLoadingTimeoutId.current) {
+                window.clearTimeout(slowLoadingTimeoutId.current);
             }
-            return setStatus(Status.Ready);
-        }
-
-        getCurrentDepth(currentNode);
-
-        async function getCurrentDepth(node: HierarcicalObjectReference | RootNode) {
-            setStatus(Status.Loading);
-
-            const parentPath =
-                node.type === NodeType.Internal || node.type === rootNode.type ? node.path : getParentPath(node.path);
-            const parentNode =
-                node.type === NodeType.Internal
-                    ? node
-                    : node.type === rootNode.type
-                      ? undefined
-                      : await searchFirstObjectAtPath({ db, path: parentPath });
-
-            try {
-                const iterator = db.search({ parentPath, descentDepth: 1, full: true }, undefined);
-                const [nodes] = await iterateAsync({ iterator, count: 100 });
-
-                setCurrentDepth({
-                    parentNode,
-                    nodes:
-                        node.type === NodeType.Leaf
-                            ? nodes.find((_node) => _node.id === node.id)
-                                ? nodes
-                                : [node, ...nodes]
-                            : nodes,
-                    iterator,
-                    path: parentPath,
-                });
-            } catch {
-                // nada
-            } finally {
-                setStatus(Status.Ready);
-            }
-        }
-    }, [currentNode, currentDepth, db, setCurrentDepth, setStatus]);
-
-    const loadMore = async () => {
-        if (!currentDepth || !currentDepth.iterator || status !== Status.Ready) {
-            return;
-        }
-
-        try {
-            setStatus(Status.Loading);
-            const [nodesToAdd, done] = await iterateAsync({ iterator: currentDepth.iterator, count: 50 });
-
-            setCurrentDepth((state) =>
-                state
-                    ? {
-                          ...state,
-                          nodes: [
-                              ...state.nodes,
-                              ...nodesToAdd.filter(
-                                  (newNode) =>
-                                      currentDepth.nodes.find((_node) => _node.id === newNode.id) === undefined,
-                              ),
-                          ],
-                          iterator: done ? undefined : state.iterator,
-                      }
-                    : state,
-            );
-        } catch {
-            // nada
-        } finally {
-            setStatus(Status.Ready);
-        }
-    };
-
-    const handleScroll = async (event: ListOnScrollProps) => {
-        const list = listElRef.current;
-
-        if (!list || event.scrollDirection !== "forward") {
-            return;
-        }
-
-        const isCloseToBottom = list.scrollHeight - event.scrollOffset - list.clientHeight < list.clientHeight / 5;
-        if (isCloseToBottom) {
-            isLoadingMore.current = true;
-
-            await loadMore();
-
-            setTimeout(() => {
-                isLoadingMore.current = false;
-            }, 150);
-        }
-    };
-
-    const handleBreadcrumbClick = async (crumbPath = "") => {
-        if (crumbPath === currentDepth?.path) {
-            return;
-        }
-
-        if (crumbPath) {
-            try {
-                setStatus(Status.Loading);
-                const node = await searchFirstObjectAtPath({ db, path: crumbPath });
-
-                if (node) {
-                    dispatch(renderActions.setMainObject(node.id));
-                }
-
-                setStatus(Status.Ready);
-            } catch {
-                // nada
-            }
-        } else {
-            dispatch(renderActions.setMainObject(undefined));
-        }
-    };
+        };
+    }, [isLoading]);
 
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader
-                    menuOpen={menuOpen}
-                    toggleMenu={toggleMenu}
-                    disableShadow
-                    widget={featuresConfig.modelTree}
-                    WidgetMenu={(props) => (
-                        <Menu {...props}>
-                            <div>
-                                <MenuItem
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(currentDepth?.path ?? "");
-
-                                        if (props.onClose) {
-                                            props.onClose({}, "backdropClick");
-                                        }
-                                    }}
-                                    disabled={!currentDepth?.path}
-                                >
-                                    <>
-                                        <ListItemIcon>
-                                            <ContentCopy fontSize="small" />
-                                        </ListItemIcon>
-                                        <ListItemText>{t("copyCurrentPath")}</ListItemText>
-                                    </>
-                                </MenuItem>
-                            </div>
-                        </Menu>
-                    )}
-                />
-                <Box display={menuOpen || minimized ? "none" : "flex"} flexDirection="column" height={1}>
-                    {status === Status.Loading ? (
-                        <Box position="relative">
-                            <LinearProgress />
-                        </Box>
-                    ) : null}
-                    {currentDepth ? (
+                <WidgetHeader menuOpen={menuOpen} toggleMenu={toggleMenu} widget={featuresConfig.modelTree}>
+                    {!menuOpen && !minimized && (
                         <>
-                            <Box px={1}>
-                                <Breadcrumbs
-                                    id="scene-tree-breadcrumbs"
-                                    path={currentDepth.path}
-                                    onClick={handleBreadcrumbClick}
-                                    rootName="Scene"
+                            <Box mt={1} mb={1} display="flex" justifyContent="space-between">
+                                <FormControlLabel
+                                    sx={{ ml: 0 }}
+                                    control={
+                                        <IosSwitch
+                                            checked={fileLevel}
+                                            color="primary"
+                                            onChange={({ target: { checked: newFileLevel } }) => {
+                                                setFileLevel(newFileLevel);
+                                            }}
+                                        />
+                                    }
+                                    label={<Box>{t("fileLevel")}</Box>}
                                 />
-                                <Divider />
-                            </Box>
-                            <Box flex={"1 1 100%"} data-test="model-tree-list-container">
-                                {currentDepth?.nodes ? (
-                                    <NodeList
-                                        parentNode={currentDepth.parentNode}
-                                        nodes={currentDepth.nodes}
-                                        onScroll={handleScroll}
-                                        ref={listRef}
-                                        outerRef={listElRef}
-                                        loading={status === Status.Loading}
-                                        allowDownload
-                                        setLoading={(loading: boolean) =>
-                                            setStatus(loading ? Status.Loading : Status.Ready)
-                                        }
-                                        abortController={abortController}
-                                    />
-                                ) : null}
+                                <Button onClick={() => {}} color="grey">
+                                    <DeleteSweep sx={{ mr: 1 }} />
+                                    {t("clear")}
+                                </Button>
                             </Box>
                         </>
-                    ) : null}
-                </Box>
+                    )}
+                </WidgetHeader>
+                {isLoading && (
+                    <Box position="relative">
+                        <LinearProgress />
+                    </Box>
+                )}
+                <WidgetBottomScrollBox
+                    display={!menuOpen && !minimized ? "flex" : "none"}
+                    flexDirection="column"
+                    flex={1}
+                    pt={1}
+                    pb={2}
+                >
+                    <Accordion
+                        slotProps={{ transition: { timeout: 200 } }}
+                        disabled={!favorites.length}
+                        sx={{ mb: 1 }}
+                        expanded={favoritesExpanded}
+                        onChange={(_evt, expanded) => toggleExpandFavorites(expanded)}
+                        square
+                    >
+                        <AccordionSummary>{t("favorites")}</AccordionSummary>
+                        <AccordionDetails>{favorites.length > 0 && <></>}</AccordionDetails>
+                    </Accordion>
+                    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+                        <AutoSizer>
+                            {({ height, width }) => (
+                                <Accordion
+                                    slotProps={{ transition: { timeout: 200 } }}
+                                    square
+                                    defaultExpanded
+                                    sx={{ height, width, display: "flex", flexDirection: "column" }}
+                                >
+                                    <AccordionSummary>{t("foldersAndFiles")}</AccordionSummary>
+                                    <AccordionDetails sx={{ height: "100%" }}></AccordionDetails>
+                                </Accordion>
+                            )}
+                        </AutoSizer>
+                    </Box>
+                </WidgetBottomScrollBox>
+                {slowLoading && (
+                    <Snackbar
+                        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                        sx={{
+                            width: { xs: "auto", sm: 350 },
+                            bottom: { xs: "auto", sm: 24 },
+                            top: { xs: 24, sm: "auto" },
+                        }}
+                        ContentProps={{
+                            sx: { flexWrap: "nowrap", [`& .${snackbarContentClasses.action}`]: { pl: 1.5 } },
+                        }}
+                        autoHideDuration={null}
+                        open={true}
+                        onClose={() => setSlowLoading(false)}
+                        message={t("slowSearch")}
+                        action={
+                            <IconButton
+                                size="small"
+                                aria-label="close"
+                                color="inherit"
+                                onClick={() => setSlowLoading(false)}
+                            >
+                                <Close fontSize="small" />
+                            </IconButton>
+                        }
+                    />
+                )}
                 {menuOpen && <WidgetList widgetKey={featuresConfig.modelTree.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />

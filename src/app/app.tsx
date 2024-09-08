@@ -335,7 +335,7 @@ function UpdatePrompt({ update }: { update: () => void }) {
                 },
             }}
             open={true}
-            message={"A new version is available."}
+            message={t("newVersionAvailable")}
         >
             <Paper
                 sx={{

@@ -15,7 +15,7 @@ import { getDataV2DynamicBaseQuery } from "./utils";
 export const dataV2Api = createApi({
     reducerPath: "dataV2",
     baseQuery: getDataV2DynamicBaseQuery(),
-    tagTypes: ["PropertyTreeFavorites", "ProjectProgress", "Deviation", "Bookmarks", "Groups"],
+    tagTypes: ["PropertyTreeFavorites", "ModelTreeFavorites", "ProjectProgress", "Deviation", "Bookmarks", "Groups"],
     endpoints: (builder) => ({
         isOmega365ConfiguredForProject: builder.query<{ configured: boolean }, { projectId: string }>({
             query: ({ projectId }) => `/explorer/${projectId}/omega365/configured`,
@@ -39,6 +39,30 @@ export const dataV2Api = createApi({
             async onQueryStarted({ favorites, projectId }, { dispatch, queryFulfilled }) {
                 const patchResult = dispatch(
                     dataV2Api.util.updateQueryData("getPropertyTreeFavorites", { projectId }, () => favorites),
+                );
+                try {
+                    await queryFulfilled;
+                } catch {
+                    patchResult.undo();
+                }
+            },
+        }),
+        getModelTreeFavorites: builder.query<string[], { projectId: string }>({
+            query: ({ projectId }) => `/explorer/${projectId}/modeltree/favorites`,
+            keepUnusedDataFor: minutesToSeconds(10),
+            providesTags: ["ModelTreeFavorites"],
+            transformResponse: (data: { path: string }[]) => data.map(({ path }) => path),
+        }),
+        setModelTreeFavorites: builder.mutation<void, { favorites: string[]; projectId: string }>({
+            query: ({ projectId, favorites }) => ({
+                url: `/explorer/${projectId}/modeltree/favorites`,
+                method: "PUT",
+                body: favorites.map((path) => ({ path })),
+            }),
+            invalidatesTags: ["ModelTreeFavorites"],
+            async onQueryStarted({ favorites, projectId }, { dispatch, queryFulfilled }) {
+                const patchResult = dispatch(
+                    dataV2Api.util.updateQueryData("getModelTreeFavorites", { projectId }, () => favorites),
                 );
                 try {
                     await queryFulfilled;
@@ -206,4 +230,6 @@ export const {
     useSaveCustomPropertiesMutation,
     useLazyGetDitioTokenQuery,
     useSaveDitioConfigMutation,
+    useGetModelTreeFavoritesQuery,
+    useSetModelTreeFavoritesMutation,
 } = dataV2Api;
