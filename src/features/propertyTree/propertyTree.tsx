@@ -212,7 +212,7 @@ export default function PropertyTree() {
                         autoHideDuration={null}
                         open={true}
                         onClose={() => setSlowLoading(false)}
-                        message={"This is a very big search. Please be patient while we build your filter."}
+                        message={t("slowSearch")}
                         action={
                             <IconButton
                                 size="small"

@@ -110,7 +110,6 @@
     "planarDist": "Ebene Dist.",
     "slope": "Neigung",
     "functions": "Funktionen",
-    "copyCurrentPath": "Aktuellen Pfad kopieren",
     "goTo": "Gehe zu",
     "marker": "Markierung",
     "center": "Zentrum",
@@ -648,5 +647,9 @@
     "formUpdateFailed": "Aktualisierung des Formulars fehlgeschlagen",
     "youNeedToEnableOutlinesForSelectedClippingPlaneToSeeTheOutlines": "Sie müssen die Umrisse für die ausgewählte Schnittebene aktivieren, um die Umrisse zu sehen.",
     "enableOutlines": "Umrisse aktivieren",
-    "colorPerObject": "Farbe pro Objekt"
+    "colorPerObject": "Farbe pro Objekt",
+    "foldersAndFiles": "Ordner und dateien",
+    "fileLevel": "Dateiebene",
+    "errorLoadingObjects": "Beim Laden der Objekte ist ein Fehler aufgetreten.",
+    "slowSearch": "Dies ist eine sehr umfangreiche Suche. Bitte haben Sie Geduld, während wir Ihren Filter erstellen."
 }

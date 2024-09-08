@@ -110,7 +110,6 @@
     "planarDist": "Planar dist.",
     "slope": "Slope",
     "functions": "Functions",
-    "copyCurrentPath": "Copy current path",
     "goTo": "Go to",
     "marker": "Marker",
     "center": "Center",
@@ -648,5 +647,9 @@
     "formUpdateFailed": "Failed to update form",
     "youNeedToEnableOutlinesForSelectedClippingPlaneToSeeTheOutlines": "You need to enable outlines for selected clipping plane to see the outlines.",
     "enableOutlines": "Enable outlines",
-    "colorPerObject": "Color per object"
+    "colorPerObject": "Color per object",
+    "foldersAndFiles": "Folders and files",
+    "fileLevel": "File level",
+    "errorLoadingObjects": "An error occurred while loading objects.",
+    "slowSearch": "This is a very big search. Please be patient while we build your filter."
 }

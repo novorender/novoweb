@@ -110,7 +110,6 @@
     "planarDist": "Plan avst.",
     "slope": "Helling",
     "functions": "Funksjoner",
-    "copyCurrentPath": "Kopier gjeldende sti",
     "goTo": "Gå til",
     "marker": "Markør",
     "center": "Senter",
@@ -648,5 +647,9 @@
     "formUpdateFailed": "Kunne ikke oppdatere skjemaet",
     "youNeedToEnableOutlinesForSelectedClippingPlaneToSeeTheOutlines": "Du må aktivere konturer for valgt klippeplan for å se konturene.",
     "enableOutlines": "Aktiver konturer",
-    "colorPerObject": "Farge per objekt"
+    "colorPerObject": "Farge per objekt",
+    "foldersAndFiles": "Mapper og filer",
+    "fileLevel": "Filnivå",
+    "errorLoadingObjects": "Det oppstod en feil under lasting av objekter.",
+    "slowSearch": "Dette er et veldig stort søk. Vær tålmodig mens vi bygger filteret ditt."
 }
