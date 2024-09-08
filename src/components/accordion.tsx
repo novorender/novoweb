@@ -1,4 +1,11 @@
-import { Accordion as MuiAccordion, accordionClasses, AccordionProps, Color, styled } from "@mui/material";
+import {
+    Accordion as MuiAccordion,
+    accordionClasses,
+    AccordionProps,
+    collapseClasses,
+    Color,
+    styled,
+} from "@mui/material";
 import { css } from "@mui/styled-engine";
 
 export const Accordion = styled(MuiAccordion, { shouldForwardProp: (prop) => prop !== "level" })<
@@ -17,6 +24,16 @@ export const Accordion = styled(MuiAccordion, { shouldForwardProp: (prop) => pro
         &.${accordionClasses.root} {
             &.${accordionClasses.expanded} {
                 margin: 0 0 ${theme.spacing(1)};
+
+                & > .${collapseClasses.root} {
+                    flex: 1;
+                    & > .${collapseClasses.wrapper} {
+                        height: 100%;
+                        & .${accordionClasses.region} {
+                            height: 100%;
+                        }
+                    }
+                }
             }
         }
 
@@ -28,5 +45,5 @@ export const Accordion = styled(MuiAccordion, { shouldForwardProp: (prop) => pro
         &.${accordionClasses.disabled} {
             background: ${theme.palette.common.white};
         }
-    `
+    `,
 );
