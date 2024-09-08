@@ -22,6 +22,7 @@ import { imagesReduces } from "features/images";
 import { jiraApi, jiraReducer } from "features/jira";
 import { manholeReducer } from "features/manhole";
 import { measureReducer } from "features/measure";
+import { modelTreeReducer } from "features/modelTree";
 import { myLocationReducer } from "features/myLocation";
 import { offlineReducer } from "features/offline";
 import { orthoCamReducer } from "features/orthoCam";
@@ -79,6 +80,7 @@ const rootReducer = combineReducers({
     clash: clashReducer,
     pointVisualization: pointVisualizationReducer,
     crossSection: crossSectionReducer,
+    modelTree: modelTreeReducer,
 });
 
 export const store = configureStore({
