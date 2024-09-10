@@ -71,6 +71,8 @@ export const selectEnabledWidgets = createSelector(
                         return can(`int:omegaPims365:use` as Permission);
                     case "bookmarks":
                         return can(Permission.BookmarkRead);
+                    case "clash":
+                        return can(Permission.ClashRead);
                     case "groups":
                         return can(Permission.GroupRead);
                     case "forms":
