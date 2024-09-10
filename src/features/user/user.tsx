@@ -1,7 +1,7 @@
 import { InfoOutlined } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, Grid, Link, Tooltip } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { dataApi } from "apis/dataV1";
