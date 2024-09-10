@@ -21,7 +21,6 @@ export function useRefreshProjectPermissions() {
             return;
         }
 
-        // TODO debounce?
         async function refresh() {
             if (!document.hidden) {
                 const viewerSceneId = projectId === sceneId ? undefined : sceneId;
@@ -30,7 +29,6 @@ export function useRefreshProjectPermissions() {
                     permissions: Object.values(Permission),
                 }).unwrap();
                 dispatch(explorerActions.setProjectPermissions(permissions));
-                // console.log("permissions", permissions);
             }
         }
 

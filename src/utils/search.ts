@@ -61,16 +61,7 @@ export async function searchByPatterns({
     abortSignal?: AbortSignal;
     full?: boolean;
 }): Promise<void> {
-    const iterator = db.search(
-        {
-            searchPattern:
-                typeof searchPatterns === "string"
-                    ? searchPatterns
-                    : searchPatterns.map(ensureSearchPatternValueIsArray),
-            full,
-        },
-        abortSignal
-    );
+    const iterator = db.search({ searchPattern: searchPatterns, full }, abortSignal);
     let done = false;
 
     while (!done && !abortSignal?.aborted) {
@@ -101,15 +92,7 @@ export async function searchDeepByPatterns({
     callbackInterval?: number;
     abortSignal?: AbortSignal;
 }): Promise<void> {
-    const iterator = db.search(
-        {
-            searchPattern:
-                typeof searchPatterns === "string"
-                    ? searchPatterns
-                    : searchPatterns.map(ensureSearchPatternValueIsArray),
-        },
-        abortSignal
-    );
+    const iterator = db.search({ searchPattern: searchPatterns }, abortSignal);
     let done = false;
 
     while (!done && !abortSignal?.aborted) {
@@ -130,7 +113,7 @@ export async function searchDeepByPatterns({
 
                 return acc;
             },
-            [[], []] as [cached: ObjectId[], uncached: HierarcicalObjectReference[]]
+            [[], []] as [cached: ObjectId[], uncached: HierarcicalObjectReference[]],
         );
 
         callback(cachedDescendants);
@@ -147,18 +130,11 @@ export async function searchDeepByPatterns({
                             callback: (results) => callback(results.map((res) => res.id)),
                             callbackInterval: callbackInterval,
                             parentPath: obj.path,
-                        })
+                        }),
                     ),
-            { concurrency: 10 }
+            { concurrency: 10 },
         );
     }
-}
-
-function ensureSearchPatternValueIsArray(pattern: SearchPattern): SearchPattern {
-    if (typeof pattern.value === "string") {
-        return { ...pattern, value: [pattern.value] };
-    }
-    return pattern;
 }
 
 /**
@@ -280,7 +256,7 @@ export async function batchedPropertySearch<T = HierarcicalObjectReference>({
 
             return acc;
         },
-        [[]] as string[][]
+        [[]] as string[][],
     );
 
     const concurrentRequests = 5;
@@ -306,7 +282,7 @@ export async function batchedPropertySearch<T = HierarcicalObjectReference>({
                 }).catch(() => {
                     // continue
                 });
-            })
+            }),
         );
     }
 

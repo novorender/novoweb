@@ -5,11 +5,11 @@ import { minutesToSeconds } from "date-fns";
 import { type ArcgisWidgetConfig } from "features/arcgis/types";
 import { CustomProperties } from "types/project";
 
-import { AuthScope, PermissionInfo } from "./authTypes";
+import { AuthScope, Role } from "./authTypes";
 import { DeviationProjectConfig } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
 import { Permission } from "./permissions";
-import { BuildProgressResult, EpsgSearchResult, ProjectInfo, Role } from "./projectTypes";
+import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
 import { getDataV2DynamicBaseQuery } from "./utils";
 
 export const dataV2Api = createApi({
@@ -109,9 +109,6 @@ export const dataV2Api = createApi({
                 body: query,
             }),
         }),
-        getFlatPermissions: builder.query<PermissionInfo[], void>({
-            query: () => "/permissions/flat",
-        }),
         getCurrentUserRoleAssignments: builder.query<
             Role[],
             { organizationId: string; projectId: string; viewerSceneId?: string }
@@ -199,7 +196,6 @@ export const {
     useGetProjectProgressQuery,
     useLazyGetFileDownloadLinkQuery,
     useSearchEpsgQuery,
-    useLazyGetFlatPermissionsQuery,
     useLazyCheckPermissionsQuery,
     useGetCurrentUserRoleAssignmentsQuery,
     useGetBookmarksQuery,

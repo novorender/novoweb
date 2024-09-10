@@ -41,7 +41,6 @@ export function BookmarkList() {
     const viewMode = useAppSelector(selectViewMode);
     const saveStatus = useAppSelector(selectSaveStatus);
     const user = useAppSelector(selectUser);
-    // TODO bookmark response should include :manage permission for each bookmark or request it separately?
     const bookmarks = useAppSelector(selectBookmarks);
     const bookmarksStatus = useAppSelector(selectBookmarksStatus);
     const filters = useAppSelector(selectBookmarkFilters);

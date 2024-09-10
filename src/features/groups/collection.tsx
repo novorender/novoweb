@@ -21,7 +21,6 @@ export function Collection({ collection, disabled }: { collection: string; disab
     const dispatchObjectGroups = useDispatchObjectGroups();
 
     const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    // TODO per group permissions?
     const checkPermission = useCheckProjectPermission();
     const canManage = (checkPermission(Permission.GroupManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
     const expanded = useAppSelector((state) => selectIsCollectionExpanded(state, collection));

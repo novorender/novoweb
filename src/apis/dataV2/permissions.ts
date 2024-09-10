@@ -1,3 +1,4 @@
+// Should be in sync with data-v2
 export enum Permission {
     Access = "access",
     AccessAssignmentsManage = "access:assignments:manage",

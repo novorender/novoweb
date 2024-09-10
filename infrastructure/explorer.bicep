@@ -14,7 +14,6 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
 }
 
 var appSettings = {
-    DATA_SERVER_URL: environment == 'prod' ? 'https://data-v2.novorender.com/api' : 'https://api-wa-${environment}.azurewebsites.net/api'
     DATA_V2_SERVER_URL: environment == 'prod' ? 'https://data-v2.novorender.com' : 'https://api-wa-${environment}.azurewebsites.net'
     AUTH_SERVER_URL: environment == 'prod' ? 'https://auth.novorender.com' : 'https://${environment}.auth.novorender.com'
     BIMCOLLAB_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=bimcollab-client-id)'
