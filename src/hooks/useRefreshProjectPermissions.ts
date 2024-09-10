@@ -24,11 +24,15 @@ export function useRefreshProjectPermissions() {
         async function refresh() {
             if (!document.hidden) {
                 const viewerSceneId = projectId === sceneId ? undefined : sceneId;
-                const permissions = await checkPermissions({
-                    scope: { organizationId: org, projectId, viewerSceneId },
-                    permissions: Object.values(Permission),
-                }).unwrap();
-                dispatch(explorerActions.setProjectPermissions(permissions));
+                try {
+                    const permissions = await checkPermissions({
+                        scope: { organizationId: org, projectId, viewerSceneId },
+                        permissions: Object.values(Permission),
+                    }).unwrap();
+                    dispatch(explorerActions.setProjectPermissions(permissions));
+                } catch (ex) {
+                    console.warn("Error refreshing permissions", ex);
+                }
             }
         }
 
@@ -38,12 +42,9 @@ export function useRefreshProjectPermissions() {
             }
         }
 
-        const timer = setInterval(refresh, 60000 * 5);
-
         document.addEventListener("visibilitychange", onVisible);
 
         return () => {
-            clearInterval(timer);
             document.removeEventListener("visibilitychange", onVisible);
         };
     }, [dispatch, checkPermissions, org, projectId, sceneId]);
