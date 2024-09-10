@@ -540,10 +540,20 @@ export function useCanvasEventHandlers({
         hideSvgCursor();
     };
 
+    const onKeyDown = (evt: KeyboardEvent<HTMLCanvasElement>) => {
+        if (view && evt.key === "Shift" && cameraType === CameraType.Orthographic) {
+            // In orhto shift moves camera on Z axis
+            view.controllers.flight.input.disableWheelOnShift = false;
+        }
+    };
+
     const onKeyUp = (evt: KeyboardEvent<HTMLCanvasElement>) => {
         if (evt.key === "Escape") {
             dispatch(renderActions.setPicker(Picker.Object));
             hideSvgCursor();
+        }
+        if (view && evt.key === "Shift") {
+            view.controllers.flight.input.disableWheelOnShift = true;
         }
     };
 
@@ -559,6 +569,7 @@ export function useCanvasEventHandlers({
         onPointerEnter,
         onPointerMove,
         onPointerOut,
+        onKeyDown,
         onKeyUp,
     };
 }
