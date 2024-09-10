@@ -1,6 +1,6 @@
 import { styled } from "@mui/material";
 import { quat, vec2, vec3 } from "gl-matrix";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { downloadMinimap, MinimapHelper } from "utils/minimap";
@@ -19,70 +19,106 @@ export function Minimap() {
         state: { size, db, view },
     } = useExplorerGlobals(true);
 
-    let width = Math.min(500, size.width / devicePixelRatio);
-    const height = size.height / 2;
+    const width = useMemo(() => Math.min(500, size.width / devicePixelRatio), [size.width]);
+    const height = useMemo(() => size.height / 4, [size.height]);
     const [minimap, setMinimap] = useState<MinimapHelper | undefined>(undefined);
-    const [ctx, setCtx] = useState<CanvasRenderingContext2D | null | undefined>(null);
+    const ctx = useRef<CanvasRenderingContext2D | null>(null);
     const animationFrameId = useRef<number>(-1);
 
     const prevCamPos = useRef<vec3>();
     const prevCamRot = useRef<quat>();
 
-    if (minimap) {
-        width = height * minimap.getAspect();
-    }
+    const [zoom, setZoom] = useState(1);
+    const [pan, setPan] = useState({ x: 0, y: 0 });
+    const isPanning = useRef(false);
+    const startPan = useRef({ x: 0, y: 0 });
 
     useEffect(() => {
         const downloadFunc = async () => {
             if (canvas) {
                 const minimapHelper = await downloadMinimap(db);
                 setMinimap(minimapHelper);
-                setCtx(canvas.getContext("2d"));
+                ctx.current = canvas.getContext("2d");
             }
         };
         downloadFunc();
     }, [db, canvas]);
 
+    const drawMinimap = useCallback(
+        (ctx: CanvasRenderingContext2D, img: HTMLImageElement) => {
+            ctx.clearRect(0, 0, width, height);
+
+            const imgAspectRatio = img.width / img.height;
+            const canvasAspectRatio = width / height;
+
+            let drawWidth, drawHeight;
+            if (imgAspectRatio > canvasAspectRatio) {
+                drawWidth = width * zoom;
+                drawHeight = (width / imgAspectRatio) * zoom;
+            } else {
+                drawHeight = height * zoom;
+                drawWidth = height * imgAspectRatio * zoom;
+            }
+
+            const offsetX = (width - drawWidth) / 2 + pan.x;
+            const offsetY = (height - drawHeight) / 2 + pan.y;
+
+            ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+        },
+        [width, height, zoom, pan],
+    );
+
     useEffect(() => {
-        if (minimap && ctx) {
+        if (minimap && ctx.current) {
             const img = new Image();
             img.crossOrigin = "anonymous";
             img.onload = () => {
+                if (!ctx.current) {
+                    return;
+                }
                 minimap.pixelHeight = img.height * 1.5;
                 minimap.pixelWidth = img.width * 1.5;
-                ctx.clearRect(0, 0, width, height);
-
-                const imgAspectRatio = img.width / img.height;
-                const canvasAspectRatio = width / height;
-
-                let drawWidth, drawHeight;
-                if (imgAspectRatio > canvasAspectRatio) {
-                    drawWidth = width;
-                    drawHeight = width / imgAspectRatio;
-                } else {
-                    drawHeight = height;
-                    drawWidth = height * imgAspectRatio;
-                }
-
-                const offsetX = (width - drawWidth) / 2;
-                const offsetY = (height - drawHeight) / 2;
-
-                ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+                drawMinimap(ctx.current, img);
             };
             const src = getAssetUrl(view, minimap.getMinimapImage());
             img.src = src.toString();
         }
-    }, [canvas, width, height, ctx, minimap, view]);
+    }, [canvas, width, height, minimap, view, zoom, pan, drawMinimap]);
 
-    const clickMinimap = (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-        if (canvas && minimap) {
-            const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            const controller = view.controllers["ortho"];
-            controller.moveTo(minimap.toWorld(vec2.fromValues(x, y)), 1000, view.renderState.camera.rotation);
+    const clickMinimap = useCallback(
+        (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+            if (canvas && minimap) {
+                const rect = canvas.getBoundingClientRect();
+                const x = (event.clientX - rect.left - pan.x) / zoom;
+                const y = (event.clientY - rect.top - pan.y) / zoom;
+                const controller = view.controllers["ortho"];
+                controller.moveTo(minimap.toWorld(vec2.fromValues(x, y)), 1000, view.renderState.camera.rotation);
+            }
+        },
+        [canvas, minimap, pan, zoom, view],
+    );
+
+    const handleWheel = useCallback((event: React.WheelEvent<HTMLCanvasElement>) => {
+        setZoom((prevZoom) => Math.max(0.1, prevZoom - event.deltaY * 0.001));
+    }, []);
+
+    const handleMouseDown = useCallback(
+        (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+            isPanning.current = true;
+            startPan.current = { x: event.clientX - pan.x, y: event.clientY - pan.y };
+        },
+        [pan],
+    );
+
+    const handleMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+        if (isPanning.current) {
+            setPan({ x: event.clientX - startPan.current.x, y: event.clientY - startPan.current.y });
         }
-    };
+    }, []);
+
+    const handleMouseUp = useCallback(() => {
+        isPanning.current = false;
+    }, []);
 
     useEffect(() => {
         function animate() {
@@ -94,47 +130,34 @@ export function Minimap() {
             ) {
                 prevCamRot.current = quat.clone(view.renderState.camera.rotation);
                 prevCamPos.current = vec3.clone(view.renderState.camera.position);
-                if (minimap && ctx) {
+                if (minimap && ctx.current) {
                     minimap.update(view.renderState.camera.position);
                     const img = new Image();
                     img.crossOrigin = "anonymous";
                     img.onload = () => {
-                        ctx.clearRect(0, 0, width, height);
-
-                        const imgAspectRatio = img.width / img.height;
-                        const canvasAspectRatio = width / height;
-
-                        let drawWidth, drawHeight;
-                        if (imgAspectRatio > canvasAspectRatio) {
-                            drawWidth = width;
-                            drawHeight = width / imgAspectRatio;
-                        } else {
-                            drawHeight = height;
-                            drawWidth = height * imgAspectRatio;
+                        if (!ctx.current) {
+                            return;
                         }
 
-                        const offsetX = (width - drawWidth) / 2;
-                        const offsetY = (height - drawHeight) / 2;
-
-                        ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+                        drawMinimap(ctx.current, img);
 
                         const minimapPos = minimap.toMinimap(view.renderState.camera.position);
                         const dirPath = minimap.directionPoints(
                             view.renderState.camera.position,
                             view.renderState.camera.rotation,
                         );
-                        ctx.strokeStyle = "green";
-                        ctx.lineWidth = 3;
-                        ctx.beginPath();
-                        ctx.moveTo(dirPath[0][0], dirPath[0][1]);
+                        ctx.current.strokeStyle = "green";
+                        ctx.current.lineWidth = 3;
+                        ctx.current.beginPath();
+                        ctx.current.moveTo(dirPath[0][0], dirPath[0][1]);
                         for (let i = 1; i < dirPath.length; ++i) {
-                            ctx.lineTo(dirPath[i][0], dirPath[i][1]);
+                            ctx.current.lineTo(dirPath[i][0], dirPath[i][1]);
                         }
-                        ctx.stroke();
-                        ctx.fillStyle = "green";
-                        ctx.beginPath();
-                        ctx.ellipse(minimapPos[0], minimapPos[1], 5, 5, 0, 0, Math.PI * 2);
-                        ctx.fill();
+                        ctx.current.stroke();
+                        ctx.current.fillStyle = "green";
+                        ctx.current.beginPath();
+                        ctx.current.ellipse(minimapPos[0], minimapPos[1], 5, 5, 0, 0, Math.PI * 2);
+                        ctx.current.fill();
                     };
                     const src = getAssetUrl(view, minimap.getMinimapImage());
                     img.src = src.toString();
@@ -144,7 +167,19 @@ export function Minimap() {
         }
         animate();
         return () => cancelAnimationFrame(animationFrameId.current);
-    }, [view, minimap, ctx, height, width]);
+    }, [view, minimap, height, width, zoom, pan, drawMinimap]);
 
-    return <Canvas ref={setCanvas} width={width} height={height} onClick={clickMinimap} />;
+    return (
+        <Canvas
+            ref={setCanvas}
+            width={width}
+            height={height}
+            onClick={clickMinimap}
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+        />
+    );
 }
