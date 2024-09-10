@@ -32,6 +32,7 @@ export function Minimap() {
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const isPanning = useRef(false);
     const startPan = useRef({ x: 0, y: 0 });
+    const lastTouchDistance = useRef<number | null>(null);
 
     useEffect(() => {
         const downloadFunc = async () => {
@@ -120,6 +121,43 @@ export function Minimap() {
         isPanning.current = false;
     }, []);
 
+    const handleTouchStart = useCallback(
+        (event: React.TouchEvent<HTMLCanvasElement>) => {
+            if (event.touches.length === 1) {
+                isPanning.current = true;
+                startPan.current = { x: event.touches[0].clientX - pan.x, y: event.touches[0].clientY - pan.y };
+            } else if (event.touches.length === 2) {
+                isPanning.current = false;
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
+                const distance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+                lastTouchDistance.current = distance;
+            }
+        },
+        [pan],
+    );
+
+    const handleTouchMove = useCallback((event: React.TouchEvent<HTMLCanvasElement>) => {
+        if (event.touches.length === 1 && isPanning.current) {
+            setPan({
+                x: event.touches[0].clientX - startPan.current.x,
+                y: event.touches[0].clientY - startPan.current.y,
+            });
+        } else if (event.touches.length === 2 && lastTouchDistance.current !== null) {
+            const touch1 = event.touches[0];
+            const touch2 = event.touches[1];
+            const distance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+            const zoomChange = distance / lastTouchDistance.current;
+            setZoom((prevZoom) => Math.max(0.1, prevZoom * zoomChange));
+            lastTouchDistance.current = distance;
+        }
+    }, []);
+
+    const handleTouchEnd = useCallback(() => {
+        isPanning.current = false;
+        lastTouchDistance.current = null;
+    }, []);
+
     useEffect(() => {
         function animate() {
             if (
@@ -180,6 +218,9 @@ export function Minimap() {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
         />
     );
 }
