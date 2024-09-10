@@ -20,7 +20,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
     const dispatchObjectGroups = useDispatchObjectGroups();
 
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.GroupManage) || checkPermission(Permission.SceneManage);
+    const canManage = checkPermission(Permission.GroupManage);
     const expanded = useAppSelector((state) => selectIsCollectionExpanded(state, collection));
     const dispatch = useAppDispatch();
 
