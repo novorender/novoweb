@@ -38,7 +38,6 @@ import { toFormFields, toFormItems } from "features/forms/utils";
 import { ObjectVisibility, renderActions } from "features/render";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
-import { selectHasAdminCapabilities } from "slices/explorer";
 import { selectAccessToken, selectConfig } from "slices/explorer";
 
 import { FormItem } from "./formItem";
@@ -56,10 +55,9 @@ export function LocationInstance() {
     const flyToForm = useFlyToForm();
     const dispatchFormsGlobals = useDispatchFormsGlobals();
     const lazyFormsGlobals = useLazyFormsGlobals();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canDelete = checkPermission(Permission.FormsDelete) ?? isAdmin;
-    const canEdit = checkPermission(Permission.FormsFill) ?? isAdmin;
+    const canDelete = checkPermission(Permission.FormsDelete);
+    const canEdit = checkPermission(Permission.FormsFill);
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);

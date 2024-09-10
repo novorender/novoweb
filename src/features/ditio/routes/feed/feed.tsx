@@ -11,7 +11,6 @@ import { Divider, FixedSizeVirualizedList, ImgTooltip, IosSwitch, LinearProgress
 import { featuresConfig } from "config/features";
 import { FormattedText } from "features/ditio/formattedText";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
-import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { baseUrl, useFeedWebRawQuery } from "../../api";
 import {
@@ -34,9 +33,8 @@ export function Feed() {
     const showMachineMarkers = useAppSelector(selectShowDitioMachineMarkers);
     const feedScrollOffset = useAppSelector(selectFeedScrollOffset);
     const filters = useAppSelector(selectFilters);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.IntDitioManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntDitioManage);
 
     const projects = useAppSelector(selectDitioProjects);
     const { data: feed, isLoading } = useFeedWebRawQuery({ projects, filters }, { skip: !projects.length });

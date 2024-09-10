@@ -8,7 +8,6 @@ import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
-import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { Bookmark } from "./bookmark";
 import { bookmarksActions, ExtendedBookmark, selectIsCollectionExpanded } from "./bookmarksSlice";
@@ -16,9 +15,8 @@ import { bookmarksActions, ExtendedBookmark, selectIsCollectionExpanded } from "
 export function Collection({ collection, bookmarks }: { collection: string; bookmarks: ExtendedBookmark[] }) {
     const history = useHistory();
     const { t } = useTranslation();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.BookmarkManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.BookmarkManage);
     const expanded = useAppSelector((state) => selectIsCollectionExpanded(state, collection));
     const dispatch = useAppDispatch();
 

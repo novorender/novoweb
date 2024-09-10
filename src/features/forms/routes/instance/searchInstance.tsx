@@ -25,7 +25,6 @@ import { selectCurrentFormsList } from "features/forms/slice";
 import { renderActions } from "features/render";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
-import { selectHasAdminCapabilities } from "slices/explorer";
 import { selectAccessToken, selectConfig } from "slices/explorer";
 
 import { useGetSearchFormQuery, useUpdateSearchFormMutation } from "../../api";
@@ -48,8 +47,7 @@ export function SearchInstance() {
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const flyToForm = useFlyToForm();
     const checkPermission = useCheckProjectPermission();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    const canEdit = checkPermission(Permission.FormsFill) ?? isAdmin;
+    const canEdit = checkPermission(Permission.FormsFill);
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);

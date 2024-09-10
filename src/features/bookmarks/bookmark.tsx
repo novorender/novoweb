@@ -27,7 +27,6 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
-import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { BookmarkAccess, bookmarksActions, ExtendedBookmark, selectBookmarks } from "./bookmarksSlice";
@@ -83,9 +82,8 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
     const bookmarks = useAppSelector(selectBookmarks);
     const sceneId = useSceneId();
 
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.BookmarkManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.BookmarkManage);
     const user = useAppSelector(selectUser);
     const [saveBookmarks] = useSaveBookmarksMutation();
 

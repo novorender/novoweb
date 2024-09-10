@@ -9,7 +9,7 @@ import { LinearProgress, ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
-import { selectConfig, selectHasAdminCapabilities } from "slices/explorer";
+import { selectConfig } from "slices/explorer";
 import { AsyncStatus, hasFinished } from "types/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 
@@ -24,9 +24,8 @@ export function Auth() {
     const dispatch = useAppDispatch();
     const explorerConfig = useAppSelector(selectConfig);
     const config = useAppSelector(selectBimTrackConfig);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.IntBimTrackManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntBimTrackManage);
 
     const [getToken] = useLazyGetTokenQuery();
     const [refreshToken] = useLazyRefreshTokenQuery();

@@ -16,19 +16,17 @@ export function useCheckProjectPermission() {
 
     const permissions = useMemo(
         () => (projectInfo?.permissions ? new Set(projectInfo.permissions) : null),
-        [projectInfo?.permissions]
+        [projectInfo?.permissions],
     );
 
     return useCallback(
         (permission: Permission) => {
             if (!permissions) {
-                // If permissions are not defined - we're dealing with V1 project, so the caller can handle it separately
-                // (e.g. fallback to checking for "administrator" role)
-                return;
+                return false;
             }
 
             return checkPermission(permissions, permission);
         },
-        [permissions]
+        [permissions],
     );
 }

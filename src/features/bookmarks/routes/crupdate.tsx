@@ -9,7 +9,6 @@ import { ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { BookmarkAccess, bookmarksActions, selectBookmarks } from "../bookmarksSlice";
 import { useCreateBookmark } from "../useCreateBookmark";
@@ -23,9 +22,8 @@ export function Crupdate() {
     const bookmarks = useAppSelector(selectBookmarks);
     const bmToEdit = bookmarks.find((bm) => bm.id === id);
 
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.BookmarkManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.BookmarkManage);
 
     const dispatch = useAppDispatch();
     const {

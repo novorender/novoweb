@@ -13,7 +13,6 @@ import { selectViewMode } from "features/render";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
-import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import { Bookmark } from "../bookmark";
@@ -45,9 +44,8 @@ export function BookmarkList() {
     const bookmarksStatus = useAppSelector(selectBookmarksStatus);
     const filters = useAppSelector(selectBookmarkFilters);
     const dispatch = useAppDispatch();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.BookmarkManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.BookmarkManage);
 
     const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
     const [filteredBookmarks, setFilteredBookmarks] = useState(bookmarks);

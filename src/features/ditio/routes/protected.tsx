@@ -10,7 +10,6 @@ import { LinearProgress, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { selectUser } from "slices/authSlice";
-import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { ditioActions, selectDitioAccessToken } from "../slice";
@@ -22,9 +21,8 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
     const [clientSecret, setClientSecret] = useState("");
     const [status, setStatus] = useState(AsyncStatus.Initial);
     const token = useAppSelector(selectDitioAccessToken);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.IntDitioManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntDitioManage);
     const user = useAppSelector(selectUser);
     const [saveDitioConfig] = useSaveDitioConfigMutation();
 

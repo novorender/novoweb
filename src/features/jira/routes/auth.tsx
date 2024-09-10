@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, ScrollBox } from "components";
 import { StorageKey } from "config/storage";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
-import { selectConfig, selectHasAdminCapabilities } from "slices/explorer";
+import { selectConfig } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 
@@ -36,9 +36,8 @@ export function Auth() {
     const history = useHistory();
     const dispatch = useAppDispatch();
 
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.IntJiraManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntJiraManage);
     const accessToken = useAppSelector(selectJiraAccessToken);
     const accessTokenStr = useAppSelector(selectJiraAccessTokenData);
     const currentUser = useAppSelector(selectJiraUser);
@@ -54,19 +53,19 @@ export function Auth() {
 
     const { data: accessibleResources, error: accessibleResourcesError } = useGetAccessibleResourcesQuery(
         { accessToken: accessTokenStr },
-        { skip: !accessTokenStr }
+        { skip: !accessTokenStr },
     );
 
     const { data: user, error: userError } = useGetCurrentUserQuery(undefined, { skip: !accessTokenStr || !space });
 
     const { data: projects, error: projectsError } = useGetProjectsQuery(
         { space: space?.id ?? "", accessToken: accessTokenStr },
-        { skip: !space || !user || !accessTokenStr }
+        { skip: !space || !user || !accessTokenStr },
     );
 
     const { data: components, error: componentsError } = useGetComponentsQuery(
         { space: space?.id ?? "", project: project?.key ?? "", accessToken: accessTokenStr },
-        { skip: !space || !accessTokenStr || !project }
+        { skip: !space || !accessTokenStr || !project },
     );
 
     useEffect(() => {
@@ -195,10 +194,10 @@ export function Auth() {
         const kind = accessibleResourcesError
             ? "spaces"
             : projectsError
-            ? "projects"
-            : componentsError
-            ? "components"
-            : "user";
+              ? "projects"
+              : componentsError
+                ? "components"
+                : "user";
         setError(`An error occurred while loading Jira ${kind}.`);
     }, [accessibleResourcesError, projectsError, componentsError, userError, error]);
 

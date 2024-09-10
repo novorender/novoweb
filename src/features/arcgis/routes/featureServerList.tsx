@@ -32,7 +32,6 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary, WidgetBottomScrollBox } from "components";
 import { CameraType, renderActions } from "features/render";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
-import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { arcgisActions, selectArcgisFeatureServers } from "../arcgisSlice";
@@ -47,11 +46,8 @@ export function FeatureServerList() {
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const dispatch = useAppDispatch();
     const history = useHistory();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.SceneManage) ?? isAdmin;
-    // TODO int:arcgis:manage permission
-    // const canManage = (checkPermission(Permission.IntArcgisManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntArcgisManage);
     const epsg = useProjectEpsg();
     const isCameraSetCorrectly = useIsCameraSetCorrectly();
 

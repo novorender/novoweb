@@ -8,14 +8,13 @@ import {
     defaultEnabledWidgets,
     defaultLockedWidgets,
     featuresConfig,
-    FeatureType,
     WidgetKey,
 } from "config/features";
 import { newDesignLocalStorageKey } from "features/newDesign/utils";
 import { initScene } from "features/render";
 import { uniqueArray } from "utils/misc";
 
-import { MutableUrlSearchQuery, ProjectType, SceneType, State, UrlSearchQuery, UserRole } from "./types";
+import { MutableUrlSearchQuery, ProjectType, SceneType, State, UrlSearchQuery } from "./types";
 import {
     getCanvasContextMenuFeatures,
     getEnabledFeatures,
@@ -23,7 +22,6 @@ import {
     getRequireConsent,
     getSceneType,
     getTakenWidgetSlotCount,
-    getUserRole,
 } from "./utils";
 
 const favoriteWidgetsStorageKey = "favoriteWidgets";
@@ -33,7 +31,6 @@ const initialState: State = {
     enabledWidgets: defaultEnabledWidgets,
     lockedWidgets: defaultLockedWidgets,
     sceneType: SceneType.Viewer,
-    userRole: UserRole.Viewer,
     projectType: ProjectType.V1,
     projectV2Info: null!,
     tmZoneForCalc: undefined as string | undefined, // for project v1 - tmZone, for project v2 - proj4 def from epsg.io
@@ -110,9 +107,6 @@ export const explorerSlice = createSlice({
         },
         setSceneType: (state, action: PayloadAction<SceneType>) => {
             state.sceneType = action.payload;
-        },
-        setUserRole: (state, action: PayloadAction<UserRole>) => {
-            state.userRole = action.payload;
         },
         setWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
             state.widgets = action.payload;
@@ -427,7 +421,6 @@ export const explorerSlice = createSlice({
             state.projectV2Info = action.payload.projectV2Info;
             state.tmZoneForCalc = action.payload.tmZoneForCalc;
             state.sceneType = getSceneType(customProperties);
-            state.userRole = getUserRole(customProperties, action.payload.projectV2Info);
             state.requireConsent = getRequireConsent(customProperties);
             state.projectName = action.payload.sceneData.title;
 
@@ -438,24 +431,14 @@ export const explorerSlice = createSlice({
             if (action.payload.deviceProfile.isMobile && !state.lockedWidgets.includes(featuresConfig.images.key)) {
                 state.lockedWidgets.push(featuresConfig.images.key);
             }
-            if (state.userRole !== UserRole.Viewer) {
-                state.enabledWidgets = uniqueArray(
-                    (
-                        (customProperties.explorerProjectState?.features?.widgets?.enabled as WidgetKey[]) ??
-                        getEnabledFeatures(customProperties)
-                    )
-                        .concat(defaultEnabledAdminWidgets)
-                        .concat(defaultEnabledWidgets),
-                );
-            } else {
-                state.enabledWidgets = uniqueArray(
-                    (
-                        (customProperties.explorerProjectState?.features?.widgets?.enabled as WidgetKey[])?.filter(
-                            (key) => featuresConfig[key] && featuresConfig[key].type !== FeatureType.AdminWidget,
-                        ) ?? getEnabledFeatures(customProperties)
-                    ).concat(defaultEnabledWidgets),
-                );
-            }
+            state.enabledWidgets = uniqueArray(
+                (
+                    (customProperties.explorerProjectState?.features?.widgets?.enabled as WidgetKey[]) ??
+                    getEnabledFeatures(customProperties)
+                )
+                    .concat(defaultEnabledAdminWidgets)
+                    .concat(defaultEnabledWidgets),
+            );
 
             if (customProperties.explorerProjectState?.features?.primaryMenu?.buttons) {
                 const [button1, button2, button3, button4, button5] = customProperties.explorerProjectState.features

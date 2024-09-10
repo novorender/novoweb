@@ -10,12 +10,6 @@ export enum SceneType {
     Admin,
 }
 
-export enum UserRole {
-    Viewer,
-    Admin,
-    Owner,
-}
-
 export enum ProjectType {
     V1, // app.novorender.com
     V2, // projects.novorender.com
@@ -29,7 +23,6 @@ export type State = {
     enabledWidgets: WidgetKey[];
     lockedWidgets: WidgetKey[];
     sceneType: SceneType;
-    userRole: UserRole;
     projectType: ProjectType;
     projectV2Info: ProjectInfo;
     tmZoneForCalc: string | undefined;

@@ -14,7 +14,6 @@ import { ObjectVisibility, renderActions } from "features/render";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
-import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { useDeleteAllFormsMutation, useListTemplatesQuery } from "../../api";
 import { formsActions } from "../../slice";
@@ -31,10 +30,9 @@ export function Templates() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const user = useAppSelector(selectUser);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.FormsManage) ?? isAdmin;
-    const canDelete = checkPermission(Permission.FormsDelete) ?? isAdmin;
+    const canManage = checkPermission(Permission.FormsManage);
+    const canDelete = checkPermission(Permission.FormsDelete);
 
     const [deleteAllForms, { isLoading: isAllFormsDeleting }] = useDeleteAllFormsMutation();
 

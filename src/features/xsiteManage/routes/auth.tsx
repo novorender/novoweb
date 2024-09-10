@@ -9,7 +9,7 @@ import { LinearProgress, ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
-import { selectConfig, selectHasAdminCapabilities } from "slices/explorer";
+import { selectConfig } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 
@@ -28,9 +28,8 @@ export function Auth() {
     const history = useHistory();
     const dispatch = useAppDispatch();
 
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.IntXsiteManageManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntXsiteManageManage);
     const accessToken = useAppSelector(selectXsiteManageAccessToken);
     const site = useAppSelector(selectXsiteManageSite);
     const config = useAppSelector(selectXsiteManageConfig);

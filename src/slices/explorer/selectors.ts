@@ -5,7 +5,7 @@ import { type RootState } from "app";
 import { defaultEnabledWidgets, featuresConfig, Widget } from "config/features";
 import { checkPermission } from "utils/auth";
 
-import { ProjectType, SceneType, UrlSearchQuery, UserRole } from "./types";
+import { ProjectType, SceneType, UrlSearchQuery } from "./types";
 import { getPositionedWidgets, getTakenWidgetSlotCount } from "./utils";
 
 export const selectWidgets = (state: RootState) => state.explorer.widgets;
@@ -18,7 +18,6 @@ export const selectLocalBookmarkId = (state: RootState) => state.explorer.localB
 export const selectUrlBookmarkId = (state: RootState) => state.explorer.urlBookmarkId;
 export const selectUrlSearchQuery = (state: RootState) => state.explorer.urlSearchQuery as UrlSearchQuery;
 export const selectSceneType = (state: RootState) => state.explorer.sceneType;
-export const selectUserRole = (state: RootState) => state.explorer.userRole;
 export const selectRequireConsent = (state: RootState) => state.explorer.requireConsent;
 export const selectOrganization = (state: RootState) => state.explorer.organization;
 export const selectMaximized = (state: RootState) => state.explorer.maximized;
@@ -26,7 +25,6 @@ export const selectMaximizedHorizontal = (state: RootState) => state.explorer.ma
 export const selectMinimized = (state: RootState) => state.explorer.minimized;
 export const selectPrimaryMenu = (state: RootState) => state.explorer.primaryMenu;
 export const selectIsAdminScene = (state: RootState) => state.explorer.sceneType === SceneType.Admin;
-export const selectHasAdminCapabilities = (state: RootState) => state.explorer.userRole !== UserRole.Viewer;
 export const selectCanvasContextMenuFeatures = (state: RootState) => state.explorer.contextMenu.canvas.features;
 export const selectIsOnline = (state: RootState) => state.explorer.isOnline;
 export const selectConfig = (state: RootState) => state.explorer.config;
@@ -65,6 +63,7 @@ export const selectEnabledWidgets = createSelector(
                     case "bimTrack":
                     case "ditio":
                     case "jira":
+                    case "arcgis":
                     case "omegaPims365":
                     case "xsiteManage":
                         return can(`int:${w.key}:use` as Permission);

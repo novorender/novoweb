@@ -46,7 +46,6 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectMainObject } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
-import { selectHasAdminCapabilities } from "slices/explorer";
 import { NodeType } from "types/misc";
 import {
     extractObjectIds,
@@ -496,10 +495,8 @@ function PropertyItem({
     const { t } = useTranslation();
 
     const isUrl = value.startsWith("http");
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    // TODO properties:manage?
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.SceneManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.SceneManage);
     const starred = useAppSelector(selectStarredProperties);
     const stampSettings = useAppSelector(selectPropertiesStampSettings);
     const dispatch = useAppDispatch();

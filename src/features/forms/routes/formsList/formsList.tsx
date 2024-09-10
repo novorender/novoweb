@@ -23,7 +23,6 @@ import { ObjectVisibility, Picker, renderActions, selectPicker } from "features/
 import { useAbortController } from "hooks/useAbortController";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
-import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { FormsListItem } from "./formsListItem";
 
@@ -46,10 +45,9 @@ export function FormsList() {
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const isPickingLocation = useAppSelector(selectPicker) === Picker.FormLocation;
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canDelete = checkPermission(Permission.FormsDelete) ?? isAdmin;
-    const canAdd = checkPermission(Permission.FormsManage) ?? isAdmin;
+    const canDelete = checkPermission(Permission.FormsDelete);
+    const canAdd = checkPermission(Permission.FormsManage);
 
     const dispatchHighlightCollections = useDispatchHighlightCollections();
 

@@ -13,7 +13,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage } from "utils/storage";
 
@@ -88,9 +88,8 @@ export default function XsiteManage() {
 function WidgetMenu(props: MenuProps) {
     const settingsPaths = ["/*"];
     const accessToken = useAppSelector(selectXsiteManageAccessToken);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.IntXsiteManageManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntXsiteManageManage);
 
     if (accessToken.status !== AsyncStatus.Success) {
         return null;

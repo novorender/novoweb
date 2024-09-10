@@ -9,7 +9,6 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
-import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { Group, StyledCheckbox } from "./group";
 import { groupsActions, selectIsCollectionExpanded } from "./groupsSlice";
@@ -20,9 +19,8 @@ export function Collection({ collection, disabled }: { collection: string; disab
     const objectGroups = useObjectGroups();
     const dispatchObjectGroups = useDispatchObjectGroups();
 
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = (checkPermission(Permission.GroupManage) || checkPermission(Permission.SceneManage)) ?? isAdmin;
+    const canManage = checkPermission(Permission.GroupManage) || checkPermission(Permission.SceneManage);
     const expanded = useAppSelector((state) => selectIsCollectionExpanded(state, collection));
     const dispatch = useAppDispatch();
 

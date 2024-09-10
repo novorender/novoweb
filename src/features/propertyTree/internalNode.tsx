@@ -32,7 +32,7 @@ import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups 
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectProjectIsV2 } from "slices/explorer";
+import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { hslToVec, VecRGBA } from "utils/color";
 import { getAssetUrl } from "utils/misc";
@@ -65,10 +65,8 @@ export function InternalNode({
 
     const [expanded, toggleExpand] = useToggle(false);
     const groups = useAppSelector((state) => selectGroupsAtProperty(state, path));
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    // TODO widget:propertyTree:manage?
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.SceneManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.SceneManage);
     const searchStatus = useAppSelector((state) => state.propertyTree.searchStatus);
     const groupsCreationStatus = useAppSelector((state) => state.propertyTree.groupsCreationStatus);
     const isV2 = useAppSelector(selectProjectIsV2);

@@ -12,7 +12,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage } from "utils/storage";
 
@@ -92,9 +92,8 @@ export default function BimTrack() {
 function WidgetMenu(props: MenuProps) {
     const settingsPaths = ["/*"];
     const token = useAppSelector(selectAccessToken);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.IntBimTrackManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntBimTrackManage);
 
     if (token.status !== AsyncStatus.Success) {
         return null;

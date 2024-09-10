@@ -11,7 +11,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import { Root } from "./routes/root";
 import { StampSettings } from "./routes/stampSettings";
@@ -58,10 +58,8 @@ function WidgetMenu(props: MenuProps) {
     const { t } = useTranslation();
     const history = useHistory();
     const location = useLocation();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    // TODO widget:properties:manage?
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.SceneManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.SceneManage);
 
     if (!canManage) {
         return null;

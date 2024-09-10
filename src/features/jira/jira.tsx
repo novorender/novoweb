@@ -13,7 +13,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { deleteFromStorage } from "utils/storage";
 
 import { jiraActions, selectJiraAccessTokenData, selectJiraClickedMarker, selectJiraLastViewedPath } from "./jiraSlice";
@@ -86,9 +86,8 @@ export default function Jira() {
 function WidgetMenu(props: MenuProps) {
     const settingsPaths = ["/*"];
     const accessToken = useAppSelector(selectJiraAccessTokenData);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.IntJiraManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.IntJiraManage);
 
     if (!accessToken) {
         return null;

@@ -1,5 +1,5 @@
 import { OfflineErrorCode, OfflineViewState, View } from "@novorender/api";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 
 import { dataApi } from "apis/dataV1";
 import { useLazyGetBookmarksQuery, useLazyGetGroupIdsQuery } from "apis/dataV2/dataV2Api";

@@ -1,7 +1,7 @@
 import { InfoOutlined } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
 import { Box, CircularProgress, Grid, Link, Tooltip } from "@mui/material";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { dataApi } from "apis/dataV1";
@@ -97,6 +97,15 @@ function LoggedIn({
         window.location.href = `${config.authServerUrl}/signout?return_url=${window.location.href}`;
     };
 
+    let sceneUrl = "";
+    if (projectsUrl && projectId) {
+        if (projectId === sceneId) {
+            sceneUrl = `${projectsUrl}/org/${org}/p/${projectId}/resources`;
+        } else {
+            sceneUrl = `${projectsUrl}/org/${org}/p/${projectId}/viewer_scenes?sceneId=${sceneId}`;
+        }
+    }
+
     return (
         <>
             <Grid container>
@@ -134,13 +143,13 @@ function LoggedIn({
                         </Grid>
                     </>
                 )}
-                {projectsUrl && projectId && projectName && (
+                {sceneUrl && projectName && (
                     <>
                         <Grid fontWeight={600} item xs={5}>
                             Project:
                         </Grid>
                         <Grid item xs={7}>
-                            <Link href={`${projectsUrl}/org/${org}/p/${sceneId}/resources`} target="_blank">
+                            <Link href={sceneUrl} target="_blank">
                                 {projectName}
                             </Link>
                         </Grid>

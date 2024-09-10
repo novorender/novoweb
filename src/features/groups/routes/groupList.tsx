@@ -14,7 +14,6 @@ import {
     useObjectGroups,
 } from "contexts/objectGroups";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
-import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { Collection } from "../collection";
@@ -25,9 +24,8 @@ export function GroupList() {
     const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.GroupManage) ?? isAdmin;
+    const canManage = checkPermission(Permission.GroupManage);
     const loadingIds = useAppSelector(selectLoadingIds);
     const saveStatus = useAppSelector(selectSaveStatus);
     const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
