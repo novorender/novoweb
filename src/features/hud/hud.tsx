@@ -91,6 +91,7 @@ function HudOld() {
     return (
         <>
             {navigationCube.enabled && <NavigationCube />}
+            {minimap && <Minimap />}
             <Box
                 position="absolute"
                 top={0}

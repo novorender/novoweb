@@ -1,5 +1,6 @@
-import { Scene } from "@novorender/webgl-api";
+import { ObjectDB } from "@novorender/data-js-api";
 import { quat, vec2, vec3 } from "gl-matrix";
+
 import { searchByPatterns } from "./search";
 
 interface MinimapInfo {
@@ -18,6 +19,7 @@ export class MinimapHelper {
     pixelHeight = 0;
     currentIndex = 0;
     constructor(readonly minimaps: MinimapInfo[]) {}
+
     toMinimap(worldPos: vec3): vec2 {
         const curInfo = this.getCurrentInfo();
         const diff = vec3.sub(vec3.create(), worldPos, curInfo.corner);
@@ -86,11 +88,11 @@ export class MinimapHelper {
     }
 }
 
-export async function downloadMinimap(scene: Scene): Promise<MinimapHelper> {
+export async function downloadMinimap(db: ObjectDB): Promise<MinimapHelper> {
     const minimaps: MinimapInfo[] = [];
 
     await searchByPatterns({
-        scene,
+        db,
         searchPatterns: [{ property: "Novorender/Document/Corners", exact: true }],
         callback: async (refs) => {
             for (const ref of refs) {
