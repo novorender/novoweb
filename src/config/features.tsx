@@ -550,6 +550,7 @@ export const featuresConfig = {
         defaultLocked: false,
         offline: false,
         tags: [featureTags.review.key],
+        groups: [featureGroups.measure.key],
         beta: true,
     },
 } as const;

@@ -13,13 +13,15 @@ import {
     useRouteMatch,
 } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { Feed } from "./routes/feed/feed";
@@ -113,16 +115,17 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
 function WidgetMenu(props: MenuProps) {
     const settingsPaths = ["/*"];
     const token = useAppSelector(selectDitioAccessToken);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntDitioManage);
 
-    if (token.status !== AsyncStatus.Success || !isAdmin) {
+    if (token.status !== AsyncStatus.Success || !canManage) {
         return null;
     }
 
     return (
         <>
             <Menu {...props}>
-                {isAdmin && (
+                {canManage && (
                     <Route path={settingsPaths} exact>
                         <SettingsMenuItem onClose={props.onClose} />
                     </Route>

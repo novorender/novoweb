@@ -15,6 +15,7 @@ import { Fragment, MouseEvent, useCallback, useEffect, useMemo, useRef, useState
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
@@ -22,6 +23,7 @@ import { highlightActions, useDispatchHighlighted, useHighlighted } from "contex
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { selectCurrentFormsList } from "features/forms/slice";
 import { renderActions } from "features/render";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectAccessToken, selectConfig } from "slices/explorer";
 
@@ -43,6 +45,8 @@ export function SearchInstance() {
     const { idArr: highlighted } = useHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const flyToForm = useFlyToForm();
+    const checkPermission = useCheckProjectPermission();
+    const canEdit = checkPermission(Permission.FormsFill);
 
     const location = useLocation();
     const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -265,7 +269,7 @@ export function SearchInstance() {
                                             </ListItemIcon>
                                             <ListItemText>{t("exportAsPDF")}</ListItemText>
                                         </MenuItem>
-                                        <MenuItem onClick={handleClearClick}>
+                                        <MenuItem onClick={handleClearClick} disabled={!canEdit}>
                                             <ListItemIcon>
                                                 <Clear fontSize="small" />
                                             </ListItemIcon>
@@ -297,6 +301,7 @@ export function SearchInstance() {
                                     setItems(itm);
                                     setIsUpdated(true);
                                 }}
+                                disabled={!canEdit}
                             />
                             {idx !== array.length - 1 ? <Divider sx={{ mt: 1, mb: 2 }} /> : null}
                         </Fragment>

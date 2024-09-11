@@ -137,7 +137,6 @@ app.get("/config.json", (_req, res) => {
         xsiteManageClientId: process.env.XSITEMANAGE_CLIENT_ID ?? "",
         novorenderClientId: process.env.NOVORENDER_CLIENT_ID ?? "",
         novorenderClientSecret: process.env.NOVORENDER_CLIENT_SECRET ?? "",
-        dataServerUrl: process.env.DATA_SERVER_URL ?? "",
         dataV2ServerUrl: process.env.DATA_V2_SERVER_URL ?? "",
         authServerUrl: process.env.AUTH_SERVER_URL ?? "",
         assetsUrl: process.env.ASSETS_URL ?? "",

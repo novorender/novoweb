@@ -14,6 +14,7 @@ import { type FormEvent, Fragment, MouseEvent, useCallback, useEffect, useMemo, 
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation, Divider, ScrollBox, TextField } from "components";
 import {
@@ -35,6 +36,7 @@ import {
 } from "features/forms/types";
 import { toFormFields, toFormItems } from "features/forms/utils";
 import { ObjectVisibility, renderActions } from "features/render";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectAccessToken, selectConfig } from "slices/explorer";
 
@@ -52,6 +54,9 @@ export function LocationInstance() {
     const flyToForm = useFlyToForm();
     const dispatchFormsGlobals = useDispatchFormsGlobals();
     const lazyFormsGlobals = useLazyFormsGlobals();
+    const checkPermission = useCheckProjectPermission();
+    const canDelete = checkPermission(Permission.FormsDelete);
+    const canEdit = checkPermission(Permission.FormsFill);
 
     const location = useLocation();
     const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -335,13 +340,13 @@ export function LocationInstance() {
                                     </ListItemIcon>
                                     <ListItemText>{t("exportAsPDF")}</ListItemText>
                                 </MenuItem>
-                                <MenuItem onClick={() => setIsDeleting(true)}>
+                                <MenuItem onClick={() => setIsDeleting(true)} disabled={!canDelete}>
                                     <ListItemIcon>
                                         <Delete fontSize="small" />
                                     </ListItemIcon>
                                     <ListItemText>{t("delete")}</ListItemText>
                                 </MenuItem>
-                                <MenuItem onClick={handleClearClick}>
+                                <MenuItem onClick={handleClearClick} disabled={!canEdit}>
                                     <ListItemIcon>
                                         <Clear fontSize="small" />
                                     </ListItemIcon>
@@ -359,7 +364,13 @@ export function LocationInstance() {
             )}
             <ScrollBox p={1} pt={2} pb={3}>
                 <Box my={2}>
-                    <TextField label="Form name" value={title} onChange={handleTitleChange} fullWidth />
+                    <TextField
+                        label="Form name"
+                        value={title}
+                        onChange={handleTitleChange}
+                        fullWidth
+                        disabled={!canEdit}
+                    />
                 </Box>
                 {items?.map((item, idx, array) => {
                     return (
@@ -370,13 +381,14 @@ export function LocationInstance() {
                                     setItems(itm);
                                     setIsUpdated(true);
                                 }}
+                                disabled={!canEdit}
                             />
                             {idx !== array.length - 1 ? <Divider sx={{ mt: 1, mb: 2 }} /> : null}
                         </Fragment>
                     );
                 })}
                 <Box mt={2}>
-                    <TransformEditor />
+                    <TransformEditor disabled={!canEdit} />
                 </Box>
             </ScrollBox>
         </>

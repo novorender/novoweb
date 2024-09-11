@@ -4,14 +4,16 @@ import { PropsWithChildren, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
 import WidgetList from "features/widgetList/widgetList";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { deleteFromStorage } from "utils/storage";
 
 import { jiraActions, selectJiraAccessTokenData, selectJiraClickedMarker, selectJiraLastViewedPath } from "./jiraSlice";
@@ -84,7 +86,8 @@ export default function Jira() {
 function WidgetMenu(props: MenuProps) {
     const settingsPaths = ["/*"];
     const accessToken = useAppSelector(selectJiraAccessTokenData);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntJiraManage);
 
     if (!accessToken) {
         return null;
@@ -94,7 +97,7 @@ function WidgetMenu(props: MenuProps) {
         <>
             <Menu {...props}>
                 <LogoutMenuItem onClose={props.onClose} />
-                {isAdmin && (
+                {canManage && (
                     <Route path={settingsPaths} exact>
                         <SettingsMenuItem onClose={props.onClose} />
                     </Route>

@@ -5,7 +5,7 @@ import { Fragment, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useLazyGetBookmarksQuery, useSaveBookmarksMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ImgModal, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -56,6 +56,8 @@ export function Issue({ sceneId }: { sceneId: string }) {
     const [modalOpen, toggleModal] = useToggle();
     const [imageAttachmentId, setImageAttachmentId] = useState("");
     const [saveStatus, setSaveStatus] = useState(AsyncStatus.Initial);
+    const [getBookmarks] = useLazyGetBookmarksQuery();
+    const [saveBookmarks] = useSaveBookmarksMutation();
 
     const {
         data: issue,
@@ -126,7 +128,7 @@ export function Issue({ sceneId }: { sceneId: string }) {
         setLoadingBookmark(true);
 
         try {
-            const bookmark = (await dataApi.getBookmarks(sceneId, { group: bookmarkId })).find(
+            const bookmark = (await getBookmarks({ projectId: sceneId, group: bookmarkId }, true).unwrap()).find(
                 (bm) => bm.id === bookmarkId,
             );
 
@@ -156,7 +158,17 @@ export function Issue({ sceneId }: { sceneId: string }) {
         const bmId = window.crypto.randomUUID();
         const bm = createBookmark();
         const snapshot = await createCanvasSnapshot(canvas, 5000, 5000);
-        const saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id: bmId, name: bmId }], { group: bmId });
+        const saved = await saveBookmarks({
+            projectId: sceneId,
+            bookmarks: [{ ...bm, id: bmId, name: bmId }],
+            group: bmId,
+        })
+            .unwrap()
+            .then(() => true)
+            .catch((error) => {
+                console.error(error);
+                return false;
+            });
 
         if (!saved) {
             setSaveStatus(AsyncStatus.Error);

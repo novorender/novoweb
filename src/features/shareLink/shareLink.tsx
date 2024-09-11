@@ -3,7 +3,7 @@ import { IconButton, ListItemIcon, ListItemText, MenuItem, Snackbar, Typography 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveBookmarksMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { WidgetMenuButtonWrapper } from "components/widgetMenuButtonWrapper";
 import { featuresConfig } from "config/features";
@@ -27,6 +27,7 @@ export function ShareLink({ asMenuItem, onClick }: { asMenuItem?: boolean; onCli
     const viewMode = useAppSelector(selectViewMode);
     const isOnline = useAppSelector(selectIsOnline);
     const sceneId = useSceneId();
+    const [saveBookmarks] = useSaveBookmarksMutation();
     const dispatch = useAppDispatch();
 
     const [status, setStatus] = useState(Status.Initial);
@@ -53,12 +54,13 @@ export function ShareLink({ asMenuItem, onClick }: { asMenuItem?: boolean; onCli
             await navigator.clipboard.write([
                 new ClipboardItem({
                     "text/plain": (async () => {
-                        saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id, name: id }], { group: id });
+                        await saveBookmarks({
+                            projectId: sceneId,
+                            bookmarks: [{ ...bm, id, name: id }],
+                            group: id,
+                        }).unwrap();
 
-                        if (!saved) {
-                            throw new Error("Failed to save bookmark");
-                        }
-
+                        saved = true;
                         return blob;
                     })(),
                 }),

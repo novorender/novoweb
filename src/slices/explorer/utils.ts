@@ -2,7 +2,7 @@ import { CanvasContextMenuFeatureKey } from "config/canvasContextMenu";
 import { defaultEnabledWidgets, featuresConfig, WidgetKey } from "config/features";
 import { uniqueArray } from "utils/misc";
 
-import { PositionedWidgetState, PrimaryMenuConfigType, SceneType, UserRole } from "./types";
+import { PositionedWidgetState, PrimaryMenuConfigType, SceneType } from "./types";
 
 export function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boolean>): WidgetKey[] {
     const dictionary: Record<string, string | string[] | undefined> = {
@@ -25,7 +25,7 @@ export function enabledFeaturesToFeatureKeys(enabledFeatures: Record<string, boo
             .filter((feature) => feature.enabled)
             .map((feature) => (dictionary[feature.key] ? dictionary[feature.key] : feature.key))
             .concat(defaultEnabledWidgets)
-            .flat() as WidgetKey[]
+            .flat() as WidgetKey[],
     );
 }
 
@@ -55,19 +55,11 @@ export function getRequireConsent(customProperties: unknown): boolean {
         return (customProperties as { requireConsent: boolean }).requireConsent;
     } else if ("enabledFeatures" in customProperties) {
         return Boolean(
-            (customProperties as { enabledFeatures?: { requireConsent?: boolean } })?.enabledFeatures?.requireConsent
+            (customProperties as { enabledFeatures?: { requireConsent?: boolean } })?.enabledFeatures?.requireConsent,
         );
     }
 
     return false;
-}
-
-export function getUserRole(customProperties: unknown): UserRole {
-    const role =
-        customProperties && typeof customProperties === "object" && "role" in customProperties
-            ? (customProperties as { role: string }).role
-            : "administrator";
-    return role === "owner" ? UserRole.Owner : role === "administrator" ? UserRole.Admin : UserRole.Viewer;
 }
 
 export function getPrimaryMenu(customProperties: unknown): PrimaryMenuConfigType | undefined {
@@ -86,7 +78,7 @@ export function getCanvasContextMenuFeatures(customProperties: unknown): CanvasC
 export function getTakenWidgetSlotCount(
     widgets: WidgetKey[],
     maximized: WidgetKey[],
-    maximizedHorizontal: WidgetKey[]
+    maximizedHorizontal: WidgetKey[],
 ) {
     let area = 0;
     for (const widget of widgets) {

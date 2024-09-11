@@ -27,10 +27,11 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary, WidgetBottomScrollBox } from "components";
 import { CameraType, renderActions } from "features/render";
-import { selectHasAdminCapabilities } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { AsyncStatus } from "types/misc";
 
 import { arcgisActions, selectArcgisFeatureServers } from "../arcgisSlice";
@@ -45,8 +46,9 @@ export function FeatureServerList() {
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const dispatch = useAppDispatch();
     const history = useHistory();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    const epsg = useProjectEpsg({ skip: featureServers.status !== AsyncStatus.Success });
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntArcgisManage);
+    const epsg = useProjectEpsg();
     const isCameraSetCorrectly = useIsCameraSetCorrectly();
 
     const handleFeatureCheck = useCallback(
@@ -102,7 +104,7 @@ export function FeatureServerList() {
                 position="absolute"
             />
 
-            {featureServers.status === AsyncStatus.Loading || epsg.isFetching ? (
+            {featureServers.status === AsyncStatus.Loading ? (
                 <Box>
                     <LinearProgress />
                 </Box>
@@ -110,11 +112,7 @@ export function FeatureServerList() {
                 <Box p={1} pt={2}>
                     {featureServers.msg}
                 </Box>
-            ) : epsg.error ? (
-                <Box p={1} pt={2}>
-                    {t("errorLoadingTMZoneInfo")}
-                </Box>
-            ) : !epsg.data ? (
+            ) : !epsg ? (
                 <Box p={1} pt={2}>
                     {t("tMZoneIsNotDefinedForTheProject")}
                 </Box>
@@ -128,7 +126,7 @@ export function FeatureServerList() {
                         variant="outlined"
                         color="primary"
                         onClick={() => history.push("/edit")}
-                        disabled={!isAdmin}
+                        disabled={!canManage}
                     >
                         {t("add")}
                     </Button>
@@ -154,7 +152,7 @@ export function FeatureServerList() {
                                     onCheckLayer={handleLayerCheck}
                                     flyToFeatureServer={handleFlyToFeatureServer}
                                     flyToLayer={handleFlyToLayer}
-                                    isAdmin={isAdmin}
+                                    canManage={canManage}
                                 />
                             );
                         })}
@@ -172,7 +170,7 @@ function FeatureServerItem({
     onCheckLayer,
     flyToFeatureServer,
     flyToLayer,
-    isAdmin,
+    canManage,
 }: {
     defaultExpanded: boolean;
     featureServer: FeatureServer;
@@ -180,7 +178,7 @@ function FeatureServerItem({
     onCheckLayer: (featureServerId: string, layerId: number, checked: boolean) => void;
     flyToFeatureServer: (featureServer: FeatureServer) => void;
     flyToLayer: (layer: Layer) => void;
-    isAdmin: boolean;
+    canManage: boolean;
 }) {
     const { t } = useTranslation();
     const history = useHistory();
@@ -280,13 +278,13 @@ function FeatureServerItem({
                             </Link>
                         </ListItemText>
                     </MenuItem>
-                    <MenuItem onClick={() => history.push("/edit", { id: featureServer.id })} disabled={!isAdmin}>
+                    <MenuItem onClick={() => history.push("/edit", { id: featureServer.id })} disabled={!canManage}>
                         <ListItemIcon>
                             <Edit fontSize="small" />
                         </ListItemIcon>
                         <ListItemText>{t("edit")}</ListItemText>
                     </MenuItem>
-                    <MenuItem onClick={() => history.push("/remove", { id: featureServer.id })} disabled={!isAdmin}>
+                    <MenuItem onClick={() => history.push("/remove", { id: featureServer.id })} disabled={!canManage}>
                         <ListItemIcon>
                             <Clear fontSize="small" />
                         </ListItemIcon>
@@ -305,7 +303,7 @@ function FeatureServerItem({
                                 layer={layer}
                                 onCheckLayer={onCheckLayer}
                                 flyToLayer={flyToLayer}
-                                isAdmin={isAdmin}
+                                canManage={canManage}
                             />
                         ))}
                     </List>
@@ -320,13 +318,13 @@ function LayerItem({
     layer,
     onCheckLayer,
     flyToLayer,
-    isAdmin,
+    canManage,
 }: {
     featureServer: FeatureServer;
     layer: Layer;
     onCheckLayer: (featureServerId: string, layerId: number, checked: boolean) => void;
     flyToLayer: (layer: Layer) => void;
-    isAdmin: boolean;
+    canManage: boolean;
 }) {
     const { t } = useTranslation();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -442,7 +440,7 @@ function LayerItem({
                             onClick={() =>
                                 history.push("/layerFilter", { featureServerId: featureServer.id, layerId: layer.id })
                             }
-                            disabled={!isAdmin}
+                            disabled={!canManage}
                         >
                             <ListItemIcon>
                                 <FilterList fontSize="small" />

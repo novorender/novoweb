@@ -1,9 +1,11 @@
+import { InfoOutlined } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
-import { Box, CircularProgress, Grid, Link } from "@mui/material";
+import { Box, CircularProgress, Grid, Link, Tooltip } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { dataApi } from "apis/dataV1";
+import { useGetCurrentUserRoleAssignmentsQuery } from "apis/dataV2/dataV2Api";
 import { useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
@@ -19,10 +21,10 @@ import {
     selectMaximized,
     selectMinimized,
     selectProjectName,
-    selectUserRole,
-    UserRole,
+    selectProjectV2Info,
 } from "slices/explorer";
 import { createOAuthStateString, generateCodeChallenge } from "utils/auth";
+import { capitalizeFirst } from "utils/misc";
 import { deleteFromStorage, saveToStorage } from "utils/storage";
 
 import { LanguageSelector } from "./languageSelector";
@@ -76,12 +78,17 @@ function LoggedIn({
 }) {
     const { t } = useTranslation();
 
-    const role = useAppSelector(selectUserRole);
     const org = useAppSelector(selectSceneOrganization);
     const config = useAppSelector(selectConfig);
-    const projectId = useSceneId();
+    const sceneId = useSceneId();
+    const projectId = useAppSelector(selectProjectV2Info).id;
     const projectName = useAppSelector(selectProjectName);
     const projectsUrl = useAppSelector(selectConfig).projectsUrl;
+    const { data: roles } = useGetCurrentUserRoleAssignmentsQuery({
+        organizationId: org,
+        projectId,
+        viewerSceneId: projectId !== sceneId ? sceneId : undefined,
+    });
 
     const logOut = () => {
         setLoading(true);
@@ -89,6 +96,15 @@ function LoggedIn({
         deleteFromStorage(StorageKey.RefreshToken);
         window.location.href = `${config.authServerUrl}/signout?return_url=${window.location.href}`;
     };
+
+    let sceneUrl = "";
+    if (projectsUrl && projectId) {
+        if (projectId === sceneId) {
+            sceneUrl = `${projectsUrl}/org/${org}/p/${projectId}/resources`;
+        } else {
+            sceneUrl = `${projectsUrl}/org/${org}/p/${projectId}/viewer_scenes?sceneId=${sceneId}`;
+        }
+    }
 
     return (
         <>
@@ -100,12 +116,23 @@ function LoggedIn({
                     {user.user}
                 </Grid>
 
-                <Grid fontWeight={600} item xs={5}>
-                    {t("role")}
-                </Grid>
-                <Grid item xs={7}>
-                    {role === UserRole.Admin ? "Admin" : role === UserRole.Owner ? "Owner" : "Viewer"}
-                </Grid>
+                {roles && (
+                    <>
+                        <Grid fontWeight={600} item xs={5}>
+                            {t(roles.length > 1 ? "roles" : "role")}
+                        </Grid>
+                        <Grid item xs={7}>
+                            {roles.map((role) => (
+                                <div key={role.id}>
+                                    {capitalizeFirst(role.name)}{" "}
+                                    <Tooltip title={role.description}>
+                                        <InfoOutlined fontSize="small" sx={{ verticalAlign: "text-bottom" }} />
+                                    </Tooltip>
+                                </div>
+                            ))}
+                        </Grid>
+                    </>
+                )}
                 {org && (
                     <>
                         <Grid fontWeight={600} item xs={5}>
@@ -116,13 +143,13 @@ function LoggedIn({
                         </Grid>
                     </>
                 )}
-                {projectsUrl && projectId && projectName && (
+                {sceneUrl && projectName && (
                     <>
                         <Grid fontWeight={600} item xs={5}>
                             Project:
                         </Grid>
                         <Grid item xs={7}>
-                            <Link href={`${projectsUrl}/org/${org}/p/${projectId}/resources`} target="_blank">
+                            <Link href={sceneUrl} target="_blank">
                                 {projectName}
                             </Link>
                         </Grid>

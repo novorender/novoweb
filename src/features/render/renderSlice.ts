@@ -11,6 +11,7 @@ import type { EnvironmentDescription } from "@novorender/webgl-api";
 import { createAction, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { quat, ReadonlyVec3, vec3, vec4 } from "gl-matrix";
 
+import { ProjectInfo } from "apis/dataV2/projectTypes";
 import type { RootState } from "app";
 import type { ProjectType } from "slices/explorer";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
@@ -222,6 +223,7 @@ type State = typeof initialState;
 
 export const initScene = createAction<{
     projectType: ProjectType;
+    projectV2Info: ProjectInfo;
     tmZoneForCalc: string | undefined;
     sceneData: Omit<SceneConfig, "db" | "url">;
     sceneConfig: OctreeSceneConfig;

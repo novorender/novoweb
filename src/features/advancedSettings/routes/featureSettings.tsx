@@ -41,7 +41,7 @@ import {
     explorerActions,
     selectCanUseNewDesign,
     selectCanvasContextMenuFeatures,
-    selectEnabledWidgets,
+    selectEnabledWidgetsWithoutPermissionCheck,
     selectLockedWidgets,
     selectNewDesign,
     selectPrimaryMenu,
@@ -53,7 +53,8 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
     const { t, i18n } = useTranslation();
 
     const dispatch = useAppDispatch();
-    const enabledWidgets = useAppSelector(selectEnabledWidgets);
+    // admins should be able to enable widgets even if they don't have access to it
+    const enabledWidgets = useAppSelector(selectEnabledWidgetsWithoutPermissionCheck);
     const lockedWidgets = useAppSelector(selectLockedWidgets);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
     const enabledCanvasContextMenuFeatures = useAppSelector(selectCanvasContextMenuFeatures);
@@ -75,7 +76,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
         dispatch(
             explorerActions.setCanvasContextMenu({
                 features: checked ? keys.concat(key) : keys.filter((k) => k !== key),
-            })
+            }),
         );
     };
 
@@ -88,7 +89,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                     ? 0
                     : lockedWidgets.includes(a.key)
                       ? 100
-                      : -100)
+                      : -100),
         );
 
     return (
@@ -166,7 +167,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                             }
                                         />
                                     </Grid>
-                                )
+                                ),
                             )}
                         </Grid>
                     </AccordionDetails>
@@ -286,7 +287,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                         dispatch(
                                             explorerActions.setPrimaryMenu({
                                                 button5: e.target.value as ButtonKey,
-                                            })
+                                            }),
                                         );
                                     }}
                                     value={primaryMenu.button5}
@@ -321,7 +322,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                                     name={feature.key}
                                                     color="primary"
                                                     checked={enabledCanvasContextMenuFeatures.some(
-                                                        (enabled) => enabled === feature.key
+                                                        (enabled) => enabled === feature.key,
                                                     )}
                                                     onChange={(_e, checked) => {
                                                         toggleCanvasContextMenuFeature(feature.key, checked);

@@ -22,6 +22,7 @@ import { useHandleOutlineLasers } from "features/outlineLaser";
 import { PerformanceStats } from "features/performanceStats";
 import { useHandleUrlSearch } from "features/search";
 import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
+import { useRefreshProjectPermissions } from "hooks/useRefreshProjectPermissions";
 import { AsyncStatus } from "types/misc";
 
 import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
@@ -107,6 +108,7 @@ export function Render3D() {
     );
 
     useHandleInit();
+    useRefreshProjectPermissions();
     useHandleInitialBookmark();
     useHandleUrlSearch();
     useHandleCameraMoved({ engine2dRenderFnRef, containers: [htmlInteractionContainer, markersContainer] });

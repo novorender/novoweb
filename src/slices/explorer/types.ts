@@ -1,5 +1,6 @@
 import { SearchPattern } from "@novorender/webgl-api";
 
+import { ProjectInfo } from "apis/dataV2/projectTypes";
 import { CanvasContextMenuFeatureKey } from "config/canvasContextMenu";
 import { ButtonKey, FeatureGroupKey, WidgetKey } from "config/features";
 import { DeepMutable } from "types/misc";
@@ -7,12 +8,6 @@ import { DeepMutable } from "types/misc";
 export enum SceneType {
     Viewer,
     Admin,
-}
-
-export enum UserRole {
-    Viewer,
-    Admin,
-    Owner,
 }
 
 export enum ProjectType {
@@ -28,8 +23,8 @@ export type State = {
     enabledWidgets: WidgetKey[];
     lockedWidgets: WidgetKey[];
     sceneType: SceneType;
-    userRole: UserRole;
     projectType: ProjectType;
+    projectV2Info: ProjectInfo;
     tmZoneForCalc: string | undefined;
     requireConsent: boolean;
     organization: string;
@@ -68,7 +63,6 @@ export type State = {
     urlBookmarkId: string | undefined;
     localBookmarkId: string | undefined;
     config: {
-        dataServerUrl: string;
         dataV2ServerUrl: string;
         projectsUrl: string;
         authServerUrl: string;

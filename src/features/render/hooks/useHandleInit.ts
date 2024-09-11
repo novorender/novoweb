@@ -1,12 +1,14 @@
 import { DeviceProfile, getDeviceProfile, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
+import { SearchOptions } from "@novorender/webgl-api";
 import { getGPUTier } from "detect-gpu";
 import { ReadonlyVec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
 import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
+import { Permission } from "apis/dataV2/permissions";
 import { ProjectInfo } from "apis/dataV2/projectTypes";
-import { useAppDispatch } from "app/redux-store-interactions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,
@@ -15,9 +17,9 @@ import {
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
-import { fillGroupIds } from "features/deviations/utils";
+import { useFillGroupIds } from "hooks/useFillGroupIds";
 import { useSceneId } from "hooks/useSceneId";
-import { ProjectType } from "slices/explorer";
+import { ProjectType, selectConfig } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { VecRGBA } from "utils/color";
 import { mixpanel } from "utils/mixpanel";
@@ -26,9 +28,11 @@ import { sleep } from "utils/time";
 import { renderActions } from "../renderSlice";
 import { ErrorKind } from "../sceneError";
 import { getDefaultCamera, loadScene, tm2LatLon } from "../utils";
+import { useCachedCheckPermissionsQuery } from "./useCachedLazyCheckPermissionsQuery";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
+    const config = useAppSelector(selectConfig);
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const dispatchObjectGroups = useDispatchObjectGroups();
@@ -40,6 +44,8 @@ export function useHandleInit() {
     const dispatch = useAppDispatch();
 
     const [getProject] = useLazyGetProjectQuery();
+    const checkPermissions = useCachedCheckPermissionsQuery();
+    const fillGroupIds = useFillGroupIds();
 
     const initialized = useRef(false);
 
@@ -69,6 +75,19 @@ export function useHandleInit() {
 
             try {
                 const [{ url: _url, db, ...sceneData }, sceneCamera] = await loadScene(sceneId);
+                const { projectId } = sceneData;
+
+                const projectV2 = await getProject({ projectId: sceneId })
+                    .unwrap()
+                    .catch((e) => {
+                        if (e.status === 401 || e.status === 403) {
+                            throw { error: "Not authorized" };
+                        }
+                        throw e;
+                    });
+
+                const projectIsV2 = Boolean(projectV2);
+
                 const url = new URL(_url);
                 const parentSceneId = url.pathname.replaceAll("/", "");
                 url.pathname = "";
@@ -78,11 +97,18 @@ export function useHandleInit() {
                     "index.json",
                     new AbortController().signal,
                 );
-                const projectV2 = await getProject({ projectId: sceneId })
-                    .unwrap()
-                    .catch(() => undefined);
-                const projectIsV2 = Boolean(projectV2);
-                const tmZoneForCalc = await loadTmZoneForCalc(projectV2, sceneData.tmZone, octreeSceneConfig.center);
+
+                const [tmZoneForCalc, permissions] = await Promise.all([
+                    loadTmZoneForCalc(projectV2, sceneData.tmZone, octreeSceneConfig.center),
+                    checkPermissions({
+                        scope: {
+                            organizationId: sceneData.organization,
+                            projectId,
+                            viewerSceneId: sceneId === projectId ? undefined : sceneId,
+                        },
+                        permissions: Object.values(Permission),
+                    }),
+                ]);
 
                 mixpanel?.register({ "Scene ID": sceneId, "Scene Org": sceneData.organization }, { persistent: false });
                 mixpanel?.track_pageview({
@@ -102,6 +128,7 @@ export function useHandleInit() {
                 dispatch(
                     renderActions.initScene({
                         projectType: projectIsV2 ? ProjectType.V2 : ProjectType.V1,
+                        projectV2Info: { ...projectV2, permissions },
                         tmZoneForCalc,
                         sceneData,
                         sceneConfig: octreeSceneConfig,
@@ -141,8 +168,8 @@ export function useHandleInit() {
                 // Ensure frozen groups are loaded before rendering anything to not even put them into memory
                 // (some scenes on some devices may crash upon loading because there's too much data)
                 await fillGroupIds(
-                    sceneId,
                     groups.filter((g) => g.status === GroupStatus.Frozen),
+                    sceneId,
                 );
 
                 dispatchObjectGroups(objectGroupsActions.set(groups));
@@ -169,6 +196,8 @@ export function useHandleInit() {
                         );
                     }
                 });
+
+                patchDb(db, config.dataV2ServerUrl, sceneId);
 
                 resizeObserver.observe(canvas);
                 dispatchGlobals(
@@ -240,6 +269,9 @@ export function useHandleInit() {
         dispatchHighlighted,
         dispatchHighlightCollections,
         getProject,
+        checkPermissions,
+        config,
+        fillGroupIds,
     ]);
 }
 
@@ -350,4 +382,43 @@ async function loadTmZoneForCalc(
     } else {
         return tmZoneV1;
     }
+}
+
+// TODO(ND): remove patches once API is updated
+// Some changes to ObjectDB to make it work with data-v2 without changing lib internals
+// and changing all the search calls
+function patchDb(db: ObjectDB | undefined, dataV2ServerUrl: string, sceneId: string) {
+    if (!db) {
+        return;
+    }
+
+    // Override object metadata URL
+    const patchedDb = db as ObjectDB & { url: string };
+    patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}`;
+    const originalGetObjectMetdata = patchedDb.getObjectMetdata.bind(patchedDb);
+    patchedDb.getObjectMetdata = (id: number) => {
+        patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}/metadata`;
+        try {
+            return originalGetObjectMetdata(id);
+        } finally {
+            patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}`;
+        }
+    };
+
+    // Search no longer accepts simple string when searching nor single string for `value`
+    // Wrap all values to avoid updating all the consuming code
+    const originalSearch = patchedDb.search.bind(patchedDb);
+    patchedDb.search = (filter: SearchOptions, signal: AbortSignal | undefined) => {
+        const searchPattern =
+            typeof filter.searchPattern === "string"
+                ? [{ value: [filter.searchPattern] }]
+                : filter.searchPattern?.map((pattern) => {
+                      if (typeof pattern.value === "string") {
+                          return { ...pattern, value: [pattern.value] };
+                      }
+                      return pattern;
+                  });
+
+        return originalSearch({ ...filter, searchPattern }, signal);
+    };
 }

@@ -74,7 +74,7 @@ export function App() {
 
             let finalConfig = config;
             if (import.meta.env.MODE === "development") {
-                dataApi.serviceUrl = config.dataServerUrl;
+                dataApi.serviceUrl = config.dataV2ServerUrl + "/api";
             } else {
                 const cfg = await load();
                 if (cfg) {
@@ -82,7 +82,7 @@ export function App() {
                     finalConfig = cfg;
                 }
 
-                dataApi.serviceUrl = cfg?.dataServerUrl ?? config.dataServerUrl;
+                dataApi.serviceUrl = (cfg?.dataV2ServerUrl ?? config.dataV2ServerUrl) + "/api";
             }
 
             initMixpanel(finalConfig.mixpanelToken);

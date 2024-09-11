@@ -143,7 +143,15 @@ const FormItemHeader = ({
     </Box>
 );
 
-export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatch<SetStateAction<FormItem[]>> }) {
+export function FormItem({
+    item,
+    setItems,
+    disabled,
+}: {
+    item: FormItem;
+    setItems: Dispatch<SetStateAction<FormItem[]>>;
+    disabled?: boolean;
+}) {
     const { t } = useTranslation();
     const sceneId = useSceneId();
     const theme = useTheme();
@@ -305,7 +313,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
     switch (item.type) {
         case FormItemType.Checkbox:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
                     <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
                     <FormGroup row>
                         {item.options.map((option) => (
@@ -340,7 +348,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
 
         case FormItemType.YesNo:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
                     <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
                     <RadioGroup
                         value={item.value ? item.value[0] : ""}
@@ -357,7 +365,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
 
         case FormItemType.TrafficLight:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
                     <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
                     <RadioGroup
                         value={item.value ? item.value[0] : ""}
@@ -376,7 +384,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         case FormItemType.Dropdown:
             return (
                 <FormControl
-                    disabled={!item.required && !item.relevant}
+                    disabled={disabled || (!item.required && !item.relevant)}
                     component="fieldset"
                     fullWidth
                     size="small"
@@ -400,7 +408,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         case FormItemType.Input:
             return (
                 <FormControl
-                    disabled={!item.required && !item.relevant && !item.value}
+                    disabled={disabled || (!item.required && !item.relevant && !item.value)}
                     component="fieldset"
                     fullWidth
                     size="small"
@@ -454,7 +462,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
 
         case FormItemType.Date:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
                     <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
                     <DatePicker
                         value={item.value}
@@ -467,7 +475,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
 
         case FormItemType.Time:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
                     <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
                     <TimePicker
                         value={item.value}
@@ -480,7 +488,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
 
         case FormItemType.DateTime:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
                     <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
                     <DateTimePicker
                         value={item.value}
@@ -546,7 +554,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                                 multiple={item.multiple}
                                 onChange={(e) => handleFileUpload(e, item.id!)}
                                 uploading={uploading}
-                                disabled={!isRelevant}
+                                disabled={disabled || !isRelevant}
                             />
                         </>
                     )}

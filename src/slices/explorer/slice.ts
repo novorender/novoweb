@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
+import { Permission } from "apis/dataV2/permissions";
 import { CanvasContextMenuFeatureKey, defaultCanvasContextMenuFeatures } from "config/canvasContextMenu";
 import {
     ButtonKey,
@@ -7,14 +8,13 @@ import {
     defaultEnabledWidgets,
     defaultLockedWidgets,
     featuresConfig,
-    FeatureType,
     WidgetKey,
 } from "config/features";
 import { newDesignLocalStorageKey } from "features/newDesign/utils";
 import { initScene } from "features/render";
 import { uniqueArray } from "utils/misc";
 
-import { MutableUrlSearchQuery, ProjectType, SceneType, State, UrlSearchQuery, UserRole } from "./types";
+import { MutableUrlSearchQuery, ProjectType, SceneType, State, UrlSearchQuery } from "./types";
 import {
     getCanvasContextMenuFeatures,
     getEnabledFeatures,
@@ -22,7 +22,6 @@ import {
     getRequireConsent,
     getSceneType,
     getTakenWidgetSlotCount,
-    getUserRole,
 } from "./utils";
 
 const favoriteWidgetsStorageKey = "favoriteWidgets";
@@ -32,8 +31,8 @@ const initialState: State = {
     enabledWidgets: defaultEnabledWidgets,
     lockedWidgets: defaultLockedWidgets,
     sceneType: SceneType.Viewer,
-    userRole: UserRole.Viewer,
     projectType: ProjectType.V1,
+    projectV2Info: null!,
     tmZoneForCalc: undefined as string | undefined, // for project v1 - tmZone, for project v2 - proj4 def from epsg.io
     requireConsent: false,
     organization: "",
@@ -73,7 +72,6 @@ const initialState: State = {
     urlBookmarkId: undefined,
     localBookmarkId: undefined,
     config: {
-        dataServerUrl: import.meta.env.REACT_APP_DATA_SERVER_URL ?? "https://data.novorender.com/api",
         dataV2ServerUrl: import.meta.env.REACT_APP_DATA_V2_SERVER_URL ?? "https://data-v2.novorender.com",
         projectsUrl: import.meta.env.REACT_APP_PROJECTS_URL ?? "https://projects.novorender.com",
         authServerUrl: import.meta.env.REACT_APP_AUTH_SERVER_URL ?? "https://auth.novorender.com",
@@ -110,9 +108,6 @@ export const explorerSlice = createSlice({
         setSceneType: (state, action: PayloadAction<SceneType>) => {
             state.sceneType = action.payload;
         },
-        setUserRole: (state, action: PayloadAction<UserRole>) => {
-            state.userRole = action.payload;
-        },
         setWidgets: (state, action: PayloadAction<WidgetKey[]>) => {
             state.widgets = action.payload;
             state.maximized = state.maximized.filter((widget) => action.payload.includes(widget));
@@ -127,13 +122,13 @@ export const explorerSlice = createSlice({
 
             if (state.maximized.includes(action.payload.replace)) {
                 state.maximized = state.maximized.map((key) =>
-                    key === action.payload.replace ? action.payload.key : key
+                    key === action.payload.replace ? action.payload.key : key,
                 );
             }
 
             if (state.maximizedHorizontal.includes(action.payload.replace)) {
                 state.maximizedHorizontal = state.maximizedHorizontal.map((key) =>
-                    key === action.payload.replace ? action.payload.key : key
+                    key === action.payload.replace ? action.payload.key : key,
                 );
             }
 
@@ -218,7 +213,7 @@ export const explorerSlice = createSlice({
             state,
             action: PayloadAction<
                 { query: UrlSearchQuery; options: { selectionOnly: string; openWidgets: boolean } } | undefined
-            >
+            >,
         ) => {
             const patterns = action.payload?.query;
 
@@ -259,7 +254,7 @@ export const explorerSlice = createSlice({
 
             if (state.maximized.length) {
                 state.widgets = state.widgets.filter(
-                    (widget) => state.maximized.includes(widget) || widget === action.payload
+                    (widget) => state.maximized.includes(widget) || widget === action.payload,
                 );
             } else {
                 const idx = state.widgets.indexOf(action.payload);
@@ -339,7 +334,7 @@ export const explorerSlice = createSlice({
                     state.widgets.unshift(action.payload);
                 }
                 state.widgets = state.widgets.filter(
-                    (widget) => state.maximizedHorizontal.includes(widget) || widget === action.payload
+                    (widget) => state.maximizedHorizontal.includes(widget) || widget === action.payload,
                 );
             } else {
                 // only non maximized widgets at this point
@@ -406,6 +401,11 @@ export const explorerSlice = createSlice({
         setConfig: (state, action: PayloadAction<State["config"]>) => {
             state.config = { ...state.config, ...action.payload };
         },
+        setProjectPermissions: (state, action: PayloadAction<Permission[]>) => {
+            if (state.projectV2Info) {
+                state.projectV2Info.permissions = action.payload;
+            }
+        },
         setSnackbarMessage: (state, action: PayloadAction<State["snackbarMessage"]>) => {
             state.snackbarMessage = action.payload;
         },
@@ -418,37 +418,27 @@ export const explorerSlice = createSlice({
             const { customProperties } = action.payload.sceneData;
 
             state.projectType = action.payload.projectType;
+            state.projectV2Info = action.payload.projectV2Info;
             state.tmZoneForCalc = action.payload.tmZoneForCalc;
             state.sceneType = getSceneType(customProperties);
-            state.userRole = getUserRole(customProperties);
             state.requireConsent = getRequireConsent(customProperties);
             state.projectName = action.payload.sceneData.title;
 
             state.lockedWidgets = state.lockedWidgets.filter(
                 (widget) =>
-                    !customProperties?.features || !(customProperties?.features as Record<string, boolean>)[widget]
+                    !customProperties?.features || !(customProperties?.features as Record<string, boolean>)[widget],
             );
             if (action.payload.deviceProfile.isMobile && !state.lockedWidgets.includes(featuresConfig.images.key)) {
                 state.lockedWidgets.push(featuresConfig.images.key);
             }
-            if (state.userRole !== UserRole.Viewer) {
-                state.enabledWidgets = uniqueArray(
-                    (
-                        (customProperties.explorerProjectState?.features?.widgets?.enabled as WidgetKey[]) ??
-                        getEnabledFeatures(customProperties)
-                    )
-                        .concat(defaultEnabledAdminWidgets)
-                        .concat(defaultEnabledWidgets)
-                );
-            } else {
-                state.enabledWidgets = uniqueArray(
-                    (
-                        (customProperties.explorerProjectState?.features?.widgets?.enabled as WidgetKey[])?.filter(
-                            (key) => featuresConfig[key] && featuresConfig[key].type !== FeatureType.AdminWidget
-                        ) ?? getEnabledFeatures(customProperties)
-                    ).concat(defaultEnabledWidgets)
-                );
-            }
+            state.enabledWidgets = uniqueArray(
+                (
+                    (customProperties.explorerProjectState?.features?.widgets?.enabled as WidgetKey[]) ??
+                    getEnabledFeatures(customProperties)
+                )
+                    .concat(defaultEnabledAdminWidgets)
+                    .concat(defaultEnabledWidgets),
+            );
 
             if (customProperties.explorerProjectState?.features?.primaryMenu?.buttons) {
                 const [button1, button2, button3, button4, button5] = customProperties.explorerProjectState.features

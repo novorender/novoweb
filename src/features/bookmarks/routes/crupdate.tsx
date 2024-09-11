@@ -3,11 +3,12 @@ import { FormEventHandler, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities } from "slices/explorer";
 
 import { BookmarkAccess, bookmarksActions, selectBookmarks } from "../bookmarksSlice";
 import { useCreateBookmark } from "../useCreateBookmark";
@@ -21,7 +22,9 @@ export function Crupdate() {
     const bookmarks = useAppSelector(selectBookmarks);
     const bmToEdit = bookmarks.find((bm) => bm.id === id);
 
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.BookmarkManage);
+
     const dispatch = useAppDispatch();
     const {
         state: { view, canvas },
@@ -193,7 +196,7 @@ export function Crupdate() {
                             label={<Box mr={0.5}>{t("addSelectedToSelectionBasket")}</Box>}
                         />
                     </Box>
-                    {isAdmin ? (
+                    {canManage ? (
                         <FormControlLabel
                             sx={{ mb: 2 }}
                             control={<Checkbox color="primary" checked={!personal} onChange={() => togglePersonal()} />}

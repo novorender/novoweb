@@ -4,6 +4,7 @@ import { type FormEvent, type MouseEvent, useCallback, useEffect, useRef, useSta
 import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation, Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -20,6 +21,7 @@ import { type FormId, type FormObject, type FormRecord, type FormState, Template
 import { mapGuidsToIds } from "features/forms/utils";
 import { ObjectVisibility, Picker, renderActions, selectPicker } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 
 import { FormsListItem } from "./formsListItem";
@@ -43,6 +45,9 @@ export function FormsList() {
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const isPickingLocation = useAppSelector(selectPicker) === Picker.FormLocation;
+    const checkPermission = useCheckProjectPermission();
+    const canDelete = checkPermission(Permission.FormsDelete);
+    const canAdd = checkPermission(Permission.FormsManage);
 
     const dispatchHighlightCollections = useDispatchHighlightCollections();
 
@@ -301,6 +306,7 @@ export function FormsList() {
                                             color="primary"
                                             checked={isPickingLocation}
                                             onChange={addLocationForm}
+                                            disabled={!canAdd}
                                         />
                                     }
                                     label={<Box fontSize={14}>{t("add")}</Box>}
@@ -311,7 +317,7 @@ export function FormsList() {
                         <Button
                             color="grey"
                             onClick={() => setIsDeleting(true)}
-                            disabled={loadingTemplate || loadingItems || !items.length}
+                            disabled={!canDelete || loadingTemplate || loadingItems || !items.length}
                         >
                             <Delete fontSize="small" sx={{ mr: 1 }} />
                             {t("deleteAll")}

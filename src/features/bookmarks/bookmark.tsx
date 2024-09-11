@@ -19,13 +19,14 @@ import { MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveBookmarksMutation } from "apis/dataV2/dataV2Api";
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Tooltip } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
-import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { BookmarkAccess, bookmarksActions, ExtendedBookmark, selectBookmarks } from "./bookmarksSlice";
@@ -81,8 +82,10 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
     const bookmarks = useAppSelector(selectBookmarks);
     const sceneId = useSceneId();
 
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.BookmarkManage);
     const user = useAppSelector(selectUser);
+    const [saveBookmarks] = useSaveBookmarksMutation();
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -99,11 +102,13 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
         const newBookmarks = bookmarks.map((bm) => (bm === bookmark ? { ...bm, img, explorerState } : bm));
 
         try {
-            await dataApi.saveBookmarks(
-                sceneId,
-                newBookmarks.filter((bm) => bm.access === bookmark.access).map(({ access: _access, ...bm }) => bm),
-                { personal: bookmark.access === BookmarkAccess.Personal },
-            );
+            await saveBookmarks({
+                projectId: sceneId,
+                bookmarks: newBookmarks
+                    .filter((bm) => bm.access === bookmark.access)
+                    .map(({ access: _access, ...bm }) => bm),
+                personal: bookmark.access === BookmarkAccess.Personal,
+            }).unwrap();
             dispatch(bookmarksActions.setBookmarks(newBookmarks));
             dispatch(
                 bookmarksActions.setSaveStatus({
@@ -151,7 +156,7 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                                 {bookmark.name}
                             </Typography>
                         </Tooltip>
-                        {isAdmin ||
+                        {canManage ||
                         (bookmark.access === BookmarkAccess.Personal && user) ||
                         bookmark.access === BookmarkAccess.Public ? (
                             <IconButton
@@ -195,7 +200,7 @@ export function Bookmark({ bookmark }: { bookmark: ExtendedBookmark }) {
                         <ListItemText>{t("share")}</ListItemText>
                     </MenuItem>
                 )}
-                {(isAdmin || (bookmark.access === BookmarkAccess.Personal && user)) && [
+                {(canManage || (bookmark.access === BookmarkAccess.Personal && user)) && [
                     <MenuItem
                         key="edit"
                         onClick={async () => {

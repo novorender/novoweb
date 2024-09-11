@@ -3,12 +3,13 @@ import { Box, CircularProgress, FormHelperText, Typography } from "@mui/material
 import { FormEventHandler, PropsWithChildren, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveDitioConfigMutation } from "apis/dataV2/dataV2Api";
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
-import { selectAccessToken, selectUser } from "slices/authSlice";
-import { selectHasAdminCapabilities } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
+import { selectUser } from "slices/authSlice";
 import { AsyncStatus } from "types/misc";
 
 import { ditioActions, selectDitioAccessToken } from "../slice";
@@ -20,9 +21,10 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
     const [clientSecret, setClientSecret] = useState("");
     const [status, setStatus] = useState(AsyncStatus.Initial);
     const token = useAppSelector(selectDitioAccessToken);
-    const nrToken = useAppSelector(selectAccessToken);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntDitioManage);
     const user = useAppSelector(selectUser);
+    const [saveDitioConfig] = useSaveDitioConfigMutation();
 
     if (token.status === AsyncStatus.Success) {
         return children;
@@ -32,7 +34,7 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
                 <LinearProgress />
             </Box>
         );
-    } else if (!isAdmin) {
+    } else if (!canManage) {
         return (
             <>
                 <Box
@@ -60,17 +62,10 @@ export function Protected({ sceneId, children }: PropsWithChildren<{ sceneId: st
         setStatus(AsyncStatus.Loading);
 
         try {
-            const res: { access_token: string } = await fetch(`${dataApi.serviceUrl}/scenes/${sceneId}/ditio`, {
-                method: "POST",
-                body: JSON.stringify({ client_id: clientId, client_secret: clientSecret }),
-                headers: { authorization: `Bearer ${nrToken}`, "content-type": "application/json" },
-            }).then((res) => {
-                if (!res.ok) {
-                    throw res.status;
-                }
-
-                return res.json();
-            });
+            const res = await saveDitioConfig({
+                projectId: sceneId,
+                data: { client_id: clientId, client_secret: clientSecret },
+            }).unwrap();
 
             if (res.access_token) {
                 // reset to be handled in useHandleDitioAuth();

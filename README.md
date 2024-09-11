@@ -54,12 +54,6 @@ REACT_APP_MIXPANEL_TOKEN=
 
 #####  ENV   ######
 
-# REACT_APP_DATA_SERVER_URL=https://data-staging.novorender.com/api # staging data service
-REACT_APP_DATA_SERVER_URL=https://data.novorender.com/api
-
-# Override local data address. Default is https://127.0.0.1:5000/api
-# DATA_SERVER_URL_PROXY_TARGET=https://127.0.0.1:5000/api
-
 # REACT_APP_DATA_V2_SERVER_URL=/data-v2 # for local data-v2 setup
 REACT_APP_DATA_V2_SERVER_URL=https://data-v2.novorender.com
 

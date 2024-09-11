@@ -47,7 +47,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
             },
             // Scene config
             {
-                urlPattern: /^https:\/\/data(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}$/i,
+                urlPattern: /^https:\/\/data-v2(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}$/i,
                 handler: "NetworkFirst",
                 options: {
                     cacheableResponse: {
@@ -58,9 +58,9 @@ const pwaOptions: Partial<VitePWAOptions> = {
                     },
                 },
             },
-            // Scene groups/bookmarks etc.
+            // Scene bookmarks, favorites, etc.
             {
-                urlPattern: /^https:\/\/data(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}\/(?!ditio).+/i,
+                urlPattern: /^https:\/\/data-v2(-staging)?\.novorender\.com\/explorer\/[\w]{32}\/(?!ditio).+/i,
                 handler: "NetworkFirst",
                 options: {
                     cacheableResponse: {
@@ -214,13 +214,6 @@ const serverOptions: ServerOptions = {
             target: process.env.DATA_V2_SERVER_URL_PROXY_TARGET ?? "http://127.0.0.1:5000",
             rewrite: (path) => path.replace(/^\/data-v2/, ""),
             changeOrigin: true,
-        },
-        // use REACT_APP_DATA_SERVER_URL=/data-v1 in .env.local to use local version
-        "/data-v1": {
-            target: process.env.DATA_SERVER_URL_PROXY_TARGET ?? "https://127.0.0.1:5000/api",
-            rewrite: (path) => path.replace(/^\/data-v1/, ""),
-            changeOrigin: true,
-            secure: false,
         },
     },
 };

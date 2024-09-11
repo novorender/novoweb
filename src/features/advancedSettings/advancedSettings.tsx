@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveCustomPropertiesMutation } from "apis/dataV2/dataV2Api";
 import { useAppSelector } from "app/redux-store-interactions";
 import {
     Divider,
@@ -42,7 +42,7 @@ import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import {
     selectCanvasContextMenuFeatures,
-    selectEnabledWidgets,
+    selectEnabledWidgetsWithoutPermissionCheck,
     selectIsAdminScene,
     selectMaximized,
     selectMinimized,
@@ -86,7 +86,7 @@ export default function AdvancedSettings() {
     const points = useAppSelector(selectPoints);
     const terrain = useAppSelector(selectTerrain);
     const { environments: _environments, ...background } = useAppSelector(selectBackground);
-    const enabledWidgets = useAppSelector(selectEnabledWidgets);
+    const enabledWidgets = useAppSelector(selectEnabledWidgetsWithoutPermissionCheck);
     const projectSettings = useAppSelector(selectProjectSettings);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
     const canvasCtxMenu = useAppSelector(selectCanvasContextMenuFeatures);
@@ -97,6 +97,7 @@ export default function AdvancedSettings() {
     const debugStats = useAppSelector(selectDebugStats);
     const navigationCube = useAppSelector(selectNavigationCube);
     const generatedParametricData = useAppSelector(selectGeneratedParametricData);
+    const [saveCustomProperties] = useSaveCustomPropertiesMutation();
 
     const save = async () => {
         setStatus(Status.Saving);
@@ -156,7 +157,7 @@ export default function AdvancedSettings() {
                 tmZone: projectSettings.tmZone,
             });
 
-            await dataApi.putScene(updated);
+            await saveCustomProperties({ projectId: sceneId, data: updated.customProperties }).unwrap();
 
             return setStatus(Status.SaveSuccess);
         } catch (e) {
@@ -176,14 +177,15 @@ export default function AdvancedSettings() {
         try {
             const [originalScene] = await loadScene(sceneId);
 
-            await dataApi.putScene(
-                mergeRecursive(originalScene, {
+            await saveCustomProperties({
+                projectId: sceneId,
+                data: mergeRecursive(originalScene, {
                     url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
                     customProperties: {
                         initialCameraState: cameraState,
                     },
-                }),
-            );
+                }).customProperties,
+            });
         } catch (e) {
             console.warn(e);
             return setStatus(Status.SaveError);
