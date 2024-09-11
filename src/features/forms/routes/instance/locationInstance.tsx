@@ -10,9 +10,9 @@ import {
     MenuItem,
     useTheme,
 } from "@mui/material";
-import { type FormEvent, Fragment, MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type FormEvent, Fragment, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory, useParams } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation, Divider, ScrollBox, TextField } from "components";
@@ -42,7 +42,6 @@ import { FormItem } from "./formItem";
 
 export function LocationInstance() {
     const { t } = useTranslation();
-    const { templateId, formId } = useParams<{ templateId: TemplateId; formId: FormId }>();
     const theme = useTheme();
     const history = useHistory();
     const sceneId = useSceneId();
@@ -53,6 +52,11 @@ export function LocationInstance() {
     const flyToForm = useFlyToForm();
     const dispatchFormsGlobals = useDispatchFormsGlobals();
     const lazyFormsGlobals = useLazyFormsGlobals();
+
+    const location = useLocation();
+    const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const templateId = queryParams.get("templateId") as TemplateId;
+    const formId = queryParams.get("formId") as FormId;
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);

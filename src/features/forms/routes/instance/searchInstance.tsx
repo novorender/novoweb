@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { Fragment, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory, useParams } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox } from "components";
@@ -32,7 +32,6 @@ import { FormItem } from "./formItem";
 
 export function SearchInstance() {
     const { t } = useTranslation();
-    const { objectGuid, formId } = useParams<{ objectGuid: FormObjectGuid; formId: FormId }>();
     const theme = useTheme();
     const history = useHistory();
     const sceneId = useSceneId();
@@ -44,6 +43,15 @@ export function SearchInstance() {
     const { idArr: highlighted } = useHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const flyToForm = useFlyToForm();
+
+    const location = useLocation();
+    const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const objectGuid = queryParams.get("objectGuid") as FormObjectGuid;
+    const formId = queryParams.get("formId") as FormId;
+    const objectId = useMemo(
+        () => (queryParams.get("objectId") ? Number.parseInt(queryParams.get("objectId")!) : undefined),
+        [queryParams],
+    );
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);
@@ -58,11 +66,6 @@ export function SearchInstance() {
     });
 
     const [updateForm, { isLoading: isFormUpdating }] = useUpdateSearchFormMutation();
-
-    const objectId = useMemo(
-        () => (history.location?.state as { objectId?: number })?.objectId,
-        [history.location.state],
-    );
 
     useEffect(() => {
         if (!objectId || highlighted.includes(objectId)) {

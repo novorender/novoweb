@@ -104,8 +104,8 @@ export function Object() {
             <Redirect
                 push={false}
                 to={{
-                    pathname: `/search-instance/${object.guid}-${currentFormsList || forms[0].id}`,
-                    state: { objectId: object.id },
+                    pathname: "/search-instance",
+                    search: `?objectId=${object.id}&objectGuid=${object.guid}&formId=${currentFormsList || forms[0].id}`,
                 }}
             />
         );
@@ -165,8 +165,8 @@ export function Object() {
                                         onClick={() => {
                                             if (object?.guid) {
                                                 history.push({
-                                                    pathname: `/search-instance/${object.guid}-${form.id}`,
-                                                    state: { objectId: object.id },
+                                                    pathname: "/search-instance",
+                                                    search: `?objectId=${object.id}&objectGuid=${object.guid}&formId=${form.id}`,
                                                 });
                                             }
                                         }}

@@ -51,10 +51,10 @@ export default function Forms() {
                         <Route path="/forms/:templateId">
                             <FormsList />
                         </Route>
-                        <Route path="/search-instance/:objectGuid-:formId">
+                        <Route path="/search-instance">
                             <SearchInstance />
                         </Route>
-                        <Route path="/location-instance/:templateId-:formId">
+                        <Route path="/location-instance">
                             <LocationInstance />
                         </Route>
                         <Route path="/object/:id">
