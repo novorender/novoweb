@@ -397,12 +397,14 @@ function patchDb(db: ObjectDB | undefined, dataV2ServerUrl: string, sceneId: str
     const originalGetObjectMetdata = patchedDb.getObjectMetdata.bind(patchedDb);
     patchedDb.getObjectMetdata = (id: number) => {
         patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}/metadata`;
-        const result = originalGetObjectMetdata(id);
-        patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}`;
-        return result;
+        try {
+            return originalGetObjectMetdata(id);
+        } finally {
+            patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}`;
+        }
     };
 
-    // Search no longer accepts simple string when seaching nor single string for `value`
+    // Search no longer accepts simple string when searching nor single string for `value`
     // Wrap all values to avoid updating all the consuming code
     const originalSearch = patchedDb.search.bind(patchedDb);
     patchedDb.search = (filter: SearchOptions, signal: AbortSignal | undefined) => {
