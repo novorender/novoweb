@@ -18,7 +18,7 @@ export function useGoToSelectedForm() {
 
         let newPath: string;
         if (selectedFormId) {
-            newPath = `/location-instance/${template.id}-${selectedFormId}`;
+            newPath = `/location-instance?templateId=${template.id}&formId=${selectedFormId}`;
         } else {
             newPath = `/forms/${template.id}`;
         }

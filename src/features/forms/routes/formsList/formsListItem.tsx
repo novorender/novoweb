@@ -27,9 +27,15 @@ export function FormsListItem({
     const handleClick = () => {
         const id = searchForm ? item.guid : item.id;
         if (searchForm) {
-            history.push(`/search-instance/${id}-${formId}`);
+            history.push({
+                pathname: "/search-instance",
+                search: `?objectGuid=${id}&formId=${formId}`,
+            });
         } else {
-            history.push(`/location-instance/${formId}-${id}`);
+            history.push({
+                pathname: "/location-instance",
+                search: `?templateId=${formId}&formId=${id}`,
+            });
         }
     };
 
