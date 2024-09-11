@@ -5,7 +5,7 @@ import { minutesToSeconds } from "date-fns";
 import { type ArcgisWidgetConfig } from "features/arcgis/types";
 import { CustomProperties } from "types/project";
 
-import { AuthScope, Role } from "./authTypes";
+import { AuthScope, ScopeRoleAssignment } from "./authTypes";
 import { DeviationProjectConfig } from "./deviationTypes";
 import { Omega365Document } from "./omega365Types";
 import { Permission } from "./permissions";
@@ -110,7 +110,7 @@ export const dataV2Api = createApi({
             }),
         }),
         getCurrentUserRoleAssignments: builder.query<
-            Role[],
+            ScopeRoleAssignment[],
             { organizationId: string; projectId: string; viewerSceneId?: string }
         >({
             query: ({ organizationId, projectId, viewerSceneId }) => ({

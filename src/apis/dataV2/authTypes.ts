@@ -13,7 +13,7 @@ export enum ResourceType {
     Widget = "widget",
 }
 
-export type Role = {
+export type ScopeRoleAssignment = {
     id: string;
     name: string;
     description: string;
