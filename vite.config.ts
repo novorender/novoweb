@@ -47,7 +47,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
             },
             // Scene config
             {
-                urlPattern: /^https:\/\/data(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}$/i,
+                urlPattern: /^https:\/\/data-v2(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}$/i,
                 handler: "NetworkFirst",
                 options: {
                     cacheableResponse: {
@@ -58,9 +58,9 @@ const pwaOptions: Partial<VitePWAOptions> = {
                     },
                 },
             },
-            // Scene groups/bookmarks etc.
+            // Scene bookmarks, favorites, etc.
             {
-                urlPattern: /^https:\/\/data(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}\/(?!ditio).+/i,
+                urlPattern: /^https:\/\/data-v2(-staging)?\.novorender\.com\/explorer\/[\w]{32}\/(?!ditio).+/i,
                 handler: "NetworkFirst",
                 options: {
                     cacheableResponse: {

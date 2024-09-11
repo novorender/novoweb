@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 
-import { useLazyCheckPermissionsQuery } from "apis/dataV2/dataV2Api";
 import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { selectSceneOrganization } from "features/render";
+import { useCachedCheckPermissionsQuery } from "features/render/hooks/useCachedLazyCheckPermissionsQuery";
 import { explorerActions, selectProjectV2Info } from "slices/explorer";
 
 import { useSceneId } from "./useSceneId";
@@ -14,7 +14,7 @@ export function useRefreshProjectPermissions() {
     const org = useAppSelector(selectSceneOrganization);
     const dispatch = useAppDispatch();
 
-    const [checkPermissions] = useLazyCheckPermissionsQuery();
+    const checkPermissions = useCachedCheckPermissionsQuery();
 
     useEffect(() => {
         if (!projectId) {
@@ -28,7 +28,7 @@ export function useRefreshProjectPermissions() {
                     const permissions = await checkPermissions({
                         scope: { organizationId: org, projectId, viewerSceneId },
                         permissions: Object.values(Permission),
-                    }).unwrap();
+                    });
                     dispatch(explorerActions.setProjectPermissions(permissions));
                 } catch (ex) {
                     console.warn("Error refreshing permissions", ex);

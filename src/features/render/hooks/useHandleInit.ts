@@ -5,7 +5,7 @@ import { getGPUTier } from "detect-gpu";
 import { ReadonlyVec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
-import { useLazyCheckPermissionsQuery, useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
+import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
 import { Permission } from "apis/dataV2/permissions";
 import { ProjectInfo } from "apis/dataV2/projectTypes";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -28,6 +28,7 @@ import { sleep } from "utils/time";
 import { renderActions } from "../renderSlice";
 import { ErrorKind } from "../sceneError";
 import { getDefaultCamera, loadScene, tm2LatLon } from "../utils";
+import { useCachedCheckPermissionsQuery } from "./useCachedLazyCheckPermissionsQuery";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
@@ -43,7 +44,7 @@ export function useHandleInit() {
     const dispatch = useAppDispatch();
 
     const [getProject] = useLazyGetProjectQuery();
-    const [checkPermissions] = useLazyCheckPermissionsQuery();
+    const checkPermissions = useCachedCheckPermissionsQuery();
     const fillGroupIds = useFillGroupIds();
 
     const initialized = useRef(false);
@@ -106,7 +107,7 @@ export function useHandleInit() {
                             viewerSceneId: sceneId === projectId ? undefined : sceneId,
                         },
                         permissions: Object.values(Permission),
-                    }).unwrap(),
+                    }),
                 ]);
 
                 mixpanel?.register({ "Scene ID": sceneId, "Scene Org": sceneData.organization }, { persistent: false });
