@@ -117,8 +117,8 @@ export function SceneError() {
                         <Alert severity="warning" sx={{ mb: 2 }}>
                             {error === ErrorKind.NOT_AUTHORIZED && user && (
                                 <>
-                                    {t("loggedInAs")}
-                                    <em>{user.user}</em> {t("noAccessToScene")}
+                                    {t("loggedInAs") + " "}
+                                    <em>{user.user}</em> {t("noAccessToScene") + " "}
                                     <em>{sceneId}</em>.
                                 </>
                             )}
@@ -133,14 +133,12 @@ export function SceneError() {
                             )}
                             {error === ErrorKind.OFFLINE_UNAVAILABLE && (
                                 <>
-                                    {t("sceneWithId")}
-                                    <em>{sceneId}</em> {t("notDownloaded")}
+                                    {t("sceneWithId")} <em>{sceneId}</em> {t("notDownloaded")}
                                 </>
                             )}
                             {error === ErrorKind.INVALID_SCENE && (
                                 <>
-                                    {t("theSceneWithId")}
-                                    <em>{sceneId}</em> {t("notExist")}
+                                    {t("sceneWithId")} <em>{sceneId}</em> {t("notExist")}
                                 </>
                             )}
                             {error === ErrorKind.DELETED_SCENE && <>{t("sceneDeleted")}</>}
