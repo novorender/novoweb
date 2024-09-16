@@ -1,11 +1,11 @@
 import { CoreModule, LoadStatus, MeasureEntity, PickSampleExt } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
 import {
-    KeyboardEvent,
     MouseEvent,
     MutableRefObject,
     PointerEvent as ReactPointerEvent,
     TouchEvent,
+    useEffect,
     useRef,
     WheelEvent,
 } from "react";
@@ -540,22 +540,36 @@ export function useCanvasEventHandlers({
         hideSvgCursor();
     };
 
-    const onKeyDown = (evt: KeyboardEvent<HTMLCanvasElement>) => {
-        if (view && evt.key === "Shift" && cameraType === CameraType.Orthographic) {
-            // In orhto shift moves camera on Z axis
-            view.controllers.flight.input.disableWheelOnShift = false;
-        }
-    };
-
-    const onKeyUp = (evt: KeyboardEvent<HTMLCanvasElement>) => {
+    const onKeyUp = (evt: React.KeyboardEvent<HTMLCanvasElement>) => {
         if (evt.key === "Escape") {
             dispatch(renderActions.setPicker(Picker.Object));
             hideSvgCursor();
         }
-        if (view && evt.key === "Shift") {
-            view.controllers.flight.input.disableWheelOnShift = true;
-        }
     };
+
+    // Technically these are not canvas event listeners, but they logically affect canvas behavior
+    // these events work only when canvas is focused, but that's not always the case
+    useEffect(() => {
+        function onKeyDown(evt: KeyboardEvent) {
+            if (view && evt.key === "Shift" && cameraType === CameraType.Orthographic) {
+                // In orhto shift moves camera on Z axis
+                view.controllers.flight.input.disableWheelOnShift = false;
+            }
+        }
+
+        function onKeyUp(evt: KeyboardEvent) {
+            if (view && evt.key === "Shift") {
+                view.controllers.flight.input.disableWheelOnShift = true;
+            }
+        }
+
+        window.addEventListener("keydown", onKeyDown);
+        window.addEventListener("keyup", onKeyUp);
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+            window.removeEventListener("keyup", onKeyUp);
+        };
+    });
 
     return {
         onWheel,
@@ -569,7 +583,6 @@ export function useCanvasEventHandlers({
         onPointerEnter,
         onPointerMove,
         onPointerOut,
-        onKeyDown,
         onKeyUp,
     };
 }
