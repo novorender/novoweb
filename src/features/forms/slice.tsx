@@ -67,7 +67,7 @@ export const formsSlice = createSlice({
         },
         setTemplateLocationForms: (
             state,
-            action: PayloadAction<{ templateId: string; forms: State["locationForms"] }>
+            action: PayloadAction<{ templateId: string; forms: State["locationForms"] }>,
         ) => {
             state.locationForms = [
                 ...state.locationForms.filter((f) => f.templateId !== action.payload.templateId),
@@ -87,14 +87,11 @@ export const formsSlice = createSlice({
                 data: [...state.templates.data.filter((t) => t.id !== template.id), template],
             };
         },
-        setTemplates: (state, action: PayloadAction<State["templates"]>) => {
-            state.templates = action.payload;
-        },
         addLocationForms: (state, action: PayloadAction<State["locationForms"]>) => {
             const newForms = action.payload;
             state.locationForms = [
                 ...state.locationForms.filter(
-                    (f) => !newForms.some((nf) => nf.templateId === f.templateId && nf.id === f.id)
+                    (f) => !newForms.some((nf) => nf.templateId === f.templateId && nf.id === f.id),
                 ),
                 ...newForms,
             ];
@@ -155,7 +152,7 @@ export const selectCurrentFormsList = (state: RootState) => state.forms.currentF
 export const selectTemplates = (state: RootState) => state.forms.templates;
 
 export const selectCurrentTemplate = createSelector([selectTemplates, selectCurrentFormsList], (templates, id) =>
-    id && templates.status === AsyncStatus.Success ? templates.data.find((t) => t.id === id) : undefined
+    id && templates.status === AsyncStatus.Success ? templates.data.find((t) => t.id === id) : undefined,
 );
 
 export const selectFormFilters = (state: RootState) => state.forms.formFilters;

@@ -32,7 +32,7 @@ import { FILE_SIZE_LIMIT } from "features/forms/constants";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 
-import { type FileTypes, type FormFileUploadResponse, type FormItem, FormItemType } from "../../types";
+import { type FormFileUploadResponse, type FormItem, FormItemType } from "../../types";
 
 const DOC_TYPES = [
     "application/pdf",
@@ -56,7 +56,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
     const [relevant, toggleRelevant] = useToggle(true);
     const [options, setOptions] = useState<string[]>([]);
     const [files, setFiles] = useState<(File & FormFileUploadResponse)[]>([]);
-    const [fileTypes, setFileTypes] = useState<FileTypes>([]);
+    const [fileTypes, setFileTypes] = useState<string[]>([]);
     const [dateTime, setDateTime] = useState<Date | null>(null);
     const [multiple, toggleMultiple] = useToggle(true);
     const [readonly, toggleReadonly] = useToggle(false);
@@ -65,12 +65,12 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
     const [uploadFiles, { isLoading: uploading }] = useUploadFilesMutation();
 
     const accept = useMemo(() => {
-        let mimeTypes = fileTypes.includes("Images") ? "image/*," : "";
-        if (fileTypes.includes("Documents")) {
+        let mimeTypes = fileTypes.includes(t("images")) ? "image/*," : "";
+        if (fileTypes.includes(t("documents"))) {
             mimeTypes += DOC_TYPES.join(",");
         }
         return mimeTypes;
-    }, [fileTypes]);
+    }, [fileTypes, t]);
 
     const canSave = useMemo(
         () =>
@@ -190,9 +190,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
     const renderAlert = (type: FormItemType) =>
         [FormItemType.Text, FormItemType.File].includes(type) && (
             <Alert severity={type === FormItemType.File ? "warning" : "info"} sx={{ mt: 1 }}>
-                {type === FormItemType.File
-                    ? "This item type is in BETA."
-                    : 'This is an immutable item. It will not be editable or clearable when filling the form. If you require an item that can be modified, please use the "Input" item instead.'}
+                {t(type === FormItemType.File ? "betaItem" : "textItemIsImmutableMessage")}
             </Alert>
         );
 
@@ -213,7 +211,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                             onChange={handleToggleRelevant}
                         />
                     }
-                    label="Always relevant"
+                    label={t("alwaysRelevant")}
                 />
             </FormGroup>
             <Divider sx={{ my: 1 }} />
@@ -266,7 +264,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                     <Divider sx={{ mb: 2 }} />
                     <TextArea
                         minRows={3}
-                        placeholder="Additional information or URL"
+                        placeholder={t("additionalInfoOrUrl")}
                         style={{ width: "100%" }}
                         value={value}
                         onChange={handleTextChange}
@@ -284,11 +282,11 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                             fullWidth
                             multiple
                             value={fileTypes}
-                            onChange={(e) => setFileTypes(e.target.value as FileTypes)}
+                            onChange={(e) => setFileTypes(e.target.value as string[])}
                             name="accept"
-                            label="Accept file types"
+                            label={t("acceptFileTypes")}
                         >
-                            {["Documents", "Images"].map((fileType) => (
+                            {[t("documents"), t("images")].map((fileType) => (
                                 <MenuItem
                                     key={fileType}
                                     value={fileType}
@@ -304,11 +302,11 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                     <FormGroup>
                         <FormControlLabel
                             control={<Checkbox size="small" checked={multiple} onChange={handleToggleMultiple} />}
-                            label="Select multiple files"
+                            label={t("selectMultipleFiles")}
                         />
                         <FormControlLabel
                             control={<Checkbox size="small" checked={!readonly} onChange={handleToggleReadonly} />}
-                            label="Allow changing files"
+                            label={t("allowChangingFiles")}
                             sx={{ mb: 1 }}
                         />
                         <AddFilesButton
@@ -353,7 +351,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                                 onChange={(e) => setDateTime(e.target.checked ? today : null)}
                             />
                         }
-                        label="Set default value"
+                        label={t("setDefaultValue")}
                     />
                     {dateTime && (
                         <>
@@ -409,7 +407,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                 autoHideDuration={2500}
                 open={fileSizeWarning}
                 onClose={() => toggleFileSizeWarning(false)}
-                message={`Some files were not added because they are larger than ${FILE_SIZE_LIMIT} MB.`}
+                message={t("filesNotAddedMessage", { limit: FILE_SIZE_LIMIT })}
                 action={
                     <IconButton
                         size="small"

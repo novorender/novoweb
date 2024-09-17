@@ -1,8 +1,10 @@
 import { ArrowBack, Delete, FilterAlt } from "@mui/icons-material";
-import { Box, Button, FormControlLabel, List, Typography, useTheme } from "@mui/material";
+import { Box, Button, FormControlLabel, Typography, useTheme } from "@mui/material";
 import { type FormEvent, type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
+import AutoSizer from "react-virtualized-auto-sizer";
+import { FixedSizeList as List } from "react-window";
 
 import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -76,6 +78,9 @@ export function FormsList() {
               : [],
     );
     const [loadingItems, setLoadingItems] = useState(false);
+    const [filteredItems, setFilteredItems] = useState<
+        (FormObject & { formState: FormState })[] | (FormRecord & { id: number; formState: FormState })[]
+    >([]);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const abortSignal = abortController.current.signal;
@@ -226,6 +231,13 @@ export function FormsList() {
         );
     }, [items, formFilters, dispatch, dispatchHighlightCollections, filterItems, template]);
 
+    useEffect(() => {
+        if (!items.length) {
+            return;
+        }
+        setFilteredItems(items.filter(filterItems) as typeof items);
+    }, [items, filterItems]);
+
     const handleBackClick = () => {
         if (isPickingLocation) {
             dispatch(renderActions.stopPicker(Picker.FormLocation));
@@ -266,10 +278,19 @@ export function FormsList() {
         [deleteTemplate, dispatch, history, isPickingLocation, sceneId, template, templateId],
     );
 
+    const ListItem = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+        const item = filteredItems[index];
+        return (
+            <div style={style}>
+                <FormsListItem key={"guid" in item ? item.guid : item.id} item={item} formId={templateId} />
+            </div>
+        );
+    };
+
     return isDeleting ? (
         <Confirmation
-            title={`Delete all "${template?.title}" forms?`}
-            confirmBtnText="Delete"
+            title={t("deleteAllFormsInTemplate", { title: template?.title })}
+            confirmBtnText={t("delete")}
             onCancel={() => setIsDeleting(false)}
             component="form"
             onSubmit={handleDelete}
@@ -278,70 +299,74 @@ export function FormsList() {
     ) : (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
-                <>
-                    <Box px={1}>
-                        <Divider />
-                    </Box>
-                    <Box display="flex" justifyContent="space-between">
-                        <Box display="flex">
-                            <Button color="grey" onClick={handleBackClick}>
-                                <ArrowBack sx={{ mr: 1 }} />
-                                {t("back")}
-                            </Button>
-                            <Button
-                                color="grey"
-                                onClick={openFilters}
-                                aria-haspopup="true"
-                                aria-controls={FILTER_MENU_ID}
-                                aria-expanded={Boolean(filterMenuAnchor)}
-                            >
-                                <FilterAlt sx={{ mr: 1 }} />
-                                {t("filters")}
-                            </Button>
-                            {template?.type === TemplateType.Location && (
-                                <FormControlLabel
-                                    control={
-                                        <IosSwitch
-                                            size="medium"
-                                            color="primary"
-                                            checked={isPickingLocation}
-                                            onChange={addLocationForm}
-                                            disabled={!canAdd}
-                                        />
-                                    }
-                                    label={<Box fontSize={14}>{t("add")}</Box>}
-                                    sx={{ ml: 1 }}
-                                />
-                            )}
-                        </Box>
+                <Box px={1}>
+                    <Divider />
+                </Box>
+                <Box m={1} display="flex" justifyContent="space-between">
+                    <Box display="flex">
+                        <Button color="grey" onClick={handleBackClick}>
+                            <ArrowBack sx={{ mr: 1 }} />
+                            {t("back")}
+                        </Button>
                         <Button
                             color="grey"
-                            onClick={() => setIsDeleting(true)}
-                            disabled={!canDelete || loadingTemplate || loadingItems || !items.length}
+                            onClick={openFilters}
+                            aria-haspopup="true"
+                            aria-controls={FILTER_MENU_ID}
+                            aria-expanded={Boolean(filterMenuAnchor)}
                         >
-                            <Delete fontSize="small" sx={{ mr: 1 }} />
-                            {t("deleteAll")}
+                            <FilterAlt sx={{ mr: 1 }} />
+                            {t("filters")}
                         </Button>
+                        {template?.type === TemplateType.Location && (
+                            <FormControlLabel
+                                control={
+                                    <IosSwitch
+                                        size="medium"
+                                        color="primary"
+                                        checked={isPickingLocation}
+                                        onChange={addLocationForm}
+                                        disabled={!canAdd}
+                                    />
+                                }
+                                label={<Box fontSize={14}>{t("add")}</Box>}
+                                sx={{ ml: 1 }}
+                            />
+                        )}
                     </Box>
-                </>
+                    <Button
+                        color="grey"
+                        onClick={() => setIsDeleting(true)}
+                        disabled={!canDelete || loadingTemplate || loadingItems || !items.length}
+                    >
+                        <Delete fontSize="small" sx={{ mr: 1 }} />
+                        {t("deleteAll")}
+                    </Button>
+                </Box>
             </Box>
             {(loadingTemplate || loadingItems) && (
                 <Box position="relative">
                     <LinearProgress />
                 </Box>
             )}
-            <ScrollBox pt={2} pb={3}>
-                <Typography px={1} fontWeight={600} mb={1}>
-                    {template?.title ?? ""}
-                </Typography>
+            <Typography py={2} px={1} fontWeight={600} mb={1}>
+                {template?.title ?? ""}
+            </Typography>
+            <ScrollBox pb={2} flex={1}>
                 {items.length === 0 && <Typography px={1}>{t("noForms")}</Typography>}
-                <List dense disablePadding>
-                    {items
-                        ?.filter(filterItems)
-                        .map((item) => (
-                            <FormsListItem key={"guid" in item ? item.guid : item.id} item={item} formId={templateId} />
-                        ))}
-                </List>
+                <AutoSizer disableWidth>
+                    {({ height }) => (
+                        <List
+                            height={height}
+                            itemCount={filteredItems.length}
+                            itemSize={48}
+                            width="100%"
+                            overscanCount={5}
+                        >
+                            {ListItem}
+                        </List>
+                    )}
+                </AutoSizer>
             </ScrollBox>
             <FormFilterMenu
                 anchorEl={filterMenuAnchor}

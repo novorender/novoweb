@@ -16,7 +16,6 @@ import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import { useGoToSelectedForm } from "./hooks/useGoToSelectedForm";
-import { useLoadLocationTemplates } from "./hooks/useLoadLocationTemplates";
 import { Create, FormsList, LocationInstance, Object, SearchInstance, Templates } from "./routes";
 import { Settings } from "./routes/settings";
 import { formsActions } from "./slice";
@@ -25,8 +24,6 @@ export default function Forms() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.forms.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.forms.key);
-
-    useLoadLocationTemplates();
 
     return (
         <MemoryRouter>

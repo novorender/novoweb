@@ -65,7 +65,7 @@ export function TransformEditor({ disabled }: { disabled?: boolean }) {
 
     useEffect(() => {
         // Prevent updating local transform based on updates made in the component,
-        // becauses it messes up input in the text fields
+        // because it messes up input in the text fields
         if (transformDraft !== latestDispatchedTransformDraft.current) {
             setTransform(toTransformState(transformDraft?.location, transformDraft?.rotation, transformDraft?.scale));
         }

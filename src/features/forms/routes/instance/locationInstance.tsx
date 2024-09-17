@@ -316,46 +316,44 @@ export function LocationInstance() {
     ) : (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
-                <>
-                    <Box px={1}>
-                        <Divider />
-                    </Box>
-                    <Box display="flex" justifyContent="space-between">
-                        <Button color="grey" onClick={handleBack}>
-                            <ArrowBack sx={{ mr: 1 }} />
-                            {t("back")}
-                        </Button>
-                        <Button color="grey" onClick={handleFlyTo}>
-                            <FlightTakeoff sx={{ mr: 1 }} />
-                            {t("flyTo")}
-                        </Button>
-                        <>
-                            <IconButton edge="start" size="small" onClick={openMenu} sx={{ mr: 1 }}>
-                                <MoreVert fontSize="small" />
-                            </IconButton>
-                            <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
-                                <MenuItem onClick={handleExportAsPdf}>
-                                    <ListItemIcon>
-                                        <Download fontSize="small" />
-                                    </ListItemIcon>
-                                    <ListItemText>{t("exportAsPDF")}</ListItemText>
-                                </MenuItem>
-                                <MenuItem onClick={() => setIsDeleting(true)} disabled={!canDelete}>
-                                    <ListItemIcon>
-                                        <Delete fontSize="small" />
-                                    </ListItemIcon>
-                                    <ListItemText>{t("delete")}</ListItemText>
-                                </MenuItem>
-                                <MenuItem onClick={handleClearClick} disabled={!canEdit}>
-                                    <ListItemIcon>
-                                        <Clear fontSize="small" />
-                                    </ListItemIcon>
-                                    <ListItemText>{t("clear")}</ListItemText>
-                                </MenuItem>
-                            </Menu>
-                        </>
-                    </Box>
-                </>
+                <Box px={1}>
+                    <Divider />
+                </Box>
+                <Box m={1} display="flex" justifyContent="space-between">
+                    <Button color="grey" onClick={handleBack}>
+                        <ArrowBack sx={{ mr: 1 }} />
+                        {t("back")}
+                    </Button>
+                    <Button color="grey" onClick={handleFlyTo}>
+                        <FlightTakeoff sx={{ mr: 1 }} />
+                        {t("flyTo")}
+                    </Button>
+                    <>
+                        <IconButton edge="start" size="small" onClick={openMenu} sx={{ mr: 1 }}>
+                            <MoreVert fontSize="small" />
+                        </IconButton>
+                        <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
+                            <MenuItem onClick={handleExportAsPdf}>
+                                <ListItemIcon>
+                                    <Download fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>{t("exportAsPDF")}</ListItemText>
+                            </MenuItem>
+                            <MenuItem onClick={() => setIsDeleting(true)} disabled={!canDelete}>
+                                <ListItemIcon>
+                                    <Delete fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>{t("delete")}</ListItemText>
+                            </MenuItem>
+                            <MenuItem onClick={handleClearClick} disabled={!canEdit}>
+                                <ListItemIcon>
+                                    <Clear fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>{t("clear")}</ListItemText>
+                            </MenuItem>
+                        </Menu>
+                    </>
+                </Box>
             </Box>
             {(isFormLoading || isFormUpdating) && (
                 <Box position="relative">

@@ -1,5 +1,6 @@
 import { Circle, Search } from "@mui/icons-material";
 import { Checkbox, InputAdornment, Menu, MenuItem, MenuProps, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { AppDispatch } from "app/store";
@@ -29,6 +30,7 @@ const FormFilterMenuItem = ({
 );
 
 export function FormFilterMenu({ ...MenuProps }: MenuProps) {
+    const { t } = useTranslation();
     const theme = useTheme();
 
     const formFilters = useAppSelector(selectFormFilters);
@@ -46,7 +48,7 @@ export function FormFilterMenu({ ...MenuProps }: MenuProps) {
                     autoFocus
                     fullWidth
                     variant="standard"
-                    placeholder="Search by name"
+                    placeholder={t("searchByName")}
                     value={name}
                     onChange={(e) => dispatch(formsActions.setFormFilters({ name: e.target.value }))}
                     InputProps={{
