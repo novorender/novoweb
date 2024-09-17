@@ -6,7 +6,7 @@ import { useSceneId } from "hooks/useSceneId";
 import { selectWidgets } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
-import { useLazyGetTemplateQuery, useLazyListTemplatesQuery } from "../api";
+import { useLazyGetTemplatesQuery } from "../api";
 import { formsActions, selectAlwaysShowMarkers } from "../slice";
 import { TemplateType } from "../types";
 
@@ -24,8 +24,7 @@ export function useFetchInitialLocationForms() {
 
     const status = useRef(AsyncStatus.Initial);
 
-    const [listTemplates] = useLazyListTemplatesQuery();
-    const [getTemplate] = useLazyGetTemplateQuery();
+    const [getTemplates] = useLazyGetTemplatesQuery();
 
     useEffect(() => {
         if (isFormWidgetOpen) {
@@ -45,13 +44,9 @@ export function useFetchInitialLocationForms() {
             status.current = AsyncStatus.Loading;
 
             try {
-                const templateIds = await listTemplates({ projectId }, true).unwrap();
-                const templates = await Promise.all(
-                    templateIds.map((templateId) => getTemplate({ projectId, templateId }, true).unwrap())
-                );
-                dispatch(formsActions.setTemplates({ status: AsyncStatus.Success, data: templates }));
+                const templates = await getTemplates({ projectId, type: TemplateType.Geo }, true).unwrap();
                 const locationForms = templates
-                    .filter((t) => t.type === TemplateType.Location && t.forms)
+                    .filter((t) => !!t.forms?.length)
                     .flatMap((t) => Object.entries(t.forms!).map(([id, form]) => ({ ...form, id, templateId: t.id! })));
 
                 dispatch(formsActions.addLocationForms(locationForms));
@@ -61,5 +56,5 @@ export function useFetchInitialLocationForms() {
                 status.current = AsyncStatus.Error;
             }
         }
-    }, [dispatch, projectId, alwaysShowMarkers, listTemplates, getTemplate]);
+    }, [dispatch, projectId, alwaysShowMarkers, getTemplates]);
 }

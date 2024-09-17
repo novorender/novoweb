@@ -165,8 +165,8 @@ export function CreateForm({
                 </Typography>
                 <FormControl>
                     <RadioGroup row value={type} onChange={handleTypeChange}>
-                        <FormControlLabel value={TemplateType.Search} control={<Radio />} label="Object" />
-                        <FormControlLabel value={TemplateType.Location} control={<Radio />} label="Geo" />
+                        <FormControlLabel value={TemplateType.Search} control={<Radio />} label={t("object")} />
+                        <FormControlLabel value={TemplateType.Location} control={<Radio />} label={t("geo")} />
                     </RadioGroup>
                 </FormControl>
 

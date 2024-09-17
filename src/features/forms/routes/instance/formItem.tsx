@@ -245,7 +245,7 @@ export function FormItem({
         });
 
         if (showFileSizeWarning) {
-            setInfoMessage(`Some files were not added because they are larger than ${FILE_SIZE_LIMIT} MB.`);
+            setInfoMessage(t("filesNotAddedMessage", { limit: FILE_SIZE_LIMIT }));
         }
 
         if (filteredFiles.length === 0) {
@@ -261,7 +261,7 @@ export function FormItem({
                 }
             });
         } else {
-            setInfoMessage("An error occurred while uploading files. Please try again.");
+            setInfoMessage(t("filesUploadingError"));
         }
 
         setItems((state) =>
@@ -357,8 +357,8 @@ export function FormItem({
                         aria-labelledby={item.id}
                         name={item.title}
                     >
-                        <FormControlLabel value={"no"} control={<Radio size="small" />} label="No" />
-                        <FormControlLabel value={"yes"} control={<Radio size="small" />} label="Yes" />
+                        <FormControlLabel value={"no"} control={<Radio size="small" />} label={t("no")} />
+                        <FormControlLabel value={"yes"} control={<Radio size="small" />} label={t("yes")} />
                     </RadioGroup>
                 </FormControl>
             );
@@ -374,9 +374,9 @@ export function FormItem({
                         aria-labelledby={item.id}
                         name={item.title}
                     >
-                        <FormControlLabel value={"red"} control={<Radio size="small" />} label="Red" />
-                        <FormControlLabel value={"yellow"} control={<Radio size="small" />} label="Yellow" />
-                        <FormControlLabel value={"green"} control={<Radio size="small" />} label="Green" />
+                        <FormControlLabel value={"red"} control={<Radio size="small" />} label={t("red")} />
+                        <FormControlLabel value={"yellow"} control={<Radio size="small" />} label={t("yellow")} />
+                        <FormControlLabel value={"green"} control={<Radio size="small" />} label={t("green")} />
                     </RadioGroup>
                 </FormControl>
             );
@@ -510,7 +510,7 @@ export function FormItem({
                     {Number.isInteger(fileIndexToDelete) ? (
                         <Confirmation
                             title={`Delete file "${(item.value as FormsFile[])[fileIndexToDelete as number].name}"?`}
-                            confirmBtnText="Delete"
+                            confirmBtnText={t("delete")}
                             textAlign="center"
                             onCancel={() => setFileIndexToDelete(null)}
                             component="form"

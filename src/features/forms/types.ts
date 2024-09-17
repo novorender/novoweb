@@ -220,8 +220,13 @@ type TemplateBase = {
 };
 
 export enum TemplateType {
+    // TODO: Deprecate this old types.
     Search = "search",
     Location = "location",
+    //
+
+    Object = "object",
+    Geo = "geo",
 }
 
 export type SearchTemplate = TemplateBase & {
@@ -235,6 +240,19 @@ export type LocationTemplate = TemplateBase & {
 } & LocationTemplateHeader;
 
 export type Template = SearchTemplate | LocationTemplate;
+
+export type MinimalTemplate = {
+    id: TemplateId;
+    type: TemplateType;
+    title: string;
+
+    // state-based counters for the form instances,
+    // computed from indexes on the backend
+    forms: {
+        finished: number;
+        total: number;
+    };
+};
 
 export type Form = {
     id: FormId;
@@ -272,5 +290,3 @@ export type FormTransform = {
     scale?: number;
     updated: boolean;
 };
-
-export type FileTypes = ("Documents" | "Images")[];
