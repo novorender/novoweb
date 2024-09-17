@@ -49,7 +49,7 @@
         "prettier": "^3.3.3",
         "skott": "^0.35.2",
         "typescript": "^5.5.4",
-        "vite": "^5.4.0",
+        "vite": "^5.4.6",
         "vite-plugin-env-compatible": "^2.0.1",
         "vite-plugin-pwa": "^0.20.1",
         "vite-plugin-svgr": "^4.2.0"
