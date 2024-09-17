@@ -349,7 +349,7 @@ export function FormsList() {
                     <LinearProgress />
                 </Box>
             )}
-            <Typography py={2} px={1} fontWeight={600} mb={1}>
+            <Typography py={2} px={1} fontWeight={600}>
                 {template?.title ?? ""}
             </Typography>
             <ScrollBox pb={2} flex={1}>

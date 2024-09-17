@@ -31,7 +31,7 @@ import {
 } from "../slice";
 import { FormGLtfAsset, LocationTemplate } from "../types";
 import { useFetchAssetList } from "./useFetchAssetList";
-import { useFetchInitialLocationForms } from "./useFetchLocationForms";
+import { useFetchLocationForms } from "./useFetchLocationForms";
 
 type RenderedForm = {
     templateId: string;
@@ -82,7 +82,7 @@ export function useRenderLocationFormAssets() {
     const canView = checkPermission(Permission.FormsView) ?? true;
 
     useFetchAssetList({ skip: !active });
-    useFetchInitialLocationForms();
+    useFetchLocationForms();
 
     const [assetAbortController, assetAbort] = useAbortController();
     const [assetGltfMap, setAssetGltfMap] = useState<AsyncState<Map<string, readonly RenderStateDynamicObject[]>>>({

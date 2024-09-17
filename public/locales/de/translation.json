@@ -464,7 +464,7 @@
     "assign": "Zuweisen ({{length}})",
     "form": "Formular",
     "formType": "Formulartyp",
-    "objectsAssigned": "Zugewiesene Objekte:",
+    "objectsAssigned": "Zugewiesene Objekte: {{length}}",
     "addObjects": "Objekte hinzufügen",
     "markerName": "Markierung:",
     "selectMarker": "Markierung auswählen",
@@ -600,5 +600,7 @@
     "allowChangingFiles": "Ändern von Dateien erlauben",
     "setDefaultValue": "Standardwert festlegen",
     "filesNotAddedMessage": "Einige Dateien wurden nicht hinzugefügt, da sie größer als {{limit}} MB sind.",
-    "deleteAllFormsConfirmation": "Sind Sie sicher, dass Sie alle Formulare im Projekt löschen möchten?"
+    "deleteAllFormsConfirmation": "Sind Sie sicher, dass Sie alle Formulare im Projekt löschen möchten?",
+    "errorSearchingInDb": "Bei der Suche in der Datenbank ist ein Fehler aufgetreten.",
+    "searchIsOverLimit": "Ihre Suche überschreitet das Limit ({{limit}})."
 }
