@@ -86,9 +86,12 @@ export function Templates() {
 
     // Clean up location forms after template deletion
     useEffect(() => {
+        if (isLoading) {
+            return;
+        }
         const ids = error ? [] : templates.map((t) => t.id);
         dispatch(formsActions.removeLocationFormsNotInTemplates(ids));
-    }, [dispatch, templates, error]);
+    }, [dispatch, templates, error, isLoading]);
 
     const handleAddFormClick = () => {
         history.push("/create");
@@ -123,7 +126,7 @@ export function Templates() {
 
     return isDeleting ? (
         <Confirmation
-            title="Are you sure you want to delete all the forms in the project?"
+            title={t("deleteAllFormsConfirmation")}
             confirmBtnText={t("delete")}
             onCancel={() => setIsDeleting(false)}
             component="form"

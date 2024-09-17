@@ -464,7 +464,7 @@
     "assign": "Assigner ({{length}})",
     "form": "Formulaire",
     "formType": "Type de formulaire",
-    "objectsAssigned": "Objets assignés:",
+    "objectsAssigned": "Objets assignés: {{length}}",
     "addObjects": "Ajouter des objets",
     "markerName": "Marqueur:",
     "selectMarker": "Sélectionner un marqueur",
@@ -622,5 +622,7 @@
     "allowChangingFiles": "Autoriser la modification des fichiers",
     "setDefaultValue": "Définir une valeur par défaut",
     "filesNotAddedMessage": "Certains fichiers n'ont pas été ajoutés car ils dépassent {{limit}} Mo.",
-    "deleteAllFormsConfirmation": "Êtes-vous sûr de vouloir supprimer tous les formulaires du projet ?"
+    "deleteAllFormsConfirmation": "Êtes-vous sûr de vouloir supprimer tous les formulaires du projet ?",
+    "errorSearchingInDb": "Une erreur s'est produite lors de la recherche dans la base de données.",
+    "searchIsOverLimit": "Votre recherche dépasse la limite ({{limit}})."
 }

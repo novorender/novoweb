@@ -8,16 +8,18 @@ import {
     type FormId,
     type FormInstanceId,
     type FormObjectGuid,
+    type MinimalTemplate,
     type ProjectId,
     type Template,
     type TemplateId,
+    TemplateType,
 } from "./types";
 import { calculateFormState } from "./utils";
 
 export const formsApi = createApi({
     reducerPath: "formsApi",
     baseQuery: getDataV2DynamicBaseQuery("/forms/"),
-    tagTypes: ["Template", "Form", "Object"],
+    tagTypes: ["Template", "MinimalTemplate", "Form", "Object"],
     keepUnusedDataFor: 60 * 5,
     endpoints: (builder) => ({
         listTemplates: builder.query<TemplateId[], { projectId: ProjectId }>({
@@ -36,6 +38,7 @@ export const formsApi = createApi({
             }),
             invalidatesTags: (result, _error, { projectId }) => [
                 { type: "Template" as const, id: "ID_LIST" },
+                { type: "MinimalTemplate" as const, id: "LIST" },
                 { type: "Template" as const, id: `${projectId}-${result}` },
                 { type: "Form" as const, id: `LIST-${projectId}` },
                 { type: "Form" as const, id: `${projectId}-${result}` },
@@ -52,8 +55,10 @@ export const formsApi = createApi({
                 },
             }),
             invalidatesTags: (result, _error, { projectId, form }) => [
-                { type: "Template" as const, id: `ID_LIST` },
+                { type: "Template" as const, id: "ID_LIST" },
+                { type: "MinimalTemplate" as const, id: "LIST" },
                 { type: "Template" as const, id: `${projectId}-${form.id}` },
+                { type: "MinimalTemplate" as const, id: `${projectId}-${form.id}` },
                 { type: "Form" as const, id: `${projectId}-${result}` },
                 {
                     type: "Form" as const,
@@ -82,7 +87,7 @@ export const formsApi = createApi({
                         id: `${projectId}-${templateId}-${formId}`,
                     },
                 ],
-            }
+            },
         ),
         getSearchForms: builder.query<Partial<Form>[], { projectId: ProjectId; objectGuid: FormObjectGuid }>({
             query: ({ projectId, objectGuid }) => `projects/${projectId}/objects/${objectGuid}/forms`,
@@ -103,12 +108,41 @@ export const formsApi = createApi({
                 { type: "Template" as const, id: `${projectId}-${templateId}` },
             ],
         }),
+        getMinimalTemplate: builder.query<MinimalTemplate, { projectId: ProjectId; templateId: TemplateId }>({
+            query: ({ projectId, templateId }) => `projects/${projectId}/templates/${templateId}?minimal=true`,
+            providesTags: (_result, _error, { projectId, templateId }) => [
+                { type: "MinimalTemplate" as const, id: `${projectId}-${templateId}` },
+            ],
+        }),
+        getTemplates: builder.query<
+            (Partial<Template> & { id: FormId })[],
+            { projectId: ProjectId; type?: TemplateType }
+        >({
+            query: ({ projectId, ...params }) => {
+                const sp = new URLSearchParams(params as Record<string, string>).toString();
+                const queryString = params ? `?${sp}` : "";
+                return `projects/${projectId}/templates${queryString}`;
+            },
+            providesTags: (result, _error, { projectId }) =>
+                result ? result.map(({ id }) => ({ type: "Template" as const, id: `${projectId}-${id}` })) : [],
+        }),
+        getMinimalTemplates: builder.query<MinimalTemplate[], { projectId: ProjectId; type?: TemplateType }>({
+            query: ({ projectId, ...params }) => {
+                const sp = new URLSearchParams({ minimal: "true", ...params } as Record<string, string>).toString();
+                const queryString = params ? `?${sp}` : "";
+                return `projects/${projectId}/templates${queryString}`;
+            },
+            providesTags: [{ type: "MinimalTemplate" as const, id: "LIST" }],
+        }),
         deleteTemplate: builder.mutation<void, { projectId: ProjectId; templateId: TemplateId }>({
             query: ({ projectId, templateId }) => ({
                 url: `projects/${projectId}/templates/${templateId}`,
                 method: "DELETE",
             }),
-            invalidatesTags: () => [{ type: "Template" as const, id: "ID_LIST" }],
+            invalidatesTags: () => [
+                { type: "Template" as const, id: "ID_LIST" },
+                { type: "MinimalTemplate" as const, id: "LIST" },
+            ],
         }),
         updateSearchForm: builder.mutation<
             Form,
@@ -125,6 +159,7 @@ export const formsApi = createApi({
             }),
             invalidatesTags: (_result, _error, { projectId, objectGuid, formId }) => [
                 { type: "Template" as const, id: "ID_LIST" },
+                { type: "MinimalTemplate" as const, id: "LIST" },
                 { type: "Template" as const, id: `${projectId}-${formId}` },
                 { type: "Form" as const, id: `LIST-${projectId}` },
                 {
@@ -176,7 +211,7 @@ export const formsApi = createApi({
                                 oldForm.state = calculateFormState(form);
                             }
                         }
-                    })
+                    }),
                 );
                 try {
                     await queryFulfilled;
@@ -199,7 +234,10 @@ export const formsApi = createApi({
                 url: `projects/${projectId}/forms`,
                 method: "DELETE",
             }),
-            invalidatesTags: (_result, _error) => [{ type: "Template" as const, id: "ID_LIST" }],
+            invalidatesTags: (_result, _error) => [
+                { type: "Template" as const, id: "ID_LIST" },
+                { type: "MinimalTemplate" as const, id: "LIST" },
+            ],
         }),
         uploadFiles: builder.mutation<
             { [key: string]: FormFileUploadResponse },
@@ -223,12 +261,10 @@ export const formsApi = createApi({
 
 export const {
     useListTemplatesQuery,
-    useLazyListTemplatesQuery,
     useGetSearchFormQuery,
     useGetLocationFormQuery,
     useGetSearchFormsQuery,
     useGetTemplateQuery,
-    useLazyGetTemplateQuery,
     useCreateSearchFormMutation,
     useCreateLocationFormMutation,
     useUpdateSearchFormMutation,
@@ -237,4 +273,8 @@ export const {
     useDeleteTemplateMutation,
     useDeleteAllFormsMutation,
     useUploadFilesMutation,
+    useGetTemplatesQuery,
+    useGetMinimalTemplatesQuery,
+    useLazyGetTemplatesQuery,
+    useLazyGetTemplateQuery,
 } = formsApi;

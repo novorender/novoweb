@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { FormEventHandler, useCallback, useMemo, useState } from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch } from "react-router-dom";
 
@@ -25,7 +26,7 @@ import { useSceneId } from "hooks/useSceneId";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { useCreateSearchFormMutation } from "../../api";
-import { FormItem, Template, TemplateType } from "../../types";
+import { type FormItem, type FormObject, type Template, TemplateType } from "../../types";
 import { getFormItemTypeDisplayName, idsToObjects, toFormFields } from "../../utils";
 
 export function CreateForm({
@@ -35,7 +36,7 @@ export function CreateForm({
     setType,
     items,
     setItems,
-    objects: formObjects,
+    objects,
     marker,
 }: {
     title: string;
@@ -63,10 +64,17 @@ export function CreateForm({
     });
 
     const [abortController] = useAbortController();
+    const abortSignal = abortController.current.signal;
+
+    const [formObjects, setFormObjects] = useState<FormObject[] | null>(null);
+    const [isFetchingFormObjects, setIsFetchingFormObjects] = useState(false);
 
     const canSave = useMemo(
-        () => title.trim() && items.length && (type === TemplateType.Location ? marker : formObjects?.ids),
-        [title, type, items, marker, formObjects],
+        () =>
+            title.trim() &&
+            items.length &&
+            (type === TemplateType.Location ? marker : !isFetchingFormObjects && formObjects?.length),
+        [title, type, items, marker, formObjects, isFetchingFormObjects],
     );
 
     const handleAddItem = useCallback(() => {
@@ -100,6 +108,25 @@ export function CreateForm({
         [items, setItems],
     );
 
+    const fetchObjects = useCallback(async () => {
+        if (objects?.ids) {
+            setIsFetchingFormObjects(true);
+            try {
+                const formObjects = await idsToObjects({
+                    ids: objects.ids,
+                    db,
+                    abortSignal,
+                });
+                if (formObjects.length) {
+                    setFormObjects(formObjects);
+                    setIsFetchingFormObjects(false);
+                }
+            } catch {
+                // nada
+            }
+        }
+    }, [abortSignal, db, objects]);
+
     const handleSubmit: FormEventHandler = useCallback(
         async (e) => {
             e.preventDefault();
@@ -111,8 +138,6 @@ export function CreateForm({
             setStatus({ status: AsyncStatus.Loading });
 
             try {
-                const abortSignal = abortController.current.signal;
-
                 const fields = toFormFields(items);
 
                 const template: Partial<Template> = {
@@ -122,13 +147,8 @@ export function CreateForm({
                 };
 
                 if (template.type === TemplateType.Search && formObjects) {
-                    const objects = await idsToObjects({
-                        ids: formObjects.ids,
-                        db,
-                        abortSignal,
-                    });
-                    template.objects = objects;
-                    template.searchPattern = JSON.stringify(formObjects.searchPattern);
+                    template.objects = formObjects;
+                    template.searchPattern = JSON.stringify(objects?.searchPattern);
                 } else if (template.type === TemplateType.Location) {
                     template.marker = marker!;
                 }
@@ -145,12 +165,18 @@ export function CreateForm({
                 return;
             }
         },
-        [abortController, canSave, formObjects, createForm, db, history, items, sceneId, title, type, marker],
+        [canSave, formObjects, createForm, history, items, sceneId, title, type, marker, objects],
     );
+
+    useEffect(() => {
+        if (objects?.ids) {
+            fetchObjects();
+        }
+    }, [objects, fetchObjects]);
 
     return (
         <>
-            {status === AsyncStatus.Loading || creatingForm ? (
+            {status === AsyncStatus.Loading || creatingForm || isFetchingFormObjects ? (
                 <Box position="relative">
                     <LinearProgress />
                 </Box>
@@ -173,10 +199,9 @@ export function CreateForm({
                 {type === TemplateType.Search && (
                     <>
                         <Divider sx={{ my: 1 }} />
-                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Box my={1} display="flex" justifyContent="space-between" alignItems="center">
                             <Typography fontWeight={600}>
-                                {t("objectsAssigned")}
-                                {formObjects?.ids.length}
+                                {t("objectsAssigned", { length: objects?.ids.length })}
                             </Typography>
                             <Button onClick={handleAddObjects}>{t("addObjects")}</Button>
                         </Box>
@@ -186,7 +211,7 @@ export function CreateForm({
                 {type === TemplateType.Location && (
                     <>
                         <Divider sx={{ my: 1 }} />
-                        <Box display="flex" alignItems="center">
+                        <Box my={1} display="flex" alignItems="center">
                             <Typography fontWeight={600}>{t("markerName")}</Typography>
                             <Box flex="auto" />
                             {marker && (
@@ -200,7 +225,7 @@ export function CreateForm({
                 )}
 
                 <Divider />
-                <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Box my={1} display="flex" justifyContent="space-between" alignItems="center">
                     <Typography fontWeight={600}>{t("items")}</Typography>
                     <Button onClick={handleAddItem}>{t("addItem")}</Button>
                 </Box>

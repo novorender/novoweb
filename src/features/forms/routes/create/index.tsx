@@ -69,17 +69,15 @@ export function Create() {
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
-                <>
-                    <Box px={1}>
-                        <Divider />
-                    </Box>
-                    <Box display="flex">
-                        <Button color="grey" onClick={handleBackClick}>
-                            <ArrowBack sx={{ mr: 1 }} />
-                            {t("back")}
-                        </Button>
-                    </Box>
-                </>
+                <Box px={1}>
+                    <Divider />
+                </Box>
+                <Box m={1} display="flex" justifyContent="space-between">
+                    <Button color="grey" onClick={handleBackClick}>
+                        <ArrowBack sx={{ mr: 1 }} />
+                        {t("back")}
+                    </Button>
+                </Box>
             </Box>
             <Switch>
                 <Route path={addItemRoute}>

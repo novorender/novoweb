@@ -464,7 +464,7 @@
     "assign": "Tildel ({{length}})",
     "form": "Skjema",
     "formType": "Skjematype",
-    "objectsAssigned": "Objekter tildelt:",
+    "objectsAssigned": "Objekter tildelt: {{length}}",
     "addObjects": "Legg til objekter",
     "markerName": "Markør:",
     "selectMarker": "Velg markør",
@@ -622,5 +622,7 @@
     "allowChangingFiles": "Tillat endring av filer",
     "setDefaultValue": "Angi standardverdi",
     "filesNotAddedMessage": "Noen filer ble ikke lagt til fordi de er større enn {{limit}} MB.",
-    "deleteAllFormsConfirmation": "Er du sikker på at du vil slette alle skjemaene i prosjektet?"
+    "deleteAllFormsConfirmation": "Er du sikker på at du vil slette alle skjemaene i prosjektet?",
+    "errorSearchingInDb": "Det oppstod en feil under søk i databasen.",
+    "searchIsOverLimit": "Søket ditt er over grensen ({{limit}})."
 }

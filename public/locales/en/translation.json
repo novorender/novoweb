@@ -464,7 +464,7 @@
     "assign": "Assign ({{length}})",
     "form": "Form",
     "formType": "Form type",
-    "objectsAssigned": "Objects assigned:",
+    "objectsAssigned": "Objects assigned: {{length}}",
     "addObjects": "Add objects",
     "markerName": "Marker:",
     "selectMarker": "Select marker",
@@ -622,5 +622,7 @@
     "allowChangingFiles": "Allow changing files",
     "setDefaultValue": "Set default value",
     "filesNotAddedMessage": "Some files were not added because they are larger than {{limit}} MB.",
-    "deleteAllFormsConfirmation": "Are you sure you want to delete all the forms in the project?"
+    "deleteAllFormsConfirmation": "Are you sure you want to delete all the forms in the project?",
+    "errorSearchingInDb": "An error occurred while searching in the DB.",
+    "searchIsOverLimit": "Your search is over the limit ({{limit}})."
 }
