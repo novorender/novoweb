@@ -199,7 +199,6 @@ type BaseTemplateHeader = {
     state: TemplateState;
     id: TemplateId;
     createdBy?: ChangeStamp;
-    modifiedBy?: ChangeStamp[];
 };
 
 type SearchTemplateHeader = BaseTemplateHeader & { type: TemplateType.Search };
@@ -254,6 +253,8 @@ export type MinimalTemplate = {
     };
 };
 
+export type Signature = ChangeStamp | { isFinal: boolean };
+
 export type Form = {
     id: FormId;
     title: string;
@@ -264,7 +265,8 @@ export type Form = {
     rotation?: quat;
     scale?: number;
     createdBy?: ChangeStamp;
-    modifiedBy?: ChangeStamp[];
+    signatures?: Signature[];
+    isFinal?: boolean;
 };
 
 export type FormGLtfAsset = {

@@ -1,7 +1,9 @@
-import { ArrowBack, Clear, Delete, Download, FlightTakeoff, MoreVert } from "@mui/icons-material";
+import { ArrowBack, Clear, Create, Delete, Download, FlightTakeoff, History, MoreVert } from "@mui/icons-material";
 import {
+    Alert,
     Box,
     Button,
+    FormControlLabel,
     IconButton,
     LinearProgress,
     ListItemIcon,
@@ -16,10 +18,11 @@ import { useHistory, useLocation } from "react-router-dom";
 
 import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Confirmation, Divider, ScrollBox, TextField } from "components";
+import { Confirmation, Divider, IosSwitch, ScrollBox, TextField } from "components";
 import {
     useDeleteLocationFormMutation,
     useGetLocationFormQuery,
+    useSignLocationFormMutation,
     useUpdateLocationFormMutation,
 } from "features/forms/api";
 import { TransformEditor } from "features/forms/components/transformEditor";
@@ -38,6 +41,8 @@ import { toFormFields, toFormItems } from "features/forms/utils";
 import { ObjectVisibility, renderActions } from "features/render";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
+import { selectUser } from "slices/authSlice";
 import { selectAccessToken, selectConfig } from "slices/explorer";
 
 import { FormItem } from "./formItem";
@@ -50,6 +55,7 @@ export function LocationInstance() {
     const currentFormsList = useAppSelector(selectCurrentFormsList);
     const formsBaseUrl = useAppSelector(selectConfig).dataV2ServerUrl + "/forms/";
     const accessToken = useAppSelector(selectAccessToken);
+    const user = useAppSelector(selectUser);
     const dispatch = useAppDispatch();
     const flyToForm = useFlyToForm();
     const dispatchFormsGlobals = useDispatchFormsGlobals();
@@ -67,6 +73,9 @@ export function LocationInstance() {
     const [items, setItems] = useState<FItype[]>([]);
     const [isUpdated, setIsUpdated] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isClearing, setIsClearing] = useState(false);
+    const [isSigning, setIsSigning] = useState(false);
+    const [isFinalSignature, toggleFinalSignature] = useToggle(false);
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const {
@@ -79,13 +88,15 @@ export function LocationInstance() {
         formId,
     });
 
+    const isFinal = useMemo(() => form?.isFinal ?? false, [form]);
+
     useEffect(() => {
         dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
         dispatch(formsActions.setSelectedFormId(formId));
     }, [dispatch, formId]);
 
     const [updateForm, { isLoading: isFormUpdating }] = useUpdateLocationFormMutation();
-
+    const [signForm] = useSignLocationFormMutation();
     const [deleteForm, { isLoading: isFormDeleting }] = useDeleteLocationFormMutation();
 
     const [title, setTitle] = useState(form?.title || formId);
@@ -241,7 +252,9 @@ export function LocationInstance() {
         dispatch(formsActions.setSelectedFormId(undefined));
     }, [currentFormsList, history, dispatch]);
 
-    const handleClearClick = useCallback(() => {
+    const handleClear = useCallback((e: FormEvent) => {
+        e.preventDefault();
+        closeMenu();
         setItems((state) =>
             state.map((item) => {
                 switch (item.type) {
@@ -267,8 +280,40 @@ export function LocationInstance() {
                 }
             }),
         );
+        setIsClearing(false);
         setIsUpdated(true);
+    }, []);
+
+    const handleCancelClear = useCallback(() => {
         closeMenu();
+        setIsClearing(false);
+    }, []);
+
+    const handleSign = useCallback(
+        (e: FormEvent) => {
+            e.preventDefault();
+            closeMenu();
+
+            signForm({
+                projectId: sceneId,
+                templateId,
+                formId,
+                isFinal: isFinalSignature,
+            }).then((res) => {
+                if ("error" in res) {
+                    console.error(res.error);
+                    return;
+                }
+            });
+
+            setIsSigning(false);
+        },
+        [isFinalSignature, signForm, sceneId, templateId, formId],
+    );
+
+    const handleCancelSign = useCallback(() => {
+        closeMenu();
+        setIsSigning(false);
     }, []);
 
     const handleTitleChange = useCallback(
@@ -290,9 +335,12 @@ export function LocationInstance() {
         flyToForm({ location: form.location });
     }, [flyToForm, form?.location]);
 
+    const handleHistoryClick = useCallback(() => {}, []);
+
     const handleDelete = useCallback(
         async (e: FormEvent) => {
             e.preventDefault();
+            closeMenu();
             await deleteForm({
                 projectId: sceneId,
                 templateId,
@@ -304,15 +352,57 @@ export function LocationInstance() {
         [sceneId, templateId, formId, deleteForm, dispatch, history],
     );
 
+    const handleCancelDelete = useCallback(() => {
+        closeMenu();
+        setIsDeleting(false);
+    }, []);
+
     return isDeleting ? (
         <Confirmation
-            title={`Delete form "${title}"?`}
-            confirmBtnText="Delete"
-            onCancel={() => setIsDeleting(false)}
+            title={t("deleteForm", { title })}
+            confirmBtnText={t("delete")}
+            onCancel={handleCancelDelete}
             component="form"
             onSubmit={handleDelete}
             loading={isFormDeleting}
+            headerShadow={false}
         />
+    ) : isClearing ? (
+        <Confirmation
+            title={t("clearForm", { title: form?.title })}
+            confirmBtnText={t("clear")}
+            onCancel={handleCancelClear}
+            component="form"
+            onSubmit={handleClear}
+            headerShadow={false}
+        />
+    ) : isSigning ? (
+        <Confirmation
+            title={t("signForm", { title: form?.title, user: user?.name ?? user?.user ?? t("unknown") })}
+            confirmBtnText={t("sign")}
+            onCancel={handleCancelSign}
+            component="form"
+            onSubmit={handleSign}
+            headerShadow={false}
+        >
+            <FormControlLabel
+                control={
+                    <IosSwitch
+                        size="medium"
+                        color="primary"
+                        checked={isFinalSignature}
+                        onChange={() => toggleFinalSignature()}
+                    />
+                }
+                label={<Box fontSize={14}>{t("signatureIsFinal")}</Box>}
+                sx={{ mb: isFinalSignature ? 0 : 8 }}
+            />
+            {isFinalSignature && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                    {t("finalSignatureWarning")}
+                </Alert>
+            )}
+        </Confirmation>
     ) : (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
@@ -333,6 +423,18 @@ export function LocationInstance() {
                             <MoreVert fontSize="small" />
                         </IconButton>
                         <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
+                            <MenuItem onClick={() => setIsSigning(true)} disabled={!canEdit || isFinal}>
+                                <ListItemIcon>
+                                    <Create fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>{t("sign")}</ListItemText>
+                            </MenuItem>
+                            <MenuItem onClick={handleHistoryClick}>
+                                <ListItemIcon>
+                                    <History fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>{t("history")}</ListItemText>
+                            </MenuItem>
                             <MenuItem onClick={handleExportAsPdf}>
                                 <ListItemIcon>
                                     <Download fontSize="small" />
@@ -345,7 +447,7 @@ export function LocationInstance() {
                                 </ListItemIcon>
                                 <ListItemText>{t("delete")}</ListItemText>
                             </MenuItem>
-                            <MenuItem onClick={handleClearClick} disabled={!canEdit}>
+                            <MenuItem onClick={() => setIsClearing(true)} disabled={!canEdit || isFinal}>
                                 <ListItemIcon>
                                     <Clear fontSize="small" />
                                 </ListItemIcon>
@@ -367,7 +469,7 @@ export function LocationInstance() {
                         value={title}
                         onChange={handleTitleChange}
                         fullWidth
-                        disabled={!canEdit}
+                        disabled={!canEdit || isFinal}
                     />
                 </Box>
                 {items?.map((item, idx, array) => {
@@ -379,14 +481,14 @@ export function LocationInstance() {
                                     setItems(itm);
                                     setIsUpdated(true);
                                 }}
-                                disabled={!canEdit}
+                                disabled={!canEdit || isFinal}
                             />
                             {idx !== array.length - 1 ? <Divider sx={{ mt: 1, mb: 2 }} /> : null}
                         </Fragment>
                     );
                 })}
                 <Box mt={2}>
-                    <TransformEditor disabled={!canEdit} />
+                    <TransformEditor disabled={!canEdit || isFinal} />
                 </Box>
             </ScrollBox>
         </>

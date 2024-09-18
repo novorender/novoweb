@@ -169,6 +169,29 @@ export const formsApi = createApi({
                 { type: "Form" as const, id: `${projectId}-${formId}` },
             ],
         }),
+        signSearchForm: builder.mutation<
+            void,
+            { projectId: ProjectId; objectGuid: FormObjectGuid; formId: FormId; isFinal?: boolean }
+        >({
+            query: ({ projectId, objectGuid, formId, isFinal = false }) => ({
+                body: { isFinal },
+                url: `projects/${projectId}/objects/${objectGuid}/forms/${formId}/sign`,
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (_result, _error, { projectId, objectGuid, formId }) => [
+                // { type: "MinimalTemplate" as const, id: "LIST" },
+                // { type: "Template" as const, id: `${projectId}-${formId}` },
+                {
+                    type: "Form" as const,
+                    id: `${projectId}-${objectGuid}-${formId}`,
+                },
+                { type: "Form" as const, id: `${projectId}-${formId}` },
+            ],
+        }),
         updateLocationForm: builder.mutation<
             Form,
             { projectId: ProjectId; formId: FormId; templateId: TemplateId; form: Partial<Form> }
@@ -185,6 +208,7 @@ export const formsApi = createApi({
             invalidatesTags: (_result, _error, { projectId, templateId, formId }) => [
                 // Instead of invalidating - optimistically update state to avoid flickering
                 // { type: "Template" as const, id: `${projectId}-${templateId}` },
+                // { type: "MinimalTemplate" as const, id: `${projectId}-${templateId}` },
                 {
                     type: "Form" as const,
                     id: `${projectId}-${templateId}-${formId}`,
@@ -219,6 +243,21 @@ export const formsApi = createApi({
                     patchResult.undo();
                 }
             },
+        }),
+        signLocationForm: builder.mutation<
+            void,
+            { projectId: ProjectId; templateId: TemplateId; formId: FormId; isFinal?: boolean }
+        >({
+            query: ({ projectId, templateId, formId, isFinal = false }) => ({
+                body: { isFinal },
+                url: `projects/${projectId}/location/${templateId}/${formId}/sign`,
+                method: "POST",
+            }),
+            invalidatesTags: (_result, _error, { projectId, templateId, formId }) => [
+                // { type: "Template" as const, id: `${projectId}-${templateId}` },
+                // { type: "MinimalTemplate" as const, id: `${projectId}-${templateId}` },
+                { type: "Form" as const, id: `${projectId}-${templateId}-${formId}` },
+            ],
         }),
         deleteLocationForm: builder.mutation<void, { projectId: ProjectId; templateId: TemplateId; formId: FormId }>({
             query: ({ projectId, templateId, formId }) => ({
@@ -277,4 +316,6 @@ export const {
     useGetMinimalTemplatesQuery,
     useLazyGetTemplatesQuery,
     useLazyGetTemplateQuery,
+    useSignSearchFormMutation,
+    useSignLocationFormMutation,
 } = formsApi;

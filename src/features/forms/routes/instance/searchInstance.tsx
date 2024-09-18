@@ -1,7 +1,9 @@
-import { ArrowBack, Clear, Download, FlightTakeoff, MoreVert } from "@mui/icons-material";
+import { ArrowBack, Clear, Create, Download, FlightTakeoff, History, MoreVert } from "@mui/icons-material";
 import {
+    Alert,
     Box,
     Button,
+    FormControlLabel,
     IconButton,
     LinearProgress,
     ListItemIcon,
@@ -11,13 +13,13 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { Fragment, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, Fragment, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 
 import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, ScrollBox } from "components";
+import { Confirmation, Divider, IosSwitch, ScrollBox } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
@@ -25,9 +27,11 @@ import { selectCurrentFormsList } from "features/forms/slice";
 import { renderActions } from "features/render";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
+import { selectUser } from "slices/authSlice";
 import { selectAccessToken, selectConfig } from "slices/explorer";
 
-import { useGetSearchFormQuery, useUpdateSearchFormMutation } from "../../api";
+import { useGetSearchFormQuery, useSignSearchFormMutation, useUpdateSearchFormMutation } from "../../api";
 import { type Form, type FormId, type FormItem as FItype, FormItemType, type FormObjectGuid } from "../../types";
 import { determineHighlightCollection, toFormFields, toFormItems } from "../../utils";
 import { FormItem } from "./formItem";
@@ -40,6 +44,7 @@ export function SearchInstance() {
     const currentFormsList = useAppSelector(selectCurrentFormsList);
     const formsBaseUrl = useAppSelector(selectConfig).dataV2ServerUrl + "/forms/";
     const accessToken = useAppSelector(selectAccessToken);
+    const user = useAppSelector(selectUser);
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const { idArr: highlighted } = useHighlighted();
@@ -62,6 +67,9 @@ export function SearchInstance() {
     const [isUpdated, setIsUpdated] = useState(false);
     const didHighlightId = useRef(false);
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+    const [isClearing, setIsClearing] = useState(false);
+    const [isSigning, setIsSigning] = useState(false);
+    const [isFinalSignature, toggleFinalSignature] = useToggle(false);
 
     const { data: form, isLoading: isFormLoading } = useGetSearchFormQuery({
         projectId: sceneId,
@@ -69,7 +77,10 @@ export function SearchInstance() {
         formId,
     });
 
+    const isFinal = useMemo(() => form?.isFinal ?? false, [form]);
+
     const [updateForm, { isLoading: isFormUpdating }] = useUpdateSearchFormMutation();
+    const [signForm] = useSignSearchFormMutation();
 
     useEffect(() => {
         if (!objectId || highlighted.includes(objectId)) {
@@ -202,7 +213,9 @@ export function SearchInstance() {
         }
     }, [dispatchHighlighted, dispatch, currentFormsList, history]);
 
-    const handleClearClick = useCallback(() => {
+    const handleClear = useCallback((e: FormEvent) => {
+        e.preventDefault();
+        closeMenu();
         setItems((state) =>
             state.map((item): FItype => {
                 switch (item.type) {
@@ -228,8 +241,40 @@ export function SearchInstance() {
                 }
             }),
         );
+        setIsClearing(false);
         setIsUpdated(true);
+    }, []);
+
+    const handleCancelClear = useCallback(() => {
         closeMenu();
+        setIsClearing(false);
+    }, []);
+
+    const handleSign = useCallback(
+        (e: FormEvent) => {
+            e.preventDefault();
+            closeMenu();
+
+            signForm({
+                projectId: sceneId,
+                objectGuid,
+                formId,
+                isFinal: isFinalSignature,
+            }).then((res) => {
+                if ("error" in res) {
+                    console.error(res.error);
+                    return;
+                }
+            });
+
+            setIsSigning(false);
+        },
+        [isFinalSignature, sceneId, objectGuid, formId, signForm],
+    );
+
+    const handleCancelSign = useCallback(() => {
+        closeMenu();
+        setIsSigning(false);
     }, []);
 
     const handleFlyTo = useCallback(() => {
@@ -240,7 +285,45 @@ export function SearchInstance() {
         flyToForm({ objectGuid });
     }, [flyToForm, objectGuid]);
 
-    return (
+    const handleHistoryClick = useCallback(() => {}, []);
+
+    return isClearing ? (
+        <Confirmation
+            title={t("clearForm", { title: form?.title })}
+            confirmBtnText={t("clear")}
+            onCancel={handleCancelClear}
+            component="form"
+            onSubmit={handleClear}
+            headerShadow={false}
+        />
+    ) : isSigning ? (
+        <Confirmation
+            title={t("signForm", { title: form?.title, user: user?.name ?? user?.user ?? t("unknown") })}
+            confirmBtnText={t("sign")}
+            onCancel={handleCancelSign}
+            component="form"
+            onSubmit={handleSign}
+            headerShadow={false}
+        >
+            <FormControlLabel
+                control={
+                    <IosSwitch
+                        size="medium"
+                        color="primary"
+                        checked={isFinalSignature}
+                        onChange={() => toggleFinalSignature()}
+                    />
+                }
+                label={<Box fontSize={14}>{t("signatureIsFinal")}</Box>}
+                sx={{ mb: isFinalSignature ? 0 : 8 }}
+            />
+            {isFinalSignature && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                    {t("finalSignatureWarning")}
+                </Alert>
+            )}
+        </Confirmation>
+    ) : (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
                 <Box px={1}>
@@ -262,13 +345,25 @@ export function SearchInstance() {
                                     <MoreVert fontSize="small" />
                                 </IconButton>
                                 <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
+                                    <MenuItem onClick={() => setIsSigning(true)} disabled={!canEdit || isFinal}>
+                                        <ListItemIcon>
+                                            <Create fontSize="small" />
+                                        </ListItemIcon>
+                                        <ListItemText>{t("sign")}</ListItemText>
+                                    </MenuItem>
+                                    <MenuItem onClick={handleHistoryClick}>
+                                        <ListItemIcon>
+                                            <History fontSize="small" />
+                                        </ListItemIcon>
+                                        <ListItemText>{t("history")}</ListItemText>
+                                    </MenuItem>
                                     <MenuItem onClick={handleExportAsPdf}>
                                         <ListItemIcon>
                                             <Download fontSize="small" />
                                         </ListItemIcon>
                                         <ListItemText>{t("exportAsPDF")}</ListItemText>
                                     </MenuItem>
-                                    <MenuItem onClick={handleClearClick} disabled={!canEdit}>
+                                    <MenuItem onClick={() => setIsClearing(true)} disabled={!canEdit || isFinal}>
                                         <ListItemIcon>
                                             <Clear fontSize="small" />
                                         </ListItemIcon>
@@ -299,7 +394,7 @@ export function SearchInstance() {
                                     setItems(itm);
                                     setIsUpdated(true);
                                 }}
-                                disabled={!canEdit}
+                                disabled={!canEdit || isFinal}
                             />
                             {idx !== array.length - 1 ? <Divider sx={{ mt: 1, mb: 2 }} /> : null}
                         </Fragment>

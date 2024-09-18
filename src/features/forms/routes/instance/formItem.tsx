@@ -126,17 +126,24 @@ const FormItemHeader = ({
     item,
     toggleRelevant,
     hideToggle = false,
+    disabled,
 }: {
     item: FormItem;
     toggleRelevant?: () => void;
     hideToggle?: boolean;
+    disabled?: boolean;
 }) => (
     <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
         <FormLabel component="legend" sx={{ fontWeight: 600, color: "text.primary" }}>
             {item.title}
         </FormLabel>
         {!hideToggle && !item.required && typeof toggleRelevant === "function" && (
-            <IconButton size="small" color={item.relevant ? "secondary" : "primary"} onClick={toggleRelevant}>
+            <IconButton
+                size="small"
+                color={item.relevant ? "secondary" : "primary"}
+                onClick={toggleRelevant}
+                disabled={disabled}
+            >
                 <NotInterested fontSize="small" />
             </IconButton>
         )}
@@ -314,7 +321,7 @@ export function FormItem({
         case FormItemType.Checkbox:
             return (
                 <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <FormGroup row>
                         {item.options.map((option) => (
                             <FormControlLabel
@@ -349,7 +356,7 @@ export function FormItem({
         case FormItemType.YesNo:
             return (
                 <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <RadioGroup
                         value={item.value ? item.value[0] : ""}
                         onChange={(_e, value) => handleChange(value)}
@@ -366,7 +373,7 @@ export function FormItem({
         case FormItemType.TrafficLight:
             return (
                 <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <RadioGroup
                         value={item.value ? item.value[0] : ""}
                         onChange={(_e, value) => handleChange(value)}
@@ -390,7 +397,7 @@ export function FormItem({
                     size="small"
                     sx={{ pb: 1 }}
                 >
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <Select
                         value={item.value ? item.value[0] : ""}
                         onChange={(evt) => handleChange(evt.target.value)}
@@ -414,7 +421,7 @@ export function FormItem({
                     size="small"
                     sx={{ pb: 1 }}
                 >
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <Box onClick={handleTextFieldClick}>
                         {!editing && (!!item.value || (!item.required && !item.relevant)) ? (
                             <Box>
@@ -463,7 +470,7 @@ export function FormItem({
         case FormItemType.Date:
             return (
                 <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <DatePicker
                         value={item.value}
                         onChange={handleChange}
@@ -476,7 +483,7 @@ export function FormItem({
         case FormItemType.Time:
             return (
                 <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <TimePicker
                         value={item.value}
                         onChange={handleChange}
@@ -489,7 +496,7 @@ export function FormItem({
         case FormItemType.DateTime:
             return (
                 <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <DateTimePicker
                         value={item.value}
                         onChange={handleChange}
@@ -509,7 +516,9 @@ export function FormItem({
                     />
                     {Number.isInteger(fileIndexToDelete) ? (
                         <Confirmation
-                            title={`Delete file "${(item.value as FormsFile[])[fileIndexToDelete as number].name}"?`}
+                            title={t("deleteFile", {
+                                fileName: (item.value as FormsFile[])[fileIndexToDelete as number].name,
+                            })}
                             confirmBtnText={t("delete")}
                             textAlign="center"
                             onCancel={() => setFileIndexToDelete(null)}

@@ -624,5 +624,13 @@
     "filesNotAddedMessage": "Some files were not added because they are larger than {{limit}} MB.",
     "deleteAllFormsConfirmation": "Are you sure you want to delete all the forms in the project?",
     "errorSearchingInDb": "An error occurred while searching in the DB.",
-    "searchIsOverLimit": "Your search is over the limit ({{limit}})."
+    "searchIsOverLimit": "Your search is over the limit ({{limit}}).",
+    "sign": "Sign",
+    "history": "History",
+    "clearForm": "Clear form \"{{title}}\"?",
+    "deleteFile": "Delete file \"{{fileName}}\"?",
+    "deleteForm": "Delete form \"{{title}}\"?",
+    "signForm": "Sign form \"{{title}}\" as {{user}}?",
+    "signatureIsFinal": "My signature is final",
+    "finalSignatureWarning": "The form would become read-only after you sign it."
 }

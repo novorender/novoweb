@@ -295,6 +295,7 @@ export function FormsList() {
             component="form"
             onSubmit={handleDelete}
             loading={isTemplateDeleting}
+            headerShadow={false}
         />
     ) : (
         <>
