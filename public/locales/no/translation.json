@@ -602,5 +602,13 @@
     "filesNotAddedMessage": "Noen filer ble ikke lagt til fordi de er større enn {{limit}} MB.",
     "deleteAllFormsConfirmation": "Er du sikker på at du vil slette alle skjemaene i prosjektet?",
     "errorSearchingInDb": "Det oppstod en feil under søk i databasen.",
-    "searchIsOverLimit": "Søket ditt er over grensen ({{limit}})."
+    "searchIsOverLimit": "Søket ditt er over grensen ({{limit}}).",
+    "sign": "Signere",
+    "history": "Historie",
+    "clearForm": "Tømme skjemaet \"{{title}}\"?",
+    "deleteFile": "Slett filen \"{{fileName}}\"?",
+    "deleteForm": "Slette skjemaet \"{{title}}\"?",
+    "signForm": "Signere skjemaet \"{{title}}\" som {{user}}?",
+    "signatureIsFinal": "Min signatur er endelig",
+    "finalSignatureWarning": "Skjemaet blir skrivebeskyttet etter at du har signert det."
 }

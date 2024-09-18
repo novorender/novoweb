@@ -602,5 +602,13 @@
     "filesNotAddedMessage": "Einige Dateien wurden nicht hinzugefügt, da sie größer als {{limit}} MB sind.",
     "deleteAllFormsConfirmation": "Sind Sie sicher, dass Sie alle Formulare im Projekt löschen möchten?",
     "errorSearchingInDb": "Bei der Suche in der Datenbank ist ein Fehler aufgetreten.",
-    "searchIsOverLimit": "Ihre Suche überschreitet das Limit ({{limit}})."
+    "searchIsOverLimit": "Ihre Suche überschreitet das Limit ({{limit}}).",
+    "sign": "Unterschreiben",
+    "history": "Verlauf",
+    "clearForm": "Formular \"{{title}}\" löschen?",
+    "deleteFile": "Datei \"{{fileName}}\" löschen?",
+    "deleteForm": "Formular \"{{title}}\" löschen?",
+    "signForm": "Formular \"{{title}}\" als {{user}} unterschreiben?",
+    "signatureIsFinal": "Meine Unterschrift ist endgültig",
+    "finalSignatureWarning": "Das Formular wird nach Ihrer Unterschrift schreibgeschützt."
 }

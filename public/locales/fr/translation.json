@@ -602,5 +602,13 @@
     "filesNotAddedMessage": "Certains fichiers n'ont pas été ajoutés car ils dépassent {{limit}} Mo.",
     "deleteAllFormsConfirmation": "Êtes-vous sûr de vouloir supprimer tous les formulaires du projet ?",
     "errorSearchingInDb": "Une erreur s'est produite lors de la recherche dans la base de données.",
-    "searchIsOverLimit": "Votre recherche dépasse la limite ({{limit}})."
+    "searchIsOverLimit": "Votre recherche dépasse la limite ({{limit}}).",
+    "sign": "Signer",
+    "history": "Historique",
+    "clearForm": "Effacer le formulaire \"{{title}}\" ?",
+    "deleteFile": "Supprimer le fichier \"{{fileName}}\"?",
+    "deleteForm": "Supprimer le formulaire \"{{title}}\" ?",
+    "signForm": "Signer le formulaire \"{{title}}\" en tant que {{user}} ?",
+    "signatureIsFinal": "Ma signature est définitive",
+    "finalSignatureWarning": "Le formulaire deviendra en lecture seule après votre signature."
 }

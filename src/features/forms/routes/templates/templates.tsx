@@ -132,6 +132,7 @@ export function Templates() {
             component="form"
             onSubmit={handleDelete}
             loading={isAllFormsDeleting}
+            headerShadow={false}
         />
     ) : (
         <>

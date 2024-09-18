@@ -10,6 +10,7 @@ export enum SceneAuthRequirement {
 
 export type User = {
     user: string;
+    name?: string;
     organization: string;
     role: string | undefined;
     features: {
