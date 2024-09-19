@@ -6,10 +6,12 @@ import {
     FormControlLabel,
     IconButton,
     LinearProgress,
+    List,
     ListItemIcon,
     ListItemText,
     Menu,
     MenuItem,
+    Stack,
     useTheme,
 } from "@mui/material";
 import { type FormEvent, Fragment, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -25,6 +27,7 @@ import {
     useSignLocationFormMutation,
     useUpdateLocationFormMutation,
 } from "features/forms/api";
+import { Signature, Signatures } from "features/forms/components/signatures";
 import { TransformEditor } from "features/forms/components/transformEditor";
 import { formsGlobalsActions, useDispatchFormsGlobals, useLazyFormsGlobals } from "features/forms/formsGlobals";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
@@ -89,6 +92,10 @@ export function LocationInstance() {
     });
 
     const isFinal = useMemo(() => form?.isFinal ?? false, [form]);
+    const finalSignature = useMemo(
+        () => (form?.isFinal ? form.signatures?.find((s) => s.isFinal) : undefined),
+        [form?.isFinal, form?.signatures],
+    );
 
     useEffect(() => {
         dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
@@ -460,7 +467,7 @@ export function LocationInstance() {
                 </Box>
             )}
             <ScrollBox p={1} pt={2} pb={3}>
-                <Box my={2}>
+                <Box mt={2} mb={isFinal ? 0 : 2}>
                     <TextField
                         label="Form name"
                         value={title}
@@ -469,6 +476,11 @@ export function LocationInstance() {
                         disabled={!canEdit || isFinal}
                     />
                 </Box>
+                {finalSignature && (
+                    <List dense sx={{ my: 2, bgcolor: theme.palette.grey[100] }}>
+                        <Signature signature={finalSignature!} />
+                    </List>
+                )}
                 {items?.map((item, idx, array) => {
                     return (
                         <Fragment key={item.id}>
@@ -484,9 +496,10 @@ export function LocationInstance() {
                         </Fragment>
                     );
                 })}
-                <Box mt={2}>
+                <Stack gap={1} mt={2}>
                     <TransformEditor disabled={!canEdit || isFinal} />
-                </Box>
+                    <Signatures signatures={form?.signatures} />
+                </Stack>
             </ScrollBox>
         </>
     );

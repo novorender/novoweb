@@ -632,5 +632,9 @@
     "deleteForm": "Formular \"{{title}}\" löschen?",
     "signForm": "Formular \"{{title}}\" als {{user}} unterschreiben?",
     "signatureIsFinal": "Meine Unterschrift ist endgültig",
-    "finalSignatureWarning": "Das Formular wird nach Ihrer Unterschrift schreibgeschützt."
+    "finalSignatureWarning": "Das Formular wird nach Ihrer Unterschrift schreibgeschützt.",
+    "signatures": "Unterschriften ({{length}})",
+    "n/a": "k. A.",
+    "unknownUser": "Unbekannter Benutzer",
+    "final": "Endgültig"
 }

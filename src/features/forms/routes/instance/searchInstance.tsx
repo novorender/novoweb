@@ -6,6 +6,7 @@ import {
     FormControlLabel,
     IconButton,
     LinearProgress,
+    List,
     ListItemIcon,
     ListItemText,
     Menu,
@@ -22,6 +23,7 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation, Divider, IosSwitch, ScrollBox } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { Signature, Signatures } from "features/forms/components/signatures";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { selectCurrentFormsList } from "features/forms/slice";
 import { renderActions } from "features/render";
@@ -78,6 +80,10 @@ export function SearchInstance() {
     });
 
     const isFinal = useMemo(() => form?.isFinal ?? false, [form]);
+    const finalSignature = useMemo(
+        () => (form?.isFinal ? form.signatures?.find((s) => s.isFinal) : undefined),
+        [form?.isFinal, form?.signatures],
+    );
 
     const [updateForm, { isLoading: isFormUpdating }] = useUpdateSearchFormMutation();
     const [signForm] = useSignSearchFormMutation();
@@ -395,9 +401,14 @@ export function SearchInstance() {
                 </Box>
             )}
             <ScrollBox p={1} pt={2} pb={3}>
-                <Typography fontWeight={600} mb={2}>
+                <Typography fontWeight={600} mb={isFinal ? 0 : 2}>
                     {form?.title}
                 </Typography>
+                {finalSignature && (
+                    <List dense sx={{ my: 2, bgcolor: theme.palette.grey[100] }}>
+                        <Signature signature={finalSignature!} />
+                    </List>
+                )}
                 {items?.length === 0 && <Typography px={0}>{t("objectHasNoForms")}</Typography>}
                 {items?.map((item, idx, array) => {
                     return (
@@ -414,6 +425,9 @@ export function SearchInstance() {
                         </Fragment>
                     );
                 })}
+                <Box mt={2}>
+                    <Signatures signatures={form?.signatures} />
+                </Box>
             </ScrollBox>
         </>
     );
