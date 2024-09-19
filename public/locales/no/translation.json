@@ -610,5 +610,9 @@
     "deleteForm": "Slette skjemaet \"{{title}}\"?",
     "signForm": "Signere skjemaet \"{{title}}\" som {{user}}?",
     "signatureIsFinal": "Min signatur er endelig",
-    "finalSignatureWarning": "Skjemaet blir skrivebeskyttet etter at du har signert det."
+    "finalSignatureWarning": "Skjemaet blir skrivebeskyttet etter at du har signert det.",
+    "signatures": "Signaturer ({{length}})",
+    "n/a": "N/A",
+    "unknownUser": "Ukjent bruker",
+    "final": "Endelig"
 }

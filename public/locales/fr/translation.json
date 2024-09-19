@@ -610,5 +610,9 @@
     "deleteForm": "Supprimer le formulaire \"{{title}}\" ?",
     "signForm": "Signer le formulaire \"{{title}}\" en tant que {{user}} ?",
     "signatureIsFinal": "Ma signature est définitive",
-    "finalSignatureWarning": "Le formulaire deviendra en lecture seule après votre signature."
+    "finalSignatureWarning": "Le formulaire deviendra en lecture seule après votre signature.",
+    "signatures": "Signatures ({{length}})",
+    "n/a": "N/D",
+    "unknownUser": "Utilisateur inconnu",
+    "final": "Final"
 }

@@ -610,5 +610,9 @@
     "deleteForm": "Delete form \"{{title}}\"?",
     "signForm": "Sign form \"{{title}}\" as {{user}}?",
     "signatureIsFinal": "My signature is final",
-    "finalSignatureWarning": "The form would become read-only after you sign it."
+    "finalSignatureWarning": "The form would become read-only after you sign it.",
+    "signatures": "Signatures ({{length}})",
+    "n/a": "N/A",
+    "unknownUser": "Unknown User",
+    "final": "Final"
 }

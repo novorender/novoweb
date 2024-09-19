@@ -253,7 +253,7 @@ export type MinimalTemplate = {
     };
 };
 
-export type Signature = ChangeStamp | { isFinal: boolean };
+export type Signature = ChangeStamp & { isFinal: boolean };
 
 export type Form = {
     id: FormId;
