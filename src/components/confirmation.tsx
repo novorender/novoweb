@@ -10,6 +10,7 @@ export function Confirmation({
     loading,
     confirmBtnDisabled,
     headerShadow = true,
+    paddingBottom = 10,
     ...boxProps
 }: BoxProps & {
     title: string;
@@ -19,6 +20,7 @@ export function Confirmation({
     loading?: boolean;
     confirmBtnDisabled?: boolean;
     headerShadow?: boolean;
+    paddingBottom?: number;
 }) {
     const theme = useTheme();
     const { t } = useTranslation();
@@ -46,7 +48,7 @@ export function Confirmation({
                     {title}
                 </Typography>
                 {boxProps.children}
-                <Box pb={10} display="flex" width={1}>
+                <Box pb={paddingBottom} display="flex" width={1}>
                     <Button
                         type="button"
                         sx={{ mr: 2 }}

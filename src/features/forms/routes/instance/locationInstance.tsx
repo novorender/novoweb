@@ -12,6 +12,7 @@ import {
     Menu,
     MenuItem,
     Stack,
+    Typography,
     useTheme,
 } from "@mui/material";
 import { type FormEvent, Fragment, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -388,6 +389,7 @@ export function LocationInstance() {
             component="form"
             onSubmit={handleSign}
             headerShadow={false}
+            paddingBottom={0}
         >
             <FormControlLabel
                 control={
@@ -398,7 +400,7 @@ export function LocationInstance() {
                         onChange={() => toggleFinalSignature()}
                     />
                 }
-                label={<Box fontSize={14}>{t("signatureIsFinal")}</Box>}
+                label={<Typography>{t("signatureIsFinal")}</Typography>}
                 sx={{ mb: isFinalSignature ? 0 : 8 }}
             />
             {isFinalSignature && (

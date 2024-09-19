@@ -324,6 +324,7 @@ export function SearchInstance() {
             component="form"
             onSubmit={handleSign}
             headerShadow={false}
+            paddingBottom={0}
         >
             <FormControlLabel
                 control={
@@ -334,7 +335,7 @@ export function SearchInstance() {
                         onChange={() => toggleFinalSignature()}
                     />
                 }
-                label={<Box fontSize={14}>{t("signatureIsFinal")}</Box>}
+                label={<Typography>{t("signatureIsFinal")}</Typography>}
                 sx={{ mb: isFinalSignature ? 0 : 8 }}
             />
             {isFinalSignature && (

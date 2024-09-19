@@ -142,7 +142,7 @@ export function CreateForm({
 
                 const template: Partial<Template> = {
                     title: title.trim(),
-                    type,
+                    type: type as TemplateType.Search | TemplateType.Location,
                     fields,
                 };
 
