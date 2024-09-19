@@ -1,3 +1,4 @@
+import { RenderStateColorGradient, RGBA } from "@novorender/api";
 import { useEffect } from "react";
 
 import { useLazyGetDeviationProfilesQuery } from "apis/dataV2/dataV2Api";
@@ -8,7 +9,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectLandXmlPaths } from "features/followPath";
 import { useLoadLandXmlPath } from "features/followPath/hooks/useLoadLandXmlPath";
 import { LandXmlPath } from "features/followPath/types";
-import { renderActions, selectDeviations, selectPoints, selectViewMode } from "features/render";
+import { renderActions, selectPoints, selectViewMode } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
@@ -21,7 +22,7 @@ import { DeviationType, UiDeviationConfig, UiDeviationProfile } from "./deviatio
 import { useHighlightDeviation } from "./hooks/useHighlightDeviation";
 import { useSetCenterLineFollowPath } from "./hooks/useSetCenterLineFollowPath";
 import { selectDeviationProfiles, selectSelectedProfile, selectSelectedProfileId } from "./selectors";
-import { accountForAbsValues } from "./utils";
+import { accountForAbsValues, MAX_DEVIATION_PROFILE_COUNT } from "./utils";
 
 const EMPTY_ARRAY: ColorStop[] = [];
 
@@ -37,7 +38,6 @@ export function useHandleDeviations() {
     const points = useAppSelector(selectPoints);
     const defaultColorStops = points.deviation.colorGradient.knots ?? EMPTY_ARRAY;
     const profile = useAppSelector(selectSelectedProfile);
-    const deviation = useAppSelector(selectDeviations);
     const [abortController] = useAbortController();
     const active = useAppSelector(selectViewMode) === ViewMode.Deviations;
     const landXmlPaths = useAppSelector(selectLandXmlPaths);
@@ -109,7 +109,7 @@ export function useHandleDeviations() {
                     deviationsActions.setProfiles({
                         status: AsyncStatus.Success,
                         data: config,
-                    })
+                    }),
                 );
 
                 dispatch(deviationsActions.initFromProfileIndex({ index: points.deviation.index }));
@@ -119,7 +119,7 @@ export function useHandleDeviations() {
                     deviationsActions.setProfiles({
                         status: AsyncStatus.Error,
                         msg: "Error loading deviations",
-                    })
+                    }),
                 );
             }
         }
@@ -153,30 +153,38 @@ export function useHandleDeviations() {
                             knots: colorStops,
                         },
                     },
-                })
+                }),
             );
         }
     }, [dispatch, profile, active]);
 
-    // Promote current deviation to render state
-    useEffect(
-        function handleDeviationChanges() {
-            if (!view) {
+    // Set deviation colors
+    useEffect(() => {
+        if (profiles.status !== AsyncStatus.Success || !view) {
+            return;
+        }
+
+        const colorGradients: RenderStateColorGradient<RGBA>[] = new Array(MAX_DEVIATION_PROFILE_COUNT).fill({
+            knots: [],
+        } as RenderStateColorGradient<RGBA>);
+
+        profiles.data.profiles.forEach((profile, index) => {
+            if (index < 0 || index >= colorGradients.length) {
                 return;
             }
 
-            let patchedDeviation = { ...deviation };
-            if (deviation.index === -1 || !active) {
-                patchedDeviation = {
-                    ...deviation,
-                    index: 0,
-                    mixFactor: 0,
-                };
+            let knots = profile.colors.colorStops.slice();
+            if (profile.colors.absoluteValues) {
+                knots = accountForAbsValues(knots);
             }
-            view.modifyRenderState({ points: { deviation: patchedDeviation } });
-        },
-        [view, deviation, active]
-    );
+
+            colorGradients[profile.index] = { knots: knots.toSorted((a, b) => a.position - b.position) };
+        });
+
+        view.modifyRenderState({
+            points: { deviation: { colorGradients } },
+        });
+    }, [view, profiles]);
 }
 
 function getEmptyDeviationConfig(): UiDeviationConfig {
@@ -251,7 +259,7 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
                     colors: g.colors ?? defaultColors,
                     hasFromAndTo: g.subprofiles !== undefined,
                     fromAndToSwapped: false,
-                } as UiDeviationProfile)
+                } as UiDeviationProfile),
             ),
             ...config.pointToPoint.groups.map((g) =>
                 populateMissingData({
@@ -275,7 +283,7 @@ function configToUi(config: DeviationProjectConfig, defaultColorStops: ColorStop
                     colors: g.colors ?? defaultColors,
                     hasFromAndTo: true,
                     fromAndToSwapped: g.fromAndToSwapped,
-                } as UiDeviationProfile)
+                } as UiDeviationProfile),
             ),
         ],
     };

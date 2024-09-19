@@ -2,7 +2,7 @@ import { ColorStop, DeviationProjectConfig, PointToPointGroup, PointToTriangleGr
 
 import { DeviationForm, DeviationType, SubprofileGroup, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
 
-export const MAX_DEVIATION_PROFILE_COUNT = 4;
+export const MAX_DEVIATION_PROFILE_COUNT = 6;
 export const PARAM_BOUND_PRECISION = 0;
 export const NEW_DEVIATION_ID = "new";
 export const EMPTY_PARAMETER_BOUNDS = [0, 0] as [number, number];
