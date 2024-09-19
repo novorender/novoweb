@@ -138,57 +138,49 @@ export function LocationInstance() {
         };
     }, [templateId, formId]);
 
-    useEffect(() => {
-        return () => {
-            if (shouldUpdateForm.current) {
-                // eslint-disable-next-line react-hooks/exhaustive-deps
-                const transformDraft = lazyFormsGlobals.current.transformDraft;
+    const maybeUpdateForm = useCallback(() => {
+        const transformDraft = lazyFormsGlobals.current.transformDraft;
 
-                if (isUpdated || transformDraft?.updated) {
-                    const form: Partial<Form> = {
-                        title: title.trim().length > 0 ? title.trim() : formId,
-                        fields: toFormFields(items),
-                    };
-                    if (transformDraft?.updated) {
-                        form.location = transformDraft.location;
-                        form.rotation = transformDraft.rotation;
-                        form.scale = transformDraft.scale;
+        if (isUpdated || transformDraft?.updated) {
+            const form: Partial<Form> = {
+                title: title.trim().length > 0 ? title.trim() : formId,
+                fields: toFormFields(items),
+            };
+            if (transformDraft?.updated) {
+                form.location = transformDraft.location;
+                form.rotation = transformDraft.rotation;
+                form.scale = transformDraft.scale;
 
-                        // Optimistic update so the form doesn't jump back and forth
-                        dispatch(
-                            formsActions.addLocationForms([
-                                {
-                                    ...(form as FormRecord),
-                                    id: formId,
-                                    templateId,
-                                },
-                            ]),
-                        );
-                    }
-                    updateForm({
-                        projectId: sceneId,
-                        templateId,
-                        formId,
-                        form,
-                    });
-                }
-
-                shouldUpdateForm.current = false;
-                setIsUpdated(false);
+                // Optimistic update so the form doesn't jump back and forth
+                dispatch(
+                    formsActions.addLocationForms([
+                        {
+                            ...(form as FormRecord),
+                            id: formId,
+                            templateId,
+                        },
+                    ]),
+                );
             }
-        };
-    }, [
-        sceneId,
-        templateId,
-        formId,
-        isUpdated,
-        items,
-        title,
-        updateForm,
-        lazyFormsGlobals,
-        dispatchFormsGlobals,
-        dispatch,
-    ]);
+            updateForm({
+                projectId: sceneId,
+                templateId,
+                formId,
+                form,
+            });
+            setIsUpdated(false);
+        }
+    }, [sceneId, templateId, formId, isUpdated, items, title, updateForm, lazyFormsGlobals, dispatch]);
+
+    useEffect(
+        () => () => {
+            if (shouldUpdateForm.current) {
+                maybeUpdateForm();
+                shouldUpdateForm.current = false;
+            }
+        },
+        [maybeUpdateForm],
+    );
 
     useEffect(() => {
         return () => {
@@ -335,6 +327,11 @@ export function LocationInstance() {
         flyToForm({ location: form.location });
     }, [flyToForm, form?.location]);
 
+    const handleSignBtnClick = useCallback(() => {
+        maybeUpdateForm();
+        setIsSigning(true);
+    }, [maybeUpdateForm]);
+
     const handleHistoryClick = useCallback(() => {}, []);
 
     const handleDelete = useCallback(
@@ -378,7 +375,7 @@ export function LocationInstance() {
         />
     ) : isSigning ? (
         <Confirmation
-            title={t("signForm", { title: form?.title, user: user?.name ?? user?.user ?? t("unknown") })}
+            title={t("signForm", { title, user: user?.name ?? user?.user ?? t("unknown") })}
             confirmBtnText={t("sign")}
             onCancel={handleCancelSign}
             component="form"
@@ -423,7 +420,7 @@ export function LocationInstance() {
                             <MoreVert fontSize="small" />
                         </IconButton>
                         <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
-                            <MenuItem onClick={() => setIsSigning(true)} disabled={!canEdit || isFinal}>
+                            <MenuItem onClick={handleSignBtnClick} disabled={!canEdit || isFinal}>
                                 <ListItemIcon>
                                     <Create fontSize="small" />
                                 </ListItemIcon>

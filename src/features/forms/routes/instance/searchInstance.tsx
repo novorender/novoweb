@@ -103,34 +103,42 @@ export function SearchInstance() {
         };
     }, []);
 
+    const maybeUpdateForm = useCallback(() => {
+        if (!isUpdated) {
+            return;
+        }
+
+        updateForm({
+            projectId: sceneId,
+            objectGuid,
+            formId,
+            form: {
+                fields: toFormFields(items),
+            },
+        }).then((res) => {
+            if ("error" in res) {
+                console.error(res.error);
+                return;
+            }
+            if (!Number.isInteger(objectId)) {
+                return;
+            }
+            dispatchHighlightCollections(
+                highlightCollectionsActions.move(
+                    determineHighlightCollection(form as Form),
+                    determineHighlightCollection(res.data),
+                    [objectId!],
+                ),
+            );
+        });
+
+        setIsUpdated(false);
+    }, [isUpdated, updateForm, sceneId, objectGuid, formId, items, objectId, dispatchHighlightCollections, form]);
+
     useEffect(() => {
         return () => {
             if (willUnmount.current) {
-                if (isUpdated) {
-                    updateForm({
-                        projectId: sceneId,
-                        objectGuid,
-                        formId,
-                        form: {
-                            fields: toFormFields(items),
-                        },
-                    }).then((res) => {
-                        if ("error" in res) {
-                            console.error(res.error);
-                            return;
-                        }
-                        if (!Number.isInteger(objectId)) {
-                            return;
-                        }
-                        dispatchHighlightCollections(
-                            highlightCollectionsActions.move(
-                                determineHighlightCollection(form as Form),
-                                determineHighlightCollection(res.data),
-                                [objectId!],
-                            ),
-                        );
-                    });
-                }
+                maybeUpdateForm();
                 if (
                     !history.location.pathname.startsWith("/forms") &&
                     !history.location.pathname.startsWith("/object") &&
@@ -153,6 +161,7 @@ export function SearchInstance() {
         form,
         objectId,
         dispatchHighlightCollections,
+        maybeUpdateForm,
     ]);
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
@@ -285,6 +294,11 @@ export function SearchInstance() {
         flyToForm({ objectGuid });
     }, [flyToForm, objectGuid]);
 
+    const handleSignBtnClick = useCallback(() => {
+        maybeUpdateForm();
+        setIsSigning(true);
+    }, [maybeUpdateForm]);
+
     const handleHistoryClick = useCallback(() => {}, []);
 
     return isClearing ? (
@@ -345,7 +359,7 @@ export function SearchInstance() {
                                     <MoreVert fontSize="small" />
                                 </IconButton>
                                 <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
-                                    <MenuItem onClick={() => setIsSigning(true)} disabled={!canEdit || isFinal}>
+                                    <MenuItem onClick={handleSignBtnClick} disabled={!canEdit || isFinal}>
                                         <ListItemIcon>
                                             <Create fontSize="small" />
                                         </ListItemIcon>
