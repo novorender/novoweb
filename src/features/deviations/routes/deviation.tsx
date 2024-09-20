@@ -234,7 +234,7 @@ export function Deviation() {
             ) : null}
             <ScrollBox height={1} p={2} ref={containerRef}>
                 <Typography fontWeight={600} fontSize="1.5rem" mb={2}>
-                    t("createDeviationProfile")
+                    {t("createDeviationProfile")}
                 </Typography>
                 <FormControl>
                     <RadioGroup
