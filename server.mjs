@@ -24,7 +24,7 @@ app.use(
             proxyReq: (proxyReq) => removeTrailingSlashFromPath(proxyReq),
         },
         changeOrigin: true,
-    })
+    }),
 );
 
 app.use(
@@ -39,7 +39,7 @@ app.use(
             proxyReq: (proxyReq) => removeTrailingSlashFromPath(proxyReq),
         },
         changeOrigin: true,
-    })
+    }),
 );
 
 app.use(
@@ -53,7 +53,7 @@ app.use(
             proxyReq: (proxyReq) => removeTrailingSlashFromPath(proxyReq),
         },
         changeOrigin: true,
-    })
+    }),
 );
 
 app.use(
@@ -67,7 +67,7 @@ app.use(
             proxyReq: (proxyReq) => removeTrailingSlashFromPath(proxyReq),
         },
         changeOrigin: true,
-    })
+    }),
 );
 app.use(
     "/ditio-machines",
@@ -80,7 +80,7 @@ app.use(
             proxyReq: (proxyReq) => removeTrailingSlashFromPath(proxyReq),
         },
         changeOrigin: true,
-    })
+    }),
 );
 
 app.use("/omega365", async (req, res) => {
@@ -123,7 +123,7 @@ app.use(
     expressStaticGzip(path.resolve(__dirname, "dist"), {
         enableBrotli: true,
         orderPreference: ["br", "gz"],
-    })
+    }),
 );
 
 app.get("/config.json", (_req, res) => {
@@ -141,6 +141,7 @@ app.get("/config.json", (_req, res) => {
         authServerUrl: process.env.AUTH_SERVER_URL ?? "",
         assetsUrl: process.env.ASSETS_URL ?? "",
         mixpanelToken: process.env.MIXPANEL_TOKEN ?? "",
+        intercomAppId: process.env.INTERCOM_APP_ID ?? "",
     });
 });
 app.get("/*", function (_req, res) {
