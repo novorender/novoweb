@@ -244,18 +244,6 @@ export function useHandleHighlights() {
                             objectIds: allHiddenIds,
                             action: "hide",
                         },
-                        ...(deviationProfile && deviationIds.length
-                            ? [
-                                  {
-                                      objectIds: deviationIds,
-                                      action: createTransparentHighlight(1),
-                                      pointVisualization: {
-                                          kind: "deviation" as const,
-                                          index: deviationProfile.index,
-                                      },
-                                  },
-                              ]
-                            : []),
                         {
                             objectIds: new Uint32Array(basket.idArr).sort(),
                             action: basketColor.use
@@ -280,6 +268,18 @@ export function useHandleHighlights() {
                             ).sort(),
                             action: group.action,
                         })),
+                        ...(deviationProfile && deviationIds.length
+                            ? [
+                                  {
+                                      objectIds: deviationIds,
+                                      action: createTransparentHighlight(1),
+                                      pointVisualization: {
+                                          kind: "deviation" as const,
+                                          index: deviationProfile.index,
+                                      },
+                                  },
+                              ]
+                            : []),
                         {
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose

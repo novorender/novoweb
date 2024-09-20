@@ -481,14 +481,14 @@ export function useCanvasEventHandlers({
                 sampleDiscRadius: isTouch ? 8 : 1,
             });
 
-            if (measurement?.deviation !== undefined) {
+            if (measurement?.pointFactor !== undefined) {
                 dispatch(
                     renderActions.setStamp({
                         kind: StampKind.Deviation,
                         pinned: false,
                         mouseX: e.nativeEvent.offsetX,
                         mouseY: e.nativeEvent.offsetY,
-                        data: { deviation: measurement.deviation },
+                        data: { deviation: measurement.pointFactor },
                     }),
                 );
             } else {

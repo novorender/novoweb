@@ -342,7 +342,7 @@ export function useCanvasClickHandler({
                 if (
                     deviation.mixFactor !== 0 &&
                     cameraState.type === CameraType.Orthographic &&
-                    result.deviation !== undefined
+                    result.pointFactor !== undefined
                 ) {
                     dispatch(
                         renderActions.setStamp({
@@ -351,7 +351,7 @@ export function useCanvasClickHandler({
                             mouseY: evt.nativeEvent.offsetY,
                             pinned: false,
                             data: {
-                                deviation: result.deviation,
+                                deviation: result.pointFactor,
                             },
                         }),
                     );
