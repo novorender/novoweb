@@ -11,6 +11,7 @@ export enum SceneAuthRequirement {
 export type User = {
     user: string;
     organization: string;
+    name: string;
     role: string | undefined;
     features: {
         [k: string]: Record<string, boolean | undefined> | boolean | undefined;

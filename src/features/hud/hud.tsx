@@ -11,12 +11,14 @@ import { SelectionModifierMenu } from "features/selectionModifierMenu";
 import { WidgetGroupPanel } from "features/widgetGroupPanel/widgetGroupPanel";
 import { Widgets } from "features/widgets";
 import { useHandleWidgetLayout } from "features/widgets/useHandleWidgetLayout";
+import { useIntercom } from "hooks/useIntercom";
 import { selectNewDesign, selectWidgetLayout } from "slices/explorer";
 
 import GlobalSnackbar from "./globalSnackbar";
 
 export function Hud() {
     const newDesign = useAppSelector(selectNewDesign);
+    useIntercom();
 
     return (
         <>
