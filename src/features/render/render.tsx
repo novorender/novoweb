@@ -166,6 +166,9 @@ export function Render3D() {
                         <Markers ref={setMarkersContainer} />
                         <Engine2DInteractions />
                         <g id="cursor" />
+                        <g id="rotation-center-point" style={{ translate: "-100px -100px" }}>
+                            <circle r={5} cx={0} cy={0} fill="transparent" stroke="white" strokeOpacity="0.5" />
+                        </g>
                     </Svg>
                     <div style={{ width: size.width, height: size.height }}>
                         <Engine2DHtmlInteractions ref={setHtmlInteractionContainer} />

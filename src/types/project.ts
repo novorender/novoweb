@@ -16,6 +16,7 @@ export type ExplorerProjectState = {
                 min: number;
                 max: number;
             };
+            usePointerLock: boolean;
         };
         orthographic: {
             controller: "ortho";
@@ -252,6 +253,7 @@ export type CustomProperties = {
     };
     pointerLock?: {
         ortho: boolean;
+        pinhole: boolean;
     };
     proportionalCameraSpeed?: {
         enabled: boolean;

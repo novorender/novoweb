@@ -79,6 +79,7 @@ export function CameraSettings({
     const cameraDefaults = useAppSelector(selectCameraDefaults);
     const {
         orthographic: { touchRotate, deAcceleration, usePointerLock },
+        pinhole: { usePointerLock: usePointerLockPinhole },
     } = cameraDefaults;
     const topDownSnapToNearestAxis = useAppSelector(selectTopDownSnapToAxis) === undefined;
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
@@ -380,6 +381,35 @@ export function CameraSettings({
                                 </Select>
                             </Box>
                             <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
+                        </Box>
+                    </AccordionDetails>
+                </Accordion>
+
+                <Accordion>
+                    <AccordionSummary>3D</AccordionSummary>
+                    <AccordionDetails>
+                        <Box px={1} mt={1} display={"flex"} flexDirection={"column"}>
+                            <FormControlLabel
+                                sx={{ ml: 0, mb: 1 }}
+                                control={
+                                    <Switch
+                                        name={"orthoPointerLock"}
+                                        checked={usePointerLockPinhole}
+                                        onChange={() => {
+                                            dispatch(
+                                                renderActions.setCameraDefaults({
+                                                    pinhole: { usePointerLock: !usePointerLockPinhole },
+                                                }),
+                                            );
+                                        }}
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        Reset pointer when released
+                                    </Box>
+                                }
+                            />
                         </Box>
                     </AccordionDetails>
                 </Accordion>

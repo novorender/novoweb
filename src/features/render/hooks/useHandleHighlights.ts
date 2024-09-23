@@ -428,7 +428,14 @@ function objectIdSet(idSets: (ImmutableObjectIdSet | Set<number> | number[])[]) 
     } else {
         // Use set
         const allIds = new Set<number>();
-        idSets.forEach((ids) => ids.forEach((id) => allIds.add(id)));
+        idSets.forEach((ids) =>
+            ids.forEach((id) => {
+                if (id === 0 || isNaN(id)) {
+                    // debugger;
+                }
+                allIds.add(id);
+            })
+        );
 
         return {
             has: (id: number) => allIds.has(id),

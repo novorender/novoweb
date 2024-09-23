@@ -139,6 +139,20 @@ export function useCanvasEventHandlers({
         }
     };
 
+    const renderRotationPoint = (x: number, y: number) => {
+        const g = document.querySelector("#rotation-center-point") as SVGElement;
+        if (g) {
+            g.style.setProperty("translate", `${x}px ${y}px`);
+        }
+    };
+
+    const hideRotationPoint = () => {
+        const g = document.querySelector("#rotation-center-point") as SVGElement;
+        if (g) {
+            g.style.setProperty("translate", "-100px -100px");
+        }
+    };
+
     const handleDown = async (x: number, y: number, timestamp: number) => {
         pointerDownStateRef.current = {
             timestamp,
@@ -228,6 +242,17 @@ export function useCanvasEventHandlers({
         }
     };
 
+    const handleRotation = () => {
+        if (view?.controllers.flight.pivot?.active) {
+            const pos = view.convert.worldSpaceToScreenSpace([view.controllers.flight.pivot.center])[0];
+            if (pos) {
+                // renderRotationPoint(pos[0], pos[1]);
+                return;
+            }
+        }
+        hideRotationPoint();
+    };
+
     const contextMenuCursorState = useRef<{
         timestamp: number;
         startPos: Vec2;
@@ -294,6 +319,8 @@ export function useCanvasEventHandlers({
                 } as MeasureEntity,
             };
         };
+
+        handleRotation();
 
         if (e.buttons !== 0) {
             turnOffLocationAutocenter();
@@ -509,6 +536,7 @@ export function useCanvasEventHandlers({
 
     const onMouseUp = (e: MouseEvent) => {
         if (e.buttons === 0 && e.button === 2) {
+            hideRotationPoint();
             const cursorState = contextMenuCursorState.current;
 
             if (!cursorState) {

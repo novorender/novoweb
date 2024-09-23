@@ -74,6 +74,18 @@ export function useHandleCameraMoved({
                     clearTimeout(orthoMovementTimer.current);
                 }
 
+                if (view?.controllers.flight.pivot?.active) {
+                    const pos = view.convert.worldSpaceToScreenSpace([view.controllers.flight.pivot.center])[0];
+                    const g = document.querySelector("#rotation-center-point") as SVGElement;
+                    if (g) {
+                        if (pos) {
+                            g.style.setProperty("translate", `${pos[0]}px ${pos[1]}px`);
+                        } else {
+                            g.style.setProperty("translate", "-100px -100px");
+                        }
+                    }
+                }
+
                 orthoMovementTimer.current = setTimeout(() => {
                     if (
                         cameraType !== CameraType.Orthographic ||

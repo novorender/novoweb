@@ -140,6 +140,7 @@ const initialState = {
                 min: 0.1,
                 max: 300,
             },
+            usePointerLock: false,
         },
         orthographic: {
             controller: "ortho" as const,
@@ -532,6 +533,10 @@ export const renderSlice = createSlice({
                           fast: props.cameraSpeedLevels.flight.fast * 33,
                       }
                     : state.cameraDefaults.pinhole.speedLevels;
+                state.cameraDefaults.pinhole.usePointerLock =
+                    props.pointerLock !== undefined
+                        ? props.pointerLock.pinhole
+                        : state.cameraDefaults.pinhole.usePointerLock;
             }
 
             // corner features
@@ -850,6 +855,7 @@ export const selectViewMode = (state: RootState) => state.render.viewMode;
 export const selectLoadingHandles = (state: RootState) => state.render.loadingHandles;
 export const selectStamp = (state: RootState) => state.render.stamp;
 export const selectPointerLock = (state: RootState) => state.render.cameraDefaults.orthographic.usePointerLock;
+export const selectPointerLockPinhole = (state: RootState) => state.render.cameraDefaults.pinhole.usePointerLock;
 export const selectProportionalCameraSpeed = (state: RootState) =>
     state.render.cameraDefaults.pinhole.proportionalSpeed;
 export const selectBackground = (state: RootState) => state.render.background;

@@ -129,4 +129,12 @@ export function useHandleCameraState() {
         defaults.orthographic.deAcceleration,
         defaults.orthographic.touchRotate,
     ]);
+
+    useEffect(() => {
+        if (!view) {
+            return;
+        }
+
+        view.controllers.flight.input.usePointerLock = defaults.pinhole.usePointerLock;
+    }, [view, defaults.pinhole.usePointerLock]);
 }
