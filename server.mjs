@@ -141,7 +141,6 @@ app.get("/config.json", (_req, res) => {
         authServerUrl: process.env.AUTH_SERVER_URL ?? "",
         assetsUrl: process.env.ASSETS_URL ?? "",
         mixpanelToken: process.env.MIXPANEL_TOKEN ?? "",
-        intercomAppId: process.env.INTERCOM_APP_ID ?? "",
     });
 });
 app.get("/*", function (_req, res) {

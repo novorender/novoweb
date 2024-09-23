@@ -77,7 +77,6 @@ export type State = {
         novorenderClientSecret: string;
         assetsUrl: string;
         mixpanelToken: string;
-        intercomAppId: string;
     };
     newDesign: boolean;
     canUseNewDesign: boolean;

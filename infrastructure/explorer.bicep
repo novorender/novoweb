@@ -27,7 +27,6 @@ var appSettings = {
     NOVORENDER_CLIENT_SECRET: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=novorender-client-secret)'
     ASSETS_URL: 'https://${assetStorageAccountName}.blob.${az.environment().suffixes.storage}/assets'
     MIXPANEL_TOKEN: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=mixpanel-token)'
-    INTERCOM_APP_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=intercom-app-id)'
     APPINSIGHTS_INSTRUMENTATIONKEY: appInsights.properties.InstrumentationKey
     APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
     ApplicationInsightsAgent_EXTENSION_VERSION: '~3'

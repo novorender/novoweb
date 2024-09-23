@@ -1,13 +1,14 @@
 import Intercom, { shutdown } from "@intercom/messenger-js-sdk";
 import { useMediaQuery, useTheme } from "@mui/material";
+import { skipToken } from "@reduxjs/toolkit/query";
 import { useEffect, useRef } from "react";
 
+import { useGetIntercomConfigQuery } from "apis/dataV2/dataV2Api";
 import { useAppSelector } from "app/redux-store-interactions";
 import { selectUser } from "slices/authSlice";
-import { selectConfig, selectNewDesign } from "slices/explorer";
+import { selectNewDesign } from "slices/explorer";
 
 export function useIntercom() {
-    const config = useAppSelector(selectConfig);
     const user = useAppSelector(selectUser);
     const newDesign = useAppSelector(selectNewDesign);
     const theme = useTheme();
@@ -15,12 +16,15 @@ export function useIntercom() {
     const hidden = window.innerWidth < 1024;
     const mounted = useRef(false);
 
+    const { data: serverConfig } = useGetIntercomConfigQuery(user && !hidden ? undefined : skipToken);
+
     useEffect(() => {
-        if (config.intercomAppId && user && !hidden) {
+        if (user && !hidden && serverConfig) {
             Intercom({
-                app_id: config.intercomAppId,
+                app_id: serverConfig.appId,
                 region: "eu",
                 user_id: user.user,
+                user_hash: serverConfig.hash,
                 name: user.name,
                 company: user.organization,
                 alignment: "left",
@@ -33,5 +37,5 @@ export function useIntercom() {
         if (mounted.current && hidden) {
             shutdown();
         }
-    }, [config.intercomAppId, user, newDesign, hidden, isSmall]);
+    }, [user, newDesign, hidden, isSmall, serverConfig]);
 }
