@@ -26,6 +26,7 @@ export function useIntercom() {
                 user_id: user.user,
                 user_hash: serverConfig.hash,
                 name: user.name,
+                email: user.user.match(/.+@.+\..+/) ? user.user : undefined,
                 company: user.organization,
                 alignment: "left",
                 horizontal_padding: isSmall ? 70 : newDesign ? 20 : 80,
