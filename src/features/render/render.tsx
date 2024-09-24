@@ -157,7 +157,7 @@ export function Render3D() {
             <Canvas id="main-canvas" onClick={onClick} {...eventHandlers} tabIndex={1} ref={canvasRef} />
             {sceneStatus.status === AsyncStatus.Error && <SceneError />}
             {[AsyncStatus.Initial, AsyncStatus.Loading].includes(sceneStatus.status) && <Loading />}
-            {sceneStatus.status === AsyncStatus.Success && view && canvas && (
+            {false && sceneStatus.status === AsyncStatus.Success && view && canvas && (
                 <>
                     {debugStats.enabled && <PerformanceStats />}
                     <Engine2D pointerPosRef={pointerPosRef} renderFnRef={engine2dRenderFnRef} svg={svg} />

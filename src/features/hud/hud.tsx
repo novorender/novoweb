@@ -1,6 +1,10 @@
-import { Box, useTheme } from "@mui/material";
+import { Box, Button, useTheme } from "@mui/material";
+import { vec3 } from "gl-matrix";
+import { useCallback } from "react";
 
 import { useAppSelector } from "app/redux-store-interactions";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { getCameraDir } from "features/engine2D/utils";
 import LocationHud from "features/locationHud/locationHud";
 import { NavigationCube } from "features/navigationCube";
 import { PickerEscSnackbar } from "features/pickerEscSnackbar/pickerEscSnackbar";
@@ -29,6 +33,7 @@ export function Hud() {
 function HudNew() {
     const navigationCube = useAppSelector(selectNavigationCube);
     const theme = useTheme();
+    const xr = useXr();
 
     useHandleWidgetLayout();
 
@@ -49,12 +54,23 @@ function HudNew() {
                 <Widgets />
                 <GlobalSnackbar />
                 <PickerEscSnackbar />
+
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    sx={{ position: "absolute", top: 0, left: 0, m: 2, width: "100%", pointerEvents: "auto" }}
+                >
+                    <Button variant="outlined" onClick={() => xr()}>
+                        XR
+                    </Button>
+                </Box>
             </Box>
         </>
     );
 }
 
 function HudOld() {
+    const xr = useXr();
     const navigationCube = useAppSelector(selectNavigationCube);
 
     useHandleWidgetLayout();
@@ -103,7 +119,36 @@ function HudOld() {
                 <SelectionModifierMenu />
                 <PrimaryMenu />
                 <Widgets />
+
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    sx={{ position: "absolute", top: 0, left: 0, m: 2, width: "100%", pointerEvents: "auto" }}
+                >
+                    <Button variant="outlined" onClick={() => xr()}>
+                        XR
+                    </Button>
+                </Box>
             </Box>
         </>
     );
+}
+
+function useXr() {
+    const {
+        state: { view },
+    } = useExplorerGlobals();
+
+    return useCallback(async () => {
+        if (!view) {
+            return;
+        }
+        const dir = getCameraDir(view.renderState.camera.rotation);
+        dir[2] = 0;
+        vec3.normalize(dir, dir);
+        vec3.negate(dir, dir);
+        view.modifyRenderState({
+            output: { xr: true },
+        });
+    }, [view]);
 }
