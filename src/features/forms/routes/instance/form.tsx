@@ -44,9 +44,11 @@ export function Form({
         [form?.isFinal, form?.signatures],
     );
 
+    const isGeoForm = useMemo(() => Boolean(form?.location), [form]);
+
     return (
         <>
-            {title ? (
+            {isGeoForm ? (
                 <Box mt={2} mb={isFinal ? 0 : 2}>
                     <TextField
                         label={t("formName")}
@@ -74,12 +76,12 @@ export function Form({
                 </Fragment>
             ))}
             <Stack gap={1} mt={2}>
-                {form?.location ? (
+                {isGeoForm && (
                     <TransformEditor
                         disabled={disabled || !canEdit || isFinal}
                         form={populateEditor ? form : undefined}
                     />
-                ) : null}
+                )}
                 <Signatures signatures={form?.signatures} />
             </Stack>
         </>
