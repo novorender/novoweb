@@ -55,10 +55,15 @@ export function TransformEditor({ disabled, form }: { disabled?: boolean; form?:
     const dispatchFormsGlobals = useDispatchFormsGlobals();
     const transformDraft = useFormsGlobals().transformDraft;
     const originalTransformDraft = useRef(transformDraft);
-    if (!originalTransformDraft.current) {
-        originalTransformDraft.current = transformDraft;
-    }
     const latestDispatchedTransformDraft = useRef(transformDraft);
+    const willUnmount = useRef(false);
+
+    useEffect(() => {
+        willUnmount.current = true;
+        return () => {
+            willUnmount.current = false;
+        };
+    });
 
     const [transform, setTransform] = useState(
         toTransformState(
@@ -69,6 +74,12 @@ export function TransformEditor({ disabled, form }: { disabled?: boolean; form?:
     );
 
     useEffect(() => {
+        if (!originalTransformDraft.current) {
+            originalTransformDraft.current = transformDraft;
+            latestDispatchedTransformDraft.current = transformDraft;
+            setTransform(toTransformState(transformDraft?.location, transformDraft?.rotation, transformDraft?.scale));
+        }
+
         // Prevent updating local transform based on updates made in the component,
         // because it messes up input in the text fields
         if (!form && transformDraft !== latestDispatchedTransformDraft.current) {
@@ -78,9 +89,11 @@ export function TransformEditor({ disabled, form }: { disabled?: boolean; form?:
 
     useEffect(() => {
         return () => {
-            dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(undefined));
-            if (isPickingLocationRef.current) {
-                dispatch(renderActions.stopPicker(Picker.FormLocation));
+            if (willUnmount.current) {
+                dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(undefined));
+                if (isPickingLocationRef.current) {
+                    dispatch(renderActions.stopPicker(Picker.FormLocation));
+                }
             }
         };
     }, [dispatch, dispatchFormsGlobals]);
