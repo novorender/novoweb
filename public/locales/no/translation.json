@@ -614,5 +614,11 @@
     "signatures": "Signaturer ({{length}})",
     "n/a": "N/A",
     "unknownUser": "Ukjent bruker",
-    "final": "Endelig"
+    "final": "Endelig",
+    "revertToThisVersion": "Gå tilbake til denne versjonen",
+    "formHistory": "Historikk for \"{{title}}\"",
+    "noFormHistoryAvailable": "Ingen historikk tilgjengelig for skjemaet \"{{title}}\".",
+    "revertForm": "Tilbakestille skjemaet \"{{title}}\" til den valgte versjonen?",
+    "revert": "Tilbakestill",
+    "formName": "Skjemanavn"
 }
