@@ -36,6 +36,7 @@ export enum Permission {
     FormsFill = "forms:fill",
     FormsManage = "forms:manage",
     FormsView = "forms:view",
+    FormsSign = "forms:sign",
     Group = "group",
     GroupManage = "group:manage",
     GroupRead = "group:read",
