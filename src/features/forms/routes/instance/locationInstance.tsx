@@ -56,6 +56,7 @@ export function LocationInstance() {
     const checkPermission = useCheckProjectPermission();
     const canDelete = checkPermission(Permission.FormsDelete);
     const canEdit = checkPermission(Permission.FormsFill);
+    const canSign = checkPermission(Permission.FormsSign);
 
     const location = useLocation();
     const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -349,7 +350,7 @@ export function LocationInstance() {
                                 <MoreVert fontSize="small" />
                             </IconButton>
                             <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
-                                <MenuItem onClick={handleSignBtnClick} disabled={!canEdit || isFinal}>
+                                <MenuItem onClick={handleSignBtnClick} disabled={!canSign || isFinal}>
                                     <ListItemIcon>
                                         <Create fontSize="small" />
                                     </ListItemIcon>
