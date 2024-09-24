@@ -270,6 +270,7 @@ export function LocationInstance() {
 
     const handleTitleChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
+            e.stopPropagation();
             const title = e.target.value;
             setTitle(title);
             if (title.trim().length > 0) {
