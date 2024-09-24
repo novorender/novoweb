@@ -253,7 +253,9 @@ export type MinimalTemplate = {
     };
 };
 
-export type Signature = ChangeStamp & { isFinal: boolean };
+export type Signature = ChangeStamp & { isFinal?: boolean };
+
+export type FormHistory = Record<string, Partial<Form>>;
 
 export type Form = {
     id: FormId;
@@ -267,6 +269,7 @@ export type Form = {
     createdBy?: ChangeStamp;
     signatures?: Signature[];
     isFinal?: boolean;
+    version: number;
 };
 
 export type FormGLtfAsset = {
@@ -284,9 +287,9 @@ export type FormTransform = {
     // Meanwhile new selected object is rendered with the previous object transform causing flicker.
     // By attaching transformDraft to particular form we can avoid that flicker.
     // Another alternative could be to make it a state in locationInstance, but I want to localize
-    // form transformDraft as much as possible because it might update quite rabpidly.
-    templateId: string;
-    formId: string;
+    // form transformDraft as much as possible because it might update quite rapidly.
+    templateId: TemplateId;
+    formId: FormId;
     location: vec3;
     rotation?: quat;
     scale?: number;

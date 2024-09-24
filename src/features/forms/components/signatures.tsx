@@ -49,7 +49,7 @@ export function Signature({ signature, showDivider }: SignatureProps) {
             <ListItemIcon>{isFinal ? <Create color="primary" /> : <Create />}</ListItemIcon>
             <ListItemText
                 primary={
-                    <Typography variant="subtitle1">
+                    <Typography component="span" variant="subtitle1">
                         {userName}
                         {isFinal && (
                             <Typography component="span" variant="caption" color="primary" sx={{ ml: 1 }}>
@@ -60,15 +60,15 @@ export function Signature({ signature, showDivider }: SignatureProps) {
                 }
                 secondary={
                     <>
-                        <Box display="flex" alignItems="center" mt={0.5}>
+                        <Box display="flex" component="span" alignItems="center" mt={0.5}>
                             <Person fontSize="small" sx={{ mr: 1 }} />
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography component="span" variant="body2" color="text.secondary">
                                 {userLogin}
                             </Typography>
                         </Box>
-                        <Box display="flex" alignItems="center" mt={0.5}>
+                        <Box display="flex" component="span" alignItems="center" mt={0.5}>
                             <AccessTime fontSize="small" sx={{ mr: 1 }} />
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography component="span" variant="body2" color="text.secondary">
                                 {localDateTime}
                             </Typography>
                         </Box>

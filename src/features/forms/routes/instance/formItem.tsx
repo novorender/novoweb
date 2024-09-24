@@ -156,7 +156,7 @@ export function FormItem({
     disabled,
 }: {
     item: FormItem;
-    setItems: Dispatch<SetStateAction<FormItem[]>>;
+    setItems?: Dispatch<SetStateAction<FormItem[]>>;
     disabled?: boolean;
 }) {
     const { t } = useTranslation();
@@ -175,7 +175,7 @@ export function FormItem({
         if (!editing) {
             setEditing(true);
         }
-        setItems((state) =>
+        setItems?.((state) =>
             state.map((_item) => {
                 if (_item === item) {
                     switch (item.type) {
@@ -207,7 +207,7 @@ export function FormItem({
         const relevant = item.required ? true : !isRelevant;
         setIsRelevant(relevant);
         setEditing(relevant);
-        setItems((state) =>
+        setItems?.((state) =>
             state.map((_item) =>
                 _item === item
                     ? {
@@ -271,7 +271,7 @@ export function FormItem({
             setInfoMessage(t("filesUploadingError"));
         }
 
-        setItems((state) =>
+        setItems?.((state) =>
             state.map((item) => {
                 if (item.id === itemId) {
                     return item.type === FormItemType.File
@@ -296,7 +296,7 @@ export function FormItem({
         (e: FormEvent) => {
             e.preventDefault();
             if (Number.isInteger(fileIndexToDelete) && item.type === FormItemType.File) {
-                setItems((state) =>
+                setItems?.((state) =>
                     state.map((_item) =>
                         _item.id === item.id
                             ? ({
@@ -333,7 +333,7 @@ export function FormItem({
                                     />
                                 }
                                 onChange={(_e, checked) =>
-                                    setItems((state) =>
+                                    setItems?.((state) =>
                                         state.map((_item) =>
                                             _item === item
                                                 ? {

@@ -354,20 +354,23 @@ export function FormsList() {
                 {template?.title ?? ""}
             </Typography>
             <ScrollBox pb={2} flex={1}>
-                {items.length === 0 && <Typography px={1}>{t("noForms")}</Typography>}
-                <AutoSizer disableWidth>
-                    {({ height }) => (
-                        <List
-                            height={height}
-                            itemCount={filteredItems.length}
-                            itemSize={48}
-                            width="100%"
-                            overscanCount={5}
-                        >
-                            {ListItem}
-                        </List>
-                    )}
-                </AutoSizer>
+                {items.length === 0 ? (
+                    <Typography px={1}>{t("noForms")}</Typography>
+                ) : (
+                    <AutoSizer disableWidth>
+                        {({ height }) => (
+                            <List
+                                height={height}
+                                itemCount={filteredItems.length}
+                                itemSize={48}
+                                width="100%"
+                                overscanCount={5}
+                            >
+                                {ListItem}
+                            </List>
+                        )}
+                    </AutoSizer>
+                )}
             </ScrollBox>
             <FormFilterMenu
                 anchorEl={filterMenuAnchor}

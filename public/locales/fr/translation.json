@@ -636,5 +636,11 @@
     "signatures": "Signatures ({{length}})",
     "n/a": "N/D",
     "unknownUser": "Utilisateur inconnu",
-    "final": "Final"
+    "final": "Final",
+    "revertToThisVersion": "Revenir à cette version",
+    "formHistory": "Historique de \"{{title}}\"",
+    "noFormHistoryAvailable": "Aucun historique disponible pour le formulaire \"{{title}}\".",
+    "revertForm": "Rétablir le formulaire \"{{title}}\" à la version sélectionnée ?",
+    "revert": "Rétablir",
+    "formName": "Nom du formulaire"
 }

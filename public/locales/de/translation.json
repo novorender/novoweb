@@ -636,5 +636,11 @@
     "signatures": "Unterschriften ({{length}})",
     "n/a": "k. A.",
     "unknownUser": "Unbekannter Benutzer",
-    "final": "Endgültig"
+    "final": "Endgültig",
+    "revertToThisVersion": "Zu dieser Version zurückkehren",
+    "formHistory": "Verlauf von \"{{title}}\"",
+    "noFormHistoryAvailable": "Kein Verlauf verfügbar für das Formular \"{{title}}\".",
+    "revertForm": "Formular \"{{title}}\" auf die ausgewählte Version zurücksetzen?",
+    "revert": "Zurücksetzen",
+    "formName": "Formularname"
 }
