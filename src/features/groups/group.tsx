@@ -24,16 +24,19 @@ import {
     styled,
     Typography,
 } from "@mui/material";
-import { MouseEvent, useState } from "react";
+import { MouseEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
 import { Permission } from "apis/dataV2/permissions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Tooltip } from "components";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { ColorPicker } from "features/colorPicker";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { rgbToVec, vecToRgb } from "utils/color";
+
+import { groupsActions, selectHighlightGroupInWidget } from "./groupsSlice";
 
 export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
     ({ theme }) => css`
@@ -55,9 +58,26 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
     const checkPermission = useCheckProjectPermission();
     const canManage = checkPermission(Permission.GroupManage);
     const dispatchObjectGroups = useDispatchObjectGroups();
+    const dispatch = useAppDispatch();
+    const buttonRef = useRef<HTMLDivElement | null>(null);
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
+    const highlightGroupInWidget = useAppSelector(selectHighlightGroupInWidget);
+
+    useEffect(() => {
+        if (highlightGroupInWidget === group.id) {
+            dispatch(groupsActions.setHighlightGroupInWidget(null));
+            const btn = buttonRef.current;
+            if (btn) {
+                btn.scrollIntoView();
+                btn.animate([{ background: "unset" }, { background: "rgb(13, 71, 161)" }, { background: "unset" }], {
+                    duration: 500,
+                    delay: 200,
+                });
+            }
+        }
+    }, [dispatch, highlightGroupInWidget, group.id]);
 
     const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
         setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
@@ -93,6 +113,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                         }),
                     );
                 }}
+                ref={buttonRef}
             >
                 <Box display="flex" width={1} alignItems="center">
                     <Box flex="1 1 auto" overflow="hidden">

@@ -7,6 +7,7 @@ const initialState = {
     loadingIds: false,
     saveStatus: AsyncStatus.Initial,
     expandedCollections: [] as string[],
+    highlightGroupInWidget: null as string | null,
 };
 
 type State = typeof initialState;
@@ -29,8 +30,11 @@ export const groupsSlice = createSlice({
         },
         renameExpandedCollection: (state, { payload: { from, to } }: PayloadAction<{ from: string; to: string }>) => {
             state.expandedCollections = state.expandedCollections.map((collection) =>
-                collection.startsWith(from) ? collection.replace(from, to) : collection
+                collection.startsWith(from) ? collection.replace(from, to) : collection,
             );
+        },
+        setHighlightGroupInWidget: (state, action: PayloadAction<string | null>) => {
+            state.highlightGroupInWidget = action.payload;
         },
     },
 });
@@ -38,10 +42,11 @@ export const groupsSlice = createSlice({
 export const selectSaveStatus = (state: RootState) => state.groups.saveStatus;
 export const selectLoadingIds = (state: RootState) => state.groups.loadingIds;
 export const selectExpandedCollections = (state: RootState) => state.groups.expandedCollections;
+export const selectHighlightGroupInWidget = (state: RootState) => state.groups.highlightGroupInWidget;
 
 export const selectIsCollectionExpanded = createSelector(
     [selectExpandedCollections, (_state, collection: string) => collection],
-    (collections, collection) => collections.includes(collection)
+    (collections, collection) => collections.includes(collection),
 );
 
 const { actions, reducer } = groupsSlice;

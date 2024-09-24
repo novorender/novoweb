@@ -20,6 +20,10 @@ export function useOpenWidget() {
 
     return useCallback(
         (widgetKey: WidgetKey) => {
+            if (widgets.includes(widgetKey)) {
+                return;
+            }
+
             if (canAddWidget) {
                 dispatch(explorerActions.addWidgetSlot(widgetKey));
                 if (widgetSlot.open) {
