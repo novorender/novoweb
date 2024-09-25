@@ -4,46 +4,35 @@ import { useHistory } from "react-router-dom";
 
 import { useAppDispatch } from "app/redux-store-interactions";
 import { Confirmation } from "components";
-import { useDeleteLocationFormMutation } from "features/forms/api";
+import { useDeleteAllFormsMutation } from "features/forms/api";
 import { formsActions } from "features/forms/slice";
-import { type FormId } from "features/forms/types";
 import { useSceneId } from "hooks/useSceneId";
 
-interface DeleteConfirmationProps {
-    templateId: string;
-    formId: FormId;
-    title?: string;
-}
-
-export function DeleteConfirmation({ templateId, formId, title }: DeleteConfirmationProps) {
+export function DeleteTemplatesConfirmation() {
     const { t } = useTranslation();
     const history = useHistory();
-    const sceneId = useSceneId();
+    const projectId = useSceneId();
     const dispatch = useAppDispatch();
-    const [deleteForm, { isLoading: isFormDeleting }] = useDeleteLocationFormMutation();
+    const [deleteAllForms, { isLoading: isAllFormsDeleting }] = useDeleteAllFormsMutation();
 
     const handleDelete = useCallback(
         async (e: FormEvent) => {
             e.preventDefault();
-            await deleteForm({
-                projectId: sceneId,
-                templateId,
-                formId,
-            });
-            dispatch(formsActions.setSelectedFormId(undefined));
+            await deleteAllForms({ projectId });
+            dispatch(formsActions.setLocationForms([]));
             history.goBack();
         },
-        [sceneId, templateId, formId, deleteForm, dispatch, history],
+        [deleteAllForms, projectId, dispatch, history],
     );
 
     return (
         <Confirmation
-            title={t("deleteForm", { title })}
+            title={t("deleteAllFormsConfirmation")}
             confirmBtnText={t("delete")}
             onCancel={history.goBack}
             component="form"
             onSubmit={handleDelete}
-            loading={isFormDeleting}
+            loading={isAllFormsDeleting}
             headerShadow={false}
             textAlign="center"
             paddingBottom={0}

@@ -26,7 +26,7 @@ export function ClearConfirmation({ title, onClear }: ClearConfirmationProps) {
         <Confirmation
             title={t("clearForm", { title })}
             confirmBtnText={t("clear")}
-            onCancel={() => history.goBack()}
+            onCancel={history.goBack}
             component="form"
             onSubmit={handleClear}
             headerShadow={false}
