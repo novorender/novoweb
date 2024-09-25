@@ -65,7 +65,7 @@ export function SignConfirmation({ objectGuid, templateId, formId, title }: Sign
         <Confirmation
             title={t("signForm", { title, user: user?.name ?? user?.user ?? t("unknown") })}
             confirmBtnText={t("sign")}
-            onCancel={() => history.goBack()}
+            onCancel={history.goBack}
             component="form"
             onSubmit={handleSign}
             headerShadow={false}

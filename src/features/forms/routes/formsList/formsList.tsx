@@ -1,6 +1,6 @@
 import { ArrowBack, Delete, FilterAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, Typography, useTheme } from "@mui/material";
-import { type FormEvent, type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -8,7 +8,7 @@ import { FixedSizeList as List } from "react-window";
 
 import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Confirmation, Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
+import { Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,
@@ -16,8 +16,9 @@ import {
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { useDeleteTemplateMutation, useGetTemplateQuery } from "features/forms/api";
+import { useGetTemplateQuery } from "features/forms/api";
 import { FormFilterMenu } from "features/forms/formFilterMenu";
+import { DELETE_TEMPLATE_ROUTE } from "features/forms/routes/constants";
 import { formsActions, selectCurrentFormsList, selectFormFilters } from "features/forms/slice";
 import { type FormId, type FormObject, type FormRecord, type FormState, TemplateType } from "features/forms/types";
 import { mapGuidsToIds } from "features/forms/utils";
@@ -58,8 +59,6 @@ export function FormsList() {
         templateId,
     });
 
-    const [deleteTemplate, { isLoading: isTemplateDeleting }] = useDeleteTemplateMutation();
-
     const [items, setItems] = useState<
         (FormObject & { formState: FormState })[] | (FormRecord & { id: number; formState: FormState })[]
     >(
@@ -81,7 +80,6 @@ export function FormsList() {
     const [filteredItems, setFilteredItems] = useState<
         (FormObject & { formState: FormState })[] | (FormRecord & { id: number; formState: FormState })[]
     >([]);
-    const [isDeleting, setIsDeleting] = useState(false);
 
     const abortSignal = abortController.current.signal;
 
@@ -264,19 +262,16 @@ export function FormsList() {
         }
     };
 
-    const handleDelete = useCallback(
-        async (e: FormEvent) => {
-            e.preventDefault();
-            await deleteTemplate({ projectId: sceneId, templateId });
-            if (template?.type === TemplateType.Location) {
-                if (isPickingLocation) {
-                    dispatch(renderActions.stopPicker(Picker.FormLocation));
-                }
-            }
-            history.push("/");
-        },
-        [deleteTemplate, dispatch, history, isPickingLocation, sceneId, template, templateId],
-    );
+    const handleDeleteClick = useCallback(() => {
+        history.push({
+            pathname: DELETE_TEMPLATE_ROUTE,
+            state: {
+                title: template?.title,
+                templateId,
+                templateType: template?.type,
+            },
+        });
+    }, [history, template?.title, templateId, template?.type]);
 
     const ListItem = ({ index, style }: { index: number; style: React.CSSProperties }) => {
         const item = filteredItems[index];
@@ -287,17 +282,7 @@ export function FormsList() {
         );
     };
 
-    return isDeleting ? (
-        <Confirmation
-            title={t("deleteAllFormsInTemplate", { title: template?.title })}
-            confirmBtnText={t("delete")}
-            onCancel={() => setIsDeleting(false)}
-            component="form"
-            onSubmit={handleDelete}
-            loading={isTemplateDeleting}
-            headerShadow={false}
-        />
-    ) : (
+    return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
                 <Box px={1}>
@@ -337,7 +322,7 @@ export function FormsList() {
                     </Box>
                     <Button
                         color="grey"
-                        onClick={() => setIsDeleting(true)}
+                        onClick={handleDeleteClick}
                         disabled={!canDelete || loadingTemplate || loadingItems || !items.length}
                     >
                         <Delete fontSize="small" sx={{ mr: 1 }} />

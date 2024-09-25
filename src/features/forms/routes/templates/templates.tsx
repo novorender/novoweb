@@ -1,6 +1,6 @@
 import { AddCircle, Delete, FilterAlt } from "@mui/icons-material";
 import { Box, Button, Divider, LinearProgress, Typography, useTheme } from "@mui/material";
-import { type FormEvent, type MouseEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -8,7 +8,7 @@ import { FixedSizeList as List } from "react-window";
 
 import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Confirmation, ScrollBox } from "components";
+import { ScrollBox } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { TemplateFilterMenu } from "features/forms/templateFilterMenu";
@@ -18,8 +18,9 @@ import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
 
-import { useDeleteAllFormsMutation, useGetMinimalTemplatesQuery } from "../../api";
+import { useGetMinimalTemplatesQuery } from "../../api";
 import { formsActions, selectTemplatesFilters } from "../../slice";
+import { DELETE_TEMPLATES_ROUTE } from "../constants";
 import { Template } from "./template";
 
 const FILTER_MENU_ID = "templates-filter-menu";
@@ -46,11 +47,7 @@ export function Templates() {
         [user],
     );
 
-    const [deleteAllForms, { isLoading: isAllFormsDeleting }] = useDeleteAllFormsMutation();
-
     const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
-
     const [filteredTemplates, setFilteredTemplates] = useState<MinimalTemplate[]>([]);
 
     useEffect(() => {
@@ -97,6 +94,10 @@ export function Templates() {
         history.push("/create");
     };
 
+    const handleDeleteClick = () => {
+        history.push(DELETE_TEMPLATES_ROUTE);
+    };
+
     const openFilters = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
         setFilterMenuAnchor(e.currentTarget);
@@ -106,35 +107,13 @@ export function Templates() {
         setFilterMenuAnchor(null);
     };
 
-    const handleDelete = useCallback(
-        async (e: FormEvent) => {
-            e.preventDefault();
-            await deleteAllForms({
-                projectId: sceneId,
-            });
-            dispatch(formsActions.setLocationForms([]));
-            setIsDeleting(false);
-        },
-        [deleteAllForms, dispatch, sceneId],
-    );
-
     const TemplateItem = ({ index, style }: { index: number; style: React.CSSProperties }) => (
         <div style={style}>
             <Template template={filteredTemplates[index]} />
         </div>
     );
 
-    return isDeleting ? (
-        <Confirmation
-            title={t("deleteAllFormsConfirmation")}
-            confirmBtnText={t("delete")}
-            onCancel={() => setIsDeleting(false)}
-            component="form"
-            onSubmit={handleDelete}
-            loading={isAllFormsDeleting}
-            headerShadow={false}
-        />
-    ) : (
+    return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
                 <Box px={1}>
@@ -160,7 +139,7 @@ export function Templates() {
                     {isInternal && (
                         <Button
                             color="grey"
-                            onClick={() => setIsDeleting(true)}
+                            onClick={handleDeleteClick}
                             disabled={!canDelete || !user || isLoading || !templates.length || !!error}
                         >
                             <Delete fontSize="small" sx={{ mr: 1 }} />
