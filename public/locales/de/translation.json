@@ -337,7 +337,7 @@
     "addGroup": "Gruppe hinzufügen",
     "groupSelected": "Gruppe ausgewählt",
     "groupsName": "Gruppen:",
-    "includeHighlight/VisibilityChanges": "Hervorhebungs-/Sichtbarkeitsänderungen einschließen",
+    "includeHighlight/VisibilityChanges": "Hervorhebungs-/Sichtbarkeitsänderungen für die Startansicht einbeziehen",
     "imageType": "Bildtyp",
     "all": "Alle",
     "panorama": "Panorama",
