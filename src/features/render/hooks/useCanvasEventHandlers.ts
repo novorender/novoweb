@@ -19,12 +19,14 @@ import { selectShowTracer } from "features/followPath";
 import { measureActions, selectMeasureHoverSettings } from "features/measure";
 import { myLocationActions, selectMyLocationAutocenter } from "features/myLocation";
 import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
+import { selectPointVisualizationStamp } from "features/pointVisualization/selectors";
 import { ViewMode } from "types/misc";
 
 import {
     renderActions,
     selectCameraType,
     selectClippingPlanes,
+    selectDefaultPointVisualization,
     selectGeneratedParametricData,
     selectPicker,
     selectPoints,
@@ -83,6 +85,8 @@ export function useCanvasEventHandlers({
     const dispatchLastPickSample = useDispatchLastPickSample();
     const { movePlanes } = useClippingPlaneActions();
     const movingPlaneControl = useRef<ReturnType<typeof movePlanes>>();
+    const defaultPointVisualization = useAppSelector(selectDefaultPointVisualization);
+    const pointVisStamp = useAppSelector(selectPointVisualizationStamp);
 
     const hideSvgCursor = () =>
         svg &&
@@ -468,13 +472,18 @@ export function useCanvasEventHandlers({
             hideSvgCursor();
         }
 
-        const setDeviationStamp =
+        const showInlineStamp =
             !stamp?.pinned &&
             deviation.mixFactor !== 0 &&
             cameraType === CameraType.Orthographic &&
-            [ViewMode.CrossSection, ViewMode.FollowPath, ViewMode.Deviations].includes(viewMode) &&
             e.buttons === 0 &&
             subtrees.points === SubtreeStatus.Shown;
+        const setDeviationStamp =
+            showInlineStamp && [ViewMode.CrossSection, ViewMode.FollowPath, ViewMode.Deviations].includes(viewMode);
+        const setPointVisStamp =
+            showInlineStamp &&
+            pointVisStamp.enabled &&
+            ["classification", "intensity"].includes(defaultPointVisualization.kind);
         if (setDeviationStamp) {
             const isTouch = e.nativeEvent instanceof PointerEvent && e.nativeEvent.pointerType === "touch";
             const measurement = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
@@ -489,6 +498,25 @@ export function useCanvasEventHandlers({
                         mouseX: e.nativeEvent.offsetX,
                         mouseY: e.nativeEvent.offsetY,
                         data: { deviation: measurement.pointFactor },
+                    }),
+                );
+            } else {
+                dispatch(renderActions.setStamp(null));
+            }
+        } else if (setPointVisStamp) {
+            const isTouch = e.nativeEvent instanceof PointerEvent && e.nativeEvent.pointerType === "touch";
+            const measurement = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
+                sampleDiscRadius: isTouch ? 8 : 1,
+            });
+
+            if (measurement?.pointFactor !== undefined) {
+                dispatch(
+                    renderActions.setStamp({
+                        kind: StampKind.Classification,
+                        pinned: false,
+                        mouseX: e.nativeEvent.offsetX,
+                        mouseY: e.nativeEvent.offsetY,
+                        data: { pointFactor: measurement.pointFactor },
                     }),
                 );
             } else {

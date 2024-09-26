@@ -101,6 +101,7 @@ export enum StampKind {
     Deviation,
     CanvasContextMenu,
     Properties,
+    Classification,
 }
 
 type LogPointStamp = {
@@ -131,6 +132,13 @@ type DeviationStamp = {
     };
 };
 
+type ClassificationStamp = {
+    kind: StampKind.Classification;
+    data: {
+        pointFactor: number;
+    };
+};
+
 type CanvasContextMenuStamp = {
     kind: StampKind.CanvasContextMenu;
     data: {
@@ -152,6 +160,7 @@ export type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
     | CanvasContextMenuStamp
     | PropertiesStamp
     | DitioMachineStamp
+    | ClassificationStamp
 );
 
 export type SceneConfig = Omit<SceneData, "settings" | "customProperties"> & {

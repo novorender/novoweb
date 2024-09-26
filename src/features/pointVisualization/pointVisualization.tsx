@@ -1,4 +1,5 @@
-import { Box, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
+import { Edit, Settings } from "@mui/icons-material";
+import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { MemoryRouter, Route, Switch, useHistory, useLocation } from "react-router-dom";
@@ -21,6 +22,7 @@ import { CsvImportView } from "./routes/csvImportView";
 import { ElevationView } from "./routes/elevation";
 import { IntensityView } from "./routes/intensity";
 import { RgbView } from "./routes/rgb";
+import { SettingsView } from "./routes/settings";
 import { selectPointVisualizationOriginalState } from "./selectors";
 import { pointVisualizationActions } from "./slice";
 
@@ -43,8 +45,8 @@ function PointVisualizationInner() {
     const defaultPointVisualization = useAppSelector(selectDefaultPointVisualization);
     const isEditing = useAppSelector(selectPointVisualizationOriginalState) !== undefined;
     const isDeviationMode = useAppSelector(selectViewMode) === ViewMode.Deviations;
-    const location = useLocation();
     const history = useHistory();
+    const location = useLocation();
 
     useEffect(() => {
         return () => {
@@ -67,7 +69,11 @@ function PointVisualizationInner() {
                     toggleMenu={toggleMenu}
                     WidgetMenu={WidgetMenu}
                     widget={featuresConfig.pointVisualization}
-                    disableShadow={menuOpen || isEditing}
+                    disableShadow={
+                        menuOpen ||
+                        (isEditing && location.pathname !== "/import-csv") ||
+                        location.pathname === "/settings"
+                    }
                 />
 
                 <Box
@@ -82,27 +88,30 @@ function PointVisualizationInner() {
                         </Typography>
                     ) : (
                         <>
-                            {location.pathname !== "/import-csv" && (
-                                <>
-                                    {isEditing && <Header />}
-                                    <MethodPicker />
-                                </>
-                            )}
                             <Switch>
-                                <Route path="/classification" exact>
-                                    <ClassificationView />
-                                </Route>
-                                <Route path="/elevation" exact>
-                                    <ElevationView />
-                                </Route>
-                                <Route path="/intensity" exact>
-                                    <IntensityView />
-                                </Route>
-                                <Route path="/color" exact>
-                                    <RgbView />
-                                </Route>
                                 <Route path="/import-csv" exact>
                                     <CsvImportView />
+                                </Route>
+                                <Route path="/settings" exact>
+                                    <SettingsView />
+                                </Route>
+                                <Route>
+                                    {isEditing && <Header />}
+                                    <MethodPicker />
+                                    <Switch>
+                                        <Route path="/classification" exact>
+                                            <ClassificationView />
+                                        </Route>
+                                        <Route path="/elevation" exact>
+                                            <ElevationView />
+                                        </Route>
+                                        <Route path="/intensity" exact>
+                                            <IntensityView />
+                                        </Route>
+                                        <Route path="/color" exact>
+                                            <RgbView />
+                                        </Route>
+                                    </Switch>
                                 </Route>
                             </Switch>
                         </>
@@ -124,6 +133,7 @@ function WidgetMenu(props: MenuProps) {
     const points = useAppSelector(selectPoints);
     const terrain = useAppSelector(selectTerrain);
     const dispatch = useAppDispatch();
+    const history = useHistory();
 
     if (!canManage) {
         return null;
@@ -140,11 +150,28 @@ function WidgetMenu(props: MenuProps) {
                             defaultPointVisualization: points.defaultPointVisualization,
                         }),
                     );
+                    if (history.location.pathname === "/settings") {
+                        history.goBack();
+                    }
                     props.onClose?.({}, "backdropClick");
                 }}
                 disabled={isEditing}
             >
+                <ListItemIcon>
+                    <Edit fontSize="small" />
+                </ListItemIcon>
                 <ListItemText>{t("edit")}</ListItemText>
+            </MenuItem>
+            <MenuItem
+                onClick={() => {
+                    history.push("/settings");
+                    props.onClose?.({}, "backdropClick");
+                }}
+            >
+                <ListItemIcon>
+                    <Settings fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>{t("settings")}</ListItemText>
             </MenuItem>
         </Menu>
     );

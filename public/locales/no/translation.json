@@ -594,5 +594,6 @@
     "columnN": "Kolonne {{i}}",
     "[none]": "[ingen]",
     "intensityDescriptionHtml": "Intensiteten registreres som styrken på et laserstråle-retur og samles inn for hvert punkt. Novorender visualiserer dette i gråtoner hvor: <ul> <li>Hvitt er 1, og</li> <li>Svart er 0</li> </ul> Fargeskalaen til høyre gir en indikasjon på hvordan dette kan se ut.",
-    "rgbDescription": "RGB-fargeverdiene tilsvarer det virkelige utseendet til objektet eller overflaten som blir skannet, noe som gjør punktskyen visuelt detaljert og realistisk."
+    "rgbDescription": "RGB-fargeverdiene tilsvarer det virkelige utseendet til objektet eller overflaten som blir skannet, noe som gjør punktskyen visuelt detaljert og realistisk.",
+    "showStampForClassificationAndIntensityModes": "Vis stempel i klassifiserings- og intensitetsmodus"
 }

@@ -342,7 +342,8 @@ export function useCanvasClickHandler({
                 if (
                     deviation.mixFactor !== 0 &&
                     cameraState.type === CameraType.Orthographic &&
-                    result.pointFactor !== undefined
+                    result.pointFactor !== undefined &&
+                    [ViewMode.CrossSection, ViewMode.FollowPath, ViewMode.Deviations].includes(viewMode)
                 ) {
                     dispatch(
                         renderActions.setStamp({

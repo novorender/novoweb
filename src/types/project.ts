@@ -134,6 +134,11 @@ export type ExplorerProjectState = {
                 };
             };
         };
+        pointVisualization?: {
+            stamp: {
+                enabled: boolean;
+            };
+        };
     };
     highlights?: {
         primary: {
