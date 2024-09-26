@@ -17,7 +17,7 @@ import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import { useGoToSelectedForm } from "./hooks/useGoToSelectedForm";
 import { Create, FormsList, LocationInstance, Object, SearchInstance, Templates } from "./routes";
-import { DELETE_TEMPLATE_ROUTE, DELETE_TEMPLATES_ROUTE } from "./routes/constants";
+import { DELETE_TEMPLATE_ROUTE, DELETE_TEMPLATES_ROUTE, EDIT_TEMPLATE_ROUTE } from "./routes/constants";
 import { Settings } from "./routes/settings";
 import { DeleteTemplate } from "./routes/templates";
 import { DeleteTemplatesConfirmation } from "./routes/templates/dialogs/deleteTemplatesConfirmation";
@@ -68,6 +68,9 @@ export default function Forms() {
                         </Route>
                         <Route path={DELETE_TEMPLATES_ROUTE}>
                             <DeleteTemplatesConfirmation />
+                        </Route>
+                        <Route path={EDIT_TEMPLATE_ROUTE}>
+                            <Create />
                         </Route>
                         <Route path="/settings">
                             <Settings />

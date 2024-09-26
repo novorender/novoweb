@@ -32,7 +32,14 @@ import { FILE_SIZE_LIMIT } from "features/forms/constants";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 
-import { type FormFileUploadResponse, type FormItem, FormItemType } from "../../types";
+import {
+    DateTimeItem,
+    type FormFileUploadResponse,
+    type FormItem,
+    FormItemType,
+    type FormsFile,
+    ItemWithOptions,
+} from "../../types";
 
 const DOC_TYPES = [
     "application/pdf",
@@ -46,20 +53,42 @@ const DOC_TYPES = [
 
 const today = new Date();
 
-export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
+export function AddFormItem({ onSave, item }: { onSave: (item: FormItem) => void; item?: FormItem }) {
     const { t } = useTranslation();
     const sceneId = useSceneId();
     const history = useHistory();
-    const [title, setTitle] = useState("");
-    const [value, setValue] = useState("");
-    const [type, setType] = useState(FormItemType.Checkbox);
-    const [relevant, toggleRelevant] = useToggle(true);
-    const [options, setOptions] = useState<string[]>([]);
-    const [files, setFiles] = useState<(File & FormFileUploadResponse)[]>([]);
-    const [fileTypes, setFileTypes] = useState<string[]>([]);
-    const [dateTime, setDateTime] = useState<Date | null>(null);
-    const [multiple, toggleMultiple] = useToggle(true);
-    const [readonly, toggleReadonly] = useToggle(false);
+
+    const [title, setTitle] = useState(item?.title ?? "");
+    const [type, setType] = useState(item?.type || FormItemType.Checkbox);
+    const [value, setValue] = useState(item?.type === FormItemType.Text ? (item.value as string[])[0] : "");
+    const [relevant, toggleRelevant] = useToggle(item?.required ?? true);
+    const [options, setOptions] = useState<string[]>((item as ItemWithOptions)?.options ?? []);
+    const [files, setFiles] = useState<FormsFile[]>(item?.type === FormItemType.File ? (item.value ?? []) : []);
+    const [fileTypes, setFileTypes] = useState<string[]>(
+        item?.type === FormItemType.File
+            ? (item?.accept
+                  ?.split(",")
+                  .reduce(
+                      (types, type) =>
+                          type === "image/*"
+                              ? [...types, t("images")]
+                              : type === "application/pdf"
+                                ? [...types, t("documents")]
+                                : types,
+                      [] as string[],
+                  ) ?? [])
+            : [],
+    );
+    const [dateTime, setDateTime] = useState<Date | null>(
+        item?.type
+            ? [FormItemType.Date, FormItemType.Time, FormItemType.DateTime].includes(item.type)
+                ? ((item as DateTimeItem).value ?? null)
+                : null
+            : null,
+    );
+    const [multiple, toggleMultiple] = useToggle(item?.type === FormItemType.File ? (item?.multiple ?? true) : true);
+    const [readonly, toggleReadonly] = useToggle(item?.type === FormItemType.File ? (item?.readonly ?? false) : false);
+
     const [fileSizeWarning, toggleFileSizeWarning] = useToggle(false);
 
     const [uploadFiles, { isLoading: uploading }] = useUploadFilesMutation();
@@ -108,7 +137,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
             }
 
             const newItem: FormItem = {
-                id: window.crypto.randomUUID(),
+                id: item?.id ?? window.crypto.randomUUID(),
                 title,
                 type,
                 value:
@@ -130,6 +159,7 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
         [
             canSave,
             files,
+            item?.id,
             title,
             type,
             value,

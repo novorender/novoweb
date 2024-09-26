@@ -39,20 +39,7 @@ type SimpleItem = BaseItem<string[] | null> & {
     >;
 };
 
-interface ItemWithOptions extends BaseItem<string[] | null> {
-    type: Exclude<
-        FormItemType,
-        | FormItemType.Input
-        | FormItemType.Text
-        | FormItemType.File
-        | FormItemType.Date
-        | FormItemType.Time
-        | FormItemType.DateTime
-    >;
-    options: string[];
-}
-
-interface ItemWithOptions extends BaseItem<string[] | null> {
+export interface ItemWithOptions extends BaseItem<string[] | null> {
     type: Exclude<
         FormItemType,
         | FormItemType.Input

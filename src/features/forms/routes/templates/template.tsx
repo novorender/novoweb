@@ -53,6 +53,10 @@ export function Template({ template }: { template: MinimalTemplate }) {
         setMenuAnchor(null);
     };
 
+    const handleEditClick = () => {
+        history.push(`/edit/${template.id}`);
+    };
+
     const handleDeleteClick = useCallback(() => {
         closeMenu();
         history.push({
@@ -93,7 +97,7 @@ export function Template({ template }: { template: MinimalTemplate }) {
                         id={`${template.id}-menu`}
                     >
                         {canEdit && (
-                            <MenuItem onClick={() => {}}>
+                            <MenuItem onClick={handleEditClick} disabled={!canEdit}>
                                 <ListItemIcon>
                                     <Edit fontSize="small" />
                                 </ListItemIcon>

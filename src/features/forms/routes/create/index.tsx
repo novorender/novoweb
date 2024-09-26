@@ -1,14 +1,18 @@
 import { ArrowBack } from "@mui/icons-material";
 import { Box, Button, useTheme } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
-import { useCallback, useMemo, useState } from "react";
+import { skipToken } from "@reduxjs/toolkit/query";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
+import { Route, Switch, useHistory, useParams, useRouteMatch } from "react-router-dom";
 
 import { Divider } from "components";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { useGetTemplateQuery } from "features/forms/api";
+import { toFormItems } from "features/forms/utils";
+import { useSceneId } from "hooks/useSceneId";
 
-import { FormItem, TemplateType } from "../../types";
+import { type FormItem, type TemplateId, TemplateType } from "../../types";
 import { AddFormItem } from "./addFormItem";
 import { AddObjects } from "./addObjects";
 import { CreateForm } from "./createForm";
@@ -20,9 +24,12 @@ const SELECT_MARKER_ROUTE = "/select-marker";
 
 export function Create() {
     const { t } = useTranslation();
+    const { templateId } = useParams<{ templateId?: TemplateId }>();
+
     const theme = useTheme();
     const history = useHistory();
     const match = useRouteMatch();
+    const projectId = useSceneId();
     const dispatchHighlighted = useDispatchHighlighted();
 
     const [type, setType] = useState(TemplateType.Search);
@@ -36,6 +43,23 @@ export function Create() {
         | undefined
     >();
     const [marker, setMarker] = useState<string>();
+
+    const { data: template } = useGetTemplateQuery(templateId ? { projectId, templateId } : skipToken);
+
+    useEffect(() => {
+        if (template) {
+            setType(template.type!);
+            setTitle(template.title ?? "");
+            setItems(template.fields ? toFormItems(template.fields) : []);
+            if (template.type === TemplateType.Search) {
+                // FIXME: Future update should allow to edit object selection query.
+                // There are quirks, so we don't allow it for now.
+                // setObjects(template.objects);
+            } else {
+                setMarker(template.marker);
+            }
+        }
+    }, [template]);
 
     const handleBackClick = useCallback(() => {
         dispatchHighlighted(highlightActions.setIds([]));
@@ -89,7 +113,7 @@ export function Create() {
                 <Route path={selectMarkerRoute}>
                     <SelectMarker marker={marker} onChange={handleSelectMarker} />
                 </Route>
-                <Route path={match.path} exact>
+                <Route path={match.url} exact>
                     <CreateForm
                         type={type}
                         setType={setType}
@@ -99,6 +123,7 @@ export function Create() {
                         setItems={handleSetItems}
                         objects={objects}
                         marker={marker}
+                        templateId={templateId}
                     />
                 </Route>
             </Switch>
