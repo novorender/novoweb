@@ -14,51 +14,63 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { Bookmark } from "@novorender/data-js-api";
-import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
 import { Fragment, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { useAppDispatch } from "app/redux-store-interactions";
 import { LinearProgress } from "components";
 import { HudPanel } from "components/hudPanel";
-import { featuresConfig, Widget, WidgetKey } from "config/features";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
-import {
-    GroupStatus,
-    isInternalGroup,
-    ObjectGroup,
-    objectGroupsActions,
-    useDispatchObjectGroups,
-    useObjectGroups,
-} from "contexts/objectGroups";
-import { selectBookmarks, useSelectBookmark } from "features/bookmarks";
-import { useInitBookmarks } from "features/bookmarks/useInitBookmarks";
+import { featuresConfig } from "config/features";
+import { GroupStatus, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
+import { useSelectBookmark } from "features/bookmarks";
+import { deviationsActions } from "features/deviations";
 import { groupsActions } from "features/groups";
 import { renderActions } from "features/render";
+import { useShareLink } from "features/shareLink/useShareLink";
 import useFlyTo from "hooks/useFlyTo";
 import { useOpenWidget } from "hooks/useOpenWidget";
-import { selectEnabledWidgets } from "slices/explorer";
+import { explorerActions } from "slices/explorer";
+import { ViewMode } from "types/misc";
 import { vecToRgb } from "utils/color";
 import { compareStrings } from "utils/misc";
 
-enum Category {
-    Group = "group",
-    Bookmark = "bookmark",
-    Object = "object",
-    Widget = "widget",
-    // Property = "property",
-}
+import { useBookmarkOptions } from "./hooks/useBookmarkOptions";
+import { useDeviationOptions } from "./hooks/useDeviationOptions";
+import { useGroupOptions } from "./hooks/useGroupOptions";
+import { useObjectOptions } from "./hooks/useObjectOptions";
+import { useSettingOptions } from "./hooks/useSettingOptions";
+import { useWidgetOptions } from "./hooks/useWidgetOptions";
+import { Category, SearchOption } from "./types";
+
+const allCategories = [
+    Category.Widget,
+    Category.Group,
+    Category.Bookmark,
+    Category.Object,
+    Category.Deviation,
+    Category.Setting,
+];
+const categoryItemOrder = [
+    Category.Widget,
+    Category.Setting,
+    Category.Deviation,
+    Category.Bookmark,
+    Category.Group,
+    Category.Object,
+];
 
 export function GlobalSearch() {
+    const { t } = useTranslation();
     const [show, setShow] = useState(false);
     const [term, setTerm] = useState("");
-    const [categories, setCategories] = useState([Category.Group, Category.Bookmark, Category.Object, Category.Widget]);
+    const [categories, setCategories] = useState(allCategories);
     const inputRef = useRef<HTMLDivElement | null>(null);
 
     const widgetOptions = useWidgetOptions();
     const groupOptions = useGroupOptions();
     const bookmarkOptions = useBookmarkOptions(!show || !term);
+    const deviationOptions = useDeviationOptions();
+    const settingOptions = useSettingOptions();
     const [objectOptions, loadingObjectOptions] = useObjectOptions(
         categories.includes(Category.Object) && show ? term : "",
     );
@@ -66,6 +78,7 @@ export function GlobalSearch() {
     const selectBookmark = useSelectBookmark();
     const dispatch = useAppDispatch();
     const flyTo = useFlyTo();
+    const shareLink = useShareLink();
 
     const cleanTerm = term.trim().toLowerCase();
 
@@ -105,20 +118,35 @@ export function GlobalSearch() {
             ...(categories.includes(Category.Group) ? groupOptions : []),
             ...(categories.includes(Category.Bookmark) ? bookmarkOptions : []),
             ...(categories.includes(Category.Object) ? objectOptions : []),
+            ...(categories.includes(Category.Deviation) ? deviationOptions : []),
+            ...(categories.includes(Category.Setting) ? settingOptions : []),
         ];
 
-        return allOptions.sort((a, b) => compareStrings(a.label, b.label)) as Option[];
-    }, [widgetOptions, groupOptions, bookmarkOptions, objectOptions, categories]);
+        return allOptions.sort((a, b) => {
+            const o1 = categoryItemOrder.indexOf(a.category);
+            const o2 = categoryItemOrder.indexOf(b.category);
+            if (o1 !== o2) {
+                return o1 - o2;
+            }
+            return compareStrings(a.label, b.label);
+        }) as SearchOption[];
+    }, [widgetOptions, groupOptions, bookmarkOptions, objectOptions, deviationOptions, settingOptions, categories]);
 
     const onSelect = useCallback(
-        (newValue: string | Option | null) => {
+        async (newValue: string | SearchOption | null) => {
             if (!newValue || typeof newValue === "string") {
                 return;
             }
 
             switch (newValue.category) {
                 case Category.Widget: {
-                    openWidget(newValue.widget.key);
+                    if (newValue.widget.key === "shareLink") {
+                        if (await shareLink()) {
+                            dispatch(explorerActions.setSnackbarMessage({ msg: t("copiedToClipboard") }));
+                        }
+                    } else {
+                        openWidget(newValue.widget.key);
+                    }
                     break;
                 }
                 case Category.Group: {
@@ -141,11 +169,27 @@ export function GlobalSearch() {
                     });
                     break;
                 }
+                case Category.Deviation: {
+                    dispatch(renderActions.setViewMode(ViewMode.Deviations));
+                    dispatch(deviationsActions.setSelectedProfileId(newValue.profile.id));
+                    break;
+                }
+                case Category.Setting: {
+                    openWidget(featuresConfig.advancedSettings.key);
+                    dispatch(
+                        explorerActions.setHighlightSetting({
+                            route: newValue.route,
+                            accordion: newValue.accordion,
+                            field: newValue.field,
+                        }),
+                    );
+                    break;
+                }
             }
 
             hide();
         },
-        [openWidget, selectBookmark, dispatch, flyTo, hide],
+        [openWidget, selectBookmark, dispatch, flyTo, hide, shareLink, t],
     );
 
     if (!show) {
@@ -202,7 +246,7 @@ export function GlobalSearch() {
                             )}
                             renderOption={({ key: _key, ...props }, option) => (
                                 <li key={option.id} {...props}>
-                                    <SearchOption option={option} term={cleanTerm} />
+                                    <SearchOptionItem option={option} term={cleanTerm} />
                                 </li>
                             )}
                         />
@@ -243,8 +287,6 @@ function CategorySelect({
         setMenuAnchor(null);
         onChange(state);
     };
-
-    const allCategories = [Category.Widget, Category.Group, Category.Bookmark, Category.Object];
 
     useEffect(() => {
         function onKeyDown(e: KeyboardEvent) {
@@ -293,21 +335,7 @@ function CategorySelect({
     );
 }
 
-type Option =
-    | { id: WidgetKey; label: string; widget: Widget; category: Category.Widget }
-    | { id: string; label: string; group: ObjectGroup; category: Category.Group }
-    | { id: string; label: string; bookmark: Bookmark; category: Category.Bookmark }
-    | OptionObject;
-
-type OptionObject = {
-    id: string;
-    label: string;
-    object: HierarcicalObjectReference;
-    match?: string;
-    category: Category.Object;
-};
-
-function SearchOption({ option, term }: { option: Option; term: string }) {
+function SearchOptionItem({ option, term }: { option: SearchOption; term: string }) {
     const theme = useTheme();
     let addon: ReactNode | null = null;
     let sublabel: ReactNode | null = null;
@@ -380,162 +408,6 @@ function SearchOption({ option, term }: { option: Option; term: string }) {
             {addon}
         </Box>
     );
-}
-
-function useWidgetOptions() {
-    const widgets = useAppSelector(selectEnabledWidgets);
-    const { t } = useTranslation();
-
-    return useMemo(() => {
-        return widgets.map((w) => ({
-            id: `widget-${w.key}`,
-            label: t(w.nameKey),
-            widget: w,
-            category: Category.Widget as const,
-        }));
-    }, [t, widgets]);
-}
-
-function useGroupOptions() {
-    const objectGroups = useObjectGroups();
-
-    return useMemo(() => {
-        return objectGroups
-            .filter((grp) => !isInternalGroup(grp))
-            .map((g) => ({
-                id: g.id,
-                label: g.name,
-                group: g,
-                category: Category.Group as const,
-            }));
-    }, [objectGroups]);
-}
-
-function useBookmarkOptions(skip: boolean) {
-    useInitBookmarks({ skip });
-    const bookmarks = useAppSelector(selectBookmarks);
-
-    return useMemo(() => {
-        return bookmarks.map((bm) => ({
-            id: bm.id,
-            label: bm.name,
-            bookmark: bm,
-            category: Category.Bookmark as const,
-        }));
-    }, [bookmarks]);
-}
-
-const emptyObjectOptions: OptionObject[] = [];
-
-function useObjectOptions(term: string) {
-    const {
-        state: { db },
-    } = useExplorerGlobals(false);
-    const [objects, setObjects] = useState<OptionObject[]>([]);
-    const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        const cleanTerm = term.trim().toLowerCase();
-        if (cleanTerm.length < 3) {
-            setObjects(emptyObjectOptions);
-            setLoading(false);
-            return;
-        }
-
-        const state = {
-            timeout: null as null | ReturnType<typeof setTimeout>,
-            abortController: null as null | AbortController,
-        };
-
-        state.timeout = setTimeout(() => {
-            state.timeout = null;
-            search(cleanTerm);
-        }, 1000);
-
-        async function search(term: string) {
-            if (!db) {
-                return;
-            }
-
-            const abort = new AbortController();
-            state.abortController = abort;
-
-            setLoading(true);
-            let searchPattern: SearchPattern[] | string;
-            if (term.includes("=")) {
-                const [property, rawValue] = term.split("=", 2).map((e) => e.trim());
-                let exact = false;
-                let value = rawValue;
-                if (value.endsWith("!")) {
-                    exact = true;
-                    value = value.slice(0, value.length - 1);
-                }
-                searchPattern = [{ property, value, exact }];
-            } else {
-                searchPattern = term;
-            }
-
-            setLoading(true);
-
-            const iter = db.search(
-                {
-                    searchPattern,
-                    full: true,
-                },
-                abort.signal,
-            );
-
-            const result: OptionObject[] = [];
-            for await (const obj of iter) {
-                const meta = await obj.loadMetaData();
-
-                let match: string | undefined = undefined;
-                if (typeof searchPattern === "string") {
-                    if (!meta.name.toLowerCase().includes(searchPattern)) {
-                        const prop = meta.properties.find(
-                            (p) =>
-                                p[0].toLowerCase().includes(searchPattern) ||
-                                p[1].toLowerCase().includes(searchPattern),
-                        );
-                        if (prop) {
-                            match = `${prop[0]}=${prop[1]}`;
-                        }
-                    }
-                } else {
-                    const prop = meta.properties.find((p) => p[0] === searchPattern[0].property);
-                    if (prop) {
-                        match = `${prop[0]}=${prop[1]}`;
-                    }
-                }
-
-                result.push({
-                    id: `object-${obj.id}`,
-                    label: meta.name,
-                    object: obj,
-                    match,
-                    category: Category.Object,
-                });
-
-                if (result.length >= 100) {
-                    break;
-                }
-            }
-
-            state.abortController = null;
-            setObjects(result);
-            setLoading(false);
-        }
-
-        return () => {
-            if (state.timeout) {
-                clearTimeout(state.timeout);
-            }
-            state.abortController?.abort();
-            setLoading(false);
-        };
-    }, [db, term]);
-
-    return useMemo(() => [objects, loading] as const, [objects, loading]);
 }
 
 function Highlight({ text, term }: { text: string; term: string }) {

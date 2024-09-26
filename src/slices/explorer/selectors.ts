@@ -34,6 +34,7 @@ export const selectTmZoneForCalc = (state: RootState) => state.explorer.tmZoneFo
 export const selectNewDesignRaw = (state: RootState) => state.explorer.newDesign;
 export const selectCanUseNewDesign = (state: RootState) => state.explorer.canUseNewDesign;
 export const selectSnackbarMessage = (state: RootState) => state.explorer.snackbarMessage;
+export const selectHighlightSetting = (state: RootState) => state.explorer.highlightSetting;
 
 export const selectNewDesign = createSelector([selectWidgetLayout, selectNewDesignRaw], (layout, newDesign) =>
     layout.sideBySide ? newDesign : false,

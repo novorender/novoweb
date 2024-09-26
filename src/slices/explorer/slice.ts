@@ -90,6 +90,7 @@ const initialState: State = {
     newDesign: false,
     canUseNewDesign: false,
     snackbarMessage: null,
+    highlightSetting: undefined,
 };
 
 export const explorerSlice = createSlice({
@@ -411,6 +412,9 @@ export const explorerSlice = createSlice({
         },
         setNewDesign: (state, action: PayloadAction<State["newDesign"]>) => {
             state.newDesign = action.payload;
+        },
+        setHighlightSetting: (state, action: PayloadAction<State["highlightSetting"]>) => {
+            state.highlightSetting = action.payload;
         },
     },
     extraReducers(builder) {
