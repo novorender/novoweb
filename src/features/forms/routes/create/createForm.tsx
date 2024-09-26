@@ -12,6 +12,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
+import { skipToken } from "@reduxjs/toolkit/query";
 import { FormEventHandler, useCallback, useMemo, useState } from "react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -20,14 +21,32 @@ import { useHistory, useRouteMatch } from "react-router-dom";
 import { useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useCreateSearchFormMutation, useGetTemplateQuery, useUpdateTemplateMutation } from "features/forms/api";
 import { selectAssets } from "features/forms/slice";
+import {
+    type FormItem,
+    type FormObject,
+    type SearchTemplate,
+    type Template,
+    type TemplateId,
+    TemplateType,
+} from "features/forms/types";
+import { getFormItemTypeDisplayName, idsToObjects, toFormFields } from "features/forms/utils";
 import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { useCreateSearchFormMutation } from "../../api";
-import { type FormItem, type FormObject, type Template, TemplateType } from "../../types";
-import { getFormItemTypeDisplayName, idsToObjects, toFormFields } from "../../utils";
+interface CreateFormProps {
+    title: string;
+    setTitle: (title: string) => void;
+    type: TemplateType;
+    setType: (type: TemplateType) => void;
+    items: FormItem[];
+    setItems: (items: FormItem[]) => void;
+    objects?: { searchPattern: string | SearchPattern[]; ids: ObjectId[] };
+    marker: string | undefined;
+    templateId?: TemplateId;
+}
 
 export function CreateForm({
     title,
@@ -38,16 +57,8 @@ export function CreateForm({
     setItems,
     objects,
     marker,
-}: {
-    title: string;
-    setTitle: (title: string) => void;
-    type: TemplateType;
-    setType: (type: TemplateType) => void;
-    items: FormItem[];
-    setItems: (items: FormItem[]) => void;
-    objects?: { searchPattern: string | SearchPattern[]; ids: ObjectId[] };
-    marker: string | undefined;
-}) {
+    templateId,
+}: CreateFormProps) {
     const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
@@ -56,8 +67,13 @@ export function CreateForm({
         state: { db },
     } = useExplorerGlobals(true);
 
-    const sceneId = useSceneId();
+    const projectId = useSceneId();
     const [createForm, { isLoading: creatingForm }] = useCreateSearchFormMutation();
+    const [updateTemplate, { isLoading: updatingTemplate }] = useUpdateTemplateMutation();
+
+    const { data: existingTemplate, isLoading: isTemplateLoading } = useGetTemplateQuery(
+        templateId ? { projectId, templateId } : skipToken,
+    );
 
     const [{ status }, setStatus] = useState<AsyncState<null>>({
         status: AsyncStatus.Initial,
@@ -71,9 +87,11 @@ export function CreateForm({
 
     const canSave = useMemo(
         () =>
-            title.trim() &&
-            items.length &&
-            (type === TemplateType.Location ? marker : !isFetchingFormObjects && formObjects?.length),
+            Boolean(
+                title.trim() &&
+                    items.length &&
+                    (type === TemplateType.Location ? marker : !isFetchingFormObjects && formObjects?.length),
+            ),
         [title, type, items, marker, formObjects, isFetchingFormObjects],
     );
 
@@ -148,25 +166,51 @@ export function CreateForm({
 
                 if (template.type === TemplateType.Search && formObjects) {
                     template.objects = formObjects;
-                    template.searchPattern = JSON.stringify(objects?.searchPattern);
+                    template.searchPattern = templateId
+                        ? (existingTemplate as SearchTemplate).searchPattern
+                        : JSON.stringify(objects?.searchPattern);
                 } else if (template.type === TemplateType.Location) {
                     template.marker = marker!;
                 }
 
-                await createForm({ projectId: sceneId, template });
+                if (templateId) {
+                    await updateTemplate({ projectId, templateId, template });
+                } else {
+                    await createForm({ projectId, template });
+                }
 
                 setStatus({ status: AsyncStatus.Success, data: null });
                 history.goBack();
             } catch {
                 setStatus({
                     status: AsyncStatus.Error,
-                    msg: "Form creation failed",
+                    msg: templateId ? "Failed to update form" : "Failed to create form",
                 });
                 return;
             }
         },
-        [canSave, formObjects, createForm, history, items, sceneId, title, type, marker, objects],
+        [
+            canSave,
+            items,
+            title,
+            type,
+            formObjects,
+            templateId,
+            history,
+            existingTemplate,
+            objects?.searchPattern,
+            marker,
+            updateTemplate,
+            projectId,
+            createForm,
+        ],
     );
+
+    useEffect(() => {
+        if (existingTemplate?.type === TemplateType.Search) {
+            setFormObjects(existingTemplate.objects);
+        }
+    }, [existingTemplate]);
 
     useEffect(() => {
         if (objects?.ids) {
@@ -176,7 +220,12 @@ export function CreateForm({
 
     return (
         <>
-            {status === AsyncStatus.Loading || creatingForm || isFetchingFormObjects ? (
+            {isTemplateLoading ||
+            status === AsyncStatus.Loading ||
+            creatingForm ||
+            updatingTemplate ||
+            isFetchingFormObjects ||
+            isTemplateLoading ? (
                 <Box position="relative">
                     <LinearProgress />
                 </Box>
@@ -189,7 +238,7 @@ export function CreateForm({
                 <Typography fontWeight={600} mt={1}>
                     {t("formType")}
                 </Typography>
-                <FormControl>
+                <FormControl disabled={Boolean(templateId)}>
                     <RadioGroup row value={type} onChange={handleTypeChange}>
                         <FormControlLabel value={TemplateType.Search} control={<Radio />} label={t("object")} />
                         <FormControlLabel value={TemplateType.Location} control={<Radio />} label={t("geo")} />
@@ -201,9 +250,13 @@ export function CreateForm({
                         <Divider sx={{ my: 1 }} />
                         <Box my={1} display="flex" justifyContent="space-between" alignItems="center">
                             <Typography fontWeight={600}>
-                                {t("objectsAssigned", { length: objects?.ids.length })}
+                                {t("objectsAssigned", {
+                                    length: templateId ? formObjects?.length : objects?.ids.length,
+                                })}
                             </Typography>
-                            <Button onClick={handleAddObjects}>{t("addObjects")}</Button>
+                            <Button onClick={handleAddObjects} disabled={Boolean(templateId)}>
+                                {t("addObjects")}
+                            </Button>
                         </Box>
                     </>
                 )}
@@ -263,7 +316,13 @@ export function CreateForm({
                         variant="contained"
                         color="primary"
                         fullWidth
-                        disabled={!canSave || status === AsyncStatus.Loading || creatingForm}
+                        disabled={
+                            !canSave ||
+                            status === AsyncStatus.Loading ||
+                            creatingForm ||
+                            isTemplateLoading ||
+                            updatingTemplate
+                        }
                         type="submit"
                     >
                         {t("saveForm")}

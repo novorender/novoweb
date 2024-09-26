@@ -55,7 +55,7 @@ export function Form({
                         value={title}
                         onChange={handleTitleChange}
                         fullWidth
-                        disabled={!canEdit || isFinal}
+                        disabled={disabled || !canEdit || isFinal}
                     />
                 </Box>
             ) : (
