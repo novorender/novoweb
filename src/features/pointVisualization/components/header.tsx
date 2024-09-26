@@ -115,7 +115,7 @@ export function Header() {
                             startIcon={<CloudUpload />}
                         >
                             {t("import")}
-                            <VisuallyHiddenInput type="file" onChange={importCsv} />
+                            <VisuallyHiddenInput type="file" onChange={importCsv} accept=".csv" />
                         </Button>
                     )}
                     <Button onClick={save} color="grey" disabled={saving}>
