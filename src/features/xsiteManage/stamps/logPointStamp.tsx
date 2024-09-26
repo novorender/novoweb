@@ -33,8 +33,7 @@ export function LogPointStamp() {
             <Divider />
             {t("number")}
             {stamp.data.logPoint.sequenceId} <br />
-            {t("code")}
-            {stamp.data.logPoint.code} <br />
+            {t("code")}:{stamp.data.logPoint.code} <br />
             {t("uploaded")}
             {new Date(stamp.data.logPoint.timestampMs).toLocaleString()}
             <Box mt={1}>

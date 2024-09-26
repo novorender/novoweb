@@ -55,6 +55,10 @@ export function rgbToVec(color: RGB): VecRGBA {
     return [color.r / 255, color.g / 255, color.b / 255, color.a ?? 1];
 }
 
+export function rgbToVecRGB(color: RGB): VecRGB {
+    return [color.r / 255, color.g / 255, color.b / 255];
+}
+
 export function rgbToHex(color: RGB, argb = false): Hex {
     const toHex = (num: number): string => {
         const hex = Math.round(num).toString(16);

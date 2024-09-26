@@ -64,7 +64,8 @@ export function useCreateBookmark() {
     const clipping = useAppSelector(selectClippingPlanes);
     const terrain = useAppSelector(selectTerrain);
     const grid = useAppSelector(selectGrid);
-    const deviations = useAppSelector(selectPoints).deviation;
+    const points = useAppSelector(selectPoints);
+    const deviations = points.deviation;
     const outlineLasers = useAppSelector(selectOutlineLasers);
     const laserPlane = useAppSelector(selectOutlineLaserPlane);
     const propertyTree = useAppSelector(selectPropertyTreeBookmarkState);
@@ -88,7 +89,7 @@ export function useCreateBookmark() {
         measurement: TraceMeasurement | undefined,
         laserPosition: ReadonlyVec3,
         startAr: ReadonlyVec3[],
-        endAr: ReadonlyVec3[]
+        endAr: ReadonlyVec3[],
     ) => {
         if (measurement) {
             const pts = getMeasurePointsFromTracer(measurement, startAr, endAr);
@@ -101,7 +102,7 @@ export function useCreateBookmark() {
     };
 
     const create = (
-        img?: string
+        img?: string,
     ): Omit<Bookmark, "name" | "description" | "img"> & { img?: string; explorerState: ExplorerBookmarkState } => {
         return {
             img,
@@ -129,6 +130,11 @@ export function useCreateBookmark() {
                 },
                 terrain: {
                     asBackground: terrain.asBackground,
+                    elevationGradient: terrain.elevationGradient,
+                },
+                pointVisualization: {
+                    defaultPointVisualization: points.defaultPointVisualization,
+                    classificationColorGradient: points.classificationColorGradient,
                 },
                 deviations:
                     viewMode === ViewMode.Deviations && deviationProfileId
@@ -217,19 +223,19 @@ export function useCreateBookmark() {
                                           t.measurementX,
                                           t.laserPosition,
                                           t.left,
-                                          t.right
+                                          t.right,
                                       );
                                       const measurementY = copyTraceMeasurement(
                                           t.measurementY,
                                           t.laserPosition,
                                           t.down,
-                                          t.up
+                                          t.up,
                                       );
                                       const measurementZ = copyTraceMeasurement(
                                           t.measurementZ,
                                           t.laserPosition,
                                           t.zDown,
-                                          t.zUp
+                                          t.zUp,
                                       );
                                       if (
                                           measurementX === undefined &&

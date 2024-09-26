@@ -27,6 +27,7 @@ import { orthoCamReducer } from "features/orthoCam";
 import { clippingOutlineLaserReducer } from "features/outlineLaser";
 import { pimsReducer } from "features/pims";
 import { pointLineReducer } from "features/pointLine";
+import { pointVisualizationReducer } from "features/pointVisualization";
 import { propertiesReducer } from "features/properties/slice";
 import { propertyTreeApi, propertyTreeReducer } from "features/propertyTree";
 import { renderReducer } from "features/render";
@@ -75,6 +76,7 @@ const rootReducer = combineReducers({
     [arcgisApi.reducerPath]: arcgisApi.reducer,
     [clashApi.reducerPath]: clashApi.reducer,
     clash: clashReducer,
+    pointVisualization: pointVisualizationReducer,
 });
 
 export const store = configureStore({

@@ -88,4 +88,5 @@ export enum Permission {
     WidgetSearch = "widget:search",
     WidgetSelectionBasket = "widget:selectionBasket",
     WidgetShareLink = "widget:shareLink",
+    // WidgetPointVisualization = "widget:pointVisualization",
 }

@@ -5,6 +5,7 @@ import { quat, vec3 } from "gl-matrix";
 import { type DitioMachine } from "features/ditio";
 import { type LogPoint, type MachineLocation } from "features/xsiteManage";
 import { type CustomProperties } from "types/project";
+import { VecRGBA } from "utils/color";
 
 export enum CameraSpeedLevel {
     Slow = "slow",
@@ -161,3 +162,9 @@ export type SceneConfig = Omit<SceneData, "settings" | "customProperties"> & {
 };
 
 export type CadCamera = { kind: "pinhole" | "orthographic"; position: vec3; rotation: quat; fov: number };
+
+export type LabeledKnot = {
+    position: number;
+    color: VecRGBA;
+    label: string;
+};

@@ -84,6 +84,16 @@ declare module "@novorender/data-js-api" {
         };
         terrain: {
             asBackground: boolean;
+            elevationGradient: {
+                knots: { position: number; color: VecRGB }[];
+            };
+        };
+        pointVisualization: {
+            classificationColorGradient: {
+                knots: LabeledKnot[];
+                undefinedColor: VecRGBA;
+            };
+            defaultPointVisualization: PointVisualization;
         };
         measurements: {
             area:

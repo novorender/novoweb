@@ -411,6 +411,15 @@ export const featuresConfig = {
         tags: [featureTags.review.key],
         groups: [featureGroups.measure.key],
     },
+    pointVisualization: {
+        key: "pointVisualization",
+        nameKey: "pointVisualization",
+        Icon: BlurOn,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+        offline: true,
+        groups: [featureGroups.settings.key],
+    },
     home: {
         key: "home",
         nameKey: "home",
