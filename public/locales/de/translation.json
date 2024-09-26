@@ -620,5 +620,6 @@
     "noFormHistoryAvailable": "Kein Verlauf verfügbar für das Formular \"{{title}}\".",
     "revertForm": "Formular \"{{title}}\" auf die ausgewählte Version zurücksetzen?",
     "revert": "Zurücksetzen",
-    "formName": "Formularname"
+    "formName": "Formularname",
+    "createFrom": "Erstellen aus..."
 }
