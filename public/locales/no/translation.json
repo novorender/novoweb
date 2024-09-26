@@ -642,5 +642,6 @@
     "noFormHistoryAvailable": "Ingen historikk tilgjengelig for skjemaet \"{{title}}\".",
     "revertForm": "Tilbakestille skjemaet \"{{title}}\" til den valgte versjonen?",
     "revert": "Tilbakestill",
-    "formName": "Skjemanavn"
+    "formName": "Skjemanavn",
+    "createFrom": "Opprett fra..."
 }

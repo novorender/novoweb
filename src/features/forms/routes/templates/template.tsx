@@ -1,4 +1,4 @@
-import { Delete, Edit, MoreVert, Place, Search } from "@mui/icons-material";
+import { ContentCopy, Delete, Edit, MoreVert, Place, Search } from "@mui/icons-material";
 import { Box, IconButton, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Typography } from "@mui/material";
 import { MouseEvent, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -57,6 +57,10 @@ export function Template({ template }: { template: MinimalTemplate }) {
         history.push(`/edit/${template.id}`);
     };
 
+    const handleCreateFromClick = () => {
+        history.push(`/create-from/${template.id}`);
+    };
+
     const handleDeleteClick = useCallback(() => {
         closeMenu();
         history.push({
@@ -102,6 +106,14 @@ export function Template({ template }: { template: MinimalTemplate }) {
                                     <Edit fontSize="small" />
                                 </ListItemIcon>
                                 <ListItemText>{t("edit")}</ListItemText>
+                            </MenuItem>
+                        )}
+                        {canEdit && (
+                            <MenuItem onClick={handleCreateFromClick} disabled={!canEdit}>
+                                <ListItemIcon>
+                                    <ContentCopy fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>{t("createFrom")}</ListItemText>
                             </MenuItem>
                         )}
                         {canDelete && (

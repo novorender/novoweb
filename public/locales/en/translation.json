@@ -642,5 +642,6 @@
     "noFormHistoryAvailable": "No history available for the form \"{{title}}\".",
     "revertForm": "Revert form \"{{title}}\" to the selected version?",
     "revert": "Revert",
-    "formName": "Form name"
+    "formName": "Form name",
+    "createFrom": "Create from..."
 }

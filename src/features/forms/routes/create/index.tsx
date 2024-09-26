@@ -7,12 +7,14 @@ import { useTranslation } from "react-i18next";
 import { Route, Switch, useHistory, useParams, useRouteMatch } from "react-router-dom";
 
 import { Divider } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useGetTemplateQuery } from "features/forms/api";
 import { toFormItems } from "features/forms/utils";
 import { useSceneId } from "hooks/useSceneId";
+import { searchDeepByPatterns } from "utils/search";
 
-import { type FormItem, type TemplateId, TemplateType } from "../../types";
+import { type FormItem, type SearchTemplate, type TemplateId, TemplateType } from "../../types";
 import { AddFormItem } from "./addFormItem";
 import { AddObjects } from "./addObjects";
 import { CreateForm } from "./createForm";
@@ -22,10 +24,12 @@ const ADD_ITEM_ROUTE = "/add-item";
 const ADD_OBJECTS_ROUTE = "/add-objects";
 const SELECT_MARKER_ROUTE = "/select-marker";
 
-export function Create() {
+export function Create({ derived }: { derived?: boolean }) {
+    const {
+        state: { db },
+    } = useExplorerGlobals(true);
     const { t } = useTranslation();
     const { templateId } = useParams<{ templateId?: TemplateId }>();
-
     const theme = useTheme();
     const history = useHistory();
     const match = useRouteMatch();
@@ -54,12 +58,29 @@ export function Create() {
             if (template.type === TemplateType.Search) {
                 // FIXME: Future update should allow to edit object selection query.
                 // There are quirks, so we don't allow it for now.
-                // setObjects(template.objects);
+                if (derived) {
+                    const searchPattern = (template as SearchTemplate).searchPattern
+                        ? JSON.parse((template as SearchTemplate).searchPattern)
+                        : [];
+                    if (searchPattern.length > 0) {
+                        searchDeepByPatterns({
+                            abortSignal: new AbortController().signal,
+                            db,
+                            searchPatterns: searchPattern,
+                            callback: (ids) => {
+                                setObjects((objects) => ({
+                                    searchPattern,
+                                    ids: Array.from(new Set([...(objects?.ids ?? []), ...ids])),
+                                }));
+                            },
+                        });
+                    }
+                }
             } else {
                 setMarker(template.marker);
             }
         }
-    }, [template]);
+    }, [db, derived, template]);
 
     const handleBackClick = useCallback(() => {
         dispatchHighlighted(highlightActions.setIds([]));
@@ -123,7 +144,7 @@ export function Create() {
                         setItems={handleSetItems}
                         objects={objects}
                         marker={marker}
-                        templateId={templateId}
+                        templateId={derived ? undefined : templateId}
                     />
                 </Route>
             </Switch>

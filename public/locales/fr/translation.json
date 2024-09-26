@@ -642,5 +642,6 @@
     "noFormHistoryAvailable": "Aucun historique disponible pour le formulaire \"{{title}}\".",
     "revertForm": "Rétablir le formulaire \"{{title}}\" à la version sélectionnée ?",
     "revert": "Rétablir",
-    "formName": "Nom du formulaire"
+    "formName": "Nom du formulaire",
+    "createFrom": "Créer à partir de..."
 }
