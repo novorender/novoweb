@@ -1,8 +1,21 @@
-import { ArrowBack, Clear, FlightTakeoff } from "@mui/icons-material";
-import { Box, Button, LinearProgress, Typography, useTheme } from "@mui/material";
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { ArrowBack, Clear, Download, FlightTakeoff, MoreVert } from "@mui/icons-material";
+import {
+    Box,
+    Button,
+    IconButton,
+    LinearProgress,
+    ListItemIcon,
+    ListItemText,
+    Menu,
+    MenuItem,
+    Typography,
+    useTheme,
+} from "@mui/material";
+import { Fragment, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useHistory, useLocation } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
@@ -10,7 +23,9 @@ import { highlightActions, useDispatchHighlighted, useHighlighted } from "contex
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { selectCurrentFormsList } from "features/forms/slice";
 import { renderActions } from "features/render";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
+import { selectAccessToken, selectConfig } from "slices/explorer";
 
 import { useGetSearchFormQuery, useUpdateSearchFormMutation } from "../../api";
 import { type Form, type FormId, type FormItem as FItype, FormItemType, type FormObjectGuid } from "../../types";
@@ -18,21 +33,35 @@ import { determineHighlightCollection, toFormFields, toFormItems } from "../../u
 import { FormItem } from "./formItem";
 
 export function SearchInstance() {
-    const { objectGuid, formId } = useParams<{ objectGuid: FormObjectGuid; formId: FormId }>();
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const sceneId = useSceneId();
     const currentFormsList = useAppSelector(selectCurrentFormsList);
+    const formsBaseUrl = useAppSelector(selectConfig).dataV2ServerUrl + "/forms/";
+    const accessToken = useAppSelector(selectAccessToken);
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const { idArr: highlighted } = useHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const flyToForm = useFlyToForm();
+    const checkPermission = useCheckProjectPermission();
+    const canEdit = checkPermission(Permission.FormsFill);
+
+    const location = useLocation();
+    const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const objectGuid = queryParams.get("objectGuid") as FormObjectGuid;
+    const formId = queryParams.get("formId") as FormId;
+    const objectId = useMemo(
+        () => (queryParams.get("objectId") ? Number.parseInt(queryParams.get("objectId")!) : undefined),
+        [queryParams],
+    );
 
     const willUnmount = useRef(false);
     const [items, setItems] = useState<FItype[]>([]);
     const [isUpdated, setIsUpdated] = useState(false);
     const didHighlightId = useRef(false);
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const { data: form, isLoading: isFormLoading } = useGetSearchFormQuery({
         projectId: sceneId,
@@ -41,11 +70,6 @@ export function SearchInstance() {
     });
 
     const [updateForm, { isLoading: isFormUpdating }] = useUpdateSearchFormMutation();
-
-    const objectId = useMemo(
-        () => (history.location?.state as { objectId?: number })?.objectId,
-        [history.location.state]
-    );
 
     useEffect(() => {
         if (!objectId || highlighted.includes(objectId)) {
@@ -91,8 +115,8 @@ export function SearchInstance() {
                             highlightCollectionsActions.move(
                                 determineHighlightCollection(form as Form),
                                 determineHighlightCollection(res.data),
-                                [objectId!]
-                            )
+                                [objectId!],
+                            ),
                         );
                     });
                 }
@@ -120,6 +144,54 @@ export function SearchInstance() {
         dispatchHighlightCollections,
     ]);
 
+    const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        setMenuAnchor(e.currentTarget);
+    };
+
+    const closeMenu = () => {
+        setMenuAnchor(null);
+    };
+
+    const handleExportAsPdf = useCallback(async () => {
+        if (!formsBaseUrl) {
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `${formsBaseUrl}projects/${sceneId}/objects/${objectGuid}/forms/${formId}/download`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Cache-Control": "no-cache, no-store, must-revalidate",
+                        Pragma: "no-cache",
+                        Expires: "0",
+                    },
+                },
+            );
+
+            if (!response.ok) {
+                console.error(`Failed to export form as PDF`);
+            }
+
+            const pdfBlob = await response.blob();
+            const url = window.URL.createObjectURL(pdfBlob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", `${form?.title ?? "Novorender form"}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error(`Failed to export form as PDF: ${err}`);
+        }
+
+        closeMenu();
+    }, [accessToken, form?.title, formId, formsBaseUrl, objectGuid, sceneId]);
+
     const handleBackClick = useCallback(() => {
         dispatchHighlighted(highlightActions.setIds([]));
         dispatch(renderActions.setMainObject(undefined));
@@ -132,12 +204,32 @@ export function SearchInstance() {
 
     const handleClearClick = useCallback(() => {
         setItems((state) =>
-            state.map((item) => ({
-                ...item,
-                value: item.type !== FormItemType.Text ? null : item.value,
-            }))
+            state.map((item): FItype => {
+                switch (item.type) {
+                    case FormItemType.File:
+                        return {
+                            ...item,
+                            value: [],
+                        };
+                    case FormItemType.Text:
+                        return item;
+                    case FormItemType.Date:
+                    case FormItemType.Time:
+                    case FormItemType.DateTime:
+                        return {
+                            ...item,
+                            value: undefined,
+                        };
+                    default:
+                        return {
+                            ...item,
+                            value: null,
+                        };
+                }
+            }),
         );
         setIsUpdated(true);
+        closeMenu();
     }, []);
 
     const handleFlyTo = useCallback(() => {
@@ -158,18 +250,33 @@ export function SearchInstance() {
                     <Box display="flex" justifyContent="space-between">
                         <Button color="grey" onClick={handleBackClick}>
                             <ArrowBack sx={{ mr: 1 }} />
-                            Back
+                            {t("back")}
                         </Button>
                         {items?.length ? (
                             <>
                                 <Button color="grey" onClick={handleFlyTo}>
                                     <FlightTakeoff sx={{ mr: 1 }} />
-                                    Fly to
+                                    {t("flyTo")}
                                 </Button>
-                                <Button color="grey" onClick={handleClearClick}>
-                                    <Clear sx={{ mr: 1 }} />
-                                    Clear
-                                </Button>
+                                <>
+                                    <IconButton edge="start" size="small" onClick={openMenu} sx={{ mr: 1 }}>
+                                        <MoreVert fontSize="small" />
+                                    </IconButton>
+                                    <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
+                                        <MenuItem onClick={handleExportAsPdf}>
+                                            <ListItemIcon>
+                                                <Download fontSize="small" />
+                                            </ListItemIcon>
+                                            <ListItemText>{t("exportAsPDF")}</ListItemText>
+                                        </MenuItem>
+                                        <MenuItem onClick={handleClearClick} disabled={!canEdit}>
+                                            <ListItemIcon>
+                                                <Clear fontSize="small" />
+                                            </ListItemIcon>
+                                            <ListItemText>{t("clear")}</ListItemText>
+                                        </MenuItem>
+                                    </Menu>
+                                </>
                             </>
                         ) : undefined}
                     </Box>
@@ -184,7 +291,7 @@ export function SearchInstance() {
                 <Typography fontWeight={600} mb={2}>
                     {form?.title}
                 </Typography>
-                {items?.length === 0 && <Typography px={0}>Selected object doesn't have any forms.</Typography>}
+                {items?.length === 0 && <Typography px={0}>{t("objectHasNoForms")}</Typography>}
                 {items?.map((item, idx, array) => {
                     return (
                         <Fragment key={item.id}>
@@ -194,6 +301,7 @@ export function SearchInstance() {
                                     setItems(itm);
                                     setIsUpdated(true);
                                 }}
+                                disabled={!canEdit}
                             />
                             {idx !== array.length - 1 ? <Divider sx={{ mt: 1, mb: 2 }} /> : null}
                         </Fragment>

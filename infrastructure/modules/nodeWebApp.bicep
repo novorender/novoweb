@@ -30,7 +30,7 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
     serverFarmId: appServicePlan.id
     siteConfig: {
       publicNetworkAccess: 'Enabled'
-      linuxFxVersion: 'NODE|18-lts'
+      linuxFxVersion: 'NODE|20-lts'
       alwaysOn: true
       http20Enabled: true
     }
@@ -66,7 +66,7 @@ resource stagingSlot 'Microsoft.Web/sites/slots@2021-02-01' = {
     siteConfig: {
       publicNetworkAccess: 'Enabled'
       autoSwapSlotName: ''
-      linuxFxVersion: 'NODE|18-lts'
+      linuxFxVersion: 'NODE|20-lts'
       alwaysOn: true
       http20Enabled: true
     }

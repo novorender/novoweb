@@ -16,7 +16,7 @@ const Marker = styled(
         <g {...props} ref={ref}>
             <CameraAlt color="primary" height="32px" width="32px" />
         </g>
-    ))
+    )),
 )(
     () => css`
         cursor: pointer;
@@ -25,7 +25,7 @@ const Marker = styled(
         svg {
             filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
         }
-    `
+    `,
 );
 
 export const ImageMarkers = forwardRef<{ update: () => void }>(function ImageMarkers(_, ref) {
@@ -50,7 +50,7 @@ export const ImageMarkers = forwardRef<{ update: () => void }>(function ImageMar
         view.measure.draw.toMarkerPoints(images.data.map((marker) => marker.position)).forEach((pos, idx) => {
             containerRef.current[idx]?.setAttribute(
                 "transform",
-                pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)"
+                pos ? `translate(${pos[0] - 25} ${pos[1] - 25})` : "translate(-100 -100)",
             );
         });
     }, [images, view]);
@@ -65,17 +65,20 @@ export const ImageMarkers = forwardRef<{ update: () => void }>(function ImageMar
         <>
             {images.status === AsyncStatus.Success && showImageMarkers
                 ? images.data.map((image, idx) => {
+                      // image guid is not guaranteed to be unique
+                      const key = idx;
+
                       if (!activeImage || viewMode !== ViewMode.Panorama) {
                           return (
                               <Marker
-                                  key={image.guid}
+                                  key={key}
                                   onClick={() =>
                                       dispatch(
                                           imagesActions.setActiveImage({
                                               image: image,
                                               mode: ImageType.Flat,
                                               status: AsyncStatus.Loading,
-                                          })
+                                          }),
                                       )
                                   }
                                   onWheel={onWheel}
@@ -89,14 +92,14 @@ export const ImageMarkers = forwardRef<{ update: () => void }>(function ImageMar
                       if (Math.abs(idx - activeIdx) === 1) {
                           return (
                               <Marker
-                                  key={image.guid}
+                                  key={key}
                                   onClick={() =>
                                       dispatch(
                                           imagesActions.setActiveImage({
                                               image: image,
                                               mode: ImageType.Flat,
                                               status: AsyncStatus.Loading,
-                                          })
+                                          }),
                                       )
                                   }
                                   onWheel={onWheel}

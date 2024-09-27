@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Switch } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useLazyGetBookmarksQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
@@ -32,6 +32,8 @@ export default function Bookmarks() {
     const status = useAppSelector(selectBookmarksStatus);
     const dispatch = useAppDispatch();
 
+    const [getBookmarks] = useLazyGetBookmarksQuery();
+
     useEffect(() => {
         if (status === AsyncStatus.Initial) {
             initBookmarks();
@@ -42,8 +44,10 @@ export default function Bookmarks() {
 
             try {
                 const [publicBmks, personalBmks] = await Promise.all([
-                    dataApi.getBookmarks(sceneId),
-                    user || !isOnline ? dataApi.getBookmarks(sceneId, { personal: true }) : Promise.resolve([]),
+                    getBookmarks({ projectId: sceneId }, true).unwrap(),
+                    user || !isOnline
+                        ? getBookmarks({ projectId: sceneId, personal: true }, true).unwrap()
+                        : Promise.resolve([]),
                 ]);
 
                 dispatch(bookmarksActions.setInitStatus(AsyncStatus.Success));
@@ -60,12 +64,17 @@ export default function Bookmarks() {
                 dispatch(bookmarksActions.setInitStatus(AsyncStatus.Error));
             }
         }
-    }, [bookmarks, dispatch, sceneId, user, isOnline, status]);
+    }, [bookmarks, dispatch, sceneId, user, isOnline, status, getBookmarks]);
 
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.bookmarks} disableShadow />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.bookmarks}
+                    disableShadow
+                />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexGrow={1}

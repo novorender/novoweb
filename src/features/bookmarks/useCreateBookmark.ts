@@ -17,6 +17,7 @@ import {
     selectSelectedSubprofileIndex,
 } from "features/deviations/selectors";
 import { selectFollowPath } from "features/followPath/followPathSlice";
+import { selectAlwaysShowMarkers } from "features/forms/slice";
 import {
     selectManholeCollisionSettings,
     selectManholeCollisionTarget,
@@ -72,6 +73,7 @@ export function useCreateBookmark() {
     const deviationLegendFloating = useAppSelector(selectIsLegendFloating);
     const deviationLegendGroups = useAppSelector(selectDeviationLegendGroups);
     const arcgisFeatureServers = useAppSelector(selectArcgisFeatureServers);
+    const alwaysShowMarkerForms = useAppSelector(selectAlwaysShowMarkers);
 
     const {
         state: { view },
@@ -162,7 +164,7 @@ export function useCreateBookmark() {
                 measurements: {
                     area: {
                         areas: areas.map((a) => {
-                            return { points: a.points, normals: a.normals };
+                            return { points: a.points };
                         }),
                     },
                     pointLine: {
@@ -223,10 +225,26 @@ export function useCreateBookmark() {
                                           t.down,
                                           t.up
                                       );
-                                      if (measurementX === undefined && measurementY === undefined) {
+                                      const measurementZ = copyTraceMeasurement(
+                                          t.measurementZ,
+                                          t.laserPosition,
+                                          t.zDown,
+                                          t.zUp
+                                      );
+                                      if (
+                                          measurementX === undefined &&
+                                          measurementY === undefined &&
+                                          measurementZ === undefined
+                                      ) {
                                           return undefined;
                                       }
-                                      return { laserPosition: t.laserPosition, measurementX, measurementY };
+                                      return {
+                                          laserPosition: t.laserPosition,
+                                          measurementX,
+                                          measurementY,
+                                          measurementZ,
+                                          laserPlanes: t.laserPlanes,
+                                      };
                                   })
                                   .filter((f) => f !== undefined) as {
                                   laserPosition: ReadonlyVec3;
@@ -248,6 +266,9 @@ export function useCreateBookmark() {
                               })),
                           }
                         : undefined,
+                forms: {
+                    alwaysShowMarkers: alwaysShowMarkerForms,
+                },
             },
         };
     };

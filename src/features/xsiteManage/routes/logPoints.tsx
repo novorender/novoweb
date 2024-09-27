@@ -1,6 +1,7 @@
 import { ArrowBack } from "@mui/icons-material";
 import { Box, Button, List, ListItemButton, useTheme } from "@mui/material";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 import { Link, useHistory } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -10,6 +11,7 @@ import { useGetLogPointsQuery } from "../api";
 import { selectXsiteManageSite } from "../slice";
 
 export function LogPoints() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
 
@@ -29,7 +31,7 @@ export function LogPoints() {
                 <Box display="flex" justifyContent={"space-between"}>
                     <Button onClick={() => history.goBack()} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     {/* <FormControlLabel
                         sx={{ ml: 3 }}
@@ -77,7 +79,8 @@ export function LogPoints() {
                                 component={Link}
                                 to={`/log-points/${point.localId}`}
                             >
-                                {point.localId}. {point.code ?? point.type} -{" "}
+                                {point.localId}.{point.code ?? point.type}
+                                {" - "}
                                 {format(point.timestampMs, "EEE dd/MM/yyyy HH:MM:SS")}
                             </ListItemButton>
                         ))}

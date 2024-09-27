@@ -2,9 +2,10 @@ import { ArrowBack } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
 import { Autocomplete, Box, Button, CircularProgress, Typography, useTheme } from "@mui/material";
 import { FormEventHandler, SyntheticEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveCustomPropertiesMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -28,12 +29,14 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const dispatch = useAppDispatch();
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const config = useAppSelector(selectXsiteManageConfig);
     const accessToken = useAppSelector(selectXsiteManageAccessToken);
     const currentSite = useAppSelector(selectXsiteManageSite);
+    const [saveCustomProperties] = useSaveCustomPropertiesMutation();
 
     const {
         data: sites,
@@ -47,8 +50,8 @@ export function Settings({ sceneId }: { sceneId: string }) {
         currentSite
             ? currentSite
             : sites
-            ? sites.items.find((site) => site.siteId === config.siteId) ?? sites.items[0]
-            : null
+              ? (sites.items.find((site) => site.siteId === config.siteId) ?? sites.items[0])
+              : null,
     );
     const [saving, setSaving] = useState<AsyncState<true>>({ status: AsyncStatus.Initial });
 
@@ -87,7 +90,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                 },
             });
 
-            dataApi.putScene(updated);
+            saveCustomProperties({ projectId: sceneId, data: updated.customProperties }).unwrap();
         } catch {
             console.warn("Failed to save Xsite Manage settings.");
         }
@@ -104,13 +107,13 @@ export function Settings({ sceneId }: { sceneId: string }) {
                 <Box display="flex">
                     <Button onClick={() => history.goBack()} disabled={!currentSite} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                 </Box>
             </Box>
             <ScrollBox p={1} component="form" onSubmit={handleSubmit}>
                 <Typography fontWeight={600} mb={2}>
-                    Settings
+                    {t("settings")}
                 </Typography>
                 <Autocomplete
                     sx={{ mb: 3 }}
@@ -144,7 +147,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                             history.goBack();
                         }}
                     >
-                        Cancel
+                        {t("cancel")}
                     </Button>
                     <LoadingButton
                         type="submit"
@@ -156,11 +159,12 @@ export function Settings({ sceneId }: { sceneId: string }) {
                         disabled={!site}
                         loadingIndicator={
                             <Box display="flex" alignItems="center">
-                                Save <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
+                                {t("save")}
+                                <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
                             </Box>
                         }
                     >
-                        Save
+                        {t("save")}
                     </LoadingButton>
                 </Box>
             </ScrollBox>

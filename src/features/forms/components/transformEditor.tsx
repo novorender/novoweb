@@ -14,6 +14,7 @@ import { computeRotation } from "@novorender/api";
 import { decomposeRotation } from "@novorender/api/web_app/controller/orientation";
 import { ReadonlyQuat, ReadonlyVec3, vec3 } from "gl-matrix";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionSummary, IosSwitch } from "components";
@@ -42,7 +43,8 @@ const marks = [
     },
 ];
 
-export function TransformEditor() {
+export function TransformEditor({ disabled }: { disabled?: boolean }) {
+    const { t } = useTranslation();
     const selectedTemplateId = useAppSelector(selectCurrentFormsList);
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const isPickingLocation = useAppSelector(selectPicker) === Picker.FormLocation;
@@ -58,7 +60,7 @@ export function TransformEditor() {
     const latestDispatchedTransformDraft = useRef(transformDraft);
 
     const [transform, setTransform] = useState(
-        toTransformState(transformDraft?.location, transformDraft?.rotation, transformDraft?.scale)
+        toTransformState(transformDraft?.location, transformDraft?.rotation, transformDraft?.scale),
     );
 
     useEffect(() => {
@@ -98,7 +100,7 @@ export function TransformEditor() {
             latestDispatchedTransformDraft.current = newTransformDraft;
             dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(newTransformDraft));
         },
-        [transform, dispatchFormsGlobals, selectedTemplateId, selectedFormId]
+        [transform, dispatchFormsGlobals, selectedTemplateId, selectedFormId],
     );
 
     const pickNewLocation = useCallback(() => {
@@ -125,18 +127,18 @@ export function TransformEditor() {
                 rotation: transform.rotation,
                 scale: transform.scale,
                 updated: false,
-            })
+            }),
         );
     }, [dispatchFormsGlobals, selectedTemplateId, selectedFormId]);
 
     return (
         <Accordion>
-            <AccordionSummary>Transformation</AccordionSummary>
+            <AccordionSummary>{t("transformation")}</AccordionSummary>
             <AccordionDetails>
                 <Stack gap={4} sx={{ mt: 2 }}>
                     <Stack gap={1}>
                         <Box display="flex" alignItems="center" justifyContent="space-between">
-                            <Typography fontWeight={600}>Position</Typography>
+                            <Typography fontWeight={600}>{t("position")}</Typography>
                             <FormControlLabel
                                 control={
                                     <IosSwitch
@@ -146,7 +148,8 @@ export function TransformEditor() {
                                         onChange={pickNewLocation}
                                     />
                                 }
-                                label={<Box fontSize={14}>Move</Box>}
+                                disabled={disabled}
+                                label={<Box fontSize={14}>{t("move")}</Box>}
                                 sx={{ ml: 1 }}
                             />
                         </Box>
@@ -158,6 +161,7 @@ export function TransformEditor() {
                                 size="small"
                                 label="X"
                                 variant="outlined"
+                                disabled={disabled}
                             />
                             <TextField
                                 value={transform.y}
@@ -166,6 +170,7 @@ export function TransformEditor() {
                                 size="small"
                                 label="Y"
                                 variant="outlined"
+                                disabled={disabled}
                             />
                             <TextField
                                 value={transform.z}
@@ -174,6 +179,7 @@ export function TransformEditor() {
                                 size="small"
                                 label="Z"
                                 variant="outlined"
+                                disabled={disabled}
                             />
                         </Stack>
                     </Stack>
@@ -186,30 +192,34 @@ export function TransformEditor() {
                         size="small"
                         label="Scale"
                         variant="outlined"
+                        disabled={disabled}
                     />
                     <Stack gap={1}>
-                        <Typography fontWeight={600}>Rotation</Typography>
+                        <Typography fontWeight={600}>{t("rotation")}</Typography>
                         <Stack gap={6}>
                             <RotationComponentInput
                                 title="Roll (X)"
                                 value={transform.roll}
                                 onChange={(roll) => updateTransform({ roll })}
+                                disabled={disabled}
                             />
                             <RotationComponentInput
                                 title="Pitch (Y)"
                                 value={transform.pitch}
                                 onChange={(pitch) => updateTransform({ pitch })}
+                                disabled={disabled}
                             />
                             <RotationComponentInput
                                 title="Yaw (Z)"
                                 value={transform.yaw}
                                 onChange={(yaw) => updateTransform({ yaw })}
+                                disabled={disabled}
                             />
                         </Stack>
                     </Stack>
                     <Box display="flex" justifyContent="end" gap={1}>
-                        <Button type="button" onClick={handleReset}>
-                            Reset
+                        <Button type="button" onClick={handleReset} disabled={disabled}>
+                            {t("reset")}
                         </Button>
                     </Box>
                 </Stack>
@@ -222,16 +232,18 @@ function RotationComponentInput({
     title,
     value,
     onChange,
+    disabled,
 }: {
     title: string;
     value: number;
     onChange: (value: number) => void;
+    disabled?: boolean;
 }) {
     return (
         <Stack spacing={2} direction="row" sx={{ mb: 1, width: 1 }} alignItems="center">
             <Typography minWidth={62}>{title}</Typography>
             <IconButton
-                disabled={value <= -180}
+                disabled={value <= -180 || disabled}
                 onClick={() => {
                     onChange(value - 1);
                 }}
@@ -248,12 +260,13 @@ function RotationComponentInput({
                 }}
                 valueLabelDisplay="auto"
                 marks={marks}
+                disabled={disabled}
             />
             <IconButton
                 onClick={() => {
                     onChange(value + 1);
                 }}
-                disabled={value >= 180}
+                disabled={value >= 180 || disabled}
                 size="small"
             >
                 <AddCircleOutline fontSize="small" />
@@ -279,6 +292,7 @@ function RotationComponentInput({
                     max: 180,
                     type: "number",
                 }}
+                disabled={disabled}
             />
         </Stack>
     );
@@ -287,7 +301,7 @@ function RotationComponentInput({
 function toTransformState(
     position: ReadonlyVec3 | undefined,
     rotation: ReadonlyQuat | undefined,
-    scale: number | undefined
+    scale: number | undefined,
 ) {
     const { roll, pitch, yaw } = rotation ? decomposeRotation(rotation) : { roll: 0, pitch: 0, yaw: 0 };
 

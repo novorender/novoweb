@@ -1,5 +1,6 @@
 import { Delete, Sync } from "@mui/icons-material";
 import { Box, Button, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
@@ -27,6 +28,7 @@ export default function Offline() {
     const {
         state: { view, offlineWorkerState },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const parentSceneId = view.renderState.scene!.config.id;
     const viewerSceneId = useSceneId();
     const [menuOpen, toggleMenu] = useToggle();
@@ -40,7 +42,12 @@ export default function Offline() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.offline} disableShadow={menuOpen} />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.offline}
+                    disableShadow={menuOpen}
+                />
                 {action && (
                     <Box position="relative">
                         <LinearProgress />
@@ -49,7 +56,7 @@ export default function Offline() {
                 {!menuOpen &&
                     !minimized &&
                     (!offlineWorkerState ? (
-                        <Typography p={1}>Offline is not available for this scene or device.</Typography>
+                        <Typography p={1}>{t("offlineNotAvailable")}</Typography>
                     ) : (
                         <ScrollBox p={1} pt={2}>
                             {sizeWarning ? (
@@ -88,6 +95,7 @@ export default function Offline() {
 }
 
 function Scanning({ progress }: { progress: string }) {
+    const { t } = useTranslation();
     const action = useAppSelector(selectOfflineAction);
     const dispatch = useAppDispatch();
     return (
@@ -96,14 +104,15 @@ function Scanning({ progress }: { progress: string }) {
                 <LinearProgress />
             </Box>
             <Box>
-                Scanning scene... {progress ? `${progress} files scanned.` : ""}
+                {t("scanningScene")}
+                {progress ? t("filesScanned", { progress }) : ""}
                 <Button
                     sx={{ ml: 2 }}
                     disabled={action !== undefined}
                     color="grey"
                     onClick={() => dispatch(offlineActions.setAction({ action: "pause" }))}
                 >
-                    Pause
+                    {t("pause")}
                 </Button>
             </Box>
         </>
@@ -111,6 +120,7 @@ function Scanning({ progress }: { progress: string }) {
 }
 
 function Downloading({ progress }: { progress: string }) {
+    const { t } = useTranslation();
     const action = useAppSelector(selectOfflineAction);
     const dispatch = useAppDispatch();
     return (
@@ -119,14 +129,15 @@ function Downloading({ progress }: { progress: string }) {
                 <LinearProgress />
             </Box>
             <Box>
-                Downloading scene... {progress ? `${progress}%` : ""}
+                {t("downloadingScene")}
+                {progress ? `${progress}%` : ""}
                 <Button
                     sx={{ ml: 2 }}
                     disabled={action !== undefined}
                     color="grey"
                     onClick={() => dispatch(offlineActions.setAction({ action: "pause" }))}
                 >
-                    Pause
+                    {t("pause")}
                 </Button>
             </Box>
         </>
@@ -134,19 +145,20 @@ function Downloading({ progress }: { progress: string }) {
 }
 
 function Interrupted() {
+    const { t } = useTranslation();
     const action = useAppSelector(selectOfflineAction);
     const isOnline = useAppSelector(selectIsOnline);
     const dispatch = useAppDispatch();
     return (
         <>
-            <Box>Scene download was interrupted.</Box>
+            <Box>{t("downloadInterrupted")}</Box>
             <Box display="flex" justifyContent="flex-end" mt={1}>
                 <Button
                     disabled={action !== undefined || !isOnline}
                     variant="contained"
                     onClick={() => dispatch(offlineActions.setAction({ action: "fullSync" }))}
                 >
-                    Resume
+                    {t("resume")}
                 </Button>
             </Box>
         </>
@@ -154,6 +166,7 @@ function Interrupted() {
 }
 
 function DownloadError({ error }: { error?: string }) {
+    const { t } = useTranslation();
     const action = useAppSelector(selectOfflineAction);
     const isOnline = useAppSelector(selectIsOnline);
     const dispatch = useAppDispatch();
@@ -167,7 +180,7 @@ function DownloadError({ error }: { error?: string }) {
                     variant="contained"
                     onClick={() => dispatch(offlineActions.setAction({ action: "fullSync" }))}
                 >
-                    Try again
+                    {t("tryAgain")}
                 </Button>
             </Box>
         </>
@@ -175,9 +188,11 @@ function DownloadError({ error }: { error?: string }) {
 }
 
 function OlderFormat() {
+    const { t } = useTranslation();
     return (
         <>
-            This scene is not made ready for download, please contact support. <br />
+            {t("nonDownloadableScene")}
+            <br />
         </>
     );
 }
@@ -186,22 +201,24 @@ function Pending() {
     const {
         state: { offlineWorkerState },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const action = useAppSelector(selectOfflineAction);
     const dispatch = useAppDispatch();
 
     return (
         <>
-            This scene has not yet been downloaded for offline use. <br />
+            {t("notOfflineScene")}
+            <br />
             {offlineWorkerState.initialStorageEstimate?.quota !== undefined &&
                 offlineWorkerState.initialStorageEstimate?.usage !== undefined && (
                     <>
-                        Estimated available space:{" "}
+                        {t("estimatedAvailableSpace")}{" "}
                         {formatFileSizeMetric(
                             Math.max(
                                 0,
                                 offlineWorkerState.initialStorageEstimate.quota -
-                                    offlineWorkerState.initialStorageEstimate.usage
-                            )
+                                    offlineWorkerState.initialStorageEstimate.usage,
+                            ),
                         )}
                         <br />
                     </>
@@ -212,7 +229,7 @@ function Pending() {
                     disabled={action !== undefined}
                     onClick={() => dispatch(offlineActions.setAction({ action: "estimate" }))}
                 >
-                    Full download
+                    {t("fullDownload")}
                 </Button>
                 <Button
                     sx={{ my: 2 }}
@@ -220,7 +237,7 @@ function Pending() {
                     disabled={action !== undefined}
                     onClick={() => dispatch(offlineActions.setAction({ action: "incrementalSync" }))}
                 >
-                    Incremental
+                    {t("incremental")}
                 </Button>
             </Box>
         </>
@@ -228,17 +245,21 @@ function Pending() {
 }
 
 function Downloaded() {
+    const { t } = useTranslation();
     return (
         <>
-            This scene is available offline. <br />
+            {t("offlineScene")}
+            <br />
         </>
     );
 }
 
 function Incremental() {
+    const { t } = useTranslation();
     return (
         <>
-            This scene is being incrementally downloaded. <br />
+            {t("sceneDownloaded")}
+            <br />
         </>
     );
 }
@@ -252,18 +273,21 @@ function ConfirmSync({
     usedSize: number;
     availableSize: number;
 }) {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const isOnline = useAppSelector(selectIsOnline);
     const requiredSize = Math.max(0, totalSize - usedSize);
 
     return (
         <>
-            Synchronizing this scene will require {formatFileSizeMetric(requiredSize)}, which is more than the{" "}
-            {formatFileSizeMetric(availableSize)} estimated available storage space.
+            {t("sceneSyncMessage", {
+                requiredSize: formatFileSizeMetric(requiredSize),
+                availableSize: formatFileSizeMetric(availableSize),
+            })}
             <br />
-            Although estimates are complicated and inaccurate, this process will likely fail.
+            {t("processLikelyFail")}
             <br />
-            Proceed downloading the scene?
+            {t("proceedDownloadingScene")}
             <Box display="flex" justifyContent="flex-end" mt={1} gap={1}>
                 <Button
                     disabled={!isOnline}
@@ -273,7 +297,7 @@ function ConfirmSync({
                         dispatch(offlineActions.setAction({ action: "fullSync" }));
                     }}
                 >
-                    Yes
+                    {t("yes")}
                 </Button>
                 <Button
                     disabled={!isOnline}
@@ -281,7 +305,7 @@ function ConfirmSync({
                         dispatch(offlineActions.setSizeWarning(undefined));
                     }}
                 >
-                    No
+                    {t("no")}
                 </Button>
             </Box>
         </>
@@ -292,6 +316,7 @@ function AllDownloadedScenes({ synchronizing }: { synchronizing: boolean }) {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const scenes = useAppSelector(selectOfflineScenes);
     const isOnline = useAppSelector(selectIsOnline);
     const dispatch = useAppDispatch();
@@ -300,7 +325,7 @@ function AllDownloadedScenes({ synchronizing }: { synchronizing: boolean }) {
     return (
         <>
             <Typography mt={2} fontWeight={600}>
-                Cached scenes
+                {t("cachedScenes")}
             </Typography>
             <Divider />
             {Object.values(scenes)
@@ -310,17 +335,27 @@ function AllDownloadedScenes({ synchronizing }: { synchronizing: boolean }) {
                     return (
                         <Accordion key={scene.id} defaultExpanded={isCurrent}>
                             <AccordionSummary>
-                                {scene.id.slice(0, 8)}... {isCurrent ? "(Current)" : ""}
+                                {scene.id.slice(0, 8)}
+                                ...
+                                {isCurrent ? `(${t("current")})` : ""}
                             </AccordionSummary>
                             <AccordionDetails sx={{ px: 1 }}>
-                                <Typography>Id: {scene.id}</Typography>
                                 <Typography>
-                                    Size: {scene.size ? formatFileSizeMetric(scene.size) : "unknown"}
+                                    {t("id")}
+                                    {scene.id}
                                 </Typography>
-                                <Typography>Status: {capitalize(scene.status)}</Typography>
                                 <Typography>
-                                    Last synchronized:{" "}
-                                    {scene.lastSync ? new Date(scene.lastSync).toLocaleString() : "unknown"}
+                                    {t("size")}
+                                    {scene.size ? formatFileSizeMetric(scene.size) : t("unknown")}
+                                </Typography>
+                                <Typography>
+                                    {t("statusName")}
+                                    {capitalize(scene.status)}
+                                </Typography>
+                                <Typography>
+                                    {t("lastSynchronized", {
+                                        date: scene.lastSync ? new Date(scene.lastSync).toLocaleString() : t("unknown"),
+                                    })}
                                 </Typography>
                                 {isCurrent && (
                                     <Box
@@ -337,12 +372,12 @@ function AllDownloadedScenes({ synchronizing }: { synchronizing: boolean }) {
                                             onClick={() => dispatch(offlineActions.setAction({ action: "readSize" }))}
                                         >
                                             <Sync fontSize="small" sx={{ mr: 1 }} />
-                                            Update Size
+                                            {t("updateSize")}
                                         </Button>
                                     </Box>
                                 )}
                                 <Typography mt={2} fontWeight={600}>
-                                    Viewer scenes
+                                    {t("viewerScenes")}
                                 </Typography>
                                 {[...scene.viewerScenes]
                                     .sort((vs) => {
@@ -357,15 +392,19 @@ function AllDownloadedScenes({ synchronizing }: { synchronizing: boolean }) {
                                                 defaultExpanded={isCurrentViewerScene}
                                             >
                                                 <AccordionSummary level={2}>
-                                                    {viewerScene.name} {isCurrentViewerScene && "(Current)"}
+                                                    {viewerScene.name} {isCurrentViewerScene && `(${t("current")})`}
                                                 </AccordionSummary>
                                                 <AccordionDetails sx={{ px: 1 }}>
-                                                    <Typography>Id: {viewerScene.id}</Typography>
                                                     <Typography>
-                                                        Last synchronized:{" "}
-                                                        {viewerScene.lastSynced
-                                                            ? new Date(viewerScene.lastSynced).toLocaleString()
-                                                            : "unknown"}
+                                                        {t("id")}
+                                                        {viewerScene.id}
+                                                    </Typography>
+                                                    <Typography>
+                                                        {t("lastSynchronized", {
+                                                            date: viewerScene.lastSynced
+                                                                ? new Date(viewerScene.lastSynced).toLocaleString()
+                                                                : t("unknown"),
+                                                        })}
                                                     </Typography>
                                                 </AccordionDetails>
                                                 {isCurrentViewerScene && (
@@ -382,11 +421,11 @@ function AllDownloadedScenes({ synchronizing }: { synchronizing: boolean }) {
                                                             disabled={!isOnline || synchronizing}
                                                             onClick={() =>
                                                                 dispatch(
-                                                                    offlineActions.setAction({ action: "estimate" })
+                                                                    offlineActions.setAction({ action: "estimate" }),
                                                                 )
                                                             }
                                                         >
-                                                            <Sync fontSize="small" sx={{ mr: 1 }} /> Sync
+                                                            <Sync fontSize="small" sx={{ mr: 1 }} /> {t("sync")}
                                                         </Button>
                                                     </Box>
                                                 )}
@@ -409,7 +448,7 @@ function AllDownloadedScenes({ synchronizing }: { synchronizing: boolean }) {
                                             dispatch(offlineActions.setAction({ id: scene.id, action: "delete" }))
                                         }
                                     >
-                                        <Delete fontSize="small" sx={{ mr: 1 }} /> Delete
+                                        <Delete fontSize="small" sx={{ mr: 1 }} /> {t("delete")}
                                     </Button>
                                 </Box>
                             </AccordionDetails>

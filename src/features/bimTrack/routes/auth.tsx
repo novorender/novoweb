@@ -1,12 +1,15 @@
 import { Box, Typography } from "@mui/material";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Redirect, useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
-import { selectConfig, selectHasAdminCapabilities } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
+import { selectConfig } from "slices/explorer";
 import { AsyncStatus, hasFinished } from "types/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 
@@ -15,12 +18,14 @@ import { bimTrackActions, selectAccessToken, selectBimTrackConfig } from "../bim
 
 let getTokensRequestInitialized = false;
 export function Auth() {
+    const { t } = useTranslation();
     const history = useHistory();
     const accessToken = useAppSelector(selectAccessToken);
     const dispatch = useAppDispatch();
     const explorerConfig = useAppSelector(selectConfig);
     const config = useAppSelector(selectBimTrackConfig);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntBimTrackManage);
 
     const [getToken] = useLazyGetTokenQuery();
     const [refreshToken] = useLazyRefreshTokenQuery();
@@ -46,7 +51,7 @@ export function Auth() {
                 const res = await getToken({ code, config: explorerConfig })
                     .unwrap()
                     .catch((e) => {
-                        console.warn(`${featuresConfig.bimTrack.name} authentication failed`, e);
+                        console.warn(`${t(featuresConfig.bimTrack.nameKey)} authentication failed`, e);
                         return undefined;
                     });
 
@@ -54,8 +59,8 @@ export function Auth() {
                     dispatch(
                         bimTrackActions.setAccessToken({
                             status: AsyncStatus.Error,
-                            msg: `An error occurred while authenticating with ${featuresConfig.bimTrack.name}`,
-                        })
+                            msg: `An error occurred while authenticating with ${t(featuresConfig.bimTrack.nameKey)}`,
+                        }),
                     );
                     return;
                 }
@@ -68,7 +73,7 @@ export function Auth() {
                     bimTrackActions.setAccessToken({
                         status: AsyncStatus.Success,
                         data: res.access_token,
-                    })
+                    }),
                 );
 
                 return res.access_token;
@@ -98,13 +103,13 @@ export function Auth() {
                     bimTrackActions.setAccessToken({
                         status: AsyncStatus.Success,
                         data: res.access_token,
-                    })
+                    }),
                 );
             } else {
                 history.replace("/login");
             }
         }
-    }, [accessToken, dispatch, explorerConfig, getToken, history, refreshToken]);
+    }, [accessToken, dispatch, explorerConfig, getToken, history, refreshToken, t]);
 
     return !hasFinished(accessToken) ? (
         <Box position="relative">
@@ -113,10 +118,10 @@ export function Auth() {
     ) : accessToken.status === AsyncStatus.Error ? (
         <ErrorMsg>{accessToken.msg}</ErrorMsg>
     ) : !(config.project && config.server) ? (
-        isAdmin ? (
+        canManage ? (
             <Redirect to="/settings" />
         ) : (
-            <ErrorMsg>{`${featuresConfig.bimTrack.name} has not yet been set up for this project.`}</ErrorMsg>
+            <ErrorMsg>{`${t(featuresConfig.bimTrack.nameKey)} has not yet been set up for this project.`}</ErrorMsg>
         )
     ) : (
         <Redirect to={`/${config.project}/topics`} />

@@ -1,6 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-import { dataApi } from "apis/dataV1";
 import { type RootState } from "app";
 import { AsyncStatus } from "types/misc";
 
@@ -94,33 +93,7 @@ export const ditioApi = createApi({
                     .catch((error) => ({ error }));
             },
         }),
-        getToken: builder.query<{ access_token: string; expires_in: number }, { sceneId: string }>({
-            queryFn: async ({ sceneId }, api) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const token = (api.getState() as any).auth.accessToken;
-
-                return fetch(
-                    `${dataApi.serviceUrl}/scenes/${sceneId}/ditio`,
-                    token ? { headers: { authorization: `Bearer ${token}` } } : undefined
-                )
-                    .then((res) => {
-                        if (res.ok) {
-                            return res.json();
-                        } else {
-                            throw res.status;
-                        }
-                    })
-                    .then((data) => ({ data }))
-                    .catch((error) => ({ error }));
-            },
-        }),
     }),
 });
 
-export const {
-    useFeedWebRawQuery,
-    useGetPostQuery,
-    useGetProjectsQuery,
-    useLazyGetTokenQuery,
-    useGetLiveMachinesQuery,
-} = ditioApi;
+export const { useFeedWebRawQuery, useGetPostQuery, useGetProjectsQuery, useGetLiveMachinesQuery } = ditioApi;

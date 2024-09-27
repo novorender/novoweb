@@ -1,18 +1,13 @@
 import { SearchPattern } from "@novorender/webgl-api";
 
+import { ProjectInfo } from "apis/dataV2/projectTypes";
 import { CanvasContextMenuFeatureKey } from "config/canvasContextMenu";
-import { ButtonKey, WidgetKey } from "config/features";
+import { ButtonKey, FeatureGroupKey, WidgetKey } from "config/features";
 import { DeepMutable } from "types/misc";
 
 export enum SceneType {
     Viewer,
     Admin,
-}
-
-export enum UserRole {
-    Viewer,
-    Admin,
-    Owner,
 }
 
 export enum ProjectType {
@@ -28,17 +23,29 @@ export type State = {
     enabledWidgets: WidgetKey[];
     lockedWidgets: WidgetKey[];
     sceneType: SceneType;
-    userRole: UserRole;
     projectType: ProjectType;
+    projectV2Info: ProjectInfo;
     tmZoneForCalc: string | undefined;
     requireConsent: boolean;
     organization: string;
+    projectName: string;
     widgets: WidgetKey[];
+    favoriteWidgets: WidgetKey[];
+    widgetSlot: {
+        open: boolean;
+        group: FeatureGroupKey | undefined;
+    };
     widgetLayout: {
         widgets: number;
         sideBySide: boolean;
+        padWidgetsTop?: boolean;
+    };
+    widgetGroupPanelState: {
+        open: boolean;
+        expanded: boolean;
     };
     maximized: WidgetKey[];
+    maximizedHorizontal: WidgetKey[];
     minimized: WidgetKey | undefined;
     primaryMenu: {
         button1: ButtonKey;
@@ -56,7 +63,6 @@ export type State = {
     urlBookmarkId: string | undefined;
     localBookmarkId: string | undefined;
     config: {
-        dataServerUrl: string;
         dataV2ServerUrl: string;
         projectsUrl: string;
         authServerUrl: string;
@@ -70,7 +76,22 @@ export type State = {
         novorenderClientId: string;
         novorenderClientSecret: string;
         assetsUrl: string;
+        mixpanelToken: string;
     };
+    newDesign: boolean;
+    canUseNewDesign: boolean;
+    snackbarMessage: {
+        msg: string;
+        closeAfter?: number;
+    } | null;
 };
 
 export type PrimaryMenuConfigType = State["primaryMenu"];
+
+export type PositionedWidgetState = {
+    key: WidgetKey;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+};

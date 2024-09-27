@@ -1,22 +1,26 @@
 import { AcUnit, Clear, Edit, MoreVert, Visibility, VisibilityOff, WbSunny } from "@mui/icons-material";
 import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { MouseEvent, useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
-import { selectHasAdminCapabilities } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 
 import { Group, StyledCheckbox } from "./group";
 import { groupsActions, selectIsCollectionExpanded } from "./groupsSlice";
 
 export function Collection({ collection, disabled }: { collection: string; disabled: boolean }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const objectGroups = useObjectGroups();
     const dispatchObjectGroups = useDispatchObjectGroups();
 
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.GroupManage);
     const expanded = useAppSelector((state) => selectIsCollectionExpanded(state, collection));
     const dispatch = useAppDispatch();
 
@@ -43,7 +47,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
             }
 
             return set;
-        }, new Set<string>())
+        }, new Set<string>()),
     ).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
 
     const name = collection.split("/").pop() ?? "";
@@ -51,18 +55,18 @@ export function Collection({ collection, disabled }: { collection: string; disab
     const nestedGroups = useMemo(
         () =>
             objectGroups.filter(
-                (group) => group.grouping === collection || group.grouping?.startsWith(`${collection}/`)
+                (group) => group.grouping === collection || group.grouping?.startsWith(`${collection}/`),
             ),
-        [objectGroups, collection]
+        [objectGroups, collection],
     );
     const allSelectedOrFrozen = nestedGroups.every(
-        (group) => group.status === GroupStatus.Selected || group.status === GroupStatus.Frozen
+        (group) => group.status === GroupStatus.Selected || group.status === GroupStatus.Frozen,
     );
     const allHiddenOrFrozen = nestedGroups.every(
-        (group) => group.status === GroupStatus.Hidden || group.status === GroupStatus.Frozen
+        (group) => group.status === GroupStatus.Hidden || group.status === GroupStatus.Frozen,
     );
     const allFullyHiddenOrFrozen = nestedGroups.every(
-        (group) => (group.opacity && group.opacity === 0) || group.status === GroupStatus.Frozen
+        (group) => (group.opacity && group.opacity === 0) || group.status === GroupStatus.Frozen,
     );
     const anyFrozen = nestedGroups.some((g) => g.status === GroupStatus.Frozen);
     const allFrozen = nestedGroups.every((g) => g.status === GroupStatus.Frozen);
@@ -75,11 +79,11 @@ export function Collection({ collection, disabled }: { collection: string; disab
                     dispatchObjectGroups(
                         objectGroupsActions.update(group.id, {
                             status,
-                        })
-                    )
+                        }),
+                    ),
                 );
         },
-        [dispatchObjectGroups, nestedGroups]
+        [dispatchObjectGroups, nestedGroups],
     );
 
     const handleToggleGroupSelection = useCallback(() => {
@@ -141,7 +145,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
                         onFocus={(event) => event.stopPropagation()}
                     />
                 </Box>
-                <Box flex="0 0 auto" sx={{ visibility: isAdmin ? "visible" : "hidden" }}>
+                <Box flex="0 0 auto" sx={{ visibility: canManage ? "visible" : "hidden" }}>
                     <IconButton
                         size="small"
                         sx={{ py: 0 }}
@@ -169,7 +173,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
                         <ListItemIcon>
                             <Edit fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Rename</ListItemText>
+                        <ListItemText>{t("rename")}</ListItemText>
                     </MenuItem>
                     <MenuItem
                         onClick={() => {
@@ -181,8 +185,8 @@ export function Collection({ collection, disabled }: { collection: string; disab
                                 dispatchObjectGroups(
                                     objectGroupsActions.update(group.id, {
                                         grouping: group.grouping?.replace(regExp, "$1").replace(/\/$/, ""),
-                                    })
-                                )
+                                    }),
+                                ),
                             );
 
                             dispatch(groupsActions.closeCollection(collection));
@@ -191,7 +195,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
                         <ListItemIcon>
                             <Clear fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Ungroup</ListItemText>
+                        <ListItemText>{t("ungroup")}</ListItemText>
                     </MenuItem>
                     <MenuItem
                         onClick={() => {
@@ -201,7 +205,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
                                     dispatchObjectGroups(
                                         objectGroupsActions.update(group.id, {
                                             status: GroupStatus.Frozen,
-                                        })
+                                        }),
                                     );
                                 });
                             closeMenu();
@@ -211,7 +215,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
                         <ListItemIcon>
                             <AcUnit fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Freeze all</ListItemText>
+                        <ListItemText>{t("freezeAll")}</ListItemText>
                     </MenuItem>
                     <MenuItem
                         onClick={() => {
@@ -221,7 +225,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
                                     dispatchObjectGroups(
                                         objectGroupsActions.update(group.id, {
                                             status: GroupStatus.None,
-                                        })
+                                        }),
                                     );
                                 });
                             closeMenu();
@@ -231,7 +235,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
                         <ListItemIcon>
                             <WbSunny fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Unfreeze all</ListItemText>
+                        <ListItemText>{t("unfreezeAll")}</ListItemText>
                     </MenuItem>
                 </Menu>
             </AccordionSummary>

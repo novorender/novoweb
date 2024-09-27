@@ -1,5 +1,6 @@
 import { MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import { ChangeEvent } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { renderActions, selectDeviations } from "features/render";
@@ -8,6 +9,7 @@ import { AsyncStatus } from "types/misc";
 import { selectSaveStatus } from "../selectors";
 
 export function MixFactorInput() {
+    const { t } = useTranslation();
     const deviations = useAppSelector(selectDeviations);
     const dispatch = useAppDispatch();
     const saveStatus = useAppSelector(selectSaveStatus);
@@ -20,7 +22,7 @@ export function MixFactorInput() {
                 deviation: {
                     mixFactor,
                 },
-            })
+            }),
         );
     };
 
@@ -38,9 +40,9 @@ export function MixFactorInput() {
             onChange={handleModeChange}
             disabled={loading}
         >
-            <MenuItem value={"on"}>On</MenuItem>
-            <MenuItem value={"mix"}>Mix</MenuItem>
-            <MenuItem value={"off"}>Off</MenuItem>
+            <MenuItem value={"on"}>{t("on")}</MenuItem>
+            <MenuItem value={"mix"}>{t("mix")}</MenuItem>
+            <MenuItem value={"off"}>{t("off")}</MenuItem>
         </Select>
     );
 }

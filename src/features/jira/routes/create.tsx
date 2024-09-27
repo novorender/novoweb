@@ -12,15 +12,15 @@ import {
     Select,
     Snackbar,
     TextField,
-    TextFieldProps,
     useTheme,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { format, isValid } from "date-fns";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveBookmarksMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -56,6 +56,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
     const {
         state: { canvas },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
 
     const issueType = useAppSelector(selectJiraIssueType);
@@ -81,6 +82,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
     const [createIssue] = useCreateIssueMutation();
     const [addAttachment] = useAddAttachmentMutation();
     const createBookmark = useCreateBookmark();
+    const [saveBookmarks] = useSaveBookmarksMutation();
     const today = useRef(new Date());
 
     const [getIssueSuggestions] = useLazyGetIssueSuggestionsQuery();
@@ -89,7 +91,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         {
             project: project?.id ?? "",
         },
-        { skip: !project, refetchOnMountOrArgChange: true }
+        { skip: !project, refetchOnMountOrArgChange: true },
     );
 
     const { data: baseIssueTypes = [] } = useGetBaseIssueTypesQuery(
@@ -98,7 +100,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
             projectId: project?.id ?? "",
             space: space?.id ?? "",
         },
-        { skip: !accessToken || !project || !space, refetchOnMountOrArgChange: true }
+        { skip: !accessToken || !project || !space, refetchOnMountOrArgChange: true },
     );
 
     const {
@@ -110,12 +112,12 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
             issueTypeId: issueType?.id ?? "",
             projectKey: project?.key ?? "",
         },
-        { skip: !issueType || !project }
+        { skip: !issueType || !project },
     );
 
     const { data: componentOptions } = useGetComponentsQuery(
         { space: space?.id ?? "", project: project?.key ?? "", accessToken },
-        { skip: !space || !project || !accessToken }
+        { skip: !space || !project || !accessToken },
     );
 
     useEffect(
@@ -126,11 +128,11 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
 
             dispatch(
                 jiraActions.setIssueType(
-                    baseIssueTypes.find((type) => /model[l]?[\s_-]?task/gi.test(type.name)) ?? baseIssueTypes[0]
-                )
+                    baseIssueTypes.find((type) => /model[l]?[\s_-]?task/gi.test(type.name)) ?? baseIssueTypes[0],
+                ),
             );
         },
-        [issueType, baseIssueTypes, dispatch]
+        [issueType, baseIssueTypes, dispatch],
     );
 
     const handleCreate = async () => {
@@ -142,7 +144,17 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
         const bmId = window.crypto.randomUUID();
         const bm = createBookmark();
         const snapshot = await createCanvasSnapshot(canvas, 5000, 5000);
-        const saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id: bmId, name: bmId }], { group: bmId });
+        const saved = await saveBookmarks({
+            projectId: sceneId,
+            bookmarks: [{ ...bm, id: bmId, name: bmId }],
+            group: bmId,
+        })
+            .unwrap()
+            .then(() => true)
+            .catch((error) => {
+                console.error(error);
+                return false;
+            });
 
         if (!saved) {
             setSaveStatus(AsyncStatus.Error);
@@ -245,7 +257,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                 <Box display="flex" justifyContent="space-between">
                     <Button onClick={() => history.goBack()} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <Button
                         disabled={saveStatus !== AsyncStatus.Initial || !formValues.summary || !project || !issueType}
@@ -253,7 +265,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                         color="grey"
                     >
                         <Save sx={{ mr: 1 }} />
-                        Create
+                        {t("create")}
                     </Button>
                 </Box>
             </Box>
@@ -273,7 +285,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                     sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
                                     htmlFor={"project"}
                                 >
-                                    Project
+                                    {t("project")}
                                 </FormLabel>
                             </Box>
 
@@ -285,10 +297,10 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                 }}
                             >
                                 <MenuItem value={project.key}>
-                                    {project.key} - {project.name}
+                                    {project.key}-{project.name}
                                 </MenuItem>
                             </Select>
-                            <FormHelperText>Can only be changed by admins in settings.</FormHelperText>
+                            <FormHelperText>{t("canOnlyBeChangedByAdminsInSettings")}</FormHelperText>
                         </FormControl>
 
                         <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 1 }}>
@@ -297,7 +309,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                     sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
                                     htmlFor={"issueType"}
                                 >
-                                    Type
+                                    {t("type")}
                                 </FormLabel>
                             </Box>
 
@@ -310,8 +322,8 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                 onChange={(e) =>
                                     dispatch(
                                         jiraActions.setIssueType(
-                                            baseIssueTypes.find((type) => type.id === e.target.value)
-                                        )
+                                            baseIssueTypes.find((type) => type.id === e.target.value),
+                                        ),
                                     )
                                 }
                             >
@@ -572,7 +584,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                                         query: value,
                                                         issueTypes: parentIssueTypes?.map((type) => type.id),
                                                     },
-                                                    true
+                                                    true,
                                                 )
                                                     .unwrap()
                                                     .catch((err) => {
@@ -598,7 +610,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                             )}
                                             renderOption={(props, option) => (
                                                 <li {...props} key={option.id}>
-                                                    {option.key} - {option.summaryText}
+                                                    {option.key}-{option.summaryText}
                                                 </li>
                                             )}
                                         />
@@ -611,16 +623,15 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                             sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
                                             htmlFor={"issueComponents"}
                                         >
-                                            Components
+                                            {t("components")}
                                         </FormLabel>
                                     </Box>
-
                                     <Select
                                         MenuProps={{ sx: { maxHeight: 300 } }}
                                         multiple
                                         value={[
                                             component.id,
-                                            ...(components ? formValues["issueComponents"] ?? [] : []),
+                                            ...(components ? (formValues["issueComponents"] ?? []) : []),
                                         ]}
                                         inputProps={{
                                             id: "issueComponents",
@@ -647,7 +658,7 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                         ))}
                                     </Select>
                                     <FormHelperText>
-                                        Default component can only be changed by admins in settings.
+                                        {t("defaultComponentCanOnlyBeChangedByAdminsInSettings")}
                                     </FormHelperText>
                                 </FormControl>
 
@@ -672,22 +683,17 @@ export function CreateIssue({ sceneId }: { sceneId: string }) {
                                             onChange={(newDate: Date | null) => {
                                                 setFormValues((state) => ({
                                                     ...state,
-                                                    duedate: newDate
-                                                        ? isValid(newDate)
-                                                            ? newDate.toISOString()
-                                                            : ""
-                                                        : "",
+                                                    duedate: newDate && isValid(newDate) ? newDate : null,
                                                 }));
                                             }}
-                                            renderInput={(params: TextFieldProps) => (
-                                                <TextField
-                                                    {...params}
-                                                    id="jiraDueDate"
-                                                    variant={"outlined"}
-                                                    size="small"
-                                                    required={duedate.required && !duedate.defaultValue}
-                                                />
-                                            )}
+                                            slotProps={{
+                                                textField: {
+                                                    id: "jiraDueDate",
+                                                    variant: "outlined",
+                                                    size: "small",
+                                                    required: duedate.required && !duedate.defaultValue,
+                                                },
+                                            }}
                                         />
                                     </FormControl>
                                 )}

@@ -1,16 +1,18 @@
 import { AddCircle, FilterAlt, Save } from "@mui/icons-material";
 import { Box, Button, List, Typography, useTheme } from "@mui/material";
 import { MouseEvent, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveBookmarksMutation } from "apis/dataV2/dataV2Api";
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, LinearProgress, ScrollBox } from "components";
+import { Divider, LinearProgress, WidgetBottomScrollBox } from "components";
 import { GroupStatus } from "contexts/objectGroups";
 import { selectViewMode } from "features/render";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
-import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import { Bookmark } from "../bookmark";
@@ -30,6 +32,7 @@ import { FilterMenu } from "../filterMenu";
 const filterMenuId = "bm-filter-menu";
 
 export function BookmarkList() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const sceneId = useSceneId();
@@ -41,16 +44,18 @@ export function BookmarkList() {
     const bookmarksStatus = useAppSelector(selectBookmarksStatus);
     const filters = useAppSelector(selectBookmarkFilters);
     const dispatch = useAppDispatch();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.BookmarkManage);
 
     const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
     const [filteredBookmarks, setFilteredBookmarks] = useState(bookmarks);
+    const [saveBookmarks] = useSaveBookmarksMutation();
 
     useEffect(
         function filterBookmarks() {
             setFilteredBookmarks(applyFilters(bookmarks, filters));
         },
-        [bookmarks, filters]
+        [bookmarks, filters],
     );
 
     const openFilters = (e: MouseEvent<HTMLButtonElement>) => {
@@ -66,21 +71,35 @@ export function BookmarkList() {
         dispatch(bookmarksActions.setSaveStatus({ status: AsyncStatus.Loading }));
 
         try {
-            const publicBmks = isAdmin
-                ? dataApi.saveBookmarks(
-                      sceneId,
-                      bookmarks
+            const publicBmks = canManage
+                ? saveBookmarks({
+                      projectId: sceneId,
+                      bookmarks: bookmarks
                           .filter((bm) => bm.access !== BookmarkAccess.Personal)
                           .map(({ access: _access, ...bm }) => bm),
-                      { personal: false }
-                  )
+                      personal: false,
+                  })
+                      .unwrap()
+                      .then(() => true)
+                      .catch((error) => {
+                          console.error(error);
+                          return false;
+                      })
                 : Promise.resolve(true);
 
-            const personalBmks = dataApi.saveBookmarks(
-                sceneId,
-                bookmarks.filter((bm) => bm.access === BookmarkAccess.Personal).map(({ access: _access, ...bm }) => bm),
-                { personal: true }
-            );
+            const personalBmks = saveBookmarks({
+                projectId: sceneId,
+                bookmarks: bookmarks
+                    .filter((bm) => bm.access === BookmarkAccess.Personal)
+                    .map(({ access: _access, ...bm }) => bm),
+                personal: true,
+            })
+                .unwrap()
+                .then(() => true)
+                .catch((error) => {
+                    console.error(error);
+                    return false;
+                });
 
             const [savedPublic, savedPersonal] = await Promise.all([publicBmks, personalBmks]);
 
@@ -95,7 +114,7 @@ export function BookmarkList() {
                 bookmarksActions.setSaveStatus({
                     status: AsyncStatus.Error,
                     msg: "An error occurred while saving bookmarks.",
-                })
+                }),
             );
         }
     };
@@ -108,7 +127,7 @@ export function BookmarkList() {
             }
 
             return set;
-        }, new Set<string>())
+        }, new Set<string>()),
     ).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
 
     const singles = filteredBookmarks
@@ -133,7 +152,7 @@ export function BookmarkList() {
                                 aria-expanded={Boolean(filterMenuAnchor)}
                             >
                                 <FilterAlt sx={{ mr: 1 }} />
-                                Filters
+                                {t("filters")}
                             </Button>
                             {user ? (
                                 <>
@@ -143,11 +162,11 @@ export function BookmarkList() {
                                         disabled={disableModifications || viewMode === ViewMode.Panorama}
                                     >
                                         <AddCircle sx={{ mr: 1 }} />
-                                        Add bookmark
+                                        {t("addBookmark")}
                                     </Button>
                                     <Button color="grey" onClick={handleSave} disabled={disableModifications}>
                                         <Save sx={{ mr: 1 }} />
-                                        Save
+                                        {t("save")}
                                     </Button>
                                 </>
                             ) : null}
@@ -160,15 +179,15 @@ export function BookmarkList() {
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox display="flex" flexDirection="column" height={1} pb={2}>
+            <WidgetBottomScrollBox display="flex" flexDirection="column" height={1} pb={2}>
                 {bookmarksStatus === AsyncStatus.Error && (
                     <>
                         <Typography p={1} mb={3}>
-                            An error occurred while loading bookmarks.
+                            {t("errorLoadingBookmarks")}
                         </Typography>
                         <Box display={"flex"} justifyContent={"center"}>
                             <Button onClick={() => dispatch(bookmarksActions.setInitStatus(AsyncStatus.Initial))}>
-                                Try again
+                                {t("tryAgain")}
                             </Button>
                         </Box>
                     </>
@@ -183,7 +202,7 @@ export function BookmarkList() {
                 {collections.map((collection) => (
                     <Collection bookmarks={filteredBookmarks} key={collection} collection={collection} />
                 ))}
-            </ScrollBox>
+            </WidgetBottomScrollBox>
             <FilterMenu
                 anchorEl={filterMenuAnchor}
                 open={Boolean(filterMenuAnchor)}

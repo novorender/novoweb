@@ -3,7 +3,7 @@ import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { useCallback, useEffect, useState } from "react";
 import { Route, Switch, useParams, useRouteMatch } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useLazyGetGroupIdsQuery } from "apis/dataV2/dataV2Api";
 import { LinearProgress } from "components";
 import { objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
 import { useToggle } from "hooks/useToggle";
@@ -23,6 +23,7 @@ export function Crupdate({ sceneId }: { sceneId: string }) {
         groupToEdit?.search ?? [{ property: "", value: "", exact: true }]
     );
     const [includeDescendants, toggleIncludeDescendants] = useToggle(groupToEdit?.includeDescendants ?? true);
+    const [getGroupIds] = useLazyGetGroupIdsQuery();
 
     const [ids, setIds] = useState((): AsyncState<ObjectId[]> => {
         if (groupToEdit && !groupToEdit.ids) {
@@ -54,7 +55,7 @@ export function Crupdate({ sceneId }: { sceneId: string }) {
             setIds({ status: AsyncStatus.Loading });
 
             try {
-                const _ids = await dataApi.getGroupIds(sceneId, groupToEdit.id);
+                const _ids = await getGroupIds({ projectId: sceneId, groupId: groupToEdit.id }).unwrap();
 
                 dispatchObjectGroups(objectGroupsActions.update(groupToEdit.id, { ids: new Set(_ids) }));
                 setIds({ status: AsyncStatus.Success, data: _ids });
@@ -63,7 +64,7 @@ export function Crupdate({ sceneId }: { sceneId: string }) {
                 setIds({ status: AsyncStatus.Error, msg: "Failed to load group data." });
             }
         }
-    }, [groupToEdit, ids, sceneId, dispatchObjectGroups]);
+    }, [groupToEdit, ids, sceneId, dispatchObjectGroups, getGroupIds]);
 
     switch (ids.status) {
         case AsyncStatus.Initial:

@@ -1,14 +1,17 @@
 import { AddCircle, Delete, FilterAlt } from "@mui/icons-material";
 import { Box, Button, List, Typography, useTheme } from "@mui/material";
 import { type FormEvent, type MouseEvent, useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation, Divider, LinearProgress, ScrollBox } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { TemplateFilterMenu } from "features/forms/templateFilterMenu";
 import { ObjectVisibility, renderActions } from "features/render";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
 
@@ -19,6 +22,7 @@ import { Template } from "./template";
 const FILTER_MENU_ID = "templates-filter-menu";
 
 export function Templates() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const sceneId = useSceneId();
@@ -26,6 +30,9 @@ export function Templates() {
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const user = useAppSelector(selectUser);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.FormsManage);
+    const canDelete = checkPermission(Permission.FormsDelete);
 
     const [deleteAllForms, { isLoading: isAllFormsDeleting }] = useDeleteAllFormsMutation();
 
@@ -74,7 +81,7 @@ export function Templates() {
             dispatch(formsActions.setLocationForms([]));
             setIsDeleting(false);
         },
-        [deleteAllForms, dispatch, sceneId]
+        [deleteAllForms, dispatch, sceneId],
     );
 
     return isDeleting ? (
@@ -95,9 +102,9 @@ export function Templates() {
                     </Box>
                     <Box display="flex" justifyContent="space-between">
                         <Box display="flex">
-                            <Button color="grey" onClick={handleAddFormClick} disabled={!user}>
+                            <Button color="grey" onClick={handleAddFormClick} disabled={!canManage || !user}>
                                 <AddCircle sx={{ mr: 1 }} />
-                                Add form
+                                {t("addForm")}
                             </Button>
                             <Button
                                 color="grey"
@@ -108,17 +115,17 @@ export function Templates() {
                                 disabled={isLoading || !templateIds.length || !!error}
                             >
                                 <FilterAlt sx={{ mr: 1 }} />
-                                Filters
+                                {t("filters")}
                             </Button>
                         </Box>
                         <Box display="flex">
                             <Button
                                 color="grey"
                                 onClick={() => setIsDeleting(true)}
-                                disabled={!user || isLoading || !templateIds.length || !!error}
+                                disabled={!canDelete || !user || isLoading || !templateIds.length || !!error}
                             >
                                 <Delete fontSize="small" sx={{ mr: 1 }} />
-                                Delete all forms
+                                {t("deleteAllForms")}
                             </Button>
                         </Box>
                     </Box>

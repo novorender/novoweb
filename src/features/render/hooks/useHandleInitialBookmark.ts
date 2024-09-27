@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { dataApi } from "apis/dataV1";
+import { useLazyGetBookmarksQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useSelectBookmark } from "features/bookmarks/useSelectBookmark";
@@ -17,6 +17,7 @@ export function useHandleInitialBookmark() {
     const localBookmarkId = useAppSelector(selectLocalBookmarkId);
     const selectBookmark = useSelectBookmark();
     const dispatch = useAppDispatch();
+    const [getBookmarks] = useLazyGetBookmarksQuery();
 
     useEffect(() => {
         handleUrlBookmark();
@@ -29,16 +30,18 @@ export function useHandleInitialBookmark() {
             dispatch(explorerActions.setUrlBookmarkId(undefined));
 
             try {
-                const shareLinkBookmark = (await dataApi.getBookmarks(sceneId, { group: urlBookmarkId })).find(
-                    (bm) => bm.id === urlBookmarkId
-                );
+                const shareLinkBookmark = (
+                    await getBookmarks({ projectId: sceneId, group: urlBookmarkId }, true).unwrap()
+                ).find((bm) => bm.id === urlBookmarkId);
 
                 if (shareLinkBookmark) {
                     selectBookmark(shareLinkBookmark);
                     return;
                 }
 
-                const savedPublicBookmark = (await dataApi.getBookmarks(sceneId)).find((bm) => bm.id === urlBookmarkId);
+                const savedPublicBookmark = (await getBookmarks({ projectId: sceneId }, true).unwrap()).find(
+                    (bm) => bm.id === urlBookmarkId
+                );
                 if (savedPublicBookmark) {
                     selectBookmark(savedPublicBookmark);
                     return;
@@ -47,7 +50,7 @@ export function useHandleInitialBookmark() {
                 console.warn(e);
             }
         }
-    }, [view, sceneId, dispatch, selectBookmark, urlBookmarkId]);
+    }, [view, sceneId, dispatch, selectBookmark, urlBookmarkId, getBookmarks]);
 
     useEffect(() => {
         handleLocalBookmark();

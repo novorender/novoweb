@@ -7,7 +7,7 @@ import { AsyncStatus } from "types/misc";
 import { formsActions, selectAssets } from "../slice";
 import { FormGLtfAsset } from "../types";
 
-export function useFetchAssetList() {
+export function useFetchAssetList({ skip = false }: { skip?: boolean } = {}) {
     const assets = useAppSelector(selectAssets);
     const dispatch = useAppDispatch();
     const assetsUrl = useAppSelector(selectConfig).assetsUrl;
@@ -16,7 +16,7 @@ export function useFetchAssetList() {
         getAssets();
 
         async function getAssets() {
-            if (assets.status !== AsyncStatus.Initial) {
+            if (assets.status !== AsyncStatus.Initial || skip) {
                 return;
             }
 
@@ -29,7 +29,7 @@ export function useFetchAssetList() {
             }));
             dispatch(formsActions.setAssets({ status: AsyncStatus.Success, data }));
         }
-    }, [dispatch, assets, assetsUrl]);
+    }, [dispatch, assets, assetsUrl, skip]);
 
     return assets;
 }

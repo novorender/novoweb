@@ -1,8 +1,9 @@
 import { Box, Checkbox, FormControlLabel, useTheme } from "@mui/material";
 import { FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveGroupsMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -19,9 +20,11 @@ export function Save({ sceneId }: { sceneId: string }) {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const objectGroups = useLazyObjectGroups();
     const [saveState, toggleSaveState] = useToggle();
     const status = useAppSelector(selectSaveStatus);
+    const [saveGroups] = useSaveGroupsMutation();
 
     const handleSave = async (e: FormEvent) => {
         e.preventDefault();
@@ -55,14 +58,13 @@ export function Save({ sceneId }: { sceneId: string }) {
                     .sort(
                         (a, b) =>
                             originalGroups.findIndex((grp) => grp.id === a.id) -
-                            originalGroups.findIndex((grp) => grp.id === b.id)
+                            originalGroups.findIndex((grp) => grp.id === b.id),
                     );
             }
 
-            const success = await dataApi.putScene({
-                ...originalScene,
-                url: `${sceneId}:${scene.id}`,
-                objectGroups: updated,
+            const success = await saveGroups({
+                projectId: sceneId,
+                groups: updated,
             });
 
             console.log({
@@ -111,7 +113,7 @@ export function Save({ sceneId }: { sceneId: string }) {
                     }
                     label={
                         <Box mr={0.5} sx={{ userSelect: "none" }}>
-                            Include highlight / visibility changes
+                            {t("includeHighlight/VisibilityChanges")}
                         </Box>
                     }
                     sx={{ mb: 3 }}

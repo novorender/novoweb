@@ -1,11 +1,27 @@
-import { Box } from "@mui/material";
-import { lazy, Suspense, useEffect } from "react";
+import { Box, css, styled, useTheme } from "@mui/material";
+import { lazy, Suspense, useEffect, useMemo } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { WidgetErrorBoundary, WidgetSkeleton } from "components";
 import { featuresConfig, WidgetKey } from "config/features";
 import { MenuWidget } from "features/menuWidget";
-import { explorerActions, selectIsOnline, selectMaximized, selectWidgetLayout, selectWidgets } from "slices/explorer";
+import {
+    explorerActions,
+    selectGridSize,
+    selectIsOnline,
+    selectMaximized,
+    selectMaximizedHorizontal,
+    selectNewDesign,
+    selectPositionedWidgets,
+    selectWidgetGroupPanelState,
+    selectWidgetLayout,
+    selectWidgets,
+    selectWidgetSlot,
+} from "slices/explorer";
+import { PositionedWidgetState } from "slices/explorer/types";
+import { getNextSlotPos, getTakenWidgetSlotCount } from "slices/explorer/utils";
+import { compareStrings } from "utils/misc";
+import { mixpanel } from "utils/mixpanel";
 
 const Properties = lazy(() => import("features/properties/properties"));
 const PropertiesTree = lazy(() => import("features/propertyTree/propertyTree"));
@@ -39,8 +55,173 @@ const Pims = lazy(() => import("features/pims/pims"));
 const Omega365 = lazy(() => import("features/omega365/omega365"));
 const Arcgis = lazy(() => import("features/arcgis/arcgis"));
 const Forms = lazy(() => import("features/forms/forms"));
+const Clash = lazy(() => import("features/clash/clash"));
+
+const emptySlotKey = "emptySlot" as const;
 
 export function Widgets() {
+    const useNewDesign = useAppSelector(selectNewDesign);
+
+    if (useNewDesign) {
+        return <NewWidgets />;
+    } else {
+        return <OldWidgets />;
+    }
+}
+
+function NewWidgets() {
+    const theme = useTheme();
+    const maximized = useAppSelector(selectMaximized);
+    const maximizedHorizontal = useAppSelector(selectMaximizedHorizontal);
+    const isOnline = useAppSelector(selectIsOnline);
+    const widgetGroupPanelState = useAppSelector(selectWidgetGroupPanelState);
+    const widgetSlot = useAppSelector(selectWidgetSlot);
+    const gridSize = useAppSelector(selectGridSize);
+
+    const layout = useAppSelector(selectWidgetLayout);
+    const slots = useAppSelector(selectWidgets);
+    const positionedWidgets = useAppSelector(selectPositionedWidgets);
+    const dispatch = useAppDispatch();
+
+    const showNewSlot = useMemo(() => {
+        return widgetSlot.open && getTakenWidgetSlotCount(slots, maximized, maximizedHorizontal) < layout.widgets;
+    }, [widgetSlot, slots, maximized, maximizedHorizontal, layout]);
+
+    useEffect(
+        function handleSettingsChange() {
+            if (getTakenWidgetSlotCount(slots, maximized, maximizedHorizontal) > layout.widgets) {
+                dispatch(explorerActions.clearMaximized());
+                dispatch(explorerActions.setWidgets(slots.slice(0, layout.widgets)));
+            }
+        },
+        [layout, slots, dispatch, maximized, maximizedHorizontal],
+    );
+
+    useEffect(() => {
+        if (!isOnline) {
+            slots.forEach((slot) => {
+                if (!featuresConfig[slot].offline) {
+                    dispatch(explorerActions.removeWidgetSlot(slot));
+                }
+            });
+        }
+    }, [dispatch, isOnline, slots]);
+
+    const positionedSlots = useMemo(() => {
+        const gap = theme.spacing(2);
+
+        let widgets = positionedWidgets as (Omit<PositionedWidgetState, "key"> & {
+            key: WidgetKey | typeof emptySlotKey;
+        })[];
+        if (showNewSlot) {
+            const pos = getNextSlotPos(positionedWidgets, gridSize.width, gridSize.height);
+            if (pos) {
+                widgets = [...widgets, { key: emptySlotKey, x: pos.x, y: pos.y, width: 1, height: 1 }];
+            }
+        }
+
+        return widgets
+            .map((widget) => {
+                const x = gridSize.width - (widget.x + widget.width);
+                const y = gridSize.height - (widget.y + widget.height);
+                const width = widget.width === gridSize.width ? "100%" : `calc((100% - ${gap}) / ${gridSize.width})`;
+                const left = x === 0 ? "0px" : `calc(((100% - ${gap}) / ${gridSize.width} + ${gap}) * ${x})`;
+                const height =
+                    widget.height === gridSize.height ? "100%" : `calc((100% - ${gap}) / ${gridSize.height})`;
+                const top = y === 0 ? "0px" : `calc(((100% - ${gap}) / ${gridSize.height} + ${gap}) * ${y})`;
+                return {
+                    key: widget.key,
+                    left,
+                    top,
+                    width,
+                    height,
+                };
+            })
+            .sort((w1, w2) => compareStrings(w1.key, w2.key));
+    }, [positionedWidgets, gridSize, theme, showNewSlot]);
+
+    const widgetGroupPanelWidth =
+        widgetGroupPanelState.expanded && widgetGroupPanelState.open
+            ? theme.customSpacing.widgetGroupPanelExpandedWidth
+            : widgetGroupPanelState.open
+              ? 12
+              : 0;
+    const maxWidgetGroupPanelWidth = 12;
+
+    const getGridLayout = () => {
+        if (layout.widgets === 4) {
+            return {
+                width: `50%`,
+                minWidth: "800px",
+                maxWidth: `min(1400px, 100% - 640px - ${theme.spacing(maxWidgetGroupPanelWidth + 2)})`,
+            };
+        } else if (layout.widgets === 2) {
+            return {
+                width: `30%`,
+                minWidth: "400px",
+                maxWidth: "700px",
+            };
+        } else if (layout.widgets === 1 && layout.sideBySide) {
+            return {
+                width: `420px`,
+            };
+        } else if (layout.widgets === 1 && !layout.sideBySide) {
+            return {
+                width: `100%`,
+            };
+        }
+    };
+
+    return (
+        <Box
+            sx={{
+                position: "absolute",
+                bottom: 0,
+                right: 0,
+                height: `calc(100% - ${theme.spacing(layout.padWidgetsTop ? 18 : 9)})`,
+                mb: 9,
+                mr: widgetGroupPanelWidth,
+                transition: "margin 0.2s",
+                gap: 2,
+                pointerEvents: "none",
+            }}
+            {...getGridLayout()}
+        >
+            {positionedSlots.map(({ key, left, top, width, height }, idx) => (
+                <WidgetBox
+                    maxHeight={1}
+                    gridArea={idxToAreaName(idx)}
+                    key={key}
+                    sx={{
+                        left,
+                        top,
+                        width,
+                        height,
+                    }}
+                >
+                    {key !== emptySlotKey ? getWidgetByKey(key) : <MenuWidget />}
+                </WidgetBox>
+            ))}
+        </Box>
+    );
+}
+
+const WidgetBox = styled(Box)(
+    () => css`
+        display: flex;
+        flexdirection: column;
+        alignitems: flex-end;
+        justifycontent: flex-end;
+        transition:
+            top 0.2s,
+            left 0.2s,
+            width 0.2s,
+            height 0.2s;
+        position: absolute;
+    `,
+);
+
+function OldWidgets() {
     const maximized = useAppSelector(selectMaximized);
     const isOnline = useAppSelector(selectIsOnline);
 
@@ -55,13 +236,14 @@ export function Widgets() {
                 dispatch(explorerActions.setWidgets(slots.slice(0, layout.widgets)));
             }
         },
-        [layout, slots, dispatch, maximized]
+        [layout, slots, dispatch, maximized],
     );
 
     useEffect(() => {
         if (!isOnline) {
             slots.forEach((slot) => {
                 if (!featuresConfig[slot].offline) {
+                    mixpanel?.track("Closed Widget", { "Widget Key": slot });
                     dispatch(explorerActions.removeWidgetSlot(slot));
                 }
             });
@@ -79,10 +261,10 @@ export function Widgets() {
                     maximized.length === 2
                         ? `"two one" "two one"`
                         : maximized.length === 1
-                        ? slots.indexOf(maximized[0]) === 0
-                            ? `"three one" "two one"`
-                            : `"three two" "three one"`
-                        : `"four two" "three one"`,
+                          ? slots.indexOf(maximized[0]) === 0
+                              ? `"three one" "two one"`
+                              : `"three two" "three one"`
+                          : `"four two" "three one"`,
             };
         } else if (layout.widgets === 2) {
             return {
@@ -252,6 +434,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
         case featuresConfig.forms.key:
             Widget = Forms;
             break;
+        case featuresConfig.clash.key:
+            Widget = Clash;
+            break;
         default:
             return key;
     }
@@ -263,4 +448,8 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             </Suspense>
         </WidgetErrorBoundary>
     );
+}
+
+function idxToAreaName(idx: number) {
+    return idx === 0 ? "one" : idx === 1 ? "two" : idx === 2 ? "three" : "four";
 }

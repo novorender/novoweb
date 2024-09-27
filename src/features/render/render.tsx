@@ -11,6 +11,7 @@ import { useHandleDitioAuth } from "features/ditio";
 import { Engine2D } from "features/engine2D/engine2D";
 import { Engine2DHtmlInteractions } from "features/engine2D/engine2DHtmlInteractions";
 import { Engine2DInteractions } from "features/engine2D/engine2DInteractions";
+import { useRenderLocationFormAssets } from "features/forms/hooks/useRenderLocationFormAssets";
 import { useHandleImages } from "features/images";
 import { useHandleJiraKeepAlive } from "features/jira";
 import { useHandleManhole } from "features/manhole";
@@ -21,6 +22,7 @@ import { useHandleOutlineLasers } from "features/outlineLaser";
 import { PerformanceStats } from "features/performanceStats";
 import { useHandleUrlSearch } from "features/search";
 import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
+import { useRefreshProjectPermissions } from "hooks/useRefreshProjectPermissions";
 import { AsyncStatus } from "types/misc";
 
 import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
@@ -106,6 +108,7 @@ export function Render3D() {
     );
 
     useHandleInit();
+    useRefreshProjectPermissions();
     useHandleInitialBookmark();
     useHandleUrlSearch();
     useHandleCameraMoved({ engine2dRenderFnRef, containers: [htmlInteractionContainer, markersContainer] });
@@ -131,6 +134,8 @@ export function Render3D() {
     useHandleXsiteManageKeepAlive();
     useHandleXsiteManageMachineLocations();
     useHandleDitioAuth();
+
+    useRenderLocationFormAssets();
 
     const cursor = useHandleCanvasCursor();
     const onClick = useCanvasClickHandler({ pointerDownStateRef });

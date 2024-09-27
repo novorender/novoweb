@@ -9,11 +9,8 @@ import { useCreateLocationFormMutation } from "../api";
 import { formsGlobalsActions } from "../formsGlobals";
 import { useDispatchFormsGlobals } from "../formsGlobals/hooks";
 import { formsActions, selectCurrentFormsList, selectSelectedFormId } from "../slice";
-import { useFetchAssetList } from "./useFetchAssetList";
 
 export function usePlaceLocationForm() {
-    useFetchAssetList();
-
     const templateId = useAppSelector(selectCurrentFormsList);
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const dispatchFormsGlobals = useDispatchFormsGlobals();

@@ -3,7 +3,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { vec3 } from "gl-matrix";
 
 import { type RootState } from "app";
-import { DeepMutable, resetView, selectBookmark } from "features/render";
+import { DeepMutable, Picker, resetView, selectBookmark } from "features/render";
 import { ExtendedMeasureEntity } from "types/misc";
 
 import { SnapKind } from "./config";
@@ -239,42 +239,39 @@ export const selectMeasure = (state: RootState) =>
 export const selectHoveredMeasureEntity = (state: RootState) => state.measure.hover;
 export const selectMeasureEntities = (state: RootState) => state.measure.selectedEntities as ExtendedMeasureEntity[][];
 
+const selectEffectiveSnapKind = (state: RootState) =>
+    state.render.picker === Picker.Area || state.render.picker === Picker.PointLine ? "point" : state.measure.snapKind;
+
 // Base tolerance for default snap is point=0.015.
 // For particular snap kinds - just multiply point by ~2-3 (???)
 // How we came up with that:
 // 1. Select a point with measure tool
 // 2. Move camera close to this point so you're ~1m away from it
 // 3. Use line measure tool to define your tolerance radius
-export const selectMeasureHoverSettings = createSelector(
-    (state: RootState) => state.measure.snapKind,
-    (snapKind) => {
-        switch (snapKind) {
-            case "point":
-                return { point: 0.03 };
-            case "curve":
-                return { edge: 0.03, segment: 0.02 };
-            case "surface":
-                return { face: 0.03 };
-            default:
-                return { edge: 0.008, segment: 0.008, face: 0.008, point: 0.015 };
-        }
+export const selectMeasureHoverSettings = createSelector(selectEffectiveSnapKind, (snapKind) => {
+    switch (snapKind) {
+        case "point":
+            return { point: 0.03 };
+        case "curve":
+            return { edge: 0.03, segment: 0.02 };
+        case "surface":
+            return { face: 0.03 };
+        default:
+            return { edge: 0.008, segment: 0.008, face: 0.015, point: 0.015 };
     }
-);
-export const selectMeasurePickSettings = createSelector(
-    (state: RootState) => state.measure.snapKind,
-    (snapKind) => {
-        switch (snapKind) {
-            case "point":
-                return { point: 0.03 };
-            case "curve":
-                return { edge: 0.03, segment: 0.02 };
-            case "surface":
-                return { face: 0.03 };
-            default:
-                return { edge: 0.008, segment: 0.008, face: 0.008, point: 0.015 };
-        }
+});
+export const selectMeasurePickSettings = createSelector(selectEffectiveSnapKind, (snapKind) => {
+    switch (snapKind) {
+        case "point":
+            return { point: 0.03 };
+        case "curve":
+            return { edge: 0.03, segment: 0.02 };
+        case "surface":
+            return { face: 0.03 };
+        default:
+            return { edge: 0.008, segment: 0.008, face: 0.015, point: 0.015 };
     }
-);
+});
 
 const { actions, reducer } = measureSlice;
 export { actions as measureActions, reducer as measureReducer };

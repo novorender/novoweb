@@ -1,8 +1,10 @@
 import { ArrowBack, Delete, FilterAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, List, Typography, useTheme } from "@mui/material";
 import { type FormEvent, type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation, Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -19,6 +21,7 @@ import { type FormId, type FormObject, type FormRecord, type FormState, Template
 import { mapGuidsToIds } from "features/forms/utils";
 import { ObjectVisibility, Picker, renderActions, selectPicker } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 
 import { FormsListItem } from "./formsListItem";
@@ -30,6 +33,7 @@ export function FormsList() {
     const {
         state: { db },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const [abortController] = useAbortController();
     const sceneId = useSceneId();
     const theme = useTheme();
@@ -41,6 +45,9 @@ export function FormsList() {
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const isPickingLocation = useAppSelector(selectPicker) === Picker.FormLocation;
+    const checkPermission = useCheckProjectPermission();
+    const canDelete = checkPermission(Permission.FormsDelete);
+    const canAdd = checkPermission(Permission.FormsManage);
 
     const dispatchHighlightCollections = useDispatchHighlightCollections();
 
@@ -56,17 +63,17 @@ export function FormsList() {
     >(
         template?.type === TemplateType.Search
             ? template.objects!.map((object: FormObject) => ({
-                ...object,
-                id: -1,
-                formState: template.forms![object.guid].state,
-            }))
+                  ...object,
+                  id: -1,
+                  formState: template.forms![object.guid].state,
+              }))
             : template?.type === TemplateType.Location
-                ? Object.entries(template?.forms ?? {}).map(([id, form]: [string, FormRecord]) => ({
+              ? Object.entries(template?.forms ?? {}).map(([id, form]: [string, FormRecord]) => ({
                     ...form,
                     formState: form.state,
                     id: Number(id),
                 }))
-                : []
+              : [],
     );
     const [loadingItems, setLoadingItems] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -84,7 +91,7 @@ export function FormsList() {
                     ...form,
                     formState: form.state,
                     id: Number(id),
-                })) ?? []
+                })) ?? [],
             );
             dispatch(
                 formsActions.setTemplateLocationForms({
@@ -94,7 +101,7 @@ export function FormsList() {
                         templateId: template.id!,
                         id: id!,
                     })),
-                })
+                }),
             );
         } else if (template.type === TemplateType.Search) {
             setItems(
@@ -102,7 +109,7 @@ export function FormsList() {
                     ...object,
                     id: -1,
                     formState: template.forms![object.guid].state,
-                })) ?? []
+                })) ?? [],
             );
         }
     }, [dispatch, template]);
@@ -125,7 +132,7 @@ export function FormsList() {
                 prevItems.map((item) => {
                     const id = map[(item as FormObject).guid];
                     return { ...item, id } as FormObject & { formState: FormState };
-                })
+                }),
             );
             setLoadingItems(false);
         };
@@ -157,7 +164,7 @@ export function FormsList() {
                 dispatch(formsActions.setCurrentFormsList(null));
             }
         },
-        [history.location.pathname, dispatch, dispatchHighlighted, dispatchHighlightCollections, template]
+        [history.location.pathname, dispatch, dispatchHighlighted, dispatchHighlightCollections, template],
     );
 
     useEffect(() => {
@@ -185,12 +192,16 @@ export function FormsList() {
 
             return matches;
         },
-        [formFilters]
+        [formFilters],
     );
 
     useEffect(() => {
         if (template?.type !== TemplateType.Search) {
-            dispatch(renderActions.setDefaultVisibility(items.length > 0 ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral));
+            dispatch(
+                renderActions.setDefaultVisibility(
+                    items.length > 0 ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral,
+                ),
+            );
             return;
         }
 
@@ -208,10 +219,10 @@ export function FormsList() {
 
         dispatchHighlightCollections(highlightCollectionsActions.setIds(HighlightCollection.FormsNew, newGroup));
         dispatchHighlightCollections(
-            highlightCollectionsActions.setIds(HighlightCollection.FormsOngoing, ongoingGroup)
+            highlightCollectionsActions.setIds(HighlightCollection.FormsOngoing, ongoingGroup),
         );
         dispatchHighlightCollections(
-            highlightCollectionsActions.setIds(HighlightCollection.FormsCompleted, finishedGroup)
+            highlightCollectionsActions.setIds(HighlightCollection.FormsCompleted, finishedGroup),
         );
     }, [items, formFilters, dispatch, dispatchHighlightCollections, filterItems, template]);
 
@@ -252,7 +263,7 @@ export function FormsList() {
             }
             history.push("/");
         },
-        [deleteTemplate, dispatch, history, isPickingLocation, sceneId, template, templateId]
+        [deleteTemplate, dispatch, history, isPickingLocation, sceneId, template, templateId],
     );
 
     return isDeleting ? (
@@ -275,7 +286,7 @@ export function FormsList() {
                         <Box display="flex">
                             <Button color="grey" onClick={handleBackClick}>
                                 <ArrowBack sx={{ mr: 1 }} />
-                                Back
+                                {t("back")}
                             </Button>
                             <Button
                                 color="grey"
@@ -285,7 +296,7 @@ export function FormsList() {
                                 aria-expanded={Boolean(filterMenuAnchor)}
                             >
                                 <FilterAlt sx={{ mr: 1 }} />
-                                Filters
+                                {t("filters")}
                             </Button>
                             {template?.type === TemplateType.Location && (
                                 <FormControlLabel
@@ -295,9 +306,10 @@ export function FormsList() {
                                             color="primary"
                                             checked={isPickingLocation}
                                             onChange={addLocationForm}
+                                            disabled={!canAdd}
                                         />
                                     }
-                                    label={<Box fontSize={14}>Add</Box>}
+                                    label={<Box fontSize={14}>{t("add")}</Box>}
                                     sx={{ ml: 1 }}
                                 />
                             )}
@@ -305,10 +317,10 @@ export function FormsList() {
                         <Button
                             color="grey"
                             onClick={() => setIsDeleting(true)}
-                            disabled={loadingTemplate || loadingItems || !items.length}
+                            disabled={!canDelete || loadingTemplate || loadingItems || !items.length}
                         >
                             <Delete fontSize="small" sx={{ mr: 1 }} />
-                            Delete all
+                            {t("deleteAll")}
                         </Button>
                     </Box>
                 </>
@@ -322,11 +334,13 @@ export function FormsList() {
                 <Typography px={1} fontWeight={600} mb={1}>
                     {template?.title ?? ""}
                 </Typography>
-                {items.length === 0 && <Typography px={1}>No forms have been added yet.</Typography>}
+                {items.length === 0 && <Typography px={1}>{t("noForms")}</Typography>}
                 <List dense disablePadding>
-                    {items?.filter(filterItems).map((item) => (
-                        <FormsListItem key={"guid" in item ? item.guid : item.id} item={item} formId={templateId} />
-                    ))}
+                    {items
+                        ?.filter(filterItems)
+                        .map((item) => (
+                            <FormsListItem key={"guid" in item ? item.guid : item.id} item={item} formId={templateId} />
+                        ))}
                 </List>
             </ScrollBox>
             <FormFilterMenu

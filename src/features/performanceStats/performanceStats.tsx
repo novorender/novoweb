@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectDeviceProfile } from "features/render";
-import { selectIsOnline } from "slices/explorer";
+import { selectIsOnline, selectNewDesign } from "slices/explorer";
 
 const canvas: HTMLCanvasElement = document.createElement("canvas") as HTMLCanvasElement;
 canvas.width = 1;
@@ -40,6 +40,7 @@ export function PerformanceStats() {
     const drawcalls = useRef<HTMLSpanElement>(null);
     const resolutionScale = useRef<HTMLSpanElement>(null);
     const detailBias = useRef<HTMLSpanElement>(null);
+    const newDesign = useAppSelector(selectNewDesign);
 
     window.view = view;
 
@@ -97,8 +98,8 @@ export function PerformanceStats() {
             color="lime"
             fontWeight={"bold"}
             position="absolute"
-            top={0}
-            left={0}
+            top={newDesign ? 80 : 0}
+            left={newDesign ? 80 : 0}
             px={1}
             bgcolor={"rgba(0,0,0,0.4)"}
             sx={{ pointerEvents: "none", "& pre": { textWrap: "wrap" } }}

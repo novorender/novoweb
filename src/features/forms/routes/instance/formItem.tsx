@@ -1,4 +1,4 @@
-import { NotInterested, OpenInNew } from "@mui/icons-material";
+import { Close, NotInterested, OpenInNew } from "@mui/icons-material";
 import {
     Box,
     Checkbox,
@@ -13,10 +13,39 @@ import {
     Radio,
     RadioGroup,
     Select,
+    Snackbar,
+    Typography,
+    useTheme,
 } from "@mui/material";
-import { type Dispatch, type MouseEvent, type SetStateAction, useState } from "react";
+import { DatePicker, DateTimePicker, TimePicker } from "@mui/x-date-pickers";
+import {
+    ChangeEvent,
+    type Dispatch,
+    FormEvent,
+    type MouseEvent,
+    type SetStateAction,
+    useCallback,
+    useState,
+} from "react";
+import { useTranslation } from "react-i18next";
+import { FixedSizeList } from "react-window";
 
-import { type FormItem, FormItemType } from "../../types";
+import { Confirmation, ImgModal, withCustomScrollbar } from "components";
+import AddFilesButton from "features/forms/addFilesButton";
+import { useUploadFilesMutation } from "features/forms/api";
+import { FILE_SIZE_LIMIT } from "features/forms/constants";
+import { useSceneId } from "hooks/useSceneId";
+import { useToggle } from "hooks/useToggle";
+
+import {
+    DateTimeItem,
+    type FileItem as FileItemType,
+    type FormFileUploadResponse,
+    type FormItem,
+    FormItemType,
+    type FormsFile,
+} from "../../types";
+import FileItem from "./formItems/fileItem";
 
 // Based on https://github.com/microsoft/vscode/blob/main/src/vs/workbench/contrib/debug/browser/linkDetector.ts
 function mapLinks(text?: string[] | null) {
@@ -31,7 +60,7 @@ function mapLinks(text?: string[] | null) {
             '"]{2,}[^\\s' +
             CONTROL_CODES +
             "\"')}\\],:;.!?]",
-        "ug"
+        "ug",
     );
 
     const result = [] as (string | JSX.Element)[];
@@ -56,7 +85,7 @@ function mapLinks(text?: string[] | null) {
                 <Link href={href} target="_blank" rel="noopener noreferrer" key={href}>
                     {linkText}
                     <OpenInNew fontSize="small" style={{ marginLeft: "5px" }} />
-                </Link>
+                </Link>,
             );
             currentIndex = match.index + linkText.length;
         }
@@ -71,12 +100,42 @@ function mapLinks(text?: string[] | null) {
     return result;
 }
 
-const FormItemHeader = ({ item, toggleRelevant }: { item: FormItem; toggleRelevant?: () => void }) => (
+const StyledFixedSizeList = withCustomScrollbar(FixedSizeList) as typeof FixedSizeList;
+
+const FormItemMessage = ({ open, message, onClose }: { open: boolean; message: string; onClose: () => void }) => (
+    <Snackbar
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        sx={{
+            width: { xs: "auto", sm: 350 },
+            bottom: { xs: "auto", sm: 24 },
+            top: { xs: 24, sm: "auto" },
+        }}
+        autoHideDuration={2500}
+        open={open}
+        onClose={onClose}
+        message={message}
+        action={
+            <IconButton size="small" aria-label="close" color="inherit" onClick={onClose}>
+                <Close fontSize="small" />
+            </IconButton>
+        }
+    />
+);
+
+const FormItemHeader = ({
+    item,
+    toggleRelevant,
+    hideToggle = false,
+}: {
+    item: FormItem;
+    toggleRelevant?: () => void;
+    hideToggle?: boolean;
+}) => (
     <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
         <FormLabel component="legend" sx={{ fontWeight: 600, color: "text.primary" }}>
             {item.title}
         </FormLabel>
-        {!item.required && typeof toggleRelevant === "function" && (
+        {!hideToggle && !item.required && typeof toggleRelevant === "function" && (
             <IconButton size="small" color={item.relevant ? "secondary" : "primary"} onClick={toggleRelevant}>
                 <NotInterested fontSize="small" />
             </IconButton>
@@ -84,23 +143,56 @@ const FormItemHeader = ({ item, toggleRelevant }: { item: FormItem; toggleReleva
     </Box>
 );
 
-export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatch<SetStateAction<FormItem[]>> }) {
+export function FormItem({
+    item,
+    setItems,
+    disabled,
+}: {
+    item: FormItem;
+    setItems: Dispatch<SetStateAction<FormItem[]>>;
+    disabled?: boolean;
+}) {
+    const { t } = useTranslation();
+    const sceneId = useSceneId();
+    const theme = useTheme();
+    const [uploadFiles, { isLoading: uploading }] = useUploadFilesMutation();
+
+    const [modalOpen, toggleModal] = useToggle();
+    const [fileIndexToDelete, setFileIndexToDelete] = useState<number | null>(null);
+    const [infoMessage, setInfoMessage] = useState<string>("");
     const [editing, setEditing] = useState(false);
     const [isRelevant, setIsRelevant] = useState(item.required);
+    const [activeImage, setActiveImage] = useState("");
 
-    const handleChange = (value: string) => {
+    const handleChange = (value: string | string[] | Date | null | FormsFile[]) => {
         if (!editing) {
             setEditing(true);
         }
         setItems((state) =>
-            state.map((_item) =>
-                _item === item
-                    ? {
-                          ...item,
-                          value: value ? [value] : null,
-                      }
-                    : _item
-            )
+            state.map((_item) => {
+                if (_item === item) {
+                    switch (item.type) {
+                        case FormItemType.Date:
+                        case FormItemType.Time:
+                        case FormItemType.DateTime:
+                            return {
+                                ...item,
+                                value: value as Date | null,
+                            } as DateTimeItem;
+                        case FormItemType.File:
+                            return {
+                                ...item,
+                                value: value as FormsFile[],
+                            };
+                        default:
+                            return {
+                                ...item,
+                                value: Array.isArray(value) ? value : value ? [value as string] : null,
+                            } as FormItem;
+                    }
+                }
+                return _item;
+            }),
         );
     };
 
@@ -114,10 +206,9 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                     ? {
                           ...item,
                           relevant,
-                          value: item.value ?? null,
                       }
-                    : _item
-            )
+                    : _item,
+            ),
         );
     };
 
@@ -136,10 +227,93 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         setEditing(false);
     };
 
+    const closeSnackbar = () => setInfoMessage("");
+
+    const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>, itemId: string) => {
+        const files: FormsFile[] = Array.from(e.target.files ?? []);
+        if (files.length === 0) {
+            return;
+        }
+
+        let showFileSizeWarning = false;
+        const filteredFiles = files.filter((file) => {
+            if (file.size > FILE_SIZE_LIMIT * 1024 * 1024) {
+                showFileSizeWarning = true;
+                return false;
+            }
+            return true;
+        });
+
+        if (showFileSizeWarning) {
+            setInfoMessage(`Some files were not added because they are larger than ${FILE_SIZE_LIMIT} MB.`);
+        }
+
+        if (filteredFiles.length === 0) {
+            return;
+        }
+
+        const resp = await uploadFiles({ projectId: sceneId, files: filteredFiles, template: false });
+        if ("data" in resp) {
+            filteredFiles.forEach((file) => {
+                if (resp.data[file.name]) {
+                    file.checksum = (resp.data[file.name] as FormFileUploadResponse)?.checksum;
+                    file.url = (resp.data[file.name] as FormFileUploadResponse)?.url;
+                }
+            });
+        } else {
+            setInfoMessage("An error occurred while uploading files. Please try again.");
+        }
+
+        setItems((state) =>
+            state.map((item) => {
+                if (item.id === itemId) {
+                    return item.type === FormItemType.File
+                        ? ({
+                              ...item,
+                              value: [...(item.value ?? []), ...(filteredFiles as { checksum?: string }[])].filter(
+                                  (file, idx, arr) => idx === arr.findIndex((f) => f.checksum === file.checksum),
+                              ),
+                          } as FileItemType)
+                        : item;
+                }
+                return item;
+            }),
+        );
+    };
+
+    const handleRemoveFile = useCallback((item: FileItemType, index: number) => {
+        setFileIndexToDelete(index);
+    }, []);
+
+    const deleteFile = useCallback(
+        (e: FormEvent) => {
+            e.preventDefault();
+            if (Number.isInteger(fileIndexToDelete) && item.type === FormItemType.File) {
+                setItems((state) =>
+                    state.map((_item) =>
+                        _item.id === item.id
+                            ? ({
+                                  ..._item,
+                                  value: (_item.value as FormsFile[]).filter((_, index) => index !== fileIndexToDelete),
+                              } as FileItemType)
+                            : _item,
+                    ),
+                );
+            }
+            setFileIndexToDelete(null);
+        },
+        [fileIndexToDelete, item, setItems],
+    );
+
+    const openImageModal = (url: string = "") => {
+        setActiveImage(url);
+        toggleModal();
+    };
+
     switch (item.type) {
         case FormItemType.Checkbox:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
                     <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
                     <FormGroup row>
                         {item.options.map((option) => (
@@ -161,8 +335,8 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                                                           ? [...(item.value || []), option]
                                                           : (item.value || []).filter((value) => value !== option),
                                                   }
-                                                : _item
-                                        )
+                                                : _item,
+                                        ),
                                     )
                                 }
                                 label={option}
@@ -174,7 +348,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
 
         case FormItemType.YesNo:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
                     <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
                     <RadioGroup
                         value={item.value ? item.value[0] : ""}
@@ -191,7 +365,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
 
         case FormItemType.TrafficLight:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
                     <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
                     <RadioGroup
                         value={item.value ? item.value[0] : ""}
@@ -210,7 +384,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         case FormItemType.Dropdown:
             return (
                 <FormControl
-                    disabled={!item.required && !item.relevant}
+                    disabled={disabled || (!item.required && !item.relevant)}
                     component="fieldset"
                     fullWidth
                     size="small"
@@ -234,7 +408,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         case FormItemType.Input:
             return (
                 <FormControl
-                    disabled={!item.required && !item.relevant && !item.value}
+                    disabled={disabled || (!item.required && !item.relevant && !item.value)}
                     component="fieldset"
                     fullWidth
                     size="small"
@@ -283,6 +457,109 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                             </Box>
                         ))}
                     </Box>
+                </FormControl>
+            );
+
+        case FormItemType.Date:
+            return (
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <DatePicker
+                        value={item.value}
+                        onChange={handleChange}
+                        disabled={!item.required && !item.relevant}
+                        slotProps={{ textField: { size: "small", fullWidth: true } }}
+                    />
+                </FormControl>
+            );
+
+        case FormItemType.Time:
+            return (
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <TimePicker
+                        value={item.value}
+                        onChange={handleChange}
+                        disabled={!item.required && !item.relevant}
+                        slotProps={{ textField: { size: "small", fullWidth: true } }}
+                    />
+                </FormControl>
+            );
+
+        case FormItemType.DateTime:
+            return (
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <DateTimePicker
+                        value={item.value}
+                        onChange={handleChange}
+                        disabled={!item.required && !item.relevant}
+                        slotProps={{ textField: { size: "small", fullWidth: true } }}
+                    />
+                </FormControl>
+            );
+
+        case FormItemType.File:
+            return (
+                <FormControl fullWidth>
+                    <FormItemHeader
+                        item={item}
+                        toggleRelevant={toggleRelevant}
+                        hideToggle={Number.isInteger(fileIndexToDelete)}
+                    />
+                    {Number.isInteger(fileIndexToDelete) ? (
+                        <Confirmation
+                            title={`Delete file "${(item.value as FormsFile[])[fileIndexToDelete as number].name}"?`}
+                            confirmBtnText="Delete"
+                            textAlign="center"
+                            onCancel={() => setFileIndexToDelete(null)}
+                            component="form"
+                            onSubmit={deleteFile}
+                            headerShadow={false}
+                        />
+                    ) : (
+                        <>
+                            {item.value && !!item.value.length ? (
+                                <StyledFixedSizeList
+                                    style={{
+                                        paddingLeft: theme.spacing(1),
+                                        paddingRight: theme.spacing(1),
+                                        marginBottom: theme.spacing(1),
+                                    }}
+                                    height={item.value.length * 80}
+                                    width="100%"
+                                    itemSize={80}
+                                    overscanCount={3}
+                                    itemCount={item.value.length}
+                                >
+                                    {({ index, style }) => (
+                                        <FileItem
+                                            style={style}
+                                            file={item.value![index]}
+                                            isReadonly={item.readonly || !isRelevant}
+                                            activeImage={activeImage}
+                                            isModalOpen={modalOpen}
+                                            removeFile={() => handleRemoveFile(item, index)}
+                                            openImageModal={openImageModal}
+                                        />
+                                    )}
+                                </StyledFixedSizeList>
+                            ) : (
+                                <Typography variant="body2" my={1}>
+                                    {t("noFilesUploaded")}
+                                </Typography>
+                            )}
+                            <AddFilesButton
+                                accept={item.accept}
+                                multiple={item.multiple}
+                                onChange={(e) => handleFileUpload(e, item.id!)}
+                                uploading={uploading}
+                                disabled={disabled || !isRelevant}
+                            />
+                        </>
+                    )}
+                    <ImgModal src={activeImage ?? ""} open={modalOpen} onClose={() => toggleModal()} anonymous />
+                    <FormItemMessage open={infoMessage.length > 0} message={infoMessage} onClose={closeSnackbar} />
                 </FormControl>
             );
 

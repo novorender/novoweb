@@ -1,17 +1,20 @@
 import { Settings } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
 
 import { useGetOmega365ProjectConfigQuery } from "apis/dataV2/dataV2Api";
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import SimpleSnackbar from "components/simpleSnackbar";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import WidgetList from "features/widgetList/widgetList";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import ConfigEditor from "./routes/configEditor";
 import Delete from "./routes/delete";
@@ -22,6 +25,7 @@ import { selectOmega365Config, selectSnackbarMessage } from "./selectors";
 import { omega365Actions } from "./slice";
 
 export default function Omega365() {
+    const { t } = useTranslation();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.omega365.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.omega365.key);
@@ -37,8 +41,8 @@ export default function Omega365() {
                     data ?? {
                         baseURL: "",
                         views: [],
-                    }
-                )
+                    },
+                ),
             );
             dispatch(omega365Actions.setSelectedViewId(data?.views?.[0]?.id ?? null));
         }
@@ -47,14 +51,19 @@ export default function Omega365() {
     return (
         <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.omega365} WidgetMenu={WidgetMenu} disableShadow />
+                <WidgetHeader
+                    widget={featuresConfig.omega365}
+                    WidgetMenu={WidgetMenu}
+                    disableShadow
+                    menuOpen={menuOpen}
+                />
                 {minimized || menuOpen ? null : isLoading ? (
                     <Box>
                         <LinearProgress />
                     </Box>
                 ) : isError ? (
                     <Box p={1} pt={2}>
-                        An error occured while loading Omega365 configuration for the project.
+                        {t("omega365ConfigError")}
                     </Box>
                 ) : (
                     <Switch>
@@ -100,12 +109,14 @@ function WidgetSnackbar() {
 }
 
 function WidgetMenu(props: MenuProps) {
+    const { t } = useTranslation();
     const history = useHistory();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
     const config = useAppSelector(selectOmega365Config);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntOmegaPims365Manage);
     const dispatch = useAppDispatch();
 
-    if (!isAdmin) {
+    if (!canManage) {
         return null;
     }
 
@@ -121,7 +132,7 @@ function WidgetMenu(props: MenuProps) {
                 <ListItemIcon>
                     <Settings fontSize="small" />
                 </ListItemIcon>
-                <ListItemText>Settings</ListItemText>
+                <ListItemText>{t("settings")}</ListItemText>
             </MenuItem>
         </Menu>
     );

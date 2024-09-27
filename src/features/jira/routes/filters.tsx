@@ -1,6 +1,7 @@
 import { ArrowBack } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, useTheme } from "@mui/material";
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -9,6 +10,7 @@ import { Divider, ScrollBox, Switch as SwitchInput } from "components";
 import { initialFilters, jiraActions, JiraFilterType, selectJiraFilters } from "../jiraSlice";
 
 export function Filters() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const dispatch = useAppDispatch();
@@ -35,7 +37,7 @@ export function Filters() {
                 </Box>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
-                    Back
+                    {t("back")}
                 </Button>
             </Box>
             <ScrollBox
@@ -61,7 +63,7 @@ export function Filters() {
                         }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Assigned to me
+                                {t("assignedToMe")}
                             </Box>
                         }
                     />
@@ -77,7 +79,7 @@ export function Filters() {
                         }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Reported by me
+                                {t("reportedByMe")}
                             </Box>
                         }
                     />
@@ -93,7 +95,7 @@ export function Filters() {
                         }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Only show unresolved
+                                {t("onlyShowUnresolved")}
                             </Box>
                         }
                     />
@@ -109,7 +111,7 @@ export function Filters() {
                         }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Only show unlinked / linked
+                                {t("onlyShowUnlinked/Linked")}
                             </Box>
                         }
                     />
@@ -123,10 +125,10 @@ export function Filters() {
                         type="reset"
                         fullWidth
                     >
-                        Default filters
+                        {t("defaultFilters")}
                     </Button>
                     <Button sx={{ ml: 2 }} fullWidth variant="contained" type="submit">
-                        Save
+                        {t("save")}
                     </Button>
                 </Box>
             </ScrollBox>

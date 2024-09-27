@@ -3,9 +3,10 @@ import { LoadingButton } from "@mui/lab";
 import { Autocomplete, Box, Button, CircularProgress, Typography } from "@mui/material";
 import { mergeRecursive } from "@novorender/api";
 import { FormEventHandler, SyntheticEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveCustomPropertiesMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
@@ -22,6 +23,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const {
         state: { scene },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const isAdminScene = useAppSelector(selectIsAdminScene);
     const token = useAppSelector(selectDitioAccessToken);
@@ -39,6 +41,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const allProjects = _allProjects
         ? Object.fromEntries(_allProjects.map((project) => [project.id, project]))
         : undefined;
+    const [saveCustomProperties] = useSaveCustomPropertiesMutation();
 
     // const handleProjectsChange = (_e: SyntheticEvent, value: any[]) => {
     const handleProjectsChange = (_e: SyntheticEvent, value: string | null) => {
@@ -75,9 +78,9 @@ export function Settings({ sceneId }: { sceneId: string }) {
                 },
             });
 
-            dataApi.putScene(updated);
+            saveCustomProperties({ projectId: sceneId, data: updated.customProperties }).unwrap();
         } catch {
-            console.warn(`Failed to save ${featuresConfig.ditio.name} settings.`);
+            console.warn(`Failed to save ${t(featuresConfig.ditio.nameKey)} settings.`);
         }
 
         history.push("/");
@@ -93,7 +96,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                     <Box display="flex">
                         <Button onClick={() => history.goBack()} disabled={!currentProjects.length} color="grey">
                             <ArrowBack sx={{ mr: 1 }} />
-                            Back
+                            {t("back")}
                         </Button>
                     </Box>
                 </>
@@ -105,7 +108,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
             )}
             <ScrollBox p={1} component="form" onSubmit={handleSubmit}>
                 <Typography fontWeight={600} mb={2}>
-                    Settings
+                    {t("settings")}
                 </Typography>
                 <Autocomplete
                     sx={{ mb: 3 }}
@@ -159,7 +162,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                             history.goBack();
                         }}
                     >
-                        Cancel
+                        {t("cancel")}
                     </Button>
                     <LoadingButton
                         type="submit"
@@ -171,11 +174,12 @@ export function Settings({ sceneId }: { sceneId: string }) {
                         disabled={!projects.length || projectsError || isLoadingProjects}
                         loadingIndicator={
                             <Box display="flex" alignItems="center">
-                                Save <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
+                                {t("save")}
+                                <CircularProgress sx={{ ml: 1 }} color="inherit" size={16} />
                             </Box>
                         }
                     >
-                        Save
+                        {t("save")}
                     </LoadingButton>
                 </Box>
             </ScrollBox>

@@ -1,5 +1,6 @@
 import { Close, Code } from "@mui/icons-material";
 import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Snackbar } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { matchPath, MemoryRouter, Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -33,7 +34,13 @@ export default function Groups() {
     return (
         <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.groups} WidgetMenu={WidgetMenu} disableShadow />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.groups}
+                    WidgetMenu={WidgetMenu}
+                    disableShadow
+                />
 
                 {showSnackbar ? (
                     <Snackbar
@@ -115,6 +122,7 @@ export function WidgetMenu(props: MenuProps) {
 }
 
 function InputJsonMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const match = useRouteMatch();
 
@@ -133,7 +141,7 @@ function InputJsonMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
                     <ListItemIcon>
                         <Code />
                     </ListItemIcon>
-                    <ListItemText>input JSON</ListItemText>
+                    <ListItemText>{t("inputJSON")}</ListItemText>
                 </>
             </MenuItem>
         </div>

@@ -4,6 +4,7 @@ import { getDataV2DynamicBaseQuery } from "apis/dataV2/utils";
 
 import {
     type Form,
+    type FormFileUploadResponse,
     type FormId,
     type FormInstanceId,
     type FormObjectGuid,
@@ -200,11 +201,29 @@ export const formsApi = createApi({
             }),
             invalidatesTags: (_result, _error) => [{ type: "Template" as const, id: "ID_LIST" }],
         }),
+        uploadFiles: builder.mutation<
+            { [key: string]: FormFileUploadResponse },
+            { projectId: ProjectId; files: File[]; template?: boolean }
+        >({
+            query: ({ projectId, files, template = false }) => {
+                const filesData = new FormData();
+                for (const file of files) {
+                    filesData.append(file.name, file);
+                }
+                return {
+                    body: filesData,
+                    url: `projects/${projectId}/files?template=${template}`,
+                    method: "POST",
+                    formData: true,
+                };
+            },
+        }),
     }),
 });
 
 export const {
     useListTemplatesQuery,
+    useLazyListTemplatesQuery,
     useGetSearchFormQuery,
     useGetLocationFormQuery,
     useGetSearchFormsQuery,
@@ -217,4 +236,5 @@ export const {
     useDeleteLocationFormMutation,
     useDeleteTemplateMutation,
     useDeleteAllFormsMutation,
+    useUploadFilesMutation,
 } = formsApi;

@@ -1,4 +1,5 @@
 import { dataApi } from "apis/dataV1";
+import { Permission } from "apis/dataV2/permissions";
 import { WidgetKey } from "config/features";
 import { User } from "slices/authSlice";
 import { base64UrlEncode, generateRandomString, sha256 } from "utils/misc";
@@ -39,16 +40,6 @@ export async function login(
         token: res.token,
         user,
     };
-}
-
-export async function getAccessToken(token: string): Promise<string> {
-    return fetch(dataApi.serviceUrl + "/user/token", {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    })
-        .then((r) => r.text())
-        .catch(() => "");
 }
 
 export async function getUser(accessToken: string): Promise<User | undefined> {
@@ -103,4 +94,10 @@ export function createOAuthStateString(state: OAuthState): string {
     sessionStorage.setItem(id, stateStr);
 
     return id;
+}
+
+export function checkPermission(permissions: Set<Permission>, permission: Permission) {
+    // permissions are expected to have both explicit and implicit permissions,
+    // so we don't have to check for parent permissions
+    return permissions.has(permission);
 }

@@ -1,6 +1,7 @@
 import { ArrowBack } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, useTheme } from "@mui/material";
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
 import { Divider, IosSwitch, LinearProgress, ScrollBox, TextField, Tooltip } from "components";
@@ -15,6 +16,7 @@ import {
 import { IncludeViewpoint, NewViewpoint } from "../includeViewpoint";
 
 export function CreateComment() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
 
@@ -61,7 +63,7 @@ export function CreateComment() {
             <Box display="flex" alignItems="center" boxShadow={theme.customShadows.widgetHeader}>
                 <Button onClick={() => history.goBack()} color="grey">
                     <ArrowBack sx={{ mr: 1 }} />
-                    Back
+                    {t("back")}
                 </Button>
                 <Divider orientation="vertical" sx={{ height: "80%" }} />
                 <Tooltip title="Includes the current view state at the time this is enabled. Toggle to update.">
@@ -76,7 +78,7 @@ export function CreateComment() {
                         }
                         label={
                             <Box fontSize={14} lineHeight={"24.5px"} fontWeight={500}>
-                                Include viewpoint
+                                {t("includeViewpoint")}
                             </Box>
                         }
                         labelPlacement="start"
@@ -108,7 +110,7 @@ export function CreateComment() {
                                 disabled={disabled}
                                 onClick={() => history.goBack()}
                             >
-                                Cancel
+                                {t("cancel")}
                             </Button>
                             <Button
                                 sx={{ ml: 2 }}
@@ -117,7 +119,7 @@ export function CreateComment() {
                                 type="submit"
                                 disabled={disabled || (includeViewpoint && !viewpoint)}
                             >
-                                Add comment
+                                {t("addComment")}
                             </Button>
                         </Box>
                     </form>

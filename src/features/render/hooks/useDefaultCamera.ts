@@ -1,12 +1,11 @@
-import { useGetProjectQuery } from "apis/dataV2/dataV2Api";
+import { useAppSelector } from "app/redux-store-interactions";
 import { type CadCamera } from "features/render/types";
-import { useSceneId } from "hooks/useSceneId";
+import { selectProjectV2Info } from "slices/explorer";
 
 import { getDefaultCamera } from "../utils";
 
 export function useDefaultCamera(): CadCamera | undefined {
-    const sceneId = useSceneId();
-    const { data: project } = useGetProjectQuery({ projectId: sceneId });
+    const project = useAppSelector(selectProjectV2Info);
 
     const bb = project?.bounds;
     if (!bb) {

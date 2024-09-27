@@ -25,13 +25,14 @@ import {
     Typography,
 } from "@mui/material";
 import { MouseEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
-import { useAppSelector } from "app/redux-store-interactions";
+import { Permission } from "apis/dataV2/permissions";
 import { Tooltip } from "components";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { ColorPicker } from "features/colorPicker";
-import { selectHasAdminCapabilities } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { rgbToVec, vecToRgb } from "utils/color";
 
 export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
@@ -39,7 +40,7 @@ export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
         margin: 0;
         flex-grow: 0;
         padding: ${theme.spacing(0.5)} ${theme.spacing(4)} ${theme.spacing(0.5)} ${theme.spacing(1)};
-    `
+    `,
 );
 
 export const StyledCheckbox = styled(Checkbox)`
@@ -48,9 +49,11 @@ export const StyledCheckbox = styled(Checkbox)`
 `;
 
 export function Group({ group, disabled }: { group: ObjectGroup; disabled: boolean }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const match = useRouteMatch();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.GroupManage);
     const dispatchObjectGroups = useDispatchObjectGroups();
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -87,7 +90,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                     dispatchObjectGroups(
                         objectGroupsActions.update(group.id, {
                             status: selected ? GroupStatus.None : GroupStatus.Selected,
-                        })
+                        }),
                     );
                 }}
             >
@@ -110,7 +113,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                     dispatchObjectGroups(
                                         objectGroupsActions.update(group.id, {
                                             status: selected ? GroupStatus.None : GroupStatus.Selected,
-                                        })
+                                        }),
                                     )
                                 }
                             />
@@ -138,7 +141,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                 dispatchObjectGroups(
                                     objectGroupsActions.update(group.id, {
                                         status: hidden ? GroupStatus.None : GroupStatus.Hidden,
-                                    })
+                                    }),
                                 )
                             }
                         />
@@ -176,7 +179,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
             >
                 <Switch>
                     <Route path={match.path} exact>
-                        {(isAdmin
+                        {(canManage
                             ? [
                                   <MenuItem
                                       key="edit"
@@ -187,7 +190,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                       <ListItemIcon>
                                           <Edit fontSize="small" />
                                       </ListItemIcon>
-                                      <ListItemText>Edit</ListItemText>
+                                      <ListItemText>{t("edit")}</ListItemText>
                                   </MenuItem>,
                                   <MenuItem
                                       key="duplicate"
@@ -199,13 +202,13 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                       <ListItemIcon>
                                           <LibraryAdd fontSize="small" />
                                       </ListItemIcon>
-                                      <ListItemText>Duplicate</ListItemText>
+                                      <ListItemText>{t("duplicate")}</ListItemText>
                                   </MenuItem>,
                                   <MenuItem key="delete" onClick={() => history.push("/delete/" + group.id)}>
                                       <ListItemIcon>
                                           <Delete fontSize="small" />
                                       </ListItemIcon>
-                                      <ListItemText>Delete</ListItemText>
+                                      <ListItemText>{t("delete")}</ListItemText>
                                   </MenuItem>,
                               ]
                             : []
@@ -214,13 +217,13 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                 <ListItemIcon>
                                     <ColorLens sx={{ color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
                                 </ListItemIcon>
-                                <ListItemText>Color</ListItemText>
+                                <ListItemText>{t("color")}</ListItemText>
                             </MenuItem>,
                             <MenuItem key="opacity" onClick={() => history.replace(match.path + "/opacity")}>
                                 <ListItemIcon>
                                     <Opacity fontSize="small" />
                                 </ListItemIcon>
-                                <ListItemText>Hidden transparency</ListItemText>
+                                <ListItemText>{t("hiddenTransparency")}</ListItemText>
                             </MenuItem>,
                             <MenuItem
                                 key="frozen"
@@ -231,7 +234,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                                 group.status === GroupStatus.Frozen
                                                     ? GroupStatus.None
                                                     : GroupStatus.Frozen,
-                                        })
+                                        }),
                                     );
                                     closeMenu();
                                 }}
@@ -246,7 +249,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                 <ListItemText>
                                     {group.status === GroupStatus.Frozen ? "Unfreeze" : "Freeze"}
                                 </ListItemText>
-                            </MenuItem>
+                            </MenuItem>,
                         )}
                     </Route>
                     <Route path={match.path + "/opacity"} exact>

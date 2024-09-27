@@ -1,6 +1,7 @@
 import { ArrowDownward, DeleteSweep, SyncAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, Switch } from "@mui/material";
 import { ChangeEvent, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
@@ -42,6 +43,7 @@ import {
     clippingOutlineLaserActions,
     OutlineGroup,
     selectOutlineGroups,
+    selectOutlineLaser3d,
     selectOutlineLasers,
 } from "./outlineLaserSlice";
 
@@ -49,6 +51,7 @@ export default function ClippingOutline() {
     const {
         state: { view, db },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.outlineLaser.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.outlineLaser.key);
@@ -58,6 +61,7 @@ export default function ClippingOutline() {
     const dispatch = useAppDispatch();
     const picker = useAppSelector(selectPicker);
     const outlineLasers = useAppSelector(selectOutlineLasers);
+    const laser3d = useAppSelector(selectOutlineLaser3d);
     const cameraType = useAppSelector(selectCameraType);
     const defaultTopDownElevation = useAppSelector(selectDefaultTopDownElevation);
     const snapToNearestAxis = useAppSelector(selectTopDownSnapToAxis) === undefined;
@@ -108,19 +112,28 @@ export default function ClippingOutline() {
         }
     };
 
+    const toggleLaser = (_e: ChangeEvent<HTMLInputElement>, checked: boolean) => {
+        dispatch(clippingOutlineLaserActions.setLaser3d(checked));
+    };
+
     const handleTopDown = () => {
         dispatch(
             renderActions.setCamera({
                 type: CameraType.Orthographic,
                 goTo: getTopDownParams({ view, elevation: defaultTopDownElevation, snapToNearestAxis }),
-            })
+            }),
         );
     };
 
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.outlineLaser} disableShadow={menuOpen}>
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.outlineLaser}
+                    disableShadow={menuOpen}
+                >
                     {!menuOpen && !minimized ? (
                         <>
                             <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -130,7 +143,7 @@ export default function ClippingOutline() {
                                     disabled={cameraType === CameraType.Orthographic}
                                 >
                                     <ArrowDownward sx={{ mr: 1 }} />
-                                    Top-down
+                                    {t("topDown")}
                                 </Button>
                                 <FormControlLabel
                                     control={
@@ -139,7 +152,6 @@ export default function ClippingOutline() {
                                             size="medium"
                                             color="primary"
                                             checked={picker === Picker.OutlineLaser}
-                                            disabled={planes.length === 0}
                                             onChange={() => {
                                                 if (picker === Picker.OutlineLaser) {
                                                     dispatch(renderActions.setPicker(Picker.Object));
@@ -149,7 +161,7 @@ export default function ClippingOutline() {
                                             }}
                                         />
                                     }
-                                    label={<Box fontSize={14}>Laser</Box>}
+                                    label={<Box fontSize={14}>{t("laser")}</Box>}
                                 />
                                 <Button
                                     onClick={() => dispatch(clippingOutlineLaserActions.clear())}
@@ -157,7 +169,7 @@ export default function ClippingOutline() {
                                     disabled={!outlineLasers.length}
                                 >
                                     <DeleteSweep sx={{ mr: 1 }} />
-                                    Clear
+                                    {t("clear")}
                                 </Button>
                             </Box>
                         </>
@@ -177,12 +189,29 @@ export default function ClippingOutline() {
                         }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Select cross section
+                                {t("selectCrossSection")}
+                            </Box>
+                        }
+                    />
+                    <FormControlLabel
+                        sx={{ ml: 0, mb: 2 }}
+                        control={
+                            <Switch
+                                name="3 point laser"
+                                checked={laser3d && cameraType === CameraType.Pinhole && planes.length === 0}
+                                color="primary"
+                                onChange={toggleLaser}
+                                disabled={cameraType !== CameraType.Pinhole || planes.length > 0}
+                            />
+                        }
+                        label={
+                            <Box ml={1} fontSize={16}>
+                                {t("3PointLaser")}
                             </Box>
                         }
                     />
                     <Accordion>
-                        <AccordionSummary>Clipping plane</AccordionSummary>
+                        <AccordionSummary>{t("clippingPlane")}</AccordionSummary>
                         <AccordionDetails>
                             <Box flex="0 0 auto">
                                 <Box
@@ -205,14 +234,14 @@ export default function ClippingOutline() {
                                                         renderActions.setPicker(
                                                             picker === Picker.ClippingPlane
                                                                 ? Picker.Object
-                                                                : Picker.ClippingPlane
-                                                        )
+                                                                : Picker.ClippingPlane,
+                                                        ),
                                                     )
                                                 }
                                             />
                                         }
                                         labelPlacement="start"
-                                        label={<Box>Select</Box>}
+                                        label={<Box>{t("select")}</Box>}
                                     />
 
                                     <Button
@@ -223,7 +252,7 @@ export default function ClippingOutline() {
                                         disabled={!planes.length}
                                     >
                                         <DeleteSweep sx={{ mr: 1 }} />
-                                        Clear
+                                        {t("clear")}
                                     </Button>
                                 </Box>
                                 <Planes />
@@ -232,12 +261,12 @@ export default function ClippingOutline() {
                     </Accordion>
                     <Accordion>
                         <Accordion>
-                            <AccordionSummary>Model list</AccordionSummary>
+                            <AccordionSummary>{t("modelList")}</AccordionSummary>
                             <AccordionDetails>
                                 <Box flex="0 0 auto">
                                     <Button onClick={() => updateClippedFiles()} color="grey">
                                         <SyncAlt sx={{ mr: 1 }} />
-                                        Update
+                                        {t("update")}
                                     </Button>
 
                                     {clippedFiles.map((f, idx) => {

@@ -1,12 +1,15 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Redirect, useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress, ScrollBox } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
-import { selectConfig, selectHasAdminCapabilities } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
+import { selectConfig } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage, getFromStorage, saveToStorage } from "utils/storage";
 
@@ -21,10 +24,12 @@ import {
 let getTokensRequestInitialized = false;
 
 export function Auth() {
+    const { t } = useTranslation();
     const history = useHistory();
     const dispatch = useAppDispatch();
 
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntXsiteManageManage);
     const accessToken = useAppSelector(selectXsiteManageAccessToken);
     const site = useAppSelector(selectXsiteManageSite);
     const config = useAppSelector(selectXsiteManageConfig);
@@ -73,13 +78,13 @@ export function Auth() {
                             xsiteManageActions.setAccessToken({
                                 status: AsyncStatus.Success,
                                 data: res.data.id_token,
-                            })
+                            }),
                         );
                         dispatch(
                             xsiteManageActions.setRefreshToken({
                                 token: refreshToken.token,
                                 refreshIn: res.data.expires_in,
-                            })
+                            }),
                         );
                     } else {
                         throw res.error;
@@ -108,7 +113,7 @@ export function Auth() {
                 JSON.stringify({
                     token: tokensResponse.refresh_token,
                     expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
-                })
+                }),
             );
         } else {
             console.warn(tokensError);
@@ -125,21 +130,21 @@ export function Auth() {
 
         if (_site) {
             dispatch(xsiteManageActions.setSite(_site));
-        } else if (isAdmin) {
+        } else if (canManage) {
             history.push("/settings");
         } else if (!config.siteId) {
-            setError(`${featuresConfig.xsiteManage.name} has not yet been set up for this project.`);
+            setError(`${t(featuresConfig.xsiteManage.nameKey)} has not yet been set up for this project.`);
         } else {
-            setError(`You do not have access to the ${config.siteId} ${featuresConfig.xsiteManage.name} site.`);
+            setError(`You do not have access to the ${config.siteId} ${t(featuresConfig.xsiteManage.nameKey)} site.`);
         }
-    }, [sites, history, isAdmin, dispatch, config, site]);
+    }, [sites, history, canManage, dispatch, config, site, t]);
 
     return site ? (
         <Redirect to="/machines" />
     ) : error ? (
         <ErrorMsg>{error}</ErrorMsg>
     ) : sitesError || tokensError || accessToken.status === AsyncStatus.Error ? (
-        <ErrorMsg>An error occurred.</ErrorMsg>
+        <ErrorMsg>{t("errorOccurred")}</ErrorMsg>
     ) : (
         <Box position="relative">
             <LinearProgress />
