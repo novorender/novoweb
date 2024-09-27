@@ -595,5 +595,7 @@
     "[none]": "[none]",
     "intensityDescriptionHtml": "Intensity is recorded as the return strength of a laser beam, and is collected for each point. Novorender visualizes this in shades of gray where: <ul> <li>White is 1, and</li> <li>Black is 0</li> </ul> The color scale to the right is an indication of how this might look.",
     "rgbDescription": "The RGB color values correspond to the real-world appearance of the object or surface being scanned, making the point cloud visually detailed and realistic.",
-    "showStampForClassificationAndIntensityModes": "Show stamp in Classification and Intensity modes"
+    "showStampForClassificationAndIntensityModes": "Show stamp in Classification and Intensity modes",
+    "projectDoesNotHaveClassificationData": "Project does not have classification data",
+    "projectDoesNotHaveIntensityData": "Project does not have intensity data"
 }
