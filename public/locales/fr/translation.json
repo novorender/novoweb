@@ -579,5 +579,10 @@
     "toExitCurrentSelectionMode": "pour quitter le mode de sélection actuel",
     "copiedToClipboard": "Copié dans le presse-papiers",
     "showPlane": "Afficher le plan",
-    "hidePlane": "Masquer le plan"
+    "hidePlane": "Masquer le plan",
+    "createActivity": "Créer une activité",
+    "activityType": "Type d'activité",
+    "orgUnit": "Unité org.",
+    "objectId": "ID de l'objet",
+    "name": "Nom"
 }

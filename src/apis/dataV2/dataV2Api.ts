@@ -44,6 +44,29 @@ export const dataV2Api = createApi({
             query: ({ projectId, objectId, viewId }) =>
                 `/explorer/${projectId}/omega365/views/${viewId}/documents/${objectId}`,
         }),
+        getOmegaActivityTypes: builder.query<{ id: number; name: string }[], { projectId: string }>({
+            query: ({ projectId }) => `/explorer/${projectId}/omega365/activity-types`,
+            keepUnusedDataFor: 60 * 60,
+            transformResponse: idAndNameUniqueById,
+        }),
+        getOmegaOrgUnits: builder.query<{ id: number; name: string }[], { projectId: string }>({
+            query: ({ projectId }) => `/explorer/${projectId}/omega365/org-units`,
+            keepUnusedDataFor: 60 * 60,
+            transformResponse: idAndNameUniqueById,
+        }),
+        createOmegaActivity: builder.mutation<
+            { newActivityUrl: string },
+            {
+                projectId: string;
+                activity: { name: string; objectId: number; activityTypeId: number; orgUnitId: number };
+            }
+        >({
+            query: ({ projectId, activity }) => ({
+                url: `/explorer/${projectId}/omega365/activity`,
+                method: "POST",
+                body: activity,
+            }),
+        }),
         getPropertyTreeFavorites: builder.query<string[], { projectId: string }>({
             query: ({ projectId }) => `/explorer/${projectId}/propertytree/favorites`,
             keepUnusedDataFor: minutesToSeconds(10),
@@ -202,11 +225,24 @@ export const dataV2Api = createApi({
     }),
 });
 
+function idAndNameUniqueById(items: { id: number; name: string }[]) {
+    const result: typeof items = [];
+    for (const item of items) {
+        if (!result.some((e) => e.id === item.id)) {
+            result.push(item);
+        }
+    }
+    return result;
+}
+
 export const {
     useGetOmega365ProjectConfigQuery,
     useSetOmega365ProjectConfigMutation,
     useLazyPreviewOmega365ProjectViewConfigQuery,
     useGetOmega365ViewDocumentLinksQuery,
+    useGetOmegaActivityTypesQuery,
+    useGetOmegaOrgUnitsQuery,
+    useCreateOmegaActivityMutation,
     useGetArcgisWidgetConfigQuery,
     usePutArcgisWidgetConfigMutation,
     useGetPropertyTreeFavoritesQuery,

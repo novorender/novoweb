@@ -1,5 +1,6 @@
-import { Box, Divider, LinearProgress, Tab, Tabs, useTheme } from "@mui/material";
+import { Box, LinearProgress, Tab, Tabs } from "@mui/material";
 import { skipToken } from "@reduxjs/toolkit/query";
+import { useEffect } from "react";
 
 import { useGetOmega365ViewDocumentLinksQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -7,6 +8,7 @@ import { ScrollBox } from "components";
 import { selectMainObject } from "features/render";
 
 import DocumentList from "../components/documentList";
+import { ViewHeader } from "../components/viewHeader";
 import { selectOmega365Config, selectSelectedView, selectSelectedViewId } from "../selectors";
 import { omega365Actions } from "../slice";
 
@@ -19,11 +21,11 @@ export default function OmegaRoot({
     menuOpen: boolean;
     minimized: boolean;
 }) {
-    const theme = useTheme();
     const mainObject = useAppSelector(selectMainObject);
     const isObjectSelected = typeof mainObject === "number";
     const selectedViewId = useAppSelector(selectSelectedViewId);
     const view = useAppSelector(selectSelectedView);
+    const dispatch = useAppDispatch();
 
     const {
         data: documents,
@@ -32,17 +34,26 @@ export default function OmegaRoot({
     } = useGetOmega365ViewDocumentLinksQuery(
         projectId && mainObject && selectedViewId
             ? { projectId, objectId: mainObject, viewId: selectedViewId }
-            : skipToken
+            : skipToken,
     );
+
+    useEffect(() => {
+        dispatch(omega365Actions.setOmegaObjectId(null));
+    }, [dispatch, mainObject]);
+
+    useEffect(() => {
+        for (const doc of documents ?? []) {
+            const objectId = doc["Object_ID"];
+            if (objectId) {
+                dispatch(omega365Actions.setOmegaObjectId(objectId as number));
+                return;
+            }
+        }
+    }, [dispatch, documents]);
 
     return (
         <>
-            {/* Header */}
-            <Box boxShadow={theme.customShadows.widgetHeader}>
-                <Box px={1}>
-                    <Divider />
-                </Box>
-            </Box>
+            <ViewHeader />
 
             {!view ? (
                 <Box color="grey" m={4} textAlign="center">

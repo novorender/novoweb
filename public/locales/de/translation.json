@@ -579,5 +579,10 @@
     "toExitCurrentSelectionMode": "um den aktuellen Auswahlmodus zu beenden",
     "copiedToClipboard": "In die Zwischenablage kopiert",
     "showPlane": "Ebene anzeigen",
-    "hidePlane": "Ebene ausblenden"
+    "hidePlane": "Ebene ausblenden",
+    "createActivity": "Aktivität erstellen",
+    "activityType": "Aktivitätstyp",
+    "orgUnit": "Org-Einheit",
+    "objectId": "Objekt-ID",
+    "name": "Name"
 }

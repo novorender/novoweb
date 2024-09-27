@@ -7,6 +7,7 @@ const initialState = {
     configDraft: null as Omega365Configuration | null,
     selectedViewId: null as string | null,
     snackbarMessage: null as string | null,
+    omegaObjectId: null as number | null,
 };
 
 type State = typeof initialState;
@@ -26,6 +27,9 @@ export const omega365Slice = createSlice({
         },
         setSnackbarMessage: (state, action: PayloadAction<State["snackbarMessage"]>) => {
             state.snackbarMessage = action.payload;
+        },
+        setOmegaObjectId: (state, action: PayloadAction<State["omegaObjectId"]>) => {
+            state.omegaObjectId = action.payload;
         },
     },
 });

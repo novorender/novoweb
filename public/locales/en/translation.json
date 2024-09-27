@@ -579,5 +579,10 @@
     "toExitCurrentSelectionMode": "to exit current selection mode",
     "copiedToClipboard": "Copied to clipboard",
     "showPlane": "Show plane",
-    "hidePlane": "Hide plane"
+    "hidePlane": "Hide plane",
+    "createActivity": "Create activity",
+    "activityType": "Activity type",
+    "orgUnit": "Org unit",
+    "objectId": "Object ID",
+    "name": "Name"
 }

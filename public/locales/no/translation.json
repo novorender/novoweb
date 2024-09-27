@@ -579,5 +579,10 @@
     "toExitCurrentSelectionMode": "for å avslutte gjeldende valgmodus",
     "copiedToClipboard": "Kopiert til utklippstavlen",
     "showPlane": "Vis plan",
-    "hidePlane": "Skjul plan"
+    "hidePlane": "Skjul plan",
+    "createActivity": "Opprett aktivitet",
+    "activityType": "Aktivitetstype",
+    "orgUnit": "Org-enhet",
+    "objectId": "Objekt-ID",
+    "name": "Navn"
 }
