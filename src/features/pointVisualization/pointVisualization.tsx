@@ -1,5 +1,5 @@
 import { Edit, Settings } from "@mui/icons-material";
-import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
+import { Box, Button, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { MemoryRouter, Route, Switch, useHistory, useLocation } from "react-router-dom";
@@ -8,11 +8,12 @@ import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
+import { selectSelectedProfile } from "features/deviations";
 import { selectDefaultPointVisualization, selectPoints, selectTerrain, selectViewMode } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useToggle } from "hooks/useToggle";
-import { selectMaximized, selectMinimized } from "slices/explorer";
+import { explorerActions, selectMaximized, selectMinimized } from "slices/explorer";
 import { ViewMode } from "types/misc";
 
 import { Header } from "./components/header";
@@ -44,7 +45,8 @@ function PointVisualizationInner() {
     const dispatch = useAppDispatch();
     const defaultPointVisualization = useAppSelector(selectDefaultPointVisualization);
     const isEditing = useAppSelector(selectPointVisualizationOriginalState) !== undefined;
-    const isDeviationMode = useAppSelector(selectViewMode) === ViewMode.Deviations;
+    const deviationProfile = useAppSelector(selectSelectedProfile);
+    const isDeviationMode = useAppSelector(selectViewMode) === ViewMode.Deviations && deviationProfile;
     const history = useHistory();
     const location = useLocation();
 
@@ -60,6 +62,10 @@ function PointVisualizationInner() {
             history.push(path);
         }
     }, [history, defaultPointVisualization]);
+
+    const openDeviations = () => {
+        dispatch(explorerActions.forceOpenWidget(featuresConfig.deviations.key));
+    };
 
     return (
         <>
@@ -84,7 +90,11 @@ function PointVisualizationInner() {
                 >
                     {isDeviationMode ? (
                         <Typography textAlign="center" color="grey" m={2}>
-                            {t("pointVisualizationIsCurrentlyControlledByDeviationsWidget")}
+                            {t("pointVisualizationIsCurrentlyControlledBy")}{" "}
+                            <Button variant="text" onClick={openDeviations}>
+                                {t("deviationsWidget") + "."}
+                            </Button>{" "}
+                            {t("pleaseTurnDeviationsOffToUseTheSettingsInPointVisualisation")}
                         </Typography>
                     ) : (
                         <>
