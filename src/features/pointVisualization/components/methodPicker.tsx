@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 
 import { useAppDispatch } from "app/redux-store-interactions";
-import { Tooltip } from "components";
+import { TabWithTooltip } from "components/tabWithTooltip";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { renderActions } from "features/render";
 
@@ -27,17 +27,19 @@ export function MethodPicker() {
                 dispatch(renderActions.setPoints({ defaultPointVisualization: { kind: path.slice(1) } }));
             }}
         >
-            <Tooltip title={hasClassification ? "" : t("projectDoesNotHaveClassificationData")}>
-                <div>
-                    <Tab value="/classification" label={t("classification")} disabled={!hasClassification} />
-                </div>
-            </Tooltip>
+            <TabWithTooltip
+                value="/classification"
+                tooltipProps={{ title: hasClassification ? "" : t("projectDoesNotHaveClassificationData") }}
+                label={t("classification")}
+                disabled={!hasClassification}
+            />
             <Tab value="/elevation" label={t("elevation")} />
-            <Tooltip title={hasClassification ? "" : t("projectDoesNotHaveIntensityData")}>
-                <div>
-                    <Tab value="/intensity" label={t("intensity")} disabled={!hasIntensity} />
-                </div>
-            </Tooltip>
+            <TabWithTooltip
+                value="/intensity"
+                tooltipProps={{ title: hasIntensity ? "" : t("projectDoesNotHaveIntensityData") }}
+                label={t("intensity")}
+                disabled={!hasIntensity}
+            />
             <Tab value="/color" label={t("rgb")} />
         </Tabs>
     );

@@ -36,6 +36,12 @@ export function ClassificationView() {
         );
     };
 
+    useEffect(() => {
+        if (!isEditing) {
+            setGradient(originalGradient);
+        }
+    }, [isEditing, originalGradient]);
+
     const setKnots = (knots: LabeledKnot[]) => {
         updateGradient({ ...gradient, knots });
     };

@@ -35,6 +35,12 @@ export function ElevationView() {
         );
     };
 
+    useEffect(() => {
+        if (!isEditing) {
+            setGradient(originalGradient);
+        }
+    }, [isEditing, originalGradient]);
+
     const setKnots = (knots: Knot[]) => {
         updateGradient({ ...gradient, knots });
     };
@@ -116,10 +122,16 @@ function KnotInput({ knot, onChange, onDelete }: { knot: Knot; onChange: (knot: 
     const { t } = useTranslation();
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
 
-    const [localKnot, setLocalKnot] = useState(knot);
+    const [localKnot, setLocalKnot] = useState({
+        position: `${knot.position}`,
+        color: knot.color,
+    });
 
     useEffect(() => {
-        setLocalKnot(knot);
+        setLocalKnot({
+            position: `${knot.position}`,
+            color: knot.color,
+        });
     }, [knot]);
 
     return (
@@ -131,8 +143,11 @@ function KnotInput({ knot, onChange, onDelete }: { knot: Knot; onChange: (knot: 
                 size="small"
                 data-elevation-input
                 value={`${localKnot.position}`}
-                onChange={(e) => setLocalKnot({ ...localKnot, position: (e.target as HTMLInputElement).valueAsNumber })}
-                onBlur={(e) => onChange({ ...knot, position: (e.target as HTMLInputElement).valueAsNumber })}
+                onChange={(e) => setLocalKnot({ ...localKnot, position: (e.target as HTMLInputElement).value })}
+                onBlur={(e) => {
+                    const value = (e.target as HTMLInputElement).valueAsNumber;
+                    onChange({ ...knot, position: Number.isFinite(value) ? value : knot.position });
+                }}
             />
             <IconButton
                 onClick={(e) => {
