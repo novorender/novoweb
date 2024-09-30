@@ -79,9 +79,6 @@ export const selectEnabledWidgets = createSelector(
                         return can(Permission.FormsView);
                     case "deviations":
                         return can(Permission.DeviationRead);
-                    // TODO use proper permission
-                    case "pointVisualization":
-                        return can(Permission.SceneView);
                     case "advancedSettings":
                         return can(Permission.SceneManage);
                     default:
