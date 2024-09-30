@@ -95,6 +95,7 @@ export function Root() {
                                             label="Select deviation profile"
                                             onChange={(e) => {
                                                 dispatch(renderActions.setViewMode(ViewMode.Deviations));
+                                                dispatch(renderActions.setPoints({ deviation: { mixFactor: 1 } }));
                                                 dispatch(deviationsActions.setSelectedProfileId(e.target.value));
                                             }}
                                         >
@@ -116,6 +117,7 @@ export function Root() {
                                     absoluteValues={selectedProfile.colors!.absoluteValues}
                                     onChange={(colorStops) => {
                                         dispatch(renderActions.setViewMode(ViewMode.Deviations));
+                                        dispatch(renderActions.setPoints({ deviation: { mixFactor: 1 } }));
                                         dispatch(
                                             deviationsActions.setProfile({
                                                 id: selectedProfile!.id,

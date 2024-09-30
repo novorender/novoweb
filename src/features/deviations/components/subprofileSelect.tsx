@@ -83,6 +83,7 @@ export function SubprofileSelect() {
         const spIndex = Number(e.target.value);
 
         dispatch(renderActions.setViewMode(ViewMode.Deviations));
+        dispatch(renderActions.setPoints({ deviation: { mixFactor: 1 } }));
         dispatch(deviationsActions.setSelectedSubprofileIndex(spIndex));
     };
 

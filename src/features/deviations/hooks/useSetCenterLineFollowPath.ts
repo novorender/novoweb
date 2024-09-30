@@ -7,7 +7,7 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { followPathActions, selectView2d } from "features/followPath/followPathSlice";
 import { useGoToProfile } from "features/followPath/useGoToProfile";
 import { measureActions } from "features/measure";
-import { renderActions, selectViewMode } from "features/render";
+import { renderActions, selectPoints, selectViewMode } from "features/render";
 import { ViewMode } from "types/misc";
 
 import { selectSelectedCenterLineId, selectSelectedProfile } from "../selectors";
@@ -27,6 +27,7 @@ export function useSetCenterLineFollowPath() {
     const dispatchHighlighted = useDispatchHighlighted();
     const installedFollowPathId = useRef<number>();
     const active = useAppSelector(selectViewMode) === ViewMode.Deviations;
+    const mixFactor = useAppSelector(selectPoints).deviation.mixFactor;
 
     const goToProfile = useGoToProfile();
     const goToProfileRef = useRef(goToProfile);
@@ -42,7 +43,7 @@ export function useSetCenterLineFollowPath() {
 
     const restore = useCallback(() => {
         if (installedFollowPathId.current !== undefined) {
-            // dispatch(renderActions.setViewMode(ViewMode.Default));
+            dispatch(renderActions.setViewMode(ViewMode.Default));
             dispatch(followPathActions.setSelectedPath(undefined));
             dispatch(followPathActions.setSelectedIds([]));
             dispatch(followPathActions.setProfileRange(undefined));
@@ -61,7 +62,7 @@ export function useSetCenterLineFollowPath() {
         setFollowPath();
 
         async function setFollowPath() {
-            if (!followPathId || !centerLine || !view || !active) {
+            if (!followPathId || !centerLine || !view || !active || mixFactor === 0) {
                 restore();
                 return;
             }
@@ -77,7 +78,7 @@ export function useSetCenterLineFollowPath() {
                 followPathActions.setProfileRange({
                     min: centerLine.parameterBounds[0],
                     max: centerLine.parameterBounds[1],
-                })
+                }),
             );
             dispatch(renderActions.setMainObject(followPathId));
             dispatchHighlighted(highlightActions.setIds([followPathId]));
@@ -93,10 +94,9 @@ export function useSetCenterLineFollowPath() {
                     if (measure) {
                         const duoMeasure = measure as DuoMeasurementValues;
                         if (duoMeasure.measureInfoB && typeof duoMeasure.measureInfoB.parameter === "number") {
-                            // dispatch(followPathActions.setProfile(duoMeasure.measureInfoB.parameter.toFixed(3)));
                             const pos = Math.max(
                                 centerLine.parameterBounds[0],
-                                Math.min(centerLine.parameterBounds[1], duoMeasure.measureInfoB.parameter)
+                                Math.min(centerLine.parameterBounds[1], duoMeasure.measureInfoB.parameter),
                             );
                             dispatch(followPathActions.setProfile(pos.toFixed(3)));
                             initPos = false;
@@ -127,5 +127,5 @@ export function useSetCenterLineFollowPath() {
 
             installedFollowPathId.current = followPathId;
         }
-    }, [view, followPathId, dispatch, dispatchHighlighted, centerLine, restore, active]);
+    }, [view, followPathId, dispatch, dispatchHighlighted, centerLine, restore, active, mixFactor]);
 }

@@ -107,6 +107,7 @@ function WidgetMenu(props: MenuProps) {
 
     useEffect(() => {
         dispatch(renderActions.setViewMode(ViewMode.Deviations));
+        dispatch(renderActions.setPoints({ deviation: { mixFactor: 1 } }));
     }, [dispatch]);
 
     useListenCalculationState();
