@@ -18,11 +18,11 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch } from "react-router-dom";
 
-import { useAppSelector } from "app/redux-store-interactions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useCreateSearchFormMutation, useGetTemplateQuery, useUpdateTemplateMutation } from "features/forms/api";
-import { selectAssets } from "features/forms/slice";
+import { formsActions, selectAssets } from "features/forms/slice";
 import {
     type FormItem,
     type FormObject,
@@ -66,6 +66,7 @@ export function CreateForm({
     const {
         state: { db },
     } = useExplorerGlobals(true);
+    const dispatch = useAppDispatch();
 
     const projectId = useSceneId();
     const [createForm, { isLoading: creatingForm }] = useCreateSearchFormMutation();
@@ -175,6 +176,7 @@ export function CreateForm({
 
                 if (templateId) {
                     await updateTemplate({ projectId, templateId, template });
+                    dispatch(formsActions.templateLoaded({ id: templateId, ...template }));
                 } else {
                     await createForm({ projectId, template });
                 }
@@ -203,6 +205,7 @@ export function CreateForm({
             updateTemplate,
             projectId,
             createForm,
+            dispatch,
         ],
     );
 
