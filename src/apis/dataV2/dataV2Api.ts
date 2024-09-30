@@ -15,7 +15,7 @@ import { getDataV2DynamicBaseQuery } from "./utils";
 export const dataV2Api = createApi({
     reducerPath: "dataV2",
     baseQuery: getDataV2DynamicBaseQuery(),
-    tagTypes: ["PropertyTreeFavorites", "ProjectProgress", "Deviation", "Bookmarks", "Groups"],
+    tagTypes: ["PropertyTreeFavorites", "ProjectProgress", "Deviation", "Bookmarks", "Groups", "OmegaItems"],
     endpoints: (builder) => ({
         getOmega365ProjectConfig: builder.query<Omega365Configuration, { projectId: string }>({
             query: ({ projectId }) => `/explorer/${projectId}/omega365/configuration`,
@@ -43,6 +43,7 @@ export const dataV2Api = createApi({
         >({
             query: ({ projectId, objectId, viewId }) =>
                 `/explorer/${projectId}/omega365/views/${viewId}/documents/${objectId}`,
+            providesTags: ["OmegaItems"],
         }),
         getOmegaActivityTypes: builder.query<{ id: number; name: string }[], { projectId: string }>({
             query: ({ projectId }) => `/explorer/${projectId}/omega365/activity-types`,
@@ -66,6 +67,7 @@ export const dataV2Api = createApi({
                 method: "POST",
                 body: activity,
             }),
+            invalidatesTags: ["OmegaItems"],
         }),
         getPropertyTreeFavorites: builder.query<string[], { projectId: string }>({
             query: ({ projectId }) => `/explorer/${projectId}/propertytree/favorites`,
