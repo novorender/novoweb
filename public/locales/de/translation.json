@@ -594,6 +594,7 @@
     "columnN": "Spalte {{i}}",
     "[none]": "[keine]",
     "[unknown]": "[unbekannt]",
+    "[noName]": "[kein Name]",
     "intensityDescriptionHtml": "Die Intensität wird als Rücklaufstärke eines Laserstrahls aufgezeichnet und für jeden Punkt gesammelt. Novorender visualisiert dies in Grautönen, wobei: <ul> <li>Weiß ist 1, und</li> <li>Schwarz ist 0</li> </ul> Die Farbskala rechts zeigt, wie dies aussehen könnte.",
     "rgbDescription": "Die RGB-Farbwerte entsprechen dem realen Aussehen des gescannten Objekts oder der Oberfläche, wodurch die Punktwolke visuell detailliert und realistisch wirkt.",
     "showStampForClassificationAndIntensityModes": "Stempel in Klassifizierungs- und Intensitätsmodi anzeigen",
