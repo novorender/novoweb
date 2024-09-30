@@ -3,7 +3,6 @@ import {
     Alert,
     Box,
     Button,
-    Divider,
     FormControl,
     FormControlLabel,
     IconButton,
@@ -32,7 +31,7 @@ import {
     RequestedType,
 } from "apis/dataV2/omega365Types";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { LinearProgress, ScrollBox, TextField } from "components";
+import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
 import InfoPopup from "features/deviations/components/infoPopup";
 import { selectMainObject } from "features/render";
@@ -73,7 +72,7 @@ export default function ViewEditor() {
                   title: "",
                   whereClause: "",
                   fields: [],
-              }
+              },
     );
     const [preview] = useLazyPreviewOmega365ProjectViewConfigQuery();
     const [previewResult, setPreviewResult] = useState<AsyncState<Omega365DynamicDocument[]>>({
@@ -118,13 +117,13 @@ export default function ViewEditor() {
 
     const handleBack = () => {
         const errors = validate();
-        if (hasErrors(errors)) {
+        if (hasErrors(errors) && viewId) {
             setErrors(errors);
             return;
         }
         const oldViews = views ?? [];
         const oldView = oldViews.find((v) => v.id === view.id);
-        if (oldView !== view) {
+        if (oldView !== view && view.title) {
             const cleanedView = {
                 ...view,
                 fields: view.fields.filter((f) => f.name.trim()),
@@ -151,8 +150,8 @@ export default function ViewEditor() {
             if (!((json.resourceName || json.viewName) && json.whereClause && json.fields)) {
                 dispatch(
                     omega365Actions.setSnackbarMessage(
-                        "JSON must have following attributes: resourceName or viewName, whereClause, fields"
-                    )
+                        "JSON must have following attributes: resourceName or viewName, whereClause, fields",
+                    ),
                 );
                 return;
             }
@@ -173,6 +172,7 @@ export default function ViewEditor() {
 
             updateView(newView);
         } catch (ex) {
+            console.warn(ex);
             dispatch(omega365Actions.setSnackbarMessage("Clipboard should contain valid JSON"));
         }
     };
@@ -418,7 +418,7 @@ function FieldList({
                 } else {
                     return f;
                 }
-            })
+            }),
         );
     };
 
@@ -433,7 +433,7 @@ function FieldList({
                 } else {
                     return f;
                 }
-            })
+            }),
         );
     };
 

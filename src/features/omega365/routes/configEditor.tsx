@@ -2,7 +2,6 @@ import { AddCircle, ArrowBack, ArrowDownward, ArrowUpward, Delete, MoreVert, Sav
 import {
     Box,
     Button,
-    Divider,
     IconButton,
     List,
     ListItemButton,
@@ -14,12 +13,14 @@ import {
     Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material";
+import { t } from "i18next";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { Omega365Configuration, Omega365View, RequestedType } from "apis/dataV2/omega365Types";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { ScrollBox, TextField } from "components";
+import { Divider, ScrollBox, TextField } from "components";
 
 import { selectOmega365Config, selectOmega365ConfigDraft } from "../selectors";
 import { omega365Actions } from "../slice";
@@ -27,6 +28,7 @@ import { omega365Actions } from "../slice";
 const MAX_VIEW_COUNT = 5;
 
 export default function ConfigEditor() {
+    const { t } = useTranslation();
     const config = useAppSelector(selectOmega365Config)!;
     const configDraft = useAppSelector(selectOmega365ConfigDraft)!;
     const views = configDraft.views;
@@ -62,12 +64,12 @@ export default function ConfigEditor() {
                 <Box display="flex">
                     <Button color="grey" onClick={handleBack}>
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <Box flex="auto" />
                     <Button color="grey" onClick={() => history.push("/save?closeAfter=true")}>
                         <Save sx={{ mr: 1 }} />
-                        Save
+                        {t("save")}
                     </Button>
                 </Box>
             </Box>
@@ -81,14 +83,14 @@ export default function ConfigEditor() {
                     horizontal: "left",
                 }}
             >
-                <Typography sx={{ p: 2 }}>Configuration was updated. Do you want to save the changes?</Typography>
+                <Typography sx={{ p: 2 }}>{t("configurationWasUpdatedDoYouWantToSaveTheChanges")}</Typography>
                 <Box m={1} display="flex" justifyContent="flex-end">
                     <Button onClick={() => history.push("/save?closeAfter=true")}>Yes</Button>
                     <Button color="grey" onClick={(e) => handleBack(e, true)}>
-                        No
+                        {t("no")}
                     </Button>
                     <Button color="grey" onClick={() => setShowBackPopover(false)}>
-                        Cancel
+                        {t("cancel")}
                     </Button>
                 </Box>
             </Popover>
@@ -116,7 +118,7 @@ export default function ConfigEditor() {
                         }}
                     >
                         <AddCircle sx={{ mr: 1 }} />
-                        Add
+                        {t("add")}
                     </Button>
                 </Box>
                 <ViewListInner
@@ -140,10 +142,11 @@ function ViewListInner({
     onClick: (view: Omega365View) => void;
     onChange: (views: Omega365View[]) => void;
 }) {
+    const { t } = useTranslation();
     if (!views || views.length === 0) {
         return (
             <Box color="grey" m={4} textAlign="center">
-                No views yet
+                {t("noViewsYet")}
             </Box>
         );
     }
@@ -205,7 +208,7 @@ function ViewListItem({
                 } else {
                     return view;
                 }
-            })
+            }),
         );
         closeMenu();
     };
@@ -221,7 +224,7 @@ function ViewListItem({
                 } else {
                     return view;
                 }
-            })
+            }),
         );
         closeMenu();
     };
@@ -258,19 +261,19 @@ function ViewListItem({
                     <ListItemIcon>
                         <ArrowUpward fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText>Move up</ListItemText>
+                    <ListItemText>{t("moveUp")}</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={handleMoveDown} disabled={index === views.length - 1}>
                     <ListItemIcon>
                         <ArrowDownward fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText>Move down</ListItemText>
+                    <ListItemText>{t("moveDown")}</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={() => history.push(`/delete/${view.id}`)}>
                     <ListItemIcon>
                         <Delete fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText>Delete</ListItemText>
+                    <ListItemText>{t("delete")}</ListItemText>
                 </MenuItem>
             </Menu>
         </ListItemButton>

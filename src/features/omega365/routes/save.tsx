@@ -1,5 +1,6 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 
 import { useSetOmega365ProjectConfigMutation } from "apis/dataV2/dataV2Api";
@@ -12,6 +13,7 @@ import { selectOmega365ConfigDraft } from "../selectors";
 import { omega365Actions } from "../slice";
 
 export default function Save() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
     const [saveStatus, setSaveStatus] = useState(AsyncStatus.Initial);
@@ -54,16 +56,14 @@ export default function Save() {
                 position="absolute"
             />
             <Confirmation
-                title="Save Omega365 configuration?"
-                confirmBtnText="Save"
+                title={t("saveOmega365Configuration?")}
+                confirmBtnText={t("save")}
                 onCancel={() => history.goBack()}
                 component="form"
                 onSubmit={handleSave}
                 loading={saveStatus === AsyncStatus.Loading}
             >
-                {saveStatus === AsyncStatus.Error ? (
-                    <Typography color="error">Error saving the configuration</Typography>
-                ) : null}
+                {saveStatus === AsyncStatus.Error ? <Typography color="error">{t("errorOccurred")}</Typography> : null}
             </Confirmation>
         </>
     );

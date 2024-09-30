@@ -584,5 +584,11 @@
     "activityType": "Activity type",
     "orgUnit": "Org unit",
     "objectId": "Object ID",
-    "name": "Name"
+    "name": "Name",
+    "configurationWasUpdatedDoYouWantToSaveTheChanges": "Configuration was updated. Do you want to save the changes?",
+    "noViewsYet": "No views yet",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "deleteView?": "Delete view?",
+    "saveOmega365Configuration?": "Save Omega365 configuration?"
 }

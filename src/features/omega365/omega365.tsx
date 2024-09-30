@@ -60,7 +60,11 @@ function Omega365Inner() {
     }, [dispatch, data, isSuccess]);
 
     const viewHeader = ViewHeader();
-    const disableShadow = location.pathname === "/config" || (location.pathname === "/" && viewHeader !== null);
+    const disableShadow =
+        location.pathname === "/config" ||
+        (location.pathname === "/" && viewHeader !== null) ||
+        location.pathname === "/newView" ||
+        location.pathname.startsWith("/editView");
 
     return (
         <>
