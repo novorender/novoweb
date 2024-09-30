@@ -178,7 +178,8 @@ export function CreateForm({
                     await updateTemplate({ projectId, templateId, template });
                     dispatch(formsActions.templateLoaded({ id: templateId, ...template }));
                 } else {
-                    await createForm({ projectId, template });
+                    const templateId = await createForm({ projectId, template }).unwrap();
+                    dispatch(formsActions.templateLoaded({ id: templateId, ...template }));
                 }
 
                 setStatus({ status: AsyncStatus.Success, data: null });
