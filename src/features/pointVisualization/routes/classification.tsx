@@ -95,7 +95,7 @@ export function ClassificationView() {
                         </>
                     ) : (
                         <>
-                            <KnotView label="Undefined color" color={gradient.undefinedColor} />
+                            <KnotView label={t("undefinedColor")} color={gradient.undefinedColor} />
                             {gradient.knots.length === 0 && (
                                 <Typography color="grey" textAlign="center">
                                     {t("noColorStopsDefined")}
