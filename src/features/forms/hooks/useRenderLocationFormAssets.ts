@@ -31,7 +31,7 @@ import {
 } from "../slice";
 import { FormGLtfAsset, LocationTemplate } from "../types";
 import { useFetchAssetList } from "./useFetchAssetList";
-import { useFetchInitialLocationForms } from "./useFetchLocationForms";
+import { useFetchLocationForms } from "./useFetchLocationForms";
 
 type RenderedForm = {
     templateId: string;
@@ -82,7 +82,7 @@ export function useRenderLocationFormAssets() {
     const canView = checkPermission(Permission.FormsView) ?? true;
 
     useFetchAssetList({ skip: !active });
-    useFetchInitialLocationForms();
+    useFetchLocationForms();
 
     const [assetAbortController, assetAbort] = useAbortController();
     const [assetGltfMap, setAssetGltfMap] = useState<AsyncState<Map<string, readonly RenderStateDynamicObject[]>>>({
@@ -101,7 +101,12 @@ export function useRenderLocationFormAssets() {
         const result = locationForms
             .filter((form) => form.location)
             .map((form) => {
-                const template = templateMap.get(form.templateId)! as LocationTemplate;
+                const template = templateMap.get(form.templateId) as LocationTemplate | undefined;
+
+                if (!template) {
+                    return null;
+                }
+
                 const result = {
                     templateId: template.id,
                     id: form.id,
@@ -117,7 +122,8 @@ export function useRenderLocationFormAssets() {
                     result.scale = transform.scale;
                 }
                 return result;
-            });
+            })
+            .filter((form) => form !== null) as RenderedForm[];
 
         if (areArraysEqual(result, prevRenderedForms.current, areRenderedFormsEqual)) {
             return prevRenderedForms.current!;
@@ -126,7 +132,6 @@ export function useRenderLocationFormAssets() {
             return result;
         }
     }, [templates, locationForms, active, transform, canView]);
-
     const baseObjectIdSet = useMemo(() => {
         const baseObjectIdSet = new Set<number>();
         if (assetInfoList.status === AsyncStatus.Success) {

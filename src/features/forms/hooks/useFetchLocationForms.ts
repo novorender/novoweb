@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
@@ -6,17 +6,17 @@ import { useSceneId } from "hooks/useSceneId";
 import { selectWidgets } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
-import { useLazyGetTemplateQuery, useLazyListTemplatesQuery } from "../api";
+import { useLazyGetTemplatesQuery } from "../api";
 import { formsActions, selectAlwaysShowMarkers } from "../slice";
 import { TemplateType } from "../types";
 
 /**
- * Used for initial location form loading.
- * Template and form loading is controlled by Forms widget.
- * When have alwaysShowMarkers=true - we need to load location forms before Forms widget is visible.
- * This hook will only load forms one time, after that Forms widget catches up.
+ * Used for loading location templates and populating location forms from templates' indexes.
+ * Full individual template and form loading is controlled by Forms widget.
+ * When alwaysShowMarkers=true - we need to load location forms before Forms widget is visible.
+ * This hook will load location forms when needed (when Forms widget is opened or alwaysShowMarkers=true).
  */
-export function useFetchInitialLocationForms() {
+export function useFetchLocationForms() {
     const projectId = useSceneId();
     const isFormWidgetOpen = useAppSelector((state) => selectWidgets(state).includes(featuresConfig.forms.key));
     const alwaysShowMarkers = useAppSelector(selectAlwaysShowMarkers);
@@ -24,42 +24,33 @@ export function useFetchInitialLocationForms() {
 
     const status = useRef(AsyncStatus.Initial);
 
-    const [listTemplates] = useLazyListTemplatesQuery();
-    const [getTemplate] = useLazyGetTemplateQuery();
+    const [getTemplates] = useLazyGetTemplatesQuery();
 
-    useEffect(() => {
-        if (isFormWidgetOpen) {
-            // In this case Forms widget is responsible for loading
-            status.current = AsyncStatus.Success;
+    const load = useCallback(async () => {
+        if (status.current !== AsyncStatus.Initial || !projectId || (!isFormWidgetOpen && !alwaysShowMarkers)) {
+            return;
         }
-    }, [isFormWidgetOpen]);
+
+        status.current = AsyncStatus.Loading;
+
+        try {
+            const templates = await getTemplates({ projectId, type: TemplateType.Geo }, true).unwrap();
+            const locationForms = templates
+                .filter((t) => t.forms)
+                .flatMap((t) => {
+                    dispatch(formsActions.templateLoaded(t));
+                    return Object.entries(t.forms!).map(([id, form]) => ({ ...form, id, templateId: t.id! }));
+                });
+
+            dispatch(formsActions.addLocationForms(locationForms));
+            status.current = AsyncStatus.Success;
+        } catch (error) {
+            console.error("Failed to load templates:", error);
+            status.current = AsyncStatus.Error;
+        }
+    }, [dispatch, projectId, alwaysShowMarkers, getTemplates, isFormWidgetOpen]);
 
     useEffect(() => {
         load();
-
-        async function load() {
-            if (status.current !== AsyncStatus.Initial || !alwaysShowMarkers || !projectId) {
-                return;
-            }
-
-            status.current = AsyncStatus.Loading;
-
-            try {
-                const templateIds = await listTemplates({ projectId }, true).unwrap();
-                const templates = await Promise.all(
-                    templateIds.map((templateId) => getTemplate({ projectId, templateId }, true).unwrap())
-                );
-                dispatch(formsActions.setTemplates({ status: AsyncStatus.Success, data: templates }));
-                const locationForms = templates
-                    .filter((t) => t.type === TemplateType.Location && t.forms)
-                    .flatMap((t) => Object.entries(t.forms!).map(([id, form]) => ({ ...form, id, templateId: t.id! })));
-
-                dispatch(formsActions.addLocationForms(locationForms));
-                status.current = AsyncStatus.Success;
-            } catch (error) {
-                console.error(error);
-                status.current = AsyncStatus.Error;
-            }
-        }
-    }, [dispatch, projectId, alwaysShowMarkers, listTemplates, getTemplate]);
+    }, [load]);
 }

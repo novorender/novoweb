@@ -1,4 +1,5 @@
 import { Box, Button, CircularProgress } from "@mui/material";
+import { t } from "i18next";
 import { type ChangeEventHandler, type DragEventHandler, type MouseEventHandler, useRef } from "react";
 
 interface AddFilesButtonProps {
@@ -35,7 +36,7 @@ export default function AddFilesButton({
         <Box display="flex" onDragOver={stopPropagation} onDrop={stopPropagation}>
             <input type="file" ref={fileInputRef} onChange={handleChange} accept={accept} multiple={multiple} hidden />
             <Button onClick={handleAddFilesClick} disabled={disabled || uploading} variant="contained">
-                {uploading ? <CircularProgress size={24} /> : `Add File${multiple ? "s" : ""}`}
+                {uploading ? <CircularProgress size={24} /> : t("addFile", { count: multiple ? 2 : 1 })}
             </Button>
         </Box>
     );
