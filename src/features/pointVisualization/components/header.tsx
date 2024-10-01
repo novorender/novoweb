@@ -1,5 +1,5 @@
 import { CloudUpload, Save } from "@mui/icons-material";
-import { Box, Button, Divider, LinearProgress, styled, useTheme } from "@mui/material";
+import { Box, Button, Divider, LinearProgress, useTheme } from "@mui/material";
 import { mergeRecursive } from "@novorender/api";
 import Papa from "papaparse";
 import { ChangeEvent, useState } from "react";
@@ -109,7 +109,7 @@ export function Header() {
                     {(kind === "classification" || kind === "elevation") && (
                         <Button component="label" color="grey" tabIndex={-1} startIcon={<CloudUpload />}>
                             {t("import")}
-                            <VisuallyHiddenInput type="file" onChange={importCsv} accept=".csv" />
+                            <input type="file" hidden onChange={importCsv} accept=".csv" />
                         </Button>
                     )}
                     <Button onClick={save} color="grey" disabled={saving}>
@@ -130,15 +130,3 @@ export function Header() {
         </>
     );
 }
-
-const VisuallyHiddenInput = styled("input")({
-    clip: "rect(0 0 0 0)",
-    clipPath: "inset(50%)",
-    height: 1,
-    overflow: "hidden",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    whiteSpace: "nowrap",
-    width: 1,
-});
