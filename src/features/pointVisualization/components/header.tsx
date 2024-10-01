@@ -107,13 +107,7 @@ export function Header() {
                 </Box>
                 <Box display="flex" justifyContent="flex-end">
                     {(kind === "classification" || kind === "elevation") && (
-                        <Button
-                            component="label"
-                            role={undefined}
-                            color="grey"
-                            tabIndex={-1}
-                            startIcon={<CloudUpload />}
-                        >
+                        <Button component="label" color="grey" tabIndex={-1} startIcon={<CloudUpload />}>
                             {t("import")}
                             <VisuallyHiddenInput type="file" onChange={importCsv} accept=".csv" />
                         </Button>

@@ -39,17 +39,17 @@ export function CsvImportView() {
     const columns = useMemo(() => {
         if (kind === "classification") {
             return [
-                { name: "position", label: "Code", type: ColumnType.Number, required: true },
-                { name: "label", label: "Label", type: ColumnType.String },
-                { name: "color", label: "Color", type: ColumnType.Color, required: true },
+                { name: "position", label: t("code"), type: ColumnType.Number, required: true },
+                { name: "label", label: t("label"), type: ColumnType.String },
+                { name: "color", label: t("color"), type: ColumnType.Color, required: true },
             ];
         } else {
             return [
-                { name: "position", label: "Elevation", type: ColumnType.Number, required: true },
-                { name: "color", label: "Color", type: ColumnType.Color, required: true },
+                { name: "position", label: t("elevation"), type: ColumnType.Number, required: true },
+                { name: "color", label: t("color"), type: ColumnType.Color, required: true },
             ];
         }
-    }, [kind]);
+    }, [t, kind]);
 
     const [mapping, setMapping] = useState(csv.data[0].map(() => ""));
 
