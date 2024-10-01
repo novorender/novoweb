@@ -643,5 +643,7 @@
     "revertForm": "Tilbakestille skjemaet \"{{title}}\" til den valgte versjonen?",
     "revert": "Tilbakestill",
     "formName": "Skjemanavn",
-    "createFrom": "Opprett fra..."
+    "createFrom": "Opprett fra...",
+    "formCreationFailed": "Skjemaopprettelse mislyktes",
+    "formUpdateFailed": "Kunne ikke oppdatere skjemaet"
 }

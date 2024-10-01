@@ -643,5 +643,7 @@
     "revertForm": "Revert form \"{{title}}\" to the selected version?",
     "revert": "Revert",
     "formName": "Form name",
-    "createFrom": "Create from..."
+    "createFrom": "Create from...",
+    "formCreationFailed": "Form creation failed",
+    "formUpdateFailed": "Failed to update form"
 }

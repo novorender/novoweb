@@ -187,7 +187,7 @@ export function CreateForm({
             } catch {
                 setStatus({
                     status: AsyncStatus.Error,
-                    msg: templateId ? "Failed to update form" : "Failed to create form",
+                    msg: templateId ? t("formUpdateFailed") : t("formCreationFailed"),
                 });
                 return;
             }
@@ -205,8 +205,9 @@ export function CreateForm({
             marker,
             updateTemplate,
             projectId,
-            createForm,
             dispatch,
+            createForm,
+            t,
         ],
     );
 

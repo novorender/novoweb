@@ -643,5 +643,7 @@
     "revertForm": "Formular \"{{title}}\" auf die ausgewählte Version zurücksetzen?",
     "revert": "Zurücksetzen",
     "formName": "Formularname",
-    "createFrom": "Erstellen aus..."
+    "createFrom": "Erstellen aus...",
+    "formCreationFailed": "Formularerstellung fehlgeschlagen",
+    "formUpdateFailed": "Aktualisierung des Formulars fehlgeschlagen"
 }

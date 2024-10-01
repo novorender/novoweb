@@ -206,10 +206,15 @@ type TemplateBase = {
 };
 
 export enum TemplateType {
-    // TODO: Deprecate this old types.
+    /**
+     * @deprecated
+     */
     Search = "search",
+
+    /**
+     * @deprecated
+     */
     Location = "location",
-    //
 
     Object = "object",
     Geo = "geo",
