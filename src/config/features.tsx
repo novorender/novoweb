@@ -45,6 +45,7 @@ import {
 } from "@mui/icons-material";
 
 import ClashIcon from "media/icons/clash.svg?react";
+import DeviationsIcon from "media/icons/deviations.svg?react";
 import Ditio from "media/icons/ditio.svg?react";
 import Jira from "media/icons/jira-software.svg?react";
 import NewformaKonekt from "media/icons/newforma-konekt.svg?react";
@@ -391,7 +392,7 @@ export const featuresConfig = {
     deviations: {
         key: "deviations",
         nameKey: "deviations",
-        Icon: BlurOn,
+        Icon: DeviationsIcon,
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: true,
@@ -410,6 +411,15 @@ export const featuresConfig = {
         offline: true,
         tags: [featureTags.review.key],
         groups: [featureGroups.measure.key],
+    },
+    pointVisualization: {
+        key: "pointVisualization",
+        nameKey: "pointVisualization",
+        Icon: BlurOn,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+        offline: true,
+        groups: [featureGroups.settings.key],
     },
     home: {
         key: "home",

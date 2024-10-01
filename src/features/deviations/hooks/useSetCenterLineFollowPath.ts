@@ -77,7 +77,7 @@ export function useSetCenterLineFollowPath() {
                 followPathActions.setProfileRange({
                     min: centerLine.parameterBounds[0],
                     max: centerLine.parameterBounds[1],
-                })
+                }),
             );
             dispatch(renderActions.setMainObject(followPathId));
             dispatchHighlighted(highlightActions.setIds([followPathId]));
@@ -93,10 +93,9 @@ export function useSetCenterLineFollowPath() {
                     if (measure) {
                         const duoMeasure = measure as DuoMeasurementValues;
                         if (duoMeasure.measureInfoB && typeof duoMeasure.measureInfoB.parameter === "number") {
-                            // dispatch(followPathActions.setProfile(duoMeasure.measureInfoB.parameter.toFixed(3)));
                             const pos = Math.max(
                                 centerLine.parameterBounds[0],
-                                Math.min(centerLine.parameterBounds[1], duoMeasure.measureInfoB.parameter)
+                                Math.min(centerLine.parameterBounds[1], duoMeasure.measureInfoB.parameter),
                             );
                             dispatch(followPathActions.setProfile(pos.toFixed(3)));
                             initPos = false;

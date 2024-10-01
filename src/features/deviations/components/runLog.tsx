@@ -31,8 +31,7 @@ export function RunLog({ data }: { data: UiDeviationConfig }) {
                         case "EMPTY_DEVIATION_GROUPS":
                             msg = (
                                 <>
-                                    {t("profile")}
-                                    <strong>{profile.name}</strong>
+                                    {t("profile")} <strong>{profile.name}</strong>
                                     {t("emptyGroupsMessage")}
                                 </>
                             );
@@ -40,8 +39,7 @@ export function RunLog({ data }: { data: UiDeviationConfig }) {
                         default:
                             msg = (
                                 <>
-                                    {t("profile")}
-                                    <strong>{profile.name}</strong>: {entry.message}
+                                    {t("profile")} <strong>{profile.name}</strong>: {entry.message}
                                 </>
                             );
                     }

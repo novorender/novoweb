@@ -56,6 +56,7 @@ const Omega365 = lazy(() => import("features/omega365/omega365"));
 const Arcgis = lazy(() => import("features/arcgis/arcgis"));
 const Forms = lazy(() => import("features/forms/forms"));
 const Clash = lazy(() => import("features/clash/clash"));
+const PointVisualization = lazy(() => import("features/pointVisualization/pointVisualization"));
 
 const emptySlotKey = "emptySlot" as const;
 
@@ -436,6 +437,9 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             break;
         case featuresConfig.clash.key:
             Widget = Clash;
+            break;
+        case featuresConfig.pointVisualization.key:
+            Widget = PointVisualization;
             break;
         default:
             return key;

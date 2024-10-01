@@ -1,6 +1,7 @@
 import {
     ClippingMode,
     DeviceProfile,
+    PointVisualization,
     RecursivePartial,
     SceneConfig as OctreeSceneConfig,
     TonemappingMode,
@@ -24,6 +25,7 @@ import {
     type CameraState,
     type CameraStep,
     CameraType,
+    LabeledKnot,
     ObjectVisibility,
     Picker,
     type SavedCameraPositions,
@@ -110,6 +112,11 @@ const initialState = {
                 knots: [] as { position: number; color: VecRGBA }[],
             },
         },
+        classificationColorGradient: {
+            knots: [] as LabeledKnot[],
+            undefinedColor: [0, 0, 0, 1] as VecRGBA,
+        },
+        defaultPointVisualization: { kind: "color" } as PointVisualization,
     },
     terrain: {
         asBackground: false,
@@ -438,6 +445,7 @@ export const renderSlice = createSlice({
         setPoints: (state, action: PayloadAction<RecursivePartial<State["points"]>>) => {
             state.points = mergeRecursive(state.points, action.payload);
             state.points.deviation.colorGradient.knots.sort((a, b) => a.position - b.position);
+            state.points.classificationColorGradient.knots.sort((a, b) => a.position - b.position);
         },
         setBackground: (state, action: PayloadAction<Partial<State["background"]>>) => {
             state.background = { ...state.background, ...action.payload };
@@ -656,6 +664,11 @@ export const renderSlice = createSlice({
                 };
             }
 
+            // Point visualization
+            state.points.defaultPointVisualization = initialState.points.defaultPointVisualization;
+            state.points.classificationColorGradient = initialState.points.classificationColorGradient;
+            state.terrain.elevationGradient = initialState.terrain.elevationGradient;
+
             const availableSubtrees = Object.keys(state.subtrees).filter(
                 (key) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable,
             );
@@ -682,7 +695,15 @@ export const renderSlice = createSlice({
                               color: node.color,
                           })),
                       }
-                    : state.terrain.elevationGradient;
+                    : (terrain.elevationGradient ?? state.terrain.elevationGradient);
+
+                // Point visualization
+                if (points.defaultPointVisualization) {
+                    state.points.defaultPointVisualization = points.defaultPointVisualization;
+                }
+                if (points.classificationColorGradient) {
+                    state.points.classificationColorGradient = points.classificationColorGradient;
+                }
             } else if (settings) {
                 // background
                 state.background.color = settings.background.color ?? state.background.color;
@@ -706,8 +727,19 @@ export const renderSlice = createSlice({
             }
         });
         builder.addCase(selectBookmark, (state, action) => {
-            const { camera, subtrees, viewMode, objects, background, terrain, deviations, grid, clipping, options } =
-                action.payload;
+            const {
+                camera,
+                subtrees,
+                viewMode,
+                objects,
+                background,
+                terrain,
+                deviations,
+                grid,
+                clipping,
+                options,
+                pointVisualization,
+            } = action.payload;
 
             state.camera =
                 camera.kind === "orthographic"
@@ -740,6 +772,9 @@ export const renderSlice = createSlice({
                 : (objects.defaultVisibility as ObjectVisibility);
             state.background.color = background.color;
             state.terrain.asBackground = terrain.asBackground;
+            if (terrain.elevationGradient) {
+                state.terrain.elevationGradient = terrain.elevationGradient;
+            }
             if (deviations) {
                 state.points.deviation.index = deviations.index;
                 state.points.deviation.mixFactor = deviations.mixFactor;
@@ -761,6 +796,10 @@ export const renderSlice = createSlice({
                     anchorPos,
                 })),
             };
+            if (pointVisualization) {
+                state.points.defaultPointVisualization = pointVisualization.defaultPointVisualization;
+                state.points.classificationColorGradient = pointVisualization.classificationColorGradient;
+            }
         });
     },
 });
@@ -865,6 +904,8 @@ export const selectDebugStats = (state: RootState) => state.render.debugStats;
 export const selectClippingInEdit = (state: RootState) => state.render.clippingInEdit;
 export const selectSceneOrganization = (state: RootState) => state.render.sceneOrganization;
 export const selectGeneratedParametricData = (state: RootState) => state.render.generatedParametricData;
+export const selectClassificationColorGradient = (state: RootState) => state.render.points.classificationColorGradient;
+export const selectDefaultPointVisualization = (state: RootState) => state.render.points.defaultPointVisualization;
 
 const { reducer } = renderSlice;
 const actions = { ...renderSlice.actions, initScene, resetView, selectBookmark };
