@@ -30,6 +30,7 @@ export function ClassificationStamp() {
         }
         case "intensity": {
             label = `${t("intensity")}: ${stamp.data.pointFactor.toFixed(3)}`;
+            break;
         }
     }
 
