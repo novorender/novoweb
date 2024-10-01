@@ -23,10 +23,6 @@ export const formsApi = createApi({
     tagTypes: ["Template", "MinimalTemplate", "Form", "Object", "FormHistory"],
     keepUnusedDataFor: 60 * 5,
     endpoints: (builder) => ({
-        listTemplates: builder.query<TemplateId[], { projectId: ProjectId }>({
-            query: ({ projectId }) => `projects/${projectId}/templates/ids`,
-            providesTags: [{ type: "Template" as const, id: "ID_LIST" }],
-        }),
         createSearchForm: builder.mutation<TemplateId, { projectId: ProjectId; template: Partial<Template> }>({
             query: ({ projectId, template }) => ({
                 body: template,
@@ -38,7 +34,6 @@ export const formsApi = createApi({
                 },
             }),
             invalidatesTags: (result, _error, { projectId }) => [
-                { type: "Template" as const, id: "ID_LIST" },
                 { type: "MinimalTemplate" as const, id: "LIST" },
                 { type: "Template" as const, id: `${projectId}-${result}` },
                 { type: "Form" as const, id: `LIST-${projectId}` },
@@ -56,7 +51,6 @@ export const formsApi = createApi({
                 },
             }),
             invalidatesTags: (result, _error, { projectId, form }) => [
-                { type: "Template" as const, id: "ID_LIST" },
                 { type: "MinimalTemplate" as const, id: "LIST" },
                 { type: "Template" as const, id: `${projectId}-${form.id}` },
                 { type: "MinimalTemplate" as const, id: `${projectId}-${form.id}` },
@@ -177,7 +171,6 @@ export const formsApi = createApi({
                 method: "DELETE",
             }),
             invalidatesTags: (_result, _error, { projectId, templateId }) => [
-                { type: "Template" as const, id: "ID_LIST" },
                 { type: "MinimalTemplate" as const, id: `${projectId}-${templateId}` },
             ],
         }),
@@ -229,7 +222,6 @@ export const formsApi = createApi({
                 },
             }),
             invalidatesTags: (_result, _error, { projectId, objectGuid, formId }) => [
-                { type: "Template" as const, id: "ID_LIST" },
                 { type: "MinimalTemplate" as const, id: "LIST" },
                 { type: "Template" as const, id: `${projectId}-${formId}` },
                 { type: "Form" as const, id: `LIST-${projectId}` },
@@ -255,8 +247,6 @@ export const formsApi = createApi({
                 },
             }),
             invalidatesTags: (_result, _error, { projectId, objectGuid, formId }) => [
-                // { type: "MinimalTemplate" as const, id: "LIST" },
-                // { type: "Template" as const, id: `${projectId}-${formId}` },
                 {
                     type: "Form" as const,
                     id: `${projectId}-${objectGuid}-${formId}`,
@@ -280,8 +270,6 @@ export const formsApi = createApi({
             }),
             invalidatesTags: (_result, _error, { projectId, templateId, formId }) => [
                 // Instead of invalidating - optimistically update state to avoid flickering
-                // { type: "Template" as const, id: `${projectId}-${templateId}` },
-                // { type: "MinimalTemplate" as const, id: `${projectId}-${templateId}` },
                 {
                     type: "Form" as const,
                     id: `${projectId}-${templateId}-${formId}`,
@@ -289,7 +277,9 @@ export const formsApi = createApi({
                 { type: "FormHistory" as const, id: `${projectId}-${templateId}-${formId}` },
             ],
             async onQueryStarted({ projectId, templateId, formId, form }, { dispatch, queryFulfilled }) {
-                const patchResult = dispatch(
+                let patchTemplatesResult: { undo: () => void } | undefined;
+
+                const patchTemplateResult = dispatch(
                     formsApi.util.updateQueryData("getTemplate", { projectId, templateId }, (draft) => {
                         const oldForm = draft.forms?.[formId];
                         if (oldForm) {
@@ -305,16 +295,35 @@ export const formsApi = createApi({
                             if (form.scale) {
                                 oldForm.scale = form.scale;
                             }
+
+                            const newFormState = calculateFormState(form);
+                            if (oldForm.state !== newFormState) {
+                                patchTemplatesResult = dispatch(
+                                    formsApi.util.updateQueryData("getMinimalTemplates", { projectId }, (draft) => {
+                                        const template = draft.find((t) => t.id === templateId);
+                                        if (template) {
+                                            if (oldForm.state === "finished") {
+                                                template.forms.finished -= 1;
+                                            } else if (newFormState === "finished") {
+                                                template.forms.finished += 1;
+                                            }
+                                        }
+                                    }),
+                                );
+                            }
+
                             if (form.fields) {
-                                oldForm.state = calculateFormState(form);
+                                oldForm.state = newFormState;
                             }
                         }
                     }),
                 );
+
                 try {
                     await queryFulfilled;
                 } catch {
-                    patchResult.undo();
+                    patchTemplateResult.undo();
+                    patchTemplatesResult?.undo();
                 }
             },
         }),
@@ -346,10 +355,7 @@ export const formsApi = createApi({
                 url: `projects/${projectId}/forms`,
                 method: "DELETE",
             }),
-            invalidatesTags: (_result, _error) => [
-                { type: "Template" as const, id: "ID_LIST" },
-                { type: "MinimalTemplate" as const, id: "LIST" },
-            ],
+            invalidatesTags: (_result, _error) => [{ type: "MinimalTemplate" as const, id: "LIST" }],
         }),
         uploadFiles: builder.mutation<
             { [key: string]: FormFileUploadResponse },
@@ -372,7 +378,6 @@ export const formsApi = createApi({
 });
 
 export const {
-    useListTemplatesQuery,
     useGetSearchFormQuery,
     useGetLocationFormQuery,
     useGetSearchFormsQuery,
