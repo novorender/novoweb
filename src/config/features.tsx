@@ -563,6 +563,16 @@ export const featuresConfig = {
         groups: [featureGroups.measure.key],
         beta: true,
     },
+    crossSection: {
+        key: "crossSection",
+        nameKey: "crossSection",
+        Icon: ClashIcon,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+        offline: true,
+        tags: [featureTags.review.key],
+        groups: [featureGroups.measure.key],
+    },
 } as const;
 
 type Config = typeof featuresConfig;

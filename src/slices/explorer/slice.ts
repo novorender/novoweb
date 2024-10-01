@@ -37,7 +37,7 @@ const initialState: State = {
     requireConsent: false,
     organization: "",
     projectName: "",
-    widgets: [],
+    widgets: ["crossSection"],
     // TODO probably should be stored on the backend instead
     favoriteWidgets: JSON.parse(localStorage.getItem(favoriteWidgetsStorageKey) || "[]"),
     widgetSlot: {
