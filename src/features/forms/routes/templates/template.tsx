@@ -1,4 +1,4 @@
-import { ContentCopy, Delete, Edit, MoreVert, Place, Search } from "@mui/icons-material";
+import { AddCircle, Delete, Edit, MoreVert, Place, Search } from "@mui/icons-material";
 import { Box, IconButton, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Typography } from "@mui/material";
 import { MouseEvent, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -111,7 +111,7 @@ export function Template({ template }: { template: MinimalTemplate }) {
                         {canEdit && (
                             <MenuItem onClick={handleCreateFromClick} disabled={!canEdit}>
                                 <ListItemIcon>
-                                    <ContentCopy fontSize="small" />
+                                    <AddCircle fontSize="small" />
                                 </ListItemIcon>
                                 <ListItemText>{t("createFrom")}</ListItemText>
                             </MenuItem>

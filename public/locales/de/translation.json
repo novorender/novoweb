@@ -588,7 +588,7 @@
     "red": "Rot",
     "yellow": "Gelb",
     "green": "Grün",
-    "deleteAllFormsInTemplate": "Alle {{title}}-Formulare löschen?",
+    "deleteAllFormsInTemplate": "Alle \"{{title}}\"-Formulare löschen?",
     "object": "Objekt",
     "geo": "Geo",
     "betaItem": "Dieser Elementtyp ist in der BETA-Phase.",

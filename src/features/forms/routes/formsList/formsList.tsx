@@ -316,7 +316,7 @@ export function FormsList() {
                                     />
                                 }
                                 label={<Box fontSize={14}>{t("add")}</Box>}
-                                sx={{ ml: 1 }}
+                                sx={{ m: 0 }}
                             />
                         )}
                     </Box>
