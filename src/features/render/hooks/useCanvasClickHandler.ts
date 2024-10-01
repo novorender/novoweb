@@ -37,7 +37,6 @@ import {
     selectCamera,
     selectCameraType,
     selectClippingPlanes,
-    selectDeviations,
     selectGeneratedParametricData,
     selectMainObject,
     selectPicker,
@@ -74,7 +73,6 @@ export function useCanvasClickHandler({
     const selectMultiple = useAppSelector(selectSelectMultiple);
     const cameraState = useAppSelector(selectCamera);
     const measure = useAppSelector(selectMeasure);
-    const deviation = useAppSelector(selectDeviations);
     const picker = useAppSelector(selectPicker);
     const measurePickSettings = useAppSelector(selectMeasurePickSettings);
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);

@@ -29,7 +29,6 @@ import {
     selectDefaultPointVisualization,
     selectGeneratedParametricData,
     selectPicker,
-    selectPoints,
     selectStamp,
     selectSubtrees,
     selectViewMode,
@@ -72,7 +71,6 @@ export function useCanvasEventHandlers({
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const picker = useAppSelector(selectPicker);
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
-    const deviation = useAppSelector(selectPoints).deviation;
     const stamp = useAppSelector(selectStamp);
     const subtrees = useAppSelector(selectSubtrees);
     const cameraType = useAppSelector(selectCameraType);
