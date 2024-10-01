@@ -10,11 +10,11 @@ type Knot = { position: number; color: VecRGB };
 
 const gradient: { knots: Knot[] } = {
     knots: [
-        { position: 0, color: [1, 1, 1] },
-        { position: 0.25, color: [0.75, 0.75, 0.75] },
+        { position: 0, color: [0, 0, 0] },
+        { position: 0.25, color: [0.25, 0.25, 0.25] },
         { position: 0.5, color: [0.5, 0.5, 0.5] },
-        { position: 0.75, color: [0.25, 0.25, 0.25] },
-        { position: 1, color: [0, 0, 0] },
+        { position: 0.75, color: [0.75, 0.75, 0.75] },
+        { position: 1, color: [1, 1, 1] },
     ],
 };
 
