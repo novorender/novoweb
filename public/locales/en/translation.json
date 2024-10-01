@@ -610,7 +610,7 @@
     "red": "Red",
     "yellow": "Yellow",
     "green": "Green",
-    "deleteAllFormsInTemplate": "Delete all {{title}} forms?",
+    "deleteAllFormsInTemplate": "Delete all \"{{title}}\" forms?",
     "object": "Object",
     "geo": "Geo",
     "betaItem": "This item type is in BETA.",

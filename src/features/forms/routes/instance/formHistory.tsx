@@ -1,5 +1,15 @@
-import { ArrowBack, History } from "@mui/icons-material";
-import { Box, Button, Divider, LinearProgress, ListItemButton, Typography, useTheme } from "@mui/material";
+import { ArrowBack, Circle, Create, History } from "@mui/icons-material";
+import {
+    Box,
+    Button,
+    Divider,
+    LinearProgress,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    Typography,
+    useTheme,
+} from "@mui/material";
 import { type ObjectId } from "@novorender/webgl-api";
 import { CSSProperties, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -104,7 +114,7 @@ export function FormHistory({ objectId, objectGuid, templateId, formId, title, i
                                 <List
                                     height={height}
                                     itemCount={formHistoryEntries.length}
-                                    itemSize={48}
+                                    itemSize={52}
                                     width="100%"
                                     itemData={{ formHistoryEntries, handleRevisionClick }}
                                     overscanCount={3}
@@ -138,7 +148,12 @@ export function FormHistory({ objectId, objectGuid, templateId, formId, title, i
                     </Typography>
                     <Divider sx={{ my: 1 }} />
                     <ScrollBox m={1}>
-                        <Form form={selectedRevision!} populateEditor disabled />
+                        <Form
+                            form={selectedRevision!}
+                            title={selectedRevision?.title || formId}
+                            populateEditor
+                            disabled
+                        />
                     </ScrollBox>
                 </>
             </Route>
@@ -169,29 +184,38 @@ function FormHistoryEntry({ index, style, data: { handleRevisionClick, formHisto
     const { t } = useTranslation();
 
     const [timestamp, revision] = formHistoryEntries[index];
+    const color = useMemo(
+        () =>
+            revision.isFinal
+                ? undefined
+                : revision.state === "new"
+                  ? "red"
+                  : revision.state === "finished"
+                    ? "green"
+                    : "orange",
+        [revision.isFinal, revision.state],
+    );
     const dateTime = useMemo(
         () => new Date(Number.parseInt(timestamp) * 1000).toLocaleString() || t("n/a"),
         [timestamp, t],
     );
     const author = useMemo(() => `${revision.createdBy?.userName} (${revision.createdBy?.userLogin})`, [revision]);
+    const text = useMemo(() => `${dateTime} ${author}`, [dateTime, author]);
     const handleRowClick = useCallback(() => {
         handleRevisionClick(revision);
     }, [handleRevisionClick, revision]);
 
     return (
         <div style={style}>
-            <ListItemButton key={timestamp} sx={{ height: "48px" }} onClick={handleRowClick}>
-                <Typography>{dateTime}</Typography>
-                <Typography
-                    whiteSpace="nowrap"
-                    overflow="hidden"
-                    textOverflow="ellipsis"
-                    flex={1}
-                    mx={1}
-                    title={author}
-                >
-                    {author}
-                </Typography>
+            <ListItemButton key={timestamp} sx={{ height: "52px" }} onClick={handleRowClick}>
+                <ListItemIcon sx={{ minWidth: 32 }}>
+                    {revision.signatures ? (
+                        <Create htmlColor={color} color={revision.isFinal ? "primary" : "inherit"} />
+                    ) : (
+                        <Circle htmlColor={color} fontSize="small" />
+                    )}
+                </ListItemIcon>
+                <ListItemText title={author}>{text}</ListItemText>
             </ListItemButton>
         </div>
     );

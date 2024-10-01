@@ -610,7 +610,7 @@
     "red": "Rød",
     "yellow": "Gul",
     "green": "Grønn",
-    "deleteAllFormsInTemplate": "Slette alle {{title}}-skjemaer?",
+    "deleteAllFormsInTemplate": "Slette alle \"{{title}}\" skjemaer?",
     "object": "Objekt",
     "geo": "Geo",
     "betaItem": "Denne elementtypen er i BETA.",
