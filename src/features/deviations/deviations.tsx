@@ -13,13 +13,7 @@ import { renderActions } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useToggle } from "hooks/useToggle";
-import {
-    selectIsAdminScene,
-    selectIsOnline,
-    selectMaximized,
-    selectMinimized,
-    selectProjectIsV2,
-} from "slices/explorer";
+import { selectIsOnline, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import { deviationsActions } from "./deviationsSlice";
@@ -93,9 +87,8 @@ export default function Deviations() {
 
 function WidgetMenu(props: MenuProps) {
     const { t } = useTranslation();
-    const isAdminScene = useAppSelector(selectIsAdminScene);
     const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.DeviationWrite) ?? isAdminScene;
+    const canManage = checkPermission(Permission.DeviationWrite);
     const history = useHistory();
     const isProjectV2 = useAppSelector(selectProjectIsV2);
     const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
@@ -107,7 +100,6 @@ function WidgetMenu(props: MenuProps) {
 
     useEffect(() => {
         dispatch(renderActions.setViewMode(ViewMode.Deviations));
-        dispatch(renderActions.setPoints({ deviation: { mixFactor: 1 } }));
     }, [dispatch]);
 
     useListenCalculationState();
@@ -121,10 +113,6 @@ function WidgetMenu(props: MenuProps) {
             props.onClose({}, "backdropClick");
         }
     };
-
-    if (!isAdminScene) {
-        return null;
-    }
 
     if (!canManage) {
         return null;

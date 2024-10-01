@@ -474,7 +474,6 @@ export function useCanvasEventHandlers({
 
         const showInlineStamp =
             !stamp?.pinned &&
-            deviation.mixFactor !== 0 &&
             cameraType === CameraType.Orthographic &&
             e.buttons === 0 &&
             subtrees.points === SubtreeStatus.Shown;

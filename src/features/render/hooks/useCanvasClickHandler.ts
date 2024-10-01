@@ -340,7 +340,6 @@ export function useCanvasClickHandler({
                 return;
             case Picker.Object: {
                 if (
-                    deviation.mixFactor !== 0 &&
                     cameraState.type === CameraType.Orthographic &&
                     result.pointFactor !== undefined &&
                     [ViewMode.CrossSection, ViewMode.FollowPath, ViewMode.Deviations].includes(viewMode)

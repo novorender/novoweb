@@ -7,7 +7,7 @@ import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { followPathActions, selectView2d } from "features/followPath/followPathSlice";
 import { useGoToProfile } from "features/followPath/useGoToProfile";
 import { measureActions } from "features/measure";
-import { renderActions, selectPoints, selectViewMode } from "features/render";
+import { renderActions, selectViewMode } from "features/render";
 import { ViewMode } from "types/misc";
 
 import { selectSelectedCenterLineId, selectSelectedProfile } from "../selectors";
@@ -27,7 +27,6 @@ export function useSetCenterLineFollowPath() {
     const dispatchHighlighted = useDispatchHighlighted();
     const installedFollowPathId = useRef<number>();
     const active = useAppSelector(selectViewMode) === ViewMode.Deviations;
-    const mixFactor = useAppSelector(selectPoints).deviation.mixFactor;
 
     const goToProfile = useGoToProfile();
     const goToProfileRef = useRef(goToProfile);
@@ -43,7 +42,7 @@ export function useSetCenterLineFollowPath() {
 
     const restore = useCallback(() => {
         if (installedFollowPathId.current !== undefined) {
-            dispatch(renderActions.setViewMode(ViewMode.Default));
+            // dispatch(renderActions.setViewMode(ViewMode.Default));
             dispatch(followPathActions.setSelectedPath(undefined));
             dispatch(followPathActions.setSelectedIds([]));
             dispatch(followPathActions.setProfileRange(undefined));
@@ -62,7 +61,7 @@ export function useSetCenterLineFollowPath() {
         setFollowPath();
 
         async function setFollowPath() {
-            if (!followPathId || !centerLine || !view || !active || mixFactor === 0) {
+            if (!followPathId || !centerLine || !view || !active) {
                 restore();
                 return;
             }
@@ -127,5 +126,5 @@ export function useSetCenterLineFollowPath() {
 
             installedFollowPathId.current = followPathId;
         }
-    }, [view, followPathId, dispatch, dispatchHighlighted, centerLine, restore, active, mixFactor]);
+    }, [view, followPathId, dispatch, dispatchHighlighted, centerLine, restore, active]);
 }
