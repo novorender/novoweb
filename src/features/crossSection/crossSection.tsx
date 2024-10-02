@@ -1,44 +1,22 @@
-import { DeleteSweep } from "@mui/icons-material";
-import { Box, Button, FormControlLabel } from "@mui/material";
-import { useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
+import { Box, useTheme } from "@mui/material";
 import ReactVirtualizedAutoSizer from "react-virtualized-auto-sizer";
 
-import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { IosSwitch, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import { useAppSelector } from "app/redux-store-interactions";
+import { Divider, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
-import { Picker, renderActions, selectClippingPlanes, selectPicker } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import { Clipping2d } from "./clipping2d";
+import { DisplaySettingsMenu } from "./components/displaySettingsMenu";
+import { PlaneSelect } from "./components/planeSelect";
 
 export default function CrossSection() {
-    const { t } = useTranslation();
+    const theme = useTheme();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.crossSection.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.crossSection.key);
-    const selecting = useAppSelector(selectPicker) === Picker.ClippingPlane;
-    const { planes, outlines } = useAppSelector(selectClippingPlanes);
-    const dispatch = useAppDispatch();
-    const isInitial = useRef(true);
-
-    useEffect(() => {
-        if (isInitial.current) {
-            if (!selecting) {
-                dispatch(renderActions.setPicker(Picker.ClippingPlane));
-            }
-
-            isInitial.current = false;
-        }
-    }, [dispatch, selecting]);
-
-    useEffect(() => {
-        return () => {
-            dispatch(renderActions.stopPicker(Picker.ClippingPlane));
-        };
-    }, [dispatch]);
 
     return (
         <>
@@ -47,8 +25,28 @@ export default function CrossSection() {
                     menuOpen={menuOpen}
                     toggleMenu={toggleMenu}
                     widget={featuresConfig.crossSection}
-                    disableShadow={menuOpen}
+                    disableShadow={true}
                 ></WidgetHeader>
+
+                <Box boxShadow={theme.customShadows.widgetHeader}>
+                    <Box px={1}>
+                        <Divider />
+                    </Box>
+
+                    <Box
+                        sx={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr min-content",
+                            gap: 1,
+                            alignItems: "center",
+                            pr: 1,
+                        }}
+                    >
+                        <PlaneSelect />
+                        <DisplaySettingsMenu />
+                    </Box>
+                </Box>
+
                 <Box sx={{ width: "100%", height: "100%" }}>
                     <ReactVirtualizedAutoSizer>
                         {({ width, height }) => <Clipping2d width={width} height={height} />}

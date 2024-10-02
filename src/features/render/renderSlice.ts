@@ -374,6 +374,12 @@ export const renderSlice = createSlice({
                 },
             }));
         },
+        toggleClippingPlaneOutlines: (state, action: PayloadAction<number>) => {
+            const plane = state.clipping.planes[action.payload];
+            if (plane) {
+                plane.outline.enabled = !plane.outline.enabled;
+            }
+        },
         addClippingPlane: (
             state,
             action: PayloadAction<Omit<State["clipping"]["planes"][number], "color" | "outline">>,

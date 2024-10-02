@@ -1,1 +1,2 @@
-export { useHandleClipping } from "./useHandleClipping";
+export * from "./slice";
+export * from "./selectors";

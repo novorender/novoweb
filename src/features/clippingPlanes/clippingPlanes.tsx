@@ -11,7 +11,6 @@ import WidgetList from "features/widgetList/widgetList";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorer";
 
-import { Clipping2d } from "./clipping2d";
 import Planes from "./planes";
 
 export default function ClippingPlanes() {
@@ -99,7 +98,6 @@ export default function ClippingPlanes() {
                 </WidgetHeader>
                 <ScrollBox p={1} pb={3} display={menuOpen || minimized ? "none" : "block"}>
                     <Planes />
-                    <Clipping2d />
                 </ScrollBox>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.clippingPlanes.key} onSelect={toggleMenu} />}
             </WidgetContainer>

@@ -10,6 +10,7 @@ import { bimTrackApi, bimTrackReducer } from "features/bimTrack";
 import { bookmarksReducer } from "features/bookmarks";
 import { clashReducer } from "features/clash";
 import { clashApi } from "features/clash/clashApi";
+import { crossSectionReducer } from "features/crossSection/slice";
 import { deviationsReducer } from "features/deviations";
 import { ditioApi } from "features/ditio";
 import { ditioReducer } from "features/ditio";
@@ -77,6 +78,7 @@ const rootReducer = combineReducers({
     [clashApi.reducerPath]: clashApi.reducer,
     clash: clashReducer,
     pointVisualization: pointVisualizationReducer,
+    crossSection: crossSectionReducer,
 });
 
 export const store = configureStore({
