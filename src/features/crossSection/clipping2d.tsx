@@ -19,7 +19,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHidden } from "contexts/hidden";
 import { CameraState, drawPart } from "features/engine2D";
 import { ColorSettings, getCameraDir } from "features/engine2D/utils";
-import { CameraType, renderActions, selectClippingPlanes } from "features/render";
+import { CameraType, renderActions, selectClippingPlanes, selectMainObject } from "features/render";
 import { flipCADToGLQuat } from "features/render/utils";
 import { getRandomColorForObjectId, hslToVec, vecToHex } from "utils/color";
 import { decomposeNormalOffset, pointToPlaneDistance, projectPointOntoPlane, radToDeg } from "utils/math";
@@ -52,6 +52,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     } | null>(null);
     const hidden = useHidden();
     const needRedrawRef = useRef(false);
+    const mainObject = useAppSelector(selectMainObject);
 
     const clippingPlaneCount = useMemo(() => clippingPlanes.planes.length, [clippingPlanes]);
     const planeIndex = useAppSelector(selectPlaneIndex);
@@ -119,6 +120,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
             type: CameraType.Orthographic,
         };
         draw(ctx, drawObjectsRef.current, cameraState, {
+            mainObject,
             outlineColor: vecToHex(plane.outline.color),
             coloring: displaySettings.coloringType,
         });
@@ -132,7 +134,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
             compassRef.current.updateCamera(cameraRef.current);
             compassRef.current.setVisible(isTopDown);
         }
-    }, [view, plane, planeIndex, width, height, displaySettings]);
+    }, [view, plane, planeIndex, width, height, displaySettings, mainObject]);
 
     useEffect(() => {
         needRedrawRef.current = true;
@@ -358,7 +360,11 @@ function draw(
     ctx: CanvasRenderingContext2D,
     products: DrawProduct[],
     cameraState: CameraState,
-    { coloring, outlineColor }: { coloring: ColoringType; outlineColor: string },
+    {
+        mainObject,
+        coloring,
+        outlineColor,
+    }: { mainObject: number | undefined; coloring: ColoringType; outlineColor: string },
 ) {
     const colorSettings: ColorSettings = {
         pointColor: outlineColor,
@@ -373,7 +379,11 @@ function draw(
 
     for (const product of products) {
         let color = outlineColor;
-        if (coloring !== ColoringType.OutlinesColor && typeof product.ObjectId === "number") {
+        let pixelWidth = 2;
+        if (mainObject !== undefined && mainObject === product.ObjectId) {
+            color = "red";
+            pixelWidth = 4;
+        } else if (coloring !== ColoringType.OutlinesColor && typeof product.ObjectId === "number") {
             const rgb = getRandomColorForObjectId(product.ObjectId);
             color = vecToHex(rgb);
         }
@@ -383,7 +393,7 @@ function draw(
 
         for (const object of product.objects) {
             for (const part of object.parts) {
-                drawPart(ctx, cameraState, part, colorSettings, 2, textSettings);
+                drawPart(ctx, cameraState, part, colorSettings, pixelWidth, textSettings);
             }
         }
     }
