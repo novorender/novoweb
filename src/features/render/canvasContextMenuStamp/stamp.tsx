@@ -238,9 +238,13 @@ function Selection() {
         const w = vec3.dot(normal, position);
         let rotation = 0;
         if (object) {
-            const rotationQuat = await getObjectMetadataRotation(view, db, object);
-            if (rotationQuat) {
-                rotation = getLocalRotationAroundNormal(rotationQuat, normal);
+            try {
+                const rotationQuat = await getObjectMetadataRotation(view, db, object);
+                if (rotationQuat) {
+                    rotation = getLocalRotationAroundNormal(rotationQuat, normal);
+                }
+            } catch (ex) {
+                console.warn("Error getting object rotation", ex);
             }
         }
         const normalOffset = vec4.fromValues(normal[0], normal[1], normal[2], w);
