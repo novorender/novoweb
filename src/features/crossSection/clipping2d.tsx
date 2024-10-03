@@ -35,7 +35,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     const {
         state: { view },
     } = useExplorerGlobals(true);
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const generationRef = useRef(0);
     const controllerRef = useRef<OrthoController | null>(null);
@@ -80,11 +80,11 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     }, [clippingPlaneCount]);
 
     const redraw = useCallback(async () => {
-        if (!canvasRef.current) {
+        if (!ctxRef.current) {
             return;
         }
 
-        clearCanvas(canvasRef.current);
+        clearCanvas(ctxRef.current);
 
         if (
             !cameraRef.current ||
@@ -112,7 +112,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
             }
         }
 
-        const ctx = canvasRef.current.getContext("2d")!;
+        const ctx = ctxRef.current;
 
         const cameraState = {
             pos: cameraRef.current.position,
@@ -141,12 +141,12 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     }, [cameraState, redraw]);
 
     const reinitAndRedraw = useCallback(async () => {
-        if (!canvasRef.current) {
+        if (!ctxRef.current) {
             return;
         }
 
         if (!plane) {
-            clearCanvas(canvasRef.current);
+            clearCanvas(ctxRef.current);
             return;
         }
 
@@ -177,7 +177,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
         }
 
         if (!controllerRef.current) {
-            const input = new ControllerInput(canvasRef.current);
+            const input = new ControllerInput(ctxRef.current.canvas);
             const ortho = new OrthoController(input);
             ortho.attach();
             controllerRef.current = ortho;
@@ -317,8 +317,8 @@ export function Clipping2d({ width, height }: { width: number; height: number })
                 width={width}
                 height={height}
                 ref={(ref) => {
-                    if (!canvasRef.current && ref) {
-                        canvasRef.current = ref;
+                    if (!ctxRef.current && ref) {
+                        ctxRef.current = ref.getContext("2d");
                         reinitAndRedraw();
                     }
                 }}
@@ -351,8 +351,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     );
 }
 
-function clearCanvas(canvas: HTMLCanvasElement) {
-    const ctx = canvas.getContext("2d")!;
+function clearCanvas(ctx: CanvasRenderingContext2D) {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 
