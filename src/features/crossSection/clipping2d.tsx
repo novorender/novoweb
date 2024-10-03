@@ -324,9 +324,9 @@ export function Clipping2d({ width, height }: { width: number; height: number })
                 onPointerUp={handlePointerUp}
             />
             {clippingPlaneCount === 0 && <Overlay>No clipping planes</Overlay>}
+            {plane && plane.outline.enabled && <Compass onClick={lookNorth} ref={compassRef} />}
             {plane && !plane.outline.enabled && (
                 <>
-                    <Compass onClick={lookNorth} ref={compassRef} />
                     <Overlay>
                         <Box>
                             <Box mb={2}>

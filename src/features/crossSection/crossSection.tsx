@@ -28,7 +28,7 @@ export default function CrossSection() {
                     disableShadow={true}
                 ></WidgetHeader>
 
-                <Box boxShadow={theme.customShadows.widgetHeader}>
+                <Box display={menuOpen || minimized ? "none" : "block"} boxShadow={theme.customShadows.widgetHeader}>
                     <Box px={1}>
                         <Divider />
                     </Box>
@@ -47,7 +47,7 @@ export default function CrossSection() {
                     </Box>
                 </Box>
 
-                <Box sx={{ width: "100%", height: "100%" }}>
+                <Box display={menuOpen || minimized ? "none" : "block"} sx={{ width: "100%", height: "100%" }}>
                     <ReactVirtualizedAutoSizer>
                         {({ width, height }) => <Clipping2d width={width} height={height} />}
                     </ReactVirtualizedAutoSizer>
