@@ -1,16 +1,26 @@
-import { Box, Button, css, styled } from "@mui/material";
-import { ControllerInput, DrawProduct, OrthoController, RenderStateCamera } from "@novorender/api";
+import { Box, Button, css, IconButton, Paper, styled, SvgIcon, useTheme } from "@mui/material";
+import {
+    computeRotation,
+    ControllerInput,
+    DrawContext,
+    DrawProduct,
+    OrthoController,
+    RenderStateCamera,
+    View,
+} from "@novorender/api";
 import { rotationFromDirection } from "@novorender/api/web_app/controller/orientation";
-import { vec3 } from "gl-matrix";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { quat, ReadonlyQuat, ReadonlyVec3, vec3 } from "gl-matrix";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { useCameraState } from "contexts/cameraState";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraState, drawPart } from "features/engine2D";
 import { ColorSettings, getCameraDir } from "features/engine2D/utils";
 import { CameraType, renderActions, selectClippingPlanes } from "features/render";
-import { getRandomColorForObjectId, vecToHex } from "utils/color";
-import { decomposeNormalOffset, projectPointOntoPlane } from "utils/math";
+import { flipCADToGLQuat } from "features/render/utils";
+import { getRandomColorForObjectId, hslToVec, vecToHex } from "utils/color";
+import { radToDeg } from "utils/math";
 import { sleep } from "utils/time";
 
 import { selectDisplaySettings, selectPlaneIndex } from "./selectors";
@@ -29,6 +39,8 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     const drawObjectsRef = useRef<DrawProduct[] | null>(null);
     const dispatch = useAppDispatch();
     const displaySettings = useAppSelector(selectDisplaySettings);
+    const cameraState = useCameraState();
+    const compassRef = useRef<CompassRef | null>(null);
 
     const clippingPlaneCount = useMemo(() => clippingPlanes.planes.length, [clippingPlanes]);
     const planeIndex = useAppSelector(selectPlaneIndex);
@@ -57,7 +69,14 @@ export function Clipping2d({ width, height }: { width: number; height: number })
 
         clearCanvas(canvasRef.current);
 
-        if (!cameraRef.current || !view.measure || !plane || planeIndex === null) {
+        if (
+            !cameraRef.current ||
+            !view.measure ||
+            !plane ||
+            !plane.outline.enabled ||
+            planeIndex === null ||
+            planeIndex >= view.renderState.clipping.planes.length
+        ) {
             return;
         }
 
@@ -76,17 +95,32 @@ export function Clipping2d({ width, height }: { width: number; height: number })
             }
         }
 
-        draw(
-            canvasRef.current,
-            drawObjectsRef.current,
-            {
-                pos: cameraRef.current.position,
-                dir: getCameraDir(cameraRef.current.rotation),
-                type: CameraType.Orthographic,
-            },
-            { outlineColor: vecToHex(plane.outline.color), coloring: displaySettings.coloringType },
-        );
+        const ctx = canvasRef.current.getContext("2d")!;
+
+        const cameraState = {
+            pos: cameraRef.current.position,
+            dir: getCameraDir(cameraRef.current.rotation),
+            type: CameraType.Orthographic,
+        };
+        draw(ctx, drawObjectsRef.current, cameraState, {
+            outlineColor: vecToHex(plane.outline.color),
+            coloring: displaySettings.coloringType,
+        });
+
+        const cameraDir = cameraState.dir;
+        const isTopDown = vec3.dot(cameraDir, vec3.fromValues(0, 0, -1)) >= 0.99;
+
+        drawCamera(view, ctx, cameraState, view.renderState.camera, drawContext);
+
+        if (compassRef.current) {
+            compassRef.current.updateCamera(cameraRef.current);
+            compassRef.current.setVisible(isTopDown);
+        }
     }, [view, plane, planeIndex, width, height, displaySettings]);
+
+    useEffect(() => {
+        redraw();
+    }, [cameraState, redraw]);
 
     const reinitAndRedraw = useCallback(async () => {
         if (!canvasRef.current) {
@@ -107,12 +141,12 @@ export function Clipping2d({ width, height }: { width: number; height: number })
             return;
         }
 
-        const cameraDir = plane.normalOffset.slice(0, 3) as vec3;
-        vec3.negate(cameraDir, cameraDir);
-        const rotation = rotationFromDirection(cameraDir);
-        const position = vec3.clone(plane.anchorPos ?? view.renderState.camera.position);
-
         if (!cameraRef.current) {
+            const cameraDir = plane.normalOffset.slice(0, 3) as vec3;
+            const rotation = rotationFromDirection(cameraDir);
+            const position = vec3.clone(plane.anchorPos ?? view.renderState.camera.position);
+            vec3.scaleAndAdd(position, position, cameraDir, 300);
+
             cameraRef.current = {
                 position,
                 rotation,
@@ -121,12 +155,6 @@ export function Clipping2d({ width, height }: { width: number; height: number })
                 fov: 50,
                 kind: "orthographic",
                 pivot: undefined,
-            };
-        } else {
-            const { normal, point } = decomposeNormalOffset(plane.normalOffset);
-            cameraRef.current = {
-                ...cameraRef.current,
-                position: projectPointOntoPlane(cameraRef.current.position, normal, point),
             };
         }
 
@@ -168,11 +196,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
                 const stateChanges = controllerRef.current.renderStateChanges(cameraRef.current, elapsedTime);
                 const plane = planeRef.current;
                 if (stateChanges?.camera && plane) {
-                    let newPosition = stateChanges.camera.position as vec3;
-                    if (newPosition) {
-                        const { normal, point } = decomposeNormalOffset(plane.normalOffset);
-                        newPosition = projectPointOntoPlane(newPosition, normal, point);
-                    }
+                    const newPosition = stateChanges.camera.position as vec3;
                     Object.assign(cameraRef.current, {
                         ...stateChanges.camera,
                         position: newPosition ?? cameraRef.current.position,
@@ -190,16 +214,41 @@ export function Clipping2d({ width, height }: { width: number; height: number })
         };
     }, [redraw]);
 
+    const lookNorth = () => {
+        if (!cameraRef.current) {
+            return;
+        }
+
+        const angle = radToDeg(getNorthAngle(cameraRef.current.rotation));
+        const rotation = flipCADToGLQuat(computeRotation(-angle, 0, 0));
+        quat.multiply(rotation, cameraRef.current.rotation, rotation);
+        quat.copy(cameraRef.current.rotation, rotation);
+
+        if (controllerRef.current) {
+            controllerRef.current.init({
+                kind: "ortho",
+                position: cameraRef.current.position,
+                rotation: cameraRef.current.rotation,
+                fovMeters: cameraRef.current.fov,
+            });
+        }
+
+        redraw();
+    };
+
     return (
         <Box position="relative" width={width} height={height}>
             <canvas
                 width={width}
                 height={height}
                 ref={(ref) => {
-                    canvasRef.current = ref;
-                    reinitAndRedraw();
+                    if (!canvasRef.current && ref) {
+                        canvasRef.current = ref;
+                        reinitAndRedraw();
+                    }
                 }}
             />
+            <Compass onClick={lookNorth} ref={compassRef} />
             {clippingPlaneCount === 0 && <Overlay>No clipping planes</Overlay>}
             {plane && !plane.outline.enabled && (
                 <Overlay>
@@ -227,13 +276,11 @@ function clearCanvas(canvas: HTMLCanvasElement) {
 }
 
 function draw(
-    canvas: HTMLCanvasElement,
+    ctx: CanvasRenderingContext2D,
     products: DrawProduct[],
     cameraState: CameraState,
     { coloring, outlineColor }: { coloring: ColoringType; outlineColor: string },
 ) {
-    const ctx = canvas.getContext("2d")!;
-
     const colorSettings: ColorSettings = {
         pointColor: outlineColor,
         fillColor: outlineColor,
@@ -263,6 +310,137 @@ function draw(
     }
 }
 
+function drawCamera(
+    view: View,
+    ctx: CanvasRenderingContext2D,
+    camera: CameraState,
+    renderedCamera: RenderStateCamera,
+    drawContext: DrawContext,
+) {
+    if (!view.measure) {
+        return;
+    }
+
+    const p0 = vec3.clone(renderedCamera.position);
+    const dir = getCameraDir(renderedCamera.rotation);
+    const up = getUp(renderedCamera.rotation);
+    const pOffset = vec3.scaleAndAdd(vec3.create(), p0, dir, 2);
+    const pNormal = vec3.cross(vec3.create(), dir, up);
+
+    let points: ReadonlyVec3[];
+    if (renderedCamera.kind === "pinhole") {
+        const p1 = vec3.scaleAndAdd(vec3.create(), pOffset, pNormal, -1);
+        const p2 = vec3.scaleAndAdd(vec3.create(), pOffset, pNormal, 1);
+        points = [p0, p1, p2];
+    } else {
+        const p1 = vec3.scaleAndAdd(vec3.create(), p0, pNormal, -1);
+        const p2 = vec3.scaleAndAdd(vec3.create(), pOffset, pNormal, -1);
+        const p3 = vec3.scaleAndAdd(vec3.create(), pOffset, pNormal, 1);
+        const p4 = vec3.scaleAndAdd(vec3.create(), p0, pNormal, 1);
+        points = [p1, p2, p3, p4];
+    }
+
+    // camera plane
+    const cameraProduct = view.measure.draw.getDrawObjectFromPoints(
+        points,
+        {
+            angles: false,
+            generateLineLabels: false,
+            closed: true,
+        },
+        drawContext,
+    );
+
+    const dot = vec3.dot(dir, vec3.fromValues(0, 0, -1));
+    const fillColorVec = hslToVec(0, 0, 0.3 + (1 - Math.abs(dot)) * 0.4);
+    const fillColor = vecToHex([...fillColorVec, 0.7]);
+
+    if (cameraProduct) {
+        for (const object of cameraProduct.objects) {
+            for (const part of object.parts) {
+                drawPart(
+                    ctx,
+                    camera,
+                    part,
+                    {
+                        lineColor: "#aaa",
+                        pointColor: "#aaa",
+                        fillColor,
+                    },
+                    2,
+                );
+            }
+        }
+    }
+
+    // point
+    const pointProduct = view.measure.draw.getDrawObjectFromPoints([p0], undefined, drawContext);
+    if (pointProduct) {
+        for (const object of pointProduct.objects) {
+            for (const part of object.parts) {
+                drawPart(ctx, camera, part, { pointColor: "#2196F3" }, 10);
+            }
+        }
+    }
+}
+
+function getNorthAngle(rotation: ReadonlyQuat) {
+    const up = vec3.transformQuat(vec3.create(), vec3.fromValues(0, 1, 0), rotation);
+    up[2] = 0;
+    vec3.normalize(up, up);
+    return Math.atan2(up[1], up[0]) - Math.PI / 2;
+}
+
+type CompassRef = {
+    updateCamera: (camera: RenderStateCamera) => void;
+    setVisible: (value: boolean) => void;
+};
+
+const Compass = forwardRef(function Compass({ onClick }: { onClick: () => void }, ref) {
+    const theme = useTheme();
+    const [angle, setAngle] = useState(0);
+    const [visible, setVisible] = useState(false);
+
+    useImperativeHandle(
+        ref,
+        () =>
+            ({
+                updateCamera(camera: RenderStateCamera) {
+                    setAngle(getNorthAngle(camera.rotation));
+                },
+                setVisible(value: boolean) {
+                    setVisible(value);
+                },
+            }) as CompassRef,
+    );
+
+    return (
+        <Paper
+            sx={{
+                borderRadius: "50%",
+                position: "absolute",
+                left: theme.spacing(1),
+                top: theme.spacing(1),
+                display: visible ? "block" : "none",
+            }}
+        >
+            <IconButton onClick={onClick}>
+                <SvgIcon>
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        xmlns="http://www.w3.org/2000/svg"
+                        style={{ rotate: `${angle}rad` }}
+                    >
+                        <path d="M 12 1 l -6 10 l 1 1 l 5 -2 l 5 2 l 1 -1 z" fill={theme.palette.primary.main} />
+                        <path d="M 12 23 l 6 -10 l -1 -1 l -5 2 l -5 -2 l -1 1 z" />
+                    </svg>
+                </SvgIcon>
+            </IconButton>
+        </Paper>
+    );
+});
+
 const Overlay = styled(Box)(
     ({ theme }) => css`
         position: absolute;
@@ -276,3 +454,7 @@ const Overlay = styled(Box)(
         color: grey;
     `,
 );
+
+function getUp(rotation: quat) {
+    return vec3.transformQuat(vec3.create(), vec3.fromValues(0, 1, 0), rotation);
+}
