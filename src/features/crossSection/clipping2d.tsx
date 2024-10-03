@@ -9,23 +9,27 @@ import {
     View,
 } from "@novorender/api";
 import { rotationFromDirection } from "@novorender/api/web_app/controller/orientation";
-import { quat, ReadonlyQuat, ReadonlyVec3, vec3 } from "gl-matrix";
+import { ScreenSpaceConversions } from "@novorender/api/web_app/screen_space_conversions";
+import { quat, ReadonlyQuat, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useCameraState } from "contexts/cameraState";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useHidden } from "contexts/hidden";
 import { CameraState, drawPart } from "features/engine2D";
 import { ColorSettings, getCameraDir } from "features/engine2D/utils";
 import { CameraType, renderActions, selectClippingPlanes } from "features/render";
 import { flipCADToGLQuat } from "features/render/utils";
 import { getRandomColorForObjectId, hslToVec, vecToHex } from "utils/color";
-import { radToDeg } from "utils/math";
+import { decomposeNormalOffset, pointToPlaneDistance, projectPointOntoPlane, radToDeg } from "utils/math";
 import { sleep } from "utils/time";
 
 import { selectDisplaySettings, selectPlaneIndex } from "./selectors";
 import { crossSectionActions } from "./slice";
 import { ColoringType } from "./types";
+
+const CAMERA_OFFSET = 300;
 
 export function Clipping2d({ width, height }: { width: number; height: number }) {
     const {
@@ -39,8 +43,15 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     const drawObjectsRef = useRef<DrawProduct[] | null>(null);
     const dispatch = useAppDispatch();
     const displaySettings = useAppSelector(selectDisplaySettings);
+    const drawContextRef = useRef<DrawContext | null>(null);
     const cameraState = useCameraState();
     const compassRef = useRef<CompassRef | null>(null);
+    const pointerDownRef = useRef<{
+        timestamp: number;
+        pos: vec2;
+    } | null>(null);
+    const hidden = useHidden();
+    const needRedrawRef = useRef(false);
 
     const clippingPlaneCount = useMemo(() => clippingPlanes.planes.length, [clippingPlanes]);
     const planeIndex = useAppSelector(selectPlaneIndex);
@@ -57,6 +68,11 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     const plane = planeIndex === null ? null : (clippingPlanes.planes[planeIndex] ?? null);
     const planeRef = useRef(plane);
     planeRef.current = plane;
+
+    useEffect(() => {
+        drawObjectsRef.current = null;
+        needRedrawRef.current = true;
+    }, [hidden]);
 
     useEffect(() => {
         cameraRef.current = null;
@@ -80,18 +96,18 @@ export function Clipping2d({ width, height }: { width: number; height: number })
             return;
         }
 
-        const drawContext = {
+        drawContextRef.current = {
             width,
             height,
             camera: cameraRef.current,
         };
         if (!drawObjectsRef.current) {
-            drawObjectsRef.current = view.getOutlineDrawObjects("clipping", planeIndex, drawContext, {
+            drawObjectsRef.current = view.getOutlineDrawObjects("clipping", planeIndex, drawContextRef.current, {
                 generateLineLabels: displaySettings.showLabels,
             });
         } else {
             for (const product of drawObjectsRef.current) {
-                view.measure.draw.updateProduct(product, drawContext);
+                view.measure.draw.updateProduct(product, drawContextRef.current);
             }
         }
 
@@ -110,7 +126,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
         const cameraDir = cameraState.dir;
         const isTopDown = vec3.dot(cameraDir, vec3.fromValues(0, 0, -1)) >= 0.99;
 
-        drawCamera(view, ctx, cameraState, view.renderState.camera, drawContext);
+        drawCamera(view, ctx, cameraState, view.renderState.camera, drawContextRef.current);
 
         if (compassRef.current) {
             compassRef.current.updateCamera(cameraRef.current);
@@ -119,7 +135,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     }, [view, plane, planeIndex, width, height, displaySettings]);
 
     useEffect(() => {
-        redraw();
+        needRedrawRef.current = true;
     }, [cameraState, redraw]);
 
     const reinitAndRedraw = useCallback(async () => {
@@ -145,7 +161,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
             const cameraDir = plane.normalOffset.slice(0, 3) as vec3;
             const rotation = rotationFromDirection(cameraDir);
             const position = vec3.clone(plane.anchorPos ?? view.renderState.camera.position);
-            vec3.scaleAndAdd(position, position, cameraDir, 300);
+            vec3.scaleAndAdd(position, position, cameraDir, CAMERA_OFFSET);
 
             cameraRef.current = {
                 position,
@@ -173,8 +189,12 @@ export function Clipping2d({ width, height }: { width: number; height: number })
 
         drawObjectsRef.current = null;
 
-        redraw();
-    }, [view, plane, redraw]);
+        needRedrawRef.current = true;
+    }, [view, plane]);
+
+    useEffect(() => {
+        needRedrawRef.current = true;
+    }, [redraw]);
 
     useEffect(() => {
         reinitAndRedraw();
@@ -201,8 +221,14 @@ export function Clipping2d({ width, height }: { width: number; height: number })
                         ...stateChanges.camera,
                         position: newPosition ?? cameraRef.current.position,
                     });
-                    redraw();
+                    needRedrawRef.current = true;
                 }
+
+                if (needRedrawRef.current) {
+                    redraw();
+                    needRedrawRef.current = false;
+                }
+
                 raf();
             });
         }
@@ -214,16 +240,12 @@ export function Clipping2d({ width, height }: { width: number; height: number })
         };
     }, [redraw]);
 
-    const lookNorth = () => {
+    const updateCamera = (update: Partial<RenderStateCamera>) => {
         if (!cameraRef.current) {
             return;
         }
 
-        const angle = radToDeg(getNorthAngle(cameraRef.current.rotation));
-        const rotation = flipCADToGLQuat(computeRotation(-angle, 0, 0));
-        quat.multiply(rotation, cameraRef.current.rotation, rotation);
-        quat.copy(cameraRef.current.rotation, rotation);
-
+        Object.assign(cameraRef.current, update);
         if (controllerRef.current) {
             controllerRef.current.init({
                 kind: "ortho",
@@ -232,8 +254,59 @@ export function Clipping2d({ width, height }: { width: number; height: number })
                 fovMeters: cameraRef.current.fov,
             });
         }
+    };
 
-        redraw();
+    const lookNorth = () => {
+        if (!cameraRef.current) {
+            return;
+        }
+
+        const angle = radToDeg(getNorthAngle(cameraRef.current.rotation));
+        const rotation = flipCADToGLQuat(computeRotation(-angle, 0, 0));
+        quat.multiply(rotation, cameraRef.current.rotation, rotation);
+        updateCamera({ rotation });
+
+        needRedrawRef.current = true;
+    };
+
+    const handlePointerDown = (e: React.PointerEvent) => {
+        pointerDownRef.current = {
+            timestamp: new Date().getTime(),
+            pos: getPointerPos(e),
+        };
+    };
+
+    const handlePointerUp = (e: React.PointerEvent) => {
+        if (!pointerDownRef.current || !drawContextRef.current || !view || !plane) {
+            return;
+        }
+
+        const now = new Date().getTime();
+        const pos = getPointerPos(e);
+        const isClick = now - pointerDownRef.current.timestamp < 500 && vec2.dist(pos, pointerDownRef.current.pos) < 20;
+
+        if (!isClick) {
+            return;
+        }
+
+        const convert = new ScreenSpaceConversions(drawContextRef.current);
+        const [pos3d] = convert.screenSpaceToWorldSpace([pos]);
+
+        const mainCamera = view.renderState.camera;
+        const mainCameraToPlaneDist = pointToPlaneDistance(mainCamera.position, plane.normalOffset);
+        const { point, normal } = decomposeNormalOffset(plane.normalOffset);
+        const position = projectPointOntoPlane(pos3d, normal, point);
+        vec3.scaleAndAdd(position, position, normal, mainCameraToPlaneDist);
+
+        dispatch(
+            renderActions.setCamera({
+                type: mainCamera.kind === "orthographic" ? CameraType.Orthographic : CameraType.Pinhole,
+                goTo: {
+                    position,
+                    rotation: mainCamera.rotation,
+                },
+            }),
+        );
     };
 
     return (
@@ -247,24 +320,30 @@ export function Clipping2d({ width, height }: { width: number; height: number })
                         reinitAndRedraw();
                     }
                 }}
+                onPointerDown={handlePointerDown}
+                onPointerUp={handlePointerUp}
             />
-            <Compass onClick={lookNorth} ref={compassRef} />
             {clippingPlaneCount === 0 && <Overlay>No clipping planes</Overlay>}
             {plane && !plane.outline.enabled && (
-                <Overlay>
-                    <Box>
-                        <Box mb={2}>You need to enable outlines for selected clipping plane to see the outlines.</Box>
+                <>
+                    <Compass onClick={lookNorth} ref={compassRef} />
+                    <Overlay>
+                        <Box>
+                            <Box mb={2}>
+                                You need to enable outlines for selected clipping plane to see the outlines.
+                            </Box>
 
-                        <Button
-                            variant="contained"
-                            onClick={() => {
-                                dispatch(renderActions.toggleClippingPlaneOutlines(planeIndex!));
-                            }}
-                        >
-                            Enable outlines
-                        </Button>
-                    </Box>
-                </Overlay>
+                            <Button
+                                variant="contained"
+                                onClick={() => {
+                                    dispatch(renderActions.toggleClippingPlaneOutlines(planeIndex!));
+                                }}
+                            >
+                                Enable outlines
+                            </Button>
+                        </Box>
+                    </Overlay>
+                </>
             )}
         </Box>
     );
@@ -457,4 +536,8 @@ const Overlay = styled(Box)(
 
 function getUp(rotation: quat) {
     return vec3.transformQuat(vec3.create(), vec3.fromValues(0, 1, 0), rotation);
+}
+
+function getPointerPos(e: React.PointerEvent) {
+    return vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 }
