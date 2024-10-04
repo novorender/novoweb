@@ -572,7 +572,7 @@ export const featuresConfig = {
         offline: true,
         tags: [featureTags.review.key],
         groups: [featureGroups.measure.key],
-        newUx: true,
+        // newUx: true,
     },
 } as const;
 
