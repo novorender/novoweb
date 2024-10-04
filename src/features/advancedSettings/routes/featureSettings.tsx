@@ -143,32 +143,40 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                     <AccordionSummary>{t("widgets")}</AccordionSummary>
                     <AccordionDetails>
                         <Grid container p={1}>
-                            {sortWidgets([...releasedViewerWidgets]).map((widget) =>
-                                defaultEnabledWidgets.includes(widget.key) ? null : (
-                                    <Grid item xs={6} key={widget.key}>
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    size="small"
-                                                    color="primary"
-                                                    name={widget.key}
-                                                    checked={
-                                                        enabledWidgets.some((enabled) => enabled.key === widget.key) &&
-                                                        !lockedWidgets.includes(widget.key)
-                                                    }
-                                                    onChange={(_e, checked) => toggleWidget(widget.key, checked)}
-                                                    disabled={lockedWidgets.includes(widget.key)}
-                                                />
-                                            }
-                                            label={
-                                                <Box mr={0.5} sx={{ userSelect: "none" }}>
-                                                    {t(widget.nameKey)}
-                                                </Box>
-                                            }
-                                        />
-                                    </Grid>
-                                ),
-                            )}
+                            {sortWidgets([...releasedViewerWidgets])
+                                .filter((widget) => {
+                                    if ("newUx" in widget && widget.newUx && !newDesign) {
+                                        return false;
+                                    }
+                                    return true;
+                                })
+                                .map((widget) =>
+                                    defaultEnabledWidgets.includes(widget.key) ? null : (
+                                        <Grid item xs={6} key={widget.key}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        size="small"
+                                                        color="primary"
+                                                        name={widget.key}
+                                                        checked={
+                                                            enabledWidgets.some(
+                                                                (enabled) => enabled.key === widget.key,
+                                                            ) && !lockedWidgets.includes(widget.key)
+                                                        }
+                                                        onChange={(_e, checked) => toggleWidget(widget.key, checked)}
+                                                        disabled={lockedWidgets.includes(widget.key)}
+                                                    />
+                                                }
+                                                label={
+                                                    <Box mr={0.5} sx={{ userSelect: "none" }}>
+                                                        {t(widget.nameKey)}
+                                                    </Box>
+                                                }
+                                            />
+                                        </Grid>
+                                    ),
+                                )}
                         </Grid>
                     </AccordionDetails>
                 </Accordion>
