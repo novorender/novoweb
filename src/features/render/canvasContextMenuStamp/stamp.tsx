@@ -306,7 +306,9 @@ function Selection() {
                 {features.includes(config.addFileToBasket.key) && (
                     <MenuItem
                         onClick={addToBasket}
-                        disabled={!properties?.file || !checkProjectPermission(config.addFileToBasket.permission)}
+                        disabled={
+                            !isOnline || !properties?.file || !checkProjectPermission(config.addFileToBasket.permission)
+                        }
                     >
                         <ListItemIcon>
                             <Layers fontSize="small" />
