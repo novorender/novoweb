@@ -1,4 +1,4 @@
-import { Check, Layers } from "@mui/icons-material";
+import { Check, FilterAlt } from "@mui/icons-material";
 import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { useState } from "react";
 
@@ -25,7 +25,7 @@ export function DisplaySettingsMenu() {
     return (
         <>
             <IconButton onClick={openMenu}>
-                <Layers />
+                <FilterAlt />
             </IconButton>
             <Menu
                 anchorEl={menuAnchor}
