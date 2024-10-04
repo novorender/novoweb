@@ -33,7 +33,7 @@ import {
 } from "features/outlineLaser";
 import { pointLineActions, selectLockPointLineElevation } from "features/pointLine";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
-import { selectCanvasContextMenuFeatures } from "slices/explorer";
+import { selectCanvasContextMenuFeatures, selectIsOnline } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { getPerpendicular } from "utils/math";
 import {
@@ -135,6 +135,7 @@ function Selection() {
         layer: [string, string] | undefined;
         file: [string, string] | undefined;
     }>();
+    const isOnline = useAppSelector(selectIsOnline);
 
     useEffect(() => {
         loadObjectData();
@@ -244,7 +245,7 @@ function Selection() {
                     rotation = getLocalRotationAroundNormal(rotationQuat, normal);
                 }
             } catch (ex) {
-                console.warn("Error getting object rotation", ex);
+                console.warn("Error getting clip rotation", ex);
             }
         }
         const normalOffset = vec4.fromValues(normal[0], normal[1], normal[2], w);
@@ -285,7 +286,9 @@ function Selection() {
                 {features.includes(config.hideLayer.key) && (
                     <MenuItem
                         onClick={hideLayer}
-                        disabled={!properties?.layer || !checkProjectPermission(config.hideLayer.permission)}
+                        disabled={
+                            !isOnline || !properties?.layer || !checkProjectPermission(config.hideLayer.permission)
+                        }
                     >
                         <ListItemIcon>
                             <LayersClear fontSize="small" />
@@ -303,7 +306,9 @@ function Selection() {
                 {features.includes(config.addFileToBasket.key) && (
                     <MenuItem
                         onClick={addToBasket}
-                        disabled={!properties?.file || !checkProjectPermission(config.addFileToBasket.permission)}
+                        disabled={
+                            !isOnline || !properties?.file || !checkProjectPermission(config.addFileToBasket.permission)
+                        }
                     >
                         <ListItemIcon>
                             <Layers fontSize="small" />
