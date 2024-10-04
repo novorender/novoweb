@@ -19,7 +19,13 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHidden } from "contexts/hidden";
 import { CameraState, drawPart } from "features/engine2D";
 import { ColorSettings, getCameraDir } from "features/engine2D/utils";
-import { CameraType, renderActions, selectClippingPlanes, selectMainObject } from "features/render";
+import {
+    CameraType,
+    renderActions,
+    selectClippingPlanes,
+    selectDefaultVisibility,
+    selectMainObject,
+} from "features/render";
 import { flipCADToGLQuat } from "features/render/utils";
 import { getRandomColorForObjectId, hslToVec, vecToHex } from "utils/color";
 import { decomposeNormalOffset, pointToPlaneDistance, projectPointOntoPlane, radToDeg } from "utils/math";
@@ -53,6 +59,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     const hidden = useHidden();
     const needRedrawRef = useRef(false);
     const mainObject = useAppSelector(selectMainObject);
+    const defaultVisibility = useAppSelector(selectDefaultVisibility);
 
     const clippingPlaneCount = useMemo(() => clippingPlanes.planes.length, [clippingPlanes]);
     const planeIndex = useAppSelector(selectPlaneIndex);
@@ -73,7 +80,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     useEffect(() => {
         drawObjectsRef.current = null;
         needRedrawRef.current = true;
-    }, [hidden]);
+    }, [hidden, defaultVisibility, displaySettings.showLabels]);
 
     useEffect(() => {
         cameraRef.current = null;
@@ -105,6 +112,8 @@ export function Clipping2d({ width, height }: { width: number; height: number })
         if (!drawObjectsRef.current) {
             drawObjectsRef.current = view.getOutlineDrawObjects("clipping", planeIndex, drawContextRef.current, {
                 generateLineLabels: displaySettings.showLabels,
+                closed: false,
+                angles: false,
             });
         } else {
             for (const product of drawObjectsRef.current) {
@@ -363,7 +372,11 @@ function draw(
         mainObject,
         coloring,
         outlineColor,
-    }: { mainObject: number | undefined; coloring: ColoringType; outlineColor: string },
+    }: {
+        mainObject: number | undefined;
+        coloring: ColoringType;
+        outlineColor: string;
+    },
 ) {
     const colorSettings: ColorSettings = {
         pointColor: outlineColor,
