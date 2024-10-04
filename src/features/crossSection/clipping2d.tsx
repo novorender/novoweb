@@ -8,8 +8,8 @@ import {
     RenderStateCamera,
     View,
 } from "@novorender/api";
+import { ScreenSpaceConversions } from "@novorender/api";
 import { rotationFromDirection } from "@novorender/api/web_app/controller/orientation";
-import { ScreenSpaceConversions } from "@novorender/api/web_app/screen_space_conversions";
 import { quat, ReadonlyQuat, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 
