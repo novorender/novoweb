@@ -45,6 +45,7 @@ import {
 } from "@mui/icons-material";
 
 import ClashIcon from "media/icons/clash.svg?react";
+import CrossSectionIcon from "media/icons/cross-section.svg?react";
 import DeviationsIcon from "media/icons/deviations.svg?react";
 import Ditio from "media/icons/ditio.svg?react";
 import Jira from "media/icons/jira-software.svg?react";
@@ -566,7 +567,7 @@ export const featuresConfig = {
     crossSection: {
         key: "crossSection",
         nameKey: "crossSection",
-        Icon: ClashIcon,
+        Icon: CrossSectionIcon,
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: true,
