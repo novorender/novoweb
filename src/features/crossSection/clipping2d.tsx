@@ -211,12 +211,14 @@ export function Clipping2d({ width, height }: { width: number; height: number })
 
     useEffect(() => {
         let mounted = true;
+        let rafRef: number | null = null;
 
         function raf() {
-            requestAnimationFrame((elapsedTime) => {
+            rafRef = requestAnimationFrame((elapsedTime) => {
                 if (!mounted) {
                     return;
                 }
+                rafRef = null;
                 if (!controllerRef.current || !cameraRef.current) {
                     raf();
                     return;
@@ -246,6 +248,9 @@ export function Clipping2d({ width, height }: { width: number; height: number })
 
         return () => {
             mounted = false;
+            if (rafRef !== null) {
+                cancelAnimationFrame(rafRef);
+            }
         };
     }, [redraw]);
 
