@@ -39,7 +39,12 @@ export function OutlineLaserCanvas({
             const zPts = z && getMeasurePointsFromTracer(z, zDown, zUp);
 
             if (xPts) {
-                const drawProd = view.measure?.draw.getDrawObjectFromPoints(xPts, false, false, true, 2);
+                const drawProd = view.measure?.draw.getDrawObjectFromPoints(xPts, {
+                    closed: false,
+                    angles: false,
+                    generateLineLabels: true,
+                    decimals: 2,
+                });
                 if (drawProd) {
                     renderTrace({ ctx, camera, drawProd, color: "blue" });
                 }
@@ -61,7 +66,12 @@ export function OutlineLaserCanvas({
             }
 
             if (yPts) {
-                const drawProd = view.measure?.draw.getDrawObjectFromPoints(yPts, false, false, true, 2);
+                const drawProd = view.measure?.draw.getDrawObjectFromPoints(yPts, {
+                    closed: false,
+                    angles: false,
+                    generateLineLabels: true,
+                    decimals: 2,
+                });
                 if (drawProd) {
                     renderTrace({ ctx, camera, drawProd, color: "green" });
                 }
@@ -82,7 +92,12 @@ export function OutlineLaserCanvas({
             }
 
             if (zPts) {
-                const drawProd = view.measure?.draw.getDrawObjectFromPoints(zPts, false, false, true, 2);
+                const drawProd = view.measure?.draw.getDrawObjectFromPoints(zPts, {
+                    closed: false,
+                    angles: false,
+                    generateLineLabels: true,
+                    decimals: 2,
+                });
                 if (drawProd) {
                     renderTrace({ ctx, camera, drawProd, color: "yellow" });
                 }

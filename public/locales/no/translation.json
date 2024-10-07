@@ -645,5 +645,8 @@
     "formName": "Skjemanavn",
     "createFrom": "Opprett fra...",
     "formCreationFailed": "Skjemaopprettelse mislyktes",
-    "formUpdateFailed": "Kunne ikke oppdatere skjemaet"
+    "formUpdateFailed": "Kunne ikke oppdatere skjemaet",
+    "youNeedToEnableOutlinesForSelectedClippingPlaneToSeeTheOutlines": "Du må aktivere konturer for valgt klippeplan for å se konturene.",
+    "enableOutlines": "Aktiver konturer",
+    "colorPerObject": "Farge per objekt"
 }

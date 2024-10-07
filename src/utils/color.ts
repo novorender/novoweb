@@ -75,3 +75,10 @@ export function hslToVec(h: number, s: number, l: number): VecRGB {
     const f = (n: number, k = (n + h / 30) % 12) => l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
     return [f(0), f(8), f(4)];
 }
+
+export function getRandomColorForObjectId(objectId: number) {
+    const h = ((objectId % 360) * 10) % 360;
+    const s = 0.5 + ((objectId % 30) / 30) * 0.3;
+    const l = 0.5 + ((objectId % 10) / 10) * 0.5;
+    return hslToVec(h, s, l);
+}

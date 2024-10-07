@@ -645,5 +645,8 @@
     "formName": "Form name",
     "createFrom": "Create from...",
     "formCreationFailed": "Form creation failed",
-    "formUpdateFailed": "Failed to update form"
+    "formUpdateFailed": "Failed to update form",
+    "youNeedToEnableOutlinesForSelectedClippingPlaneToSeeTheOutlines": "You need to enable outlines for selected clipping plane to see the outlines.",
+    "enableOutlines": "Enable outlines",
+    "colorPerObject": "Color per object"
 }
