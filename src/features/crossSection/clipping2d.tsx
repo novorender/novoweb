@@ -12,6 +12,7 @@ import { ScreenSpaceConversions } from "@novorender/api";
 import { rotationFromDirection } from "@novorender/api/web_app/controller/orientation";
 import { quat, ReadonlyQuat, ReadonlyVec3, vec2, vec3 } from "gl-matrix";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useCameraState } from "contexts/cameraState";
@@ -41,6 +42,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const generationRef = useRef(0);
@@ -340,9 +342,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
                 <>
                     <Overlay>
                         <Box>
-                            <Box mb={2}>
-                                You need to enable outlines for selected clipping plane to see the outlines.
-                            </Box>
+                            <Box mb={2}>{t("youNeedToEnableOutlinesForSelectedClippingPlaneToSeeTheOutlines")}</Box>
 
                             <Button
                                 variant="contained"
@@ -350,7 +350,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
                                     dispatch(renderActions.toggleClippingPlaneOutlines(planeIndex!));
                                 }}
                             >
-                                Enable outlines
+                                {t("enableOutlines")}
                             </Button>
                         </Box>
                     </Overlay>

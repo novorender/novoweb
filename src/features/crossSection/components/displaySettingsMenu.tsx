@@ -1,6 +1,7 @@
 import { Check, FilterAlt } from "@mui/icons-material";
 import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 
@@ -9,6 +10,7 @@ import { crossSectionActions } from "../slice";
 import { ColoringType } from "../types";
 
 export function DisplaySettingsMenu() {
+    const { t } = useTranslation();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const displaySettings = useAppSelector(selectDisplaySettings);
     const dispatch = useAppDispatch();
@@ -50,7 +52,7 @@ export function DisplaySettingsMenu() {
                             <Check />
                         </ListItemIcon>
                     )}
-                    <ListItemText inset={!displaySettings.showLabels}>Labels</ListItemText>
+                    <ListItemText inset={!displaySettings.showLabels}>{t("labels")}</ListItemText>
                 </MenuItem>
                 <MenuItem
                     onClick={() =>
@@ -70,7 +72,7 @@ export function DisplaySettingsMenu() {
                         </ListItemIcon>
                     )}
                     <ListItemText inset={displaySettings.coloringType !== ColoringType.UniquePerObject}>
-                        Color per object
+                        {t("colorPerObject")}
                     </ListItemText>
                 </MenuItem>
             </Menu>
