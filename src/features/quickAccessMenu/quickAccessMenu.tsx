@@ -1,4 +1,4 @@
-import { AccountTree, ContentCut, Gradient, Star, Straighten, Terrain } from "@mui/icons-material";
+import { AccountTree, ContentCut, Gradient, Star, Straighten } from "@mui/icons-material";
 import { Box, ClickAwayListener, Fade, Popper, Stack, Tooltip } from "@mui/material";
 import { MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -115,7 +115,7 @@ export function QuickAccessMenu() {
                                 </IconButtonExt>
                             </Box>
                         </Tooltip>
-                        <Tooltip title={activeSection !== Section.Terrain ? t("terrain") : ""} placement="right">
+                        {/* <Tooltip title={activeSection !== Section.Terrain ? t("terrain") : ""} placement="right">
                             <Box>
                                 <IconButtonExt
                                     onClick={(e) => selectSection(e, Section.Terrain)}
@@ -124,7 +124,7 @@ export function QuickAccessMenu() {
                                     <Terrain />
                                 </IconButtonExt>
                             </Box>
-                        </Tooltip>
+                        </Tooltip> */}
                         {showSubtrees && (
                             <Tooltip
                                 title={activeSection !== Section.Subtrees ? t("renderTypes") : ""}
