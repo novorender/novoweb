@@ -206,10 +206,6 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     }, [view, plane]);
 
     useEffect(() => {
-        needRedrawRef.current = true;
-    }, [redraw]);
-
-    useEffect(() => {
         reinitAndRedraw();
     }, [reinitAndRedraw]);
 
