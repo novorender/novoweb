@@ -649,5 +649,6 @@
     "youNeedToEnableOutlinesForSelectedClippingPlaneToSeeTheOutlines": "You need to enable outlines for selected clipping plane to see the outlines.",
     "youNeedToEnableOutlines": "You need to enable outlines.",
     "enableOutlines": "Enable outlines",
-    "colorPerObject": "Color per object"
+    "colorPerObject": "Color per object",
+    "noClippingPlanes": "No clipping planes"
 }

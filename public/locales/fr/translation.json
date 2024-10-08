@@ -649,5 +649,6 @@
     "youNeedToEnableOutlinesForSelectedClippingPlaneToSeeTheOutlines": "Vous devez activer les contours pour le plan de découpe sélectionné afin de voir les contours.",
     "youNeedToEnableOutlines": "Vous devez activer les contours.",
     "enableOutlines": "Activer les contours",
-    "colorPerObject": "Couleur par objet"
+    "colorPerObject": "Couleur par objet",
+    "noClippingPlanes": "Aucun plan de découpe"
 }

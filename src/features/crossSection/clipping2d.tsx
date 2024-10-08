@@ -332,7 +332,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
             />
             {plane && plane.outline.enabled && <Compass onClick={lookNorth} ref={compassRef} />}
             {clippingPlaneCount === 0 ? (
-                <Overlay>No clipping planes</Overlay>
+                <Overlay>{t("noClippingPlanes")}</Overlay>
             ) : !clippingPlanes.outlines ? (
                 <>
                     <Overlay>
