@@ -30,4 +30,5 @@ export enum Omega365ViewFieldType {
     Text = "text",
     Link = "link",
     File = "file",
+    Hidden = "hidden",
 }

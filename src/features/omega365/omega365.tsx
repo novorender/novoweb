@@ -59,7 +59,10 @@ function Omega365Inner() {
         }
     }, [dispatch, data, isSuccess]);
 
+    // This feels a bit dirty, but probably the easiest way to check that header is present
+    // and shouldn't be that expensive
     const viewHeader = ViewHeader();
+
     const disableShadow =
         location.pathname === "/config" ||
         (location.pathname === "/" && viewHeader !== null) ||

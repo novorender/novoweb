@@ -22,12 +22,22 @@ export function ViewHeader() {
         return null;
     }
 
+    // Custom per-customer content that feels to specific at the moment
+    // to make a generic approach for it
     let content: ReactNode;
     if (view.viewOrResourceName === "aviw_FOB_EksportAktiviteter") {
         content = (
             <Button onClick={() => history.push("/create-activity", { objectId })} color="grey">
                 <PostAdd fontSize="small" sx={{ mr: 1 }} />
                 {t("createActivity")}
+            </Button>
+        );
+    } else if (view.viewOrResourceName === "aviw_NyeVeier_EksportObjektDokumentLink") {
+        const href = objectId ? `https://nyeveier.omega365.com/nt/objects/objectdetails?ID=${objectId}` : null;
+
+        content = (
+            <Button href={href ?? ""} target="_blank" color="grey" disabled={!href}>
+                {t("objectDetails")}
             </Button>
         );
     }
