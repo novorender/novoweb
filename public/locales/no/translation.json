@@ -647,6 +647,8 @@
     "formCreationFailed": "Skjemaopprettelse mislyktes",
     "formUpdateFailed": "Kunne ikke oppdatere skjemaet",
     "youNeedToEnableOutlinesForSelectedClippingPlaneToSeeTheOutlines": "Du må aktivere konturer for valgt klippeplan for å se konturene.",
+    "youNeedToEnableOutlines": "Du må aktivere konturer.",
     "enableOutlines": "Aktiver konturer",
-    "colorPerObject": "Farge per objekt"
+    "colorPerObject": "Farge per objekt",
+    "noClippingPlanes": "Ingen klippeplaner"
 }
