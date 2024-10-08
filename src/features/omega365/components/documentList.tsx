@@ -99,10 +99,12 @@ function DynamicDocument({
                     {textFields.map((field) => {
                         return (
                             <TableRow key={field.name} sx={{ border: 0 }}>
-                                <TableCell sx={{ fontWeight: 600, border: 0, whiteSpace: "nowrap" }}>
+                                <TableCell
+                                    sx={{ fontWeight: 600, border: 0, whiteSpace: "nowrap", width: "100px", pl: 0 }}
+                                >
                                     {field.title}:
                                 </TableCell>
-                                <TableCell sx={{ border: 0, fontWeight: "normal" }}>{doc[field.name]}</TableCell>
+                                <TableCell sx={{ border: 0, fontWeight: "normal", px: 0 }}>{doc[field.name]}</TableCell>
                             </TableRow>
                         );
                     })}

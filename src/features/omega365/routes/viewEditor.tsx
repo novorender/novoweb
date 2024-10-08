@@ -353,16 +353,16 @@ export default function ViewEditor() {
                             />
 
                             <FormControl fullWidth size="small">
-                                <InputLabel id="demo-simple-select-label">Group by field</InputLabel>
+                                <InputLabel id="omega-group-by-label">Group by field</InputLabel>
                                 <Select
-                                    labelId="demo-simple-select-label"
+                                    labelId="omega-group-by-label"
                                     value={view.groupBy ?? ""}
                                     label="Group by field"
                                     onChange={(e) => updateView({ groupBy: e.target.value as string })}
                                 >
                                     <MenuItem value="">Don't group</MenuItem>
                                     {view.fields
-                                        .filter((f) => f.name && f.title)
+                                        .filter((f) => f.name && f.title && f.type !== Omega365ViewFieldType.Hidden)
                                         .map((field, i) => (
                                             <MenuItem key={i} value={field.name}>
                                                 {field.title}
@@ -459,6 +459,10 @@ function FieldList({
             <List>
                 {fields.map((field, index) => {
                     const error = errors[index];
+
+                    if (field.type === Omega365ViewFieldType.Hidden) {
+                        return null;
+                    }
 
                     if (index === currentIndex) {
                         return (
