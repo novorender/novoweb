@@ -77,8 +77,13 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     planeRef.current = plane;
 
     useEffect(() => {
-        drawObjectsRef.current = null;
-        needRedrawRef.current = true;
+        const timeout = setTimeout(() => {
+            drawObjectsRef.current = null;
+            needRedrawRef.current = true;
+        });
+        return () => {
+            clearTimeout(timeout);
+        };
     }, [plane, hidden, defaultVisibility, displaySettings.showLabels]);
 
     const planeNormalStr = plane ? plane.normalOffset.slice(0, 3).join(",") : null;
@@ -174,6 +179,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     }, [cameraState, redraw]);
 
     const prevOutlinesOnRef = useRef(view?.renderState.outlines.on ?? false);
+    const prevTrianglesRendered = useRef(0);
     useEffect(() => {
         let mounted = true;
         let rafRef: number | null = null;
@@ -187,14 +193,21 @@ export function Clipping2d({ width, height }: { width: number; height: number })
 
                 // Outlines are turned off when camera moves and are enabled on idle frame
                 // Instead of passing event from render we can check that outlines are back
+                let scheduleRedraw = false;
                 const outlinesOn = view?.renderState.outlines.on ?? false;
                 if (outlinesOn && !prevOutlinesOnRef.current) {
-                    setTimeout(() => {
-                        drawObjectsRef.current = null;
-                        needRedrawRef.current = true;
-                    });
+                    scheduleRedraw = true;
                 }
                 prevOutlinesOnRef.current = outlinesOn;
+
+                // When we enable subtrees (e.g. mesh) or jump to a new place - nodes may start loading progressively
+                // and it may take some time. ATM there's no way AFAIK to figure out that new nodes are loaded,
+                // but we probably can rely on statistics
+                const triangles = view?.statistics?.render.triangles ?? 0;
+                if (outlinesOn && triangles !== prevTrianglesRendered.current) {
+                    scheduleRedraw = true;
+                }
+                prevTrianglesRendered.current = triangles;
 
                 if (controllerRef.current && cameraRef.current) {
                     const stateChanges = controllerRef.current.renderStateChanges(cameraRef.current, elapsedTime);
@@ -212,6 +225,11 @@ export function Clipping2d({ width, height }: { width: number; height: number })
                 if (needRedrawRef.current) {
                     redraw();
                     needRedrawRef.current = false;
+                }
+
+                if (scheduleRedraw) {
+                    drawObjectsRef.current = null;
+                    needRedrawRef.current = true;
                 }
 
                 raf();
