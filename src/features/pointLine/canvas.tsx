@@ -67,24 +67,26 @@ export function PointLineCanvas({
                 return;
             }
 
-            view.measure?.draw.getDrawObjectFromPoints(pts, false, true, true)?.objects.forEach((obj) =>
-                obj.parts.forEach((part) =>
-                    drawPart(
-                        ctx,
-                        cameraState,
-                        part,
-                        {
-                            lineColor: "yellow",
-                            pointColor: { start: "green", middle: "white", end: "blue" },
-                            displayAllPoints: true,
-                        },
-                        2,
-                        {
-                            type: "default",
-                        }
-                    )
-                )
-            );
+            view.measure?.draw
+                .getDrawObjectFromPoints(pts, { closed: false, angles: true, generateLineLabels: true })
+                ?.objects.forEach((obj) =>
+                    obj.parts.forEach((part) =>
+                        drawPart(
+                            ctx,
+                            cameraState,
+                            part,
+                            {
+                                lineColor: "yellow",
+                                pointColor: { start: "green", middle: "white", end: "blue" },
+                                displayAllPoints: true,
+                            },
+                            2,
+                            {
+                                type: "default",
+                            },
+                        ),
+                    ),
+                );
         });
     }, [view, pointLines, ctx, canvas]);
 

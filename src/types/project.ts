@@ -1,3 +1,7 @@
+import { PointVisualization } from "@novorender/api";
+
+import { VecRGBA } from "utils/color";
+
 export type ExplorerProjectState = {
     camera?: {
         pinhole: {
@@ -73,6 +77,11 @@ export type ExplorerProjectState = {
                     }[];
                 };
             };
+            classificationColorGradient: {
+                knots: { position: number; label: string; color: VecRGBA }[];
+                undefinedColor: VecRGBA;
+            };
+            defaultPointVisualization: PointVisualization;
         };
         hide: {
             terrain: boolean;
@@ -123,6 +132,11 @@ export type ExplorerProjectState = {
                 primary: {
                     features: string[];
                 };
+            };
+        };
+        pointVisualization?: {
+            stamp: {
+                enabled: boolean;
             };
         };
     };

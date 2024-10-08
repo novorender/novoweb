@@ -59,7 +59,7 @@ export function AreaCanvas({
                 return;
             }
 
-            view.measure?.draw.getDrawObjectFromPoints(pts, true, true)?.objects.forEach((obj) =>
+            view.measure?.draw.getDrawObjectFromPoints(pts, { closed: true, angles: true })?.objects.forEach((obj) =>
                 obj.parts.forEach((part) =>
                     drawPart(
                         ctx,
@@ -76,9 +76,9 @@ export function AreaCanvas({
                             type: "center",
                             unit: "m²",
                             customText: [area.area.toFixed(2)],
-                        }
-                    )
-                )
+                        },
+                    ),
+                ),
             );
         });
     }, [view, areas, ctx, canvas]);

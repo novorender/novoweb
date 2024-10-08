@@ -20,7 +20,7 @@ export function Settings() {
                 <Box px={1}>
                     <Divider />
                 </Box>
-                <Box display="flex" justifyContent="space-between">
+                <Box m={1} display="flex" justifyContent="space-between">
                     <Button onClick={() => history.goBack()} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
                         {t("back")}

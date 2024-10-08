@@ -10,6 +10,7 @@ import { bimTrackApi, bimTrackReducer } from "features/bimTrack";
 import { bookmarksReducer } from "features/bookmarks";
 import { clashReducer } from "features/clash";
 import { clashApi } from "features/clash/clashApi";
+import { crossSectionReducer } from "features/crossSection/slice";
 import { deviationsReducer } from "features/deviations";
 import { ditioApi } from "features/ditio";
 import { ditioReducer } from "features/ditio";
@@ -28,6 +29,7 @@ import { orthoCamReducer } from "features/orthoCam";
 import { clippingOutlineLaserReducer } from "features/outlineLaser";
 import { pimsReducer } from "features/pims";
 import { pointLineReducer } from "features/pointLine";
+import { pointVisualizationReducer } from "features/pointVisualization";
 import { propertiesReducer } from "features/properties/slice";
 import { propertyTreeApi, propertyTreeReducer } from "features/propertyTree";
 import { renderReducer } from "features/render";
@@ -77,6 +79,8 @@ const rootReducer = combineReducers({
     [arcgisApi.reducerPath]: arcgisApi.reducer,
     [clashApi.reducerPath]: clashApi.reducer,
     clash: clashReducer,
+    pointVisualization: pointVisualizationReducer,
+    crossSection: crossSectionReducer,
 });
 
 export const store = configureStore({

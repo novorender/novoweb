@@ -37,21 +37,23 @@ export function CrossSectionCanvas({
 
         const cameraState = getCameraState(view.renderState.camera);
 
-        view.measure?.draw.getDrawObjectFromPoints(crossSection, false, false)?.objects.forEach((obj) =>
-            obj.parts.forEach((part) =>
-                drawPart(
-                    crossSectionCtx,
-                    cameraState,
-                    part,
-                    {
-                        lineColor: "black",
-                        pointColor: "black",
-                        displayAllPoints: true,
-                    },
-                    2
-                )
-            )
-        );
+        view.measure?.draw
+            .getDrawObjectFromPoints(crossSection, { closed: false, angles: false })
+            ?.objects.forEach((obj) =>
+                obj.parts.forEach((part) =>
+                    drawPart(
+                        crossSectionCtx,
+                        cameraState,
+                        part,
+                        {
+                            lineColor: "black",
+                            pointColor: "black",
+                            displayAllPoints: true,
+                        },
+                        2,
+                    ),
+                ),
+            );
 
         if (crossSection.length > 1 && cameraState.dir[2] === -1) {
             // top-down
@@ -64,22 +66,24 @@ export function CrossSectionCanvas({
             const center = vec3.add(vec3.create(), crossSection[0], crossSection[1]);
             vec3.scale(center, center, 0.5);
             const offsetP = vec3.scaleAndAdd(vec3.create(), center, cross, -3);
-            view.measure?.draw.getDrawObjectFromPoints([center, offsetP], false, false)?.objects.forEach((obj) =>
-                obj.parts.forEach((part) =>
-                    drawPart(
-                        crossSectionCtx,
-                        cameraState,
-                        part,
-                        {
-                            lineColor: "black",
-                            pointColor: "black",
-                        },
-                        2,
-                        undefined,
-                        { end: "arrow" }
-                    )
-                )
-            );
+            view.measure?.draw
+                .getDrawObjectFromPoints([center, offsetP], { closed: false, angles: false })
+                ?.objects.forEach((obj) =>
+                    obj.parts.forEach((part) =>
+                        drawPart(
+                            crossSectionCtx,
+                            cameraState,
+                            part,
+                            {
+                                lineColor: "black",
+                                pointColor: "black",
+                            },
+                            2,
+                            undefined,
+                            { end: "arrow" },
+                        ),
+                    ),
+                );
         }
     }, [view, crossSectionCtx, canvas, crossSection]);
 

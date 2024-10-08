@@ -24,6 +24,7 @@ import { radToDeg } from "utils/math";
 import { formsGlobalsActions } from "../formsGlobals";
 import { useDispatchFormsGlobals, useFormsGlobals } from "../formsGlobals/hooks";
 import { selectCurrentFormsList, selectSelectedFormId } from "../slice";
+import { type Form } from "../types";
 
 const POSITION_PRECISION = 2;
 const SCALE_PRECISION = 3;
@@ -43,7 +44,7 @@ const marks = [
     },
 ];
 
-export function TransformEditor({ disabled }: { disabled?: boolean }) {
+export function TransformEditor({ disabled, form }: { disabled?: boolean; form?: Partial<Form> }) {
     const { t } = useTranslation();
     const selectedTemplateId = useAppSelector(selectCurrentFormsList);
     const selectedFormId = useAppSelector(selectSelectedFormId);
@@ -54,28 +55,45 @@ export function TransformEditor({ disabled }: { disabled?: boolean }) {
     const dispatchFormsGlobals = useDispatchFormsGlobals();
     const transformDraft = useFormsGlobals().transformDraft;
     const originalTransformDraft = useRef(transformDraft);
-    if (!originalTransformDraft.current) {
-        originalTransformDraft.current = transformDraft;
-    }
     const latestDispatchedTransformDraft = useRef(transformDraft);
+    const willUnmount = useRef(false);
+
+    useEffect(() => {
+        willUnmount.current = true;
+        return () => {
+            willUnmount.current = false;
+        };
+    });
 
     const [transform, setTransform] = useState(
-        toTransformState(transformDraft?.location, transformDraft?.rotation, transformDraft?.scale),
+        toTransformState(
+            form?.location ?? transformDraft?.location,
+            form?.rotation ?? transformDraft?.rotation,
+            form?.scale ?? transformDraft?.scale,
+        ),
     );
 
     useEffect(() => {
-        // Prevent updating local transform based on updates made in the component,
-        // becauses it messes up input in the text fields
-        if (transformDraft !== latestDispatchedTransformDraft.current) {
+        if (!originalTransformDraft.current) {
+            originalTransformDraft.current = transformDraft;
+            latestDispatchedTransformDraft.current = transformDraft;
             setTransform(toTransformState(transformDraft?.location, transformDraft?.rotation, transformDraft?.scale));
         }
-    }, [transformDraft]);
+
+        // Prevent updating local transform based on updates made in the component,
+        // because it messes up input in the text fields
+        if (!form && transformDraft !== latestDispatchedTransformDraft.current) {
+            setTransform(toTransformState(transformDraft?.location, transformDraft?.rotation, transformDraft?.scale));
+        }
+    }, [transformDraft, form]);
 
     useEffect(() => {
         return () => {
-            dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(undefined));
-            if (isPickingLocationRef.current) {
-                dispatch(renderActions.stopPicker(Picker.FormLocation));
+            if (willUnmount.current) {
+                dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(undefined));
+                if (isPickingLocationRef.current) {
+                    dispatch(renderActions.stopPicker(Picker.FormLocation));
+                }
             }
         };
     }, [dispatch, dispatchFormsGlobals]);
@@ -139,19 +157,21 @@ export function TransformEditor({ disabled }: { disabled?: boolean }) {
                     <Stack gap={1}>
                         <Box display="flex" alignItems="center" justifyContent="space-between">
                             <Typography fontWeight={600}>{t("position")}</Typography>
-                            <FormControlLabel
-                                control={
-                                    <IosSwitch
-                                        size="medium"
-                                        color="primary"
-                                        checked={Boolean(selectedFormId) && isPickingLocation}
-                                        onChange={pickNewLocation}
-                                    />
-                                }
-                                disabled={disabled}
-                                label={<Box fontSize={14}>{t("move")}</Box>}
-                                sx={{ ml: 1 }}
-                            />
+                            {!form && (
+                                <FormControlLabel
+                                    control={
+                                        <IosSwitch
+                                            size="medium"
+                                            color="primary"
+                                            checked={Boolean(selectedFormId) && isPickingLocation}
+                                            onChange={pickNewLocation}
+                                        />
+                                    }
+                                    disabled={disabled}
+                                    label={<Box fontSize={14}>{t("move")}</Box>}
+                                    sx={{ ml: 1 }}
+                                />
+                            )}
                         </Box>
                         <Stack direction="row" gap={2}>
                             <TextField
@@ -161,7 +181,7 @@ export function TransformEditor({ disabled }: { disabled?: boolean }) {
                                 size="small"
                                 label="X"
                                 variant="outlined"
-                                disabled={disabled}
+                                disabled={disabled || !!form}
                             />
                             <TextField
                                 value={transform.y}
@@ -170,7 +190,7 @@ export function TransformEditor({ disabled }: { disabled?: boolean }) {
                                 size="small"
                                 label="Y"
                                 variant="outlined"
-                                disabled={disabled}
+                                disabled={disabled || !!form}
                             />
                             <TextField
                                 value={transform.z}
@@ -179,7 +199,7 @@ export function TransformEditor({ disabled }: { disabled?: boolean }) {
                                 size="small"
                                 label="Z"
                                 variant="outlined"
-                                disabled={disabled}
+                                disabled={disabled || !!form}
                             />
                         </Stack>
                     </Stack>
@@ -192,7 +212,7 @@ export function TransformEditor({ disabled }: { disabled?: boolean }) {
                         size="small"
                         label="Scale"
                         variant="outlined"
-                        disabled={disabled}
+                        disabled={disabled || !!form}
                     />
                     <Stack gap={1}>
                         <Typography fontWeight={600}>{t("rotation")}</Typography>
@@ -201,27 +221,29 @@ export function TransformEditor({ disabled }: { disabled?: boolean }) {
                                 title="Roll (X)"
                                 value={transform.roll}
                                 onChange={(roll) => updateTransform({ roll })}
-                                disabled={disabled}
+                                disabled={disabled || !!form}
                             />
                             <RotationComponentInput
                                 title="Pitch (Y)"
                                 value={transform.pitch}
                                 onChange={(pitch) => updateTransform({ pitch })}
-                                disabled={disabled}
+                                disabled={disabled || !!form}
                             />
                             <RotationComponentInput
                                 title="Yaw (Z)"
                                 value={transform.yaw}
                                 onChange={(yaw) => updateTransform({ yaw })}
-                                disabled={disabled}
+                                disabled={disabled || !!form}
                             />
                         </Stack>
                     </Stack>
-                    <Box display="flex" justifyContent="end" gap={1}>
-                        <Button type="button" onClick={handleReset} disabled={disabled}>
-                            {t("reset")}
-                        </Button>
-                    </Box>
+                    {!form && (
+                        <Box display="flex" justifyContent="end" gap={1}>
+                            <Button type="button" onClick={handleReset} disabled={disabled}>
+                                {t("reset")}
+                            </Button>
+                        </Box>
+                    )}
                 </Stack>
             </AccordionDetails>
         </Accordion>
