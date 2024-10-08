@@ -80,13 +80,8 @@ export function Clipping2d({ width, height }: { width: number; height: number })
     }, [dispatch, clippingPlaneCount, planeIndex]);
 
     useEffect(() => {
-        const timeout = setTimeout(() => {
-            drawObjectsRef.current = null;
-            needRedrawRef.current = true;
-        });
-        return () => {
-            clearTimeout(timeout);
-        };
+        drawObjectsRef.current = null;
+        needRedrawRef.current = true;
     }, [plane, hidden, defaultVisibility, displaySettings.showLabels]);
 
     const planeNormalStr = plane ? plane.normalOffset.slice(0, 3).join(",") : null;
