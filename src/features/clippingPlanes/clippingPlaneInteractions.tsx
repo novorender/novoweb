@@ -328,6 +328,9 @@ function PlaneMenu({
         closeMenu();
     };
 
+    const handleCrossSectionClick = newDesign ? openCrossSection : swapCamera;
+    const CrossSectionIcon = newDesign ? featuresConfig.crossSection.Icon : featuresConfig.orthoCam.Icon;
+
     visible = visible || Boolean(menuAnchor);
 
     return (
@@ -357,21 +360,12 @@ function PlaneMenu({
                     </ListItemIcon>
                     <ListItemText>{t("openWidget")}</ListItemText>
                 </MenuItem>
-                {newDesign ? (
-                    <MenuItem onClick={openCrossSection}>
-                        <ListItemIcon>
-                            <featuresConfig.crossSection.Icon fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText>{t("crossSection")}</ListItemText>
-                    </MenuItem>
-                ) : (
-                    <MenuItem onClick={swapCamera}>
-                        <ListItemIcon>
-                            <featuresConfig.orthoCam.Icon fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText>{t("crossSection")}</ListItemText>
-                    </MenuItem>
-                )}
+                <MenuItem onClick={handleCrossSectionClick}>
+                    <ListItemIcon>
+                        <CrossSectionIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>{t("crossSection")}</ListItemText>
+                </MenuItem>
                 <MenuItem onClick={alignCamera}>
                     <ListItemIcon>
                         <CenterFocusWeak fontSize="small" />
