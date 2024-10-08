@@ -42,27 +42,34 @@ export function Clipping2d({ width, height }: { width: number; height: number })
         state: { view },
     } = useExplorerGlobals(true);
     const { t } = useTranslation();
-    const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
     const clippingPlanes = useAppSelector(selectClippingPlanes);
+    const dispatch = useAppDispatch();
+    const displaySettings = useAppSelector(selectDisplaySettings);
+    const cameraState = useCameraState();
+    const hidden = useHidden();
+    const mainObject = useAppSelector(selectMainObject);
+    const defaultVisibility = useAppSelector(selectDefaultVisibility);
+    const planeIndex = useAppSelector(selectPlaneIndex);
+
+    const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
     const controllerRef = useRef<OrthoController | null>(null);
     const cameraRef = useRef<RenderStateCamera | null>(null);
     const drawObjectsRef = useRef<DrawProduct[] | null>(null);
-    const dispatch = useAppDispatch();
-    const displaySettings = useAppSelector(selectDisplaySettings);
     const drawContextRef = useRef<DrawContext | null>(null);
-    const cameraState = useCameraState();
     const compassRef = useRef<CompassRef | null>(null);
     const pointerDownRef = useRef<{
         timestamp: number;
         pos: vec2;
     } | null>(null);
-    const hidden = useHidden();
     const needRedrawRef = useRef(false);
-    const mainObject = useAppSelector(selectMainObject);
-    const defaultVisibility = useAppSelector(selectDefaultVisibility);
+    const prevOutlinesOnRef = useRef(view?.renderState.outlines.on ?? false);
+    const prevTrianglesRendered = useRef(0);
 
     const clippingPlaneCount = useMemo(() => clippingPlanes.planes.length, [clippingPlanes]);
-    const planeIndex = useAppSelector(selectPlaneIndex);
+
+    const plane = planeIndex === null ? null : (clippingPlanes.planes[planeIndex] ?? null);
+    const planeRef = useRef(plane);
+    planeRef.current = plane;
 
     useEffect(() => {
         if (planeIndex !== null && planeIndex >= clippingPlaneCount) {
@@ -71,10 +78,6 @@ export function Clipping2d({ width, height }: { width: number; height: number })
             dispatch(crossSectionActions.setPlaneIndex(0));
         }
     }, [dispatch, clippingPlaneCount, planeIndex]);
-
-    const plane = planeIndex === null ? null : (clippingPlanes.planes[planeIndex] ?? null);
-    const planeRef = useRef(plane);
-    planeRef.current = plane;
 
     useEffect(() => {
         const timeout = setTimeout(() => {
@@ -178,8 +181,6 @@ export function Clipping2d({ width, height }: { width: number; height: number })
         needRedrawRef.current = true;
     }, [cameraState, redraw]);
 
-    const prevOutlinesOnRef = useRef(view?.renderState.outlines.on ?? false);
-    const prevTrianglesRendered = useRef(0);
     useEffect(() => {
         let mounted = true;
         let rafRef: number | null = null;
@@ -329,9 +330,10 @@ export function Clipping2d({ width, height }: { width: number; height: number })
                 onPointerDown={handlePointerDown}
                 onPointerUp={handlePointerUp}
             />
-            {clippingPlaneCount === 0 && <Overlay>No clipping planes</Overlay>}
             {plane && plane.outline.enabled && <Compass onClick={lookNorth} ref={compassRef} />}
-            {!clippingPlanes.outlines ? (
+            {clippingPlaneCount === 0 ? (
+                <Overlay>No clipping planes</Overlay>
+            ) : !clippingPlanes.outlines ? (
                 <>
                     <Overlay>
                         <Box>
