@@ -647,6 +647,7 @@
     "formCreationFailed": "Formularerstellung fehlgeschlagen",
     "formUpdateFailed": "Aktualisierung des Formulars fehlgeschlagen",
     "youNeedToEnableOutlinesForSelectedClippingPlaneToSeeTheOutlines": "Sie müssen die Umrisse für die ausgewählte Schnittebene aktivieren, um die Umrisse zu sehen.",
+    "youNeedToEnableOutlines": "Sie müssen die Umrisse aktivieren.",
     "enableOutlines": "Umrisse aktivieren",
     "colorPerObject": "Farbe pro Objekt"
 }
