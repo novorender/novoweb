@@ -27,6 +27,7 @@ import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { crossSectionActions } from "features/crossSection";
 import { getCameraDir } from "features/engine2D/utils";
 import { RenderState, selectClippingPlanes } from "features/render";
 import { explorerActions, selectNewDesign, selectWidgets } from "slices/explorer";
@@ -325,6 +326,7 @@ function PlaneMenu({
 
     const openCrossSection = () => {
         dispatch(explorerActions.forceOpenWidget(featuresConfig.crossSection.key));
+        dispatch(crossSectionActions.setPlaneIndex(index));
         closeMenu();
     };
 
