@@ -116,7 +116,6 @@ function ViewTabs() {
             onChange={(_e, newValue) => {
                 dispatch(omega365Actions.setSelectedViewId(newValue));
             }}
-            aria-label="basic tabs example"
         >
             {views.map((view) => {
                 return <Tab key={view.id} label={view.title} value={view.id} />;

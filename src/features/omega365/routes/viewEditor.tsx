@@ -204,7 +204,7 @@ export default function ViewEditor() {
             }).unwrap();
             setPreviewResult({ status: AsyncStatus.Success, data: docs });
         } catch (ex: unknown) {
-            let msg = "Error getting data";
+            let msg = t("errorOccurred");
             if (ex && typeof ex === "object" && "data" in ex && ex.data) {
                 const data = ex.data as { error: string; errorDetails: string };
                 msg = data.errorDetails ?? data.error ?? msg;

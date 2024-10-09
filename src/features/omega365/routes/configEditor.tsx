@@ -85,7 +85,7 @@ export default function ConfigEditor() {
             >
                 <Typography sx={{ p: 2 }}>{t("configurationWasUpdatedDoYouWantToSaveTheChanges")}</Typography>
                 <Box m={1} display="flex" justifyContent="flex-end">
-                    <Button onClick={() => history.push("/save?closeAfter=true")}>Yes</Button>
+                    <Button onClick={() => history.push("/save?closeAfter=true")}>{t("yes")}</Button>
                     <Button color="grey" onClick={(e) => handleBack(e, true)}>
                         {t("no")}
                     </Button>

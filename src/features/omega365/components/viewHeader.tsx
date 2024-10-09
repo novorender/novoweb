@@ -22,7 +22,7 @@ export function ViewHeader() {
         return null;
     }
 
-    // Custom per-customer content that feels to specific at the moment
+    // Custom per-customer content that feels too specific at the moment
     // to make a generic approach for it
     let content: ReactNode;
     if (view.viewOrResourceName === "aviw_FOB_EksportAktiviteter") {
