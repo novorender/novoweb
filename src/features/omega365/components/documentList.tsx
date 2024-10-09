@@ -1,6 +1,7 @@
 import { Download, OpenInNew } from "@mui/icons-material";
 import { Box, Button, Divider, Table, TableBody, TableCell, TableRow } from "@mui/material";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
     Omega365DynamicDocument,
@@ -35,6 +36,7 @@ function DynamicDocumentList({ documents, view }: { documents: Omega365DynamicDo
 }
 
 function GroupedDynamicDocumentList({ documents, view }: { documents: Omega365DynamicDocument[]; view: Omega365View }) {
+    const { t } = useTranslation();
     const groupedDocs = useMemo(() => {
         let result: { name?: string; items: Omega365DynamicDocument[] }[] = [];
         for (const doc of documents) {
@@ -49,11 +51,11 @@ function GroupedDynamicDocumentList({ documents, view }: { documents: Omega365Dy
 
         const emptyGroup = result.find((g) => !g.name);
         if (emptyGroup) {
-            result = [...result.filter((g) => g !== emptyGroup), { ...emptyGroup, name: "[no title]" }];
+            result = [...result.filter((g) => g !== emptyGroup), { ...emptyGroup, name: t("[noName]") }];
         }
 
         return result;
-    }, [documents, view.groupBy]);
+    }, [documents, view.groupBy, t]);
 
     if (!view) {
         return null;
