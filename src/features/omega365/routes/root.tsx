@@ -1,6 +1,7 @@
 import { Box, LinearProgress, Tab, Tabs } from "@mui/material";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useGetOmega365ViewDocumentLinksQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -21,6 +22,7 @@ export default function OmegaRoot({
     menuOpen: boolean;
     minimized: boolean;
 }) {
+    const { t } = useTranslation();
     const mainObject = useAppSelector(selectMainObject);
     const isObjectSelected = typeof mainObject === "number";
     const selectedViewId = useAppSelector(selectSelectedViewId);
@@ -57,7 +59,7 @@ export default function OmegaRoot({
 
             {!view ? (
                 <Box color="grey" m={4} textAlign="center">
-                    No configured views
+                    {t("noConfiguredViews")}
                 </Box>
             ) : (
                 <>
@@ -65,7 +67,7 @@ export default function OmegaRoot({
                     {/* Content */}
                     {!isObjectSelected ? (
                         <Box m={4} color="grey" textAlign="center">
-                            Select an object to see associated documents.
+                            {t("selectAnObjectToSeeAssociatedDocuments")}
                         </Box>
                     ) : isFetching ? (
                         <Box>
@@ -81,11 +83,11 @@ export default function OmegaRoot({
                         >
                             {isError ? (
                                 <Box p={1} pt={2}>
-                                    An error occured while loading Omega365 configuration for the project.
+                                    {t("anErrorOccuredWhileLoadingOmega365ConfigurationForTheProject")}
                                 </Box>
                             ) : documents?.length === 0 ? (
                                 <Box m={4} color="grey" textAlign="center">
-                                    Found no documents attached to the selected object.
+                                    {t("foundNoDocumentsAttachedToTheSelectedObject")}
                                 </Box>
                             ) : (
                                 <DocumentList documents={documents || []} view={view} />

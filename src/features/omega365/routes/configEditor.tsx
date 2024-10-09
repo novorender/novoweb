@@ -101,14 +101,14 @@ export default function ConfigEditor() {
                     <TextField
                         value={configDraft.baseURL}
                         onChange={(e) => updateConfigDraft({ baseURL: e.target.value })}
-                        label="Base URL"
+                        label={t("baseURL")}
                         placeholder="https://my-company.omega365.com"
                         fullWidth
                         required
                     />
                 </Box>
                 <Box gap={1} display="flex" alignItems="center" m={2} mb={0}>
-                    <Typography fontWeight="600">Views</Typography>
+                    <Typography fontWeight="600">{t("views")}</Typography>
 
                     <Button
                         disabled={views && views.length >= MAX_VIEW_COUNT}

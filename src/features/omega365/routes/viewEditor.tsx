@@ -20,6 +20,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 
 import { useLazyPreviewOmega365ProjectViewConfigQuery } from "apis/dataV2/dataV2Api";
@@ -52,6 +53,7 @@ const EMPTY_ERRORS = {
 };
 
 export default function ViewEditor() {
+    const { t } = useTranslation();
     const projectId = useSceneId();
     const theme = useTheme();
     const dispatch = useAppDispatch();
@@ -89,20 +91,20 @@ export default function ViewEditor() {
 
     const validate = () => {
         return {
-            title: view.title.trim() ? "" : "Value is required",
-            viewOrResourceName: view.viewOrResourceName.trim() ? "" : "Value is required",
-            whereClause: view.whereClause.trim() ? "" : "Value is required",
-            fieldGroup: view.fields.length > 0 ? "" : "At least one field is required",
+            title: view.title.trim() ? "" : t("valueIsRequired"),
+            viewOrResourceName: view.viewOrResourceName.trim() ? "" : t("valueIsRequired"),
+            whereClause: view.whereClause.trim() ? "" : t("valueIsRequired"),
+            fieldGroup: view.fields.length > 0 ? "" : t("atLeastOneFieldIsRequired"),
             fields: view.fields.map((field) => {
                 let error = "";
                 if (!field.title) {
-                    error = "Title is empty";
+                    error = t("titleIsEmpty");
                 } else if (!field.name) {
-                    error = "Field name is empty";
+                    error = t("fieldNameIsEmpty");
                 } else if (view.fields.find((f) => f.title === field.title) !== field) {
-                    error = "There is already field with this title";
+                    error = t("thereIsAlreadyFieldWithThisTitle");
                 } else if (view.fields.find((f) => f.name === field.name) !== field) {
-                    error = "There is already field with this name";
+                    error = t("thereIsAlreadyFieldWithThisName");
                 }
                 return error;
             }),
@@ -143,14 +145,14 @@ export default function ViewEditor() {
     const handleGetFromClipboard = async () => {
         const text = await navigator.clipboard.readText();
         if (!text || text.trim() === "") {
-            dispatch(omega365Actions.setSnackbarMessage("Clipboard is empty"));
+            dispatch(omega365Actions.setSnackbarMessage(t("clipboardIsEmpty")));
         }
         try {
             const json = JSON.parse(text);
             if (!((json.resourceName || json.viewName) && json.whereClause && json.fields)) {
                 dispatch(
                     omega365Actions.setSnackbarMessage(
-                        "JSON must have following attributes: resourceName or viewName, whereClause, fields",
+                        t("JSONMustHaveFollowingAttributes:ResourceNameOrViewName,WhereClause,Fields"),
                     ),
                 );
                 return;
@@ -173,7 +175,7 @@ export default function ViewEditor() {
             updateView(newView);
         } catch (ex) {
             console.warn(ex);
-            dispatch(omega365Actions.setSnackbarMessage("Clipboard should contain valid JSON"));
+            dispatch(omega365Actions.setSnackbarMessage(t("clipboardShouldContainValidJSON")));
         }
     };
 
@@ -181,14 +183,14 @@ export default function ViewEditor() {
         setPreviewResult({ status: AsyncStatus.Initial });
 
         if (!mainObject) {
-            dispatch(omega365Actions.setSnackbarMessage("Select an object for the preview"));
+            dispatch(omega365Actions.setSnackbarMessage(t("selectAnObjectForThePreview")));
             return;
         }
 
         const errors = validate();
         if (hasErrors(errors)) {
             setErrors(errors);
-            dispatch(omega365Actions.setSnackbarMessage("Fix the validation errors first"));
+            dispatch(omega365Actions.setSnackbarMessage(t("fixTheValidationErrorsFirst")));
             return;
         }
 
@@ -229,20 +231,20 @@ export default function ViewEditor() {
                 <Box display="flex">
                     <Button type="button" onClick={handleBack} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <Box flex="auto" />
                     {previewResult.status === AsyncStatus.Success ? (
                         <Button type="button" form="omega-view-form" color="grey" onClick={handleClosePreview}>
-                            Exit preview
+                            {t("exitPreview")}
                         </Button>
                     ) : (
                         <>
                             <Button type="button" color="grey" onClick={handleGetFromClipboard}>
-                                Get from clipboard
+                                {t("getFromClipboard")}
                             </Button>
                             <Button type="button" form="omega-view-form" color="grey" onClick={handlePreview}>
-                                Preview
+                                {t("preview")}
                             </Button>
                         </>
                     )}
@@ -270,7 +272,7 @@ export default function ViewEditor() {
                             <TextField
                                 value={view.title}
                                 onChange={(e) => updateView({ title: e.target.value })}
-                                label="Title"
+                                label={t("title")}
                                 fullWidth
                                 required
                                 error={Boolean(errors.title)}
@@ -288,18 +290,22 @@ export default function ViewEditor() {
                                     }}
                                     sx={{ ml: 2 }}
                                 >
-                                    <FormControlLabel value={RequestedType.View} control={<Radio />} label="View" />
+                                    <FormControlLabel
+                                        value={RequestedType.View}
+                                        control={<Radio />}
+                                        label={t("view(noun)")}
+                                    />
                                     <FormControlLabel
                                         value={RequestedType.Resource}
                                         control={<Radio />}
-                                        label="Resource"
+                                        label={t("resource")}
                                     />
                                 </RadioGroup>
                             </Box>
                             <TextField
                                 value={view.viewOrResourceName}
                                 onChange={(e) => updateView({ viewOrResourceName: e.target.value })}
-                                label={view.requestedType === RequestedType.View ? "View" : "Resource"}
+                                label={t(view.requestedType === RequestedType.View ? "view(noun)" : "resource")}
                                 fullWidth
                                 required
                                 error={Boolean(errors.viewOrResourceName)}
@@ -308,7 +314,7 @@ export default function ViewEditor() {
                             <TextField
                                 value={view.whereClause}
                                 onChange={(e) => updateView({ whereClause: e.target.value })}
-                                label="Where"
+                                label={t("where")}
                                 fullWidth
                                 required
                                 error={Boolean(errors.whereClause)}
@@ -325,25 +331,27 @@ export default function ViewEditor() {
                                             >
                                                 <Box p={1} maxWidth={600}>
                                                     <Box>
-                                                        Enter request where clause. You can use selected object property
-                                                        values wrapping them into <code>{"{{"}</code> and{" "}
-                                                        <code>{"}}"}</code>. Property name can be copied from{" "}
-                                                        <Button onClick={openProperties}>Properties</Button>
-                                                        widget.
+                                                        {t(
+                                                            "enterRequestWhereClause.YouCanUseSelectedObjectPropertyValuesWrappingThemInto",
+                                                        )}{" "}
+                                                        <code>{"{{"}</code> and <code>{"}}"}</code>.{" "}
+                                                        {t("propertyNameCanBeCopiedFrom")}{" "}
+                                                        <Button onClick={openProperties}>{t("properties")}</Button>
                                                     </Box>
                                                     <Typography mt={1} fontWeight={600}>
-                                                        Example
+                                                        {t("example")}
                                                     </Typography>
                                                     <code>{`ObjectName = '{{Objectinfo/Object code}}'`}</code>
                                                     <br />
                                                     <Box mt={1}>
-                                                        Value of the selected object property{" "}
-                                                        <code>Objectinfo/Object code</code> will be subsituted into the
-                                                        where clause.
+                                                        {t("valueOfTheSelectedObjectProperty")}{" "}
+                                                        <code>Objectinfo/Object code</code>{" "}
+                                                        {t("willBeSubstitutedIntoTheWhereClause")}.
                                                     </Box>
                                                     <Box>
-                                                        If object doesn't have any of the used properties - no
-                                                        associated documents will be returned.
+                                                        {t(
+                                                            "ifObjectDoesntHaveAnyOfTheUsedPropertiesNoAssociatedDocumentsWillBeReturned.",
+                                                        )}
                                                     </Box>
                                                 </Box>
                                             </InfoPopup>
@@ -353,14 +361,14 @@ export default function ViewEditor() {
                             />
 
                             <FormControl fullWidth size="small">
-                                <InputLabel id="omega-group-by-label">Group by field</InputLabel>
+                                <InputLabel id="omega-group-by-label">{t("groupByField")}</InputLabel>
                                 <Select
                                     labelId="omega-group-by-label"
                                     value={view.groupBy ?? ""}
-                                    label="Group by field"
+                                    label={t("groupByField")}
                                     onChange={(e) => updateView({ groupBy: e.target.value as string })}
                                 >
-                                    <MenuItem value="">Don't group</MenuItem>
+                                    <MenuItem value="">{t("dontGroup")}</MenuItem>
                                     {view.fields
                                         .filter((f) => f.name && f.title && f.type !== Omega365ViewFieldType.Hidden)
                                         .map((field, i) => (
@@ -401,6 +409,7 @@ function FieldList({
     groupError: string;
     onChange: (fields: Omega365ViewField[]) => void;
 }) {
+    const { t } = useTranslation();
     const [currentIndex, setCurrentIndex] = useState<number | null>(null);
 
     const onClose = () => {
@@ -441,7 +450,7 @@ function FieldList({
         <>
             <Box mt={2}>
                 <Box display="flex" alignItems="center" gap={1} ml={2}>
-                    <Typography fontWeight={600}>Fields</Typography>
+                    <Typography fontWeight={600}>{t("fields")}</Typography>
                     <Button
                         color="grey"
                         onClick={async () => {
@@ -450,7 +459,7 @@ function FieldList({
                         }}
                     >
                         <AddCircle sx={{ mr: 1 }} />
-                        Add
+                        {t("add")}
                     </Button>
                 </Box>
                 {groupError ? <Typography color="error">{groupError}</Typography> : null}
@@ -481,7 +490,7 @@ function FieldList({
                                 primary={field.title}
                                 secondary={
                                     <>
-                                        Field: {field.name}
+                                        {t("field")}: {field.name}
                                         {error ? <Typography color="error">{error}</Typography> : null}
                                     </>
                                 }
@@ -524,6 +533,7 @@ function FieldEditor({
     onChange: (field: Omega365ViewField) => void;
     onClose: () => void;
 }) {
+    const { t } = useTranslation();
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
@@ -548,7 +558,7 @@ function FieldEditor({
                 <TextField
                     value={field.title}
                     onChange={(e) => onChange({ ...field, title: e.target.value })}
-                    label="Title"
+                    label={t("title")}
                     fullWidth
                     autoFocus
                 />
@@ -560,7 +570,7 @@ function FieldEditor({
                             onChange({ ...field, title: makeFieldTitleFromName(field.name) });
                         }
                     }}
-                    label="Field name"
+                    label={t("fieldName")}
                     fullWidth
                 />
                 <Box display="flex" justifyContent="space-between">
@@ -572,9 +582,21 @@ function FieldEditor({
                                 onChange({ ...field, type: e.target.value as Omega365ViewFieldType });
                             }}
                         >
-                            <FormControlLabel value={Omega365ViewFieldType.Text} control={<Radio />} label="Text" />
-                            <FormControlLabel value={Omega365ViewFieldType.Link} control={<Radio />} label="Link" />
-                            <FormControlLabel value={Omega365ViewFieldType.File} control={<Radio />} label="File" />
+                            <FormControlLabel
+                                value={Omega365ViewFieldType.Text}
+                                control={<Radio />}
+                                label={t("text")}
+                            />
+                            <FormControlLabel
+                                value={Omega365ViewFieldType.Link}
+                                control={<Radio />}
+                                label={t("link")}
+                            />
+                            <FormControlLabel
+                                value={Omega365ViewFieldType.File}
+                                control={<Radio />}
+                                label={t("file")}
+                            />
                         </RadioGroup>
                     </FormControl>
                     <IconButton type="submit">
