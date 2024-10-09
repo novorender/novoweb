@@ -1,6 +1,6 @@
 import { ArrowBack, Delete, FilterAlt } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, Typography, useTheme } from "@mui/material";
-import { type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { memo, type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -77,9 +77,6 @@ export function FormsList() {
               : [],
     );
     const [loadingItems, setLoadingItems] = useState(false);
-    const [filteredItems, setFilteredItems] = useState<
-        (FormObject & { formState: FormState })[] | (FormRecord & { id: number; formState: FormState })[]
-    >([]);
 
     const abortSignal = abortController.current.signal;
 
@@ -198,19 +195,16 @@ export function FormsList() {
         [formFilters],
     );
 
+    const filteredItems = useMemo(() => items.filter(filterItems), [items, filterItems]);
+
     useEffect(() => {
-        if (template?.type !== TemplateType.Search) {
-            dispatch(
-                renderActions.setDefaultVisibility(
-                    items.length > 0 ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral,
-                ),
-            );
-            return;
-        }
+        dispatch(
+            renderActions.setDefaultVisibility(
+                items.length > 0 ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral,
+            ),
+        );
 
         const forms = items.filter(filterItems);
-
-        dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
 
         const newGroup = formFilters.new ? forms.filter((form) => form.formState === "new").map((form) => form.id) : [];
         const ongoingGroup = formFilters.ongoing
@@ -228,13 +222,6 @@ export function FormsList() {
             highlightCollectionsActions.setIds(HighlightCollection.FormsCompleted, finishedGroup),
         );
     }, [items, formFilters, dispatch, dispatchHighlightCollections, filterItems, template]);
-
-    useEffect(() => {
-        if (!items.length) {
-            return;
-        }
-        setFilteredItems(items.filter(filterItems) as typeof items);
-    }, [items, filterItems]);
 
     const handleBackClick = () => {
         if (isPickingLocation) {
@@ -255,7 +242,11 @@ export function FormsList() {
     const addLocationForm = () => {
         if (isPickingLocation) {
             dispatch(renderActions.stopPicker(Picker.FormLocation));
-            dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
+            dispatch(
+                renderActions.setDefaultVisibility(
+                    items.length > 0 ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral,
+                ),
+            );
         } else {
             dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
             dispatch(renderActions.setPicker(Picker.FormLocation));
@@ -273,14 +264,14 @@ export function FormsList() {
         });
     }, [history, template?.title, templateId, template?.type]);
 
-    const ListItem = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+    const ListItem = memo(({ index, style }: { index: number; style: React.CSSProperties }) => {
         const item = filteredItems[index];
         return (
             <div style={style}>
                 <FormsListItem key={"guid" in item ? item.guid : item.id} item={item} formId={templateId} />
             </div>
         );
-    };
+    });
 
     return (
         <>
