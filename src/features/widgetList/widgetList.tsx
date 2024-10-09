@@ -1,10 +1,10 @@
 import { MemoryRouter, Route, Switch } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { useAppSelector } from "app/redux-store-interactions";
 import { FeatureGroupKey, featuresConfig, type WidgetKey } from "config/features";
 import GroupedWidgetList from "features/groupedWidgetList/groupedWidgetList";
-import { explorerActions, selectNewDesign, selectWidgets } from "slices/explorer";
-import { mixpanel } from "utils/mixpanel";
+import { useOpenWidget } from "hooks/useOpenWidget";
+import { selectNewDesign, selectWidgets } from "slices/explorer";
 
 import { Root } from "./routes/root";
 import { Tag } from "./routes/tag";
@@ -24,7 +24,7 @@ export default function WidgetList(props: {
 
 function WidgetListInner({ widgetKey, onSelect }: { widgetKey?: WidgetKey; onSelect: () => void }) {
     const activeWidgets = useAppSelector(selectWidgets);
-    const dispatch = useAppDispatch();
+    const openWidget = useOpenWidget();
 
     const handleClick = (key: WidgetKey) => () => {
         const active = key !== widgetKey && activeWidgets.includes(key);
@@ -35,13 +35,12 @@ function WidgetListInner({ widgetKey, onSelect }: { widgetKey?: WidgetKey; onSel
 
         if (!widgetKey) {
             onSelect();
-            mixpanel?.track("Opened Widget", { "Widget Key": key });
-            return dispatch(explorerActions.addWidgetSlot(key));
+            openWidget(key);
+            return;
         }
 
         onSelect();
-        mixpanel?.track("Opened Widget", { "Widget Key": key });
-        dispatch(explorerActions.replaceWidgetSlot({ replace: widgetKey, key }));
+        openWidget(key, { replace: widgetKey });
     };
 
     const config = widgetKey ? featuresConfig[widgetKey] : undefined;

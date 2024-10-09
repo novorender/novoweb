@@ -18,9 +18,10 @@ import {
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
+import { useOpenWidget } from "hooks/useOpenWidget";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { explorerActions, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
+import { selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { secondsToMs } from "utils/time";
 
@@ -40,6 +41,7 @@ export default function PropertyTree() {
     const isLoading = useAppSelector(selectIsPropertyTreeLoading);
     const activeGroups = useAppSelector(selectPropertyTreeBookmarkState);
     const groupsCreationStatus = useAppSelector((state) => state.propertyTree.groupsCreationStatus);
+    const openWidget = useOpenWidget();
 
     const { data: favorites = [], isLoading: isLoadingFavorites } = useGetPropertyTreeFavoritesQuery(
         { projectId: sceneId },
@@ -187,7 +189,7 @@ export default function PropertyTree() {
                                     aria-label="close"
                                     color="inherit"
                                     onClick={() => {
-                                        dispatch(explorerActions.forceOpenWidget(featuresConfig.groups.key));
+                                        openWidget(featuresConfig.groups.key, { force: true });
                                         dispatch(propertyTreeActions.setGroupsCreationStatus(AsyncStatus.Initial));
                                     }}
                                 >

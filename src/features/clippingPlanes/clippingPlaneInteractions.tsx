@@ -30,7 +30,8 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { crossSectionActions } from "features/crossSection";
 import { getCameraDir } from "features/engine2D/utils";
 import { RenderState, selectClippingPlanes } from "features/render";
-import { explorerActions, selectNewDesign, selectWidgets } from "slices/explorer";
+import { useOpenWidget } from "hooks/useOpenWidget";
+import { selectNewDesign, selectWidgets } from "slices/explorer";
 import { rgbToHex, vecToRgb } from "utils/color";
 import { hasMouseSupport } from "utils/misc";
 
@@ -284,6 +285,7 @@ function PlaneMenu({
     const plane = clipping.planes[index];
     const isWidgetOpen = useAppSelector((state) => selectWidgets(state).includes(featuresConfig.clippingPlanes.key));
     const newDesign = useAppSelector(selectNewDesign);
+    const openWidget = useOpenWidget();
 
     const openMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -295,7 +297,7 @@ function PlaneMenu({
     };
 
     const showWidget = () => {
-        dispatch(explorerActions.forceOpenWidget(featuresConfig.clippingPlanes.key));
+        openWidget(featuresConfig.clippingPlanes.key, { force: true });
         closeMenu();
     };
 
@@ -325,7 +327,7 @@ function PlaneMenu({
     };
 
     const openCrossSection = () => {
-        dispatch(explorerActions.forceOpenWidget(featuresConfig.crossSection.key));
+        openWidget(featuresConfig.crossSection.key, { force: true });
         dispatch(crossSectionActions.setPlaneIndex(index));
         closeMenu();
     };

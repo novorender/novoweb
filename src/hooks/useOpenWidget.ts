@@ -6,10 +6,14 @@ import { WidgetKey } from "config/features";
 import {
     explorerActions,
     selectCanAddWidget,
+    selectMaximized,
+    selectMaximizedHorizontal,
     selectWidgetLayout,
     selectWidgets,
     selectWidgetSlot,
 } from "slices/explorer";
+import { getTakenWidgetSlotCount } from "slices/explorer/utils";
+import { mixpanel } from "utils/mixpanel";
 
 export function useOpenWidget() {
     const canAddWidget = useAppSelector(selectCanAddWidget);
@@ -17,10 +21,36 @@ export function useOpenWidget() {
     const widgetLayout = useAppSelector(selectWidgetLayout);
     const widgets = useAppSelector(selectWidgets);
     const dispatch = useAppDispatch();
+    const maximized = useAppSelector(selectMaximized);
+    const maximizedHorizontal = useAppSelector(selectMaximizedHorizontal);
 
     return useCallback(
-        (widgetKey: WidgetKey) => {
-            if (canAddWidget) {
+        (widgetKey: WidgetKey, params: { replace?: WidgetKey } | { force?: boolean } = {}) => {
+            const replace = "replace" in params ? params.replace : false;
+            const force = "force" in params ? params.force : false;
+
+            const trackOpened = (key: WidgetKey) => {
+                mixpanel?.track("Opened Widget", { "Widget Key": key });
+            };
+            const trackClosed = (key: WidgetKey) => {
+                mixpanel?.track("Closed Widget", { "Widget Key": key });
+            };
+
+            if (widgets.includes(widgetKey)) {
+                // already open, noop
+            } else if (replace && widgets.includes(replace)) {
+                trackClosed(replace);
+                trackOpened(widgetKey);
+                dispatch(explorerActions.replaceWidgetSlot({ replace: replace, key: widgetKey }));
+            } else if (force) {
+                if (getTakenWidgetSlotCount(widgets, maximized, maximizedHorizontal) >= widgetLayout.widgets) {
+                    const evicted = widgets[widgets.length - 1];
+                    trackClosed(evicted);
+                }
+                trackOpened(widgetKey);
+                dispatch(explorerActions.forceOpenWidget(widgetKey));
+            } else if (canAddWidget) {
+                trackOpened(widgetKey);
                 dispatch(explorerActions.addWidgetSlot(widgetKey));
                 if (widgetSlot.open) {
                     dispatch(explorerActions.setWidgetSlot({ open: false, group: undefined }));
@@ -39,6 +69,6 @@ export function useOpenWidget() {
                 dispatch(explorerActions.setSnackbarMessage({ msg, closeAfter: 5000 }));
             }
         },
-        [canAddWidget, widgetSlot, widgetLayout, widgets, dispatch],
+        [canAddWidget, widgetSlot, widgetLayout, widgets, dispatch, maximized, maximizedHorizontal],
     );
 }

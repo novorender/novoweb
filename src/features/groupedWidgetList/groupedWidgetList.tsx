@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { useAppSelector } from "app/redux-store-interactions";
 import { FeatureGroupKey, featuresConfig, type WidgetKey } from "config/features";
-import { explorerActions, selectWidgets } from "slices/explorer";
+import { useOpenWidget } from "hooks/useOpenWidget";
+import { selectWidgets } from "slices/explorer";
 
 import { Root } from "./routes/root";
 
@@ -16,11 +17,11 @@ export default function GroupedWidgetList({
     onSelect: () => void;
 }) {
     const activeWidgets = useAppSelector(selectWidgets);
-    const dispatch = useAppDispatch();
     const config = widgetKey ? featuresConfig[widgetKey] : undefined;
     const [expandedGroupKey, setExpandedGroupKey] = useState(
-        featureGroupKey || (config && "groups" in config && config.groups[0]) || null
+        featureGroupKey || (config && "groups" in config && config.groups[0]) || null,
     );
+    const openWidget = useOpenWidget();
 
     useEffect(() => {
         if (featureGroupKey) {
@@ -37,11 +38,12 @@ export default function GroupedWidgetList({
 
         if (!widgetKey) {
             onSelect();
-            return dispatch(explorerActions.addWidgetSlot(key));
+            openWidget(key);
+            return;
         }
 
         onSelect();
-        dispatch(explorerActions.replaceWidgetSlot({ replace: widgetKey, key }));
+        openWidget(key, { replace: widgetKey });
     };
 
     return (
