@@ -25,6 +25,7 @@ import { getOutlineLaser } from "features/outlineLaser";
 import { pointLineActions } from "features/pointLine";
 import { selectShowPropertiesStamp } from "features/properties/slice";
 import { useAbortController } from "hooks/useAbortController";
+import { selectNewDesign } from "slices/explorer";
 import { ExtendedMeasureEntity, NodeType, ViewMode } from "types/misc";
 import { getPerpendicular } from "utils/math";
 import { isRealVec } from "utils/misc";
@@ -82,6 +83,7 @@ export function useCanvasClickHandler({
     const { planes } = useAppSelector(selectClippingPlanes);
     const laser3d = useAppSelector(selectOutlineLaser3d);
     const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
+    const newDesign = useAppSelector(selectNewDesign);
 
     const [secondaryHighlightAbortController, abortSecondaryHighlight] = useAbortController();
     const currentSecondaryHighlightQuery = useRef("");
@@ -202,28 +204,37 @@ export function useCanvasClickHandler({
                     vec3.cross(right, up, dir);
                     vec3.normalize(right, right);
 
-                    const rotation = quat.fromMat3(
-                        quat.create(),
-                        mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2]),
-                    );
+                    if (!newDesign) {
+                        const rotation = quat.fromMat3(
+                            quat.create(),
+                            mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2]),
+                        );
 
-                    dispatch(
-                        renderActions.setCamera({
-                            type: CameraType.Orthographic,
-                            goTo: {
-                                position: p,
-                                rotation,
-                                fov: 45,
-                                far: crossSectionClipping,
-                            },
-                            gridOrigo: p as vec3,
-                        }),
-                    );
+                        dispatch(
+                            renderActions.setCamera({
+                                type: CameraType.Orthographic,
+                                goTo: {
+                                    position: p,
+                                    rotation,
+                                    fov: 45,
+                                    far: crossSectionClipping,
+                                },
+                                gridOrigo: p as vec3,
+                            }),
+                        );
+                    }
                     const w = vec3.dot(dir, p);
                     dispatch(
                         renderActions.setClippingPlanes({
                             enabled: true,
-                            planes: [{ normalOffset: [dir[0], dir[1], dir[2], w], baseW: w, color: [0, 1, 0, 0.2] }],
+                            planes: [
+                                {
+                                    normalOffset: [dir[0], dir[1], dir[2], w],
+                                    baseW: w,
+                                    color: [0, 1, 0, 0.2],
+                                    anchorPos: p,
+                                },
+                            ],
                         }),
                     );
                     dispatch(renderActions.setPicker(Picker.Object));

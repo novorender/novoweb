@@ -657,6 +657,7 @@
     "formCreationFailed": "Skjemaopprettelse mislyktes",
     "formUpdateFailed": "Kunne ikke oppdatere skjemaet",
     "youNeedToEnableOutlinesForSelectedClippingPlaneToSeeTheOutlines": "Du må aktivere konturer for valgt klippeplan for å se konturene.",
+    "youNeedToEnableOutlines": "Du må aktivere konturer.",
     "enableOutlines": "Aktiver konturer",
     "colorPerObject": "Farge per objekt",
     "baseURL": "Base-URL",
@@ -694,5 +695,6 @@
     "fields": "Felt",
     "field": "Felt",
     "text": "Tekst",
-    "link": "Lenke"
+    "link": "Lenke",
+    "noClippingPlanes": "Ingen klippeplaner"
 }

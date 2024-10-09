@@ -110,7 +110,10 @@ export function useHandleInit() {
                     }),
                 ]);
 
-                mixpanel?.register({ "Scene ID": sceneId, "Scene Org": sceneData.organization }, { persistent: false });
+                mixpanel?.register(
+                    { "Scene ID": sceneId, "Scene Title": sceneData.title, "Scene Org": sceneData.organization },
+                    { persistent: false },
+                );
                 mixpanel?.track_pageview({
                     "Scene ID": sceneId,
                     "Scene Title": sceneData.title,

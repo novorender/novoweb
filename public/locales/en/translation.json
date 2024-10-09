@@ -657,6 +657,7 @@
     "formCreationFailed": "Form creation failed",
     "formUpdateFailed": "Failed to update form",
     "youNeedToEnableOutlinesForSelectedClippingPlaneToSeeTheOutlines": "You need to enable outlines for selected clipping plane to see the outlines.",
+    "youNeedToEnableOutlines": "You need to enable outlines.",
     "enableOutlines": "Enable outlines",
     "colorPerObject": "Color per object",
     "baseURL": "Base URL",
@@ -694,5 +695,6 @@
     "fields": "Fields",
     "field": "Field",
     "text": "Text",
-    "link": "Link"
+    "link": "Link",
+    "noClippingPlanes": "No clipping planes"
 }

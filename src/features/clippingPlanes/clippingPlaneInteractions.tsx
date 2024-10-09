@@ -29,7 +29,7 @@ import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { getCameraDir } from "features/engine2D/utils";
 import { RenderState, selectClippingPlanes } from "features/render";
-import { explorerActions, selectWidgets } from "slices/explorer";
+import { explorerActions, selectNewDesign, selectWidgets } from "slices/explorer";
 import { rgbToHex, vecToRgb } from "utils/color";
 import { hasMouseSupport } from "utils/misc";
 
@@ -282,6 +282,7 @@ function PlaneMenu({
     const actions = useClippingPlaneActions();
     const plane = clipping.planes[index];
     const isWidgetOpen = useAppSelector((state) => selectWidgets(state).includes(featuresConfig.clippingPlanes.key));
+    const newDesign = useAppSelector(selectNewDesign);
 
     const openMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -322,6 +323,14 @@ function PlaneMenu({
         closeMenu();
     };
 
+    const openCrossSection = () => {
+        dispatch(explorerActions.forceOpenWidget(featuresConfig.crossSection.key));
+        closeMenu();
+    };
+
+    const handleCrossSectionClick = newDesign ? openCrossSection : swapCamera;
+    const CrossSectionIcon = newDesign ? featuresConfig.crossSection.Icon : featuresConfig.orthoCam.Icon;
+
     visible = visible || Boolean(menuAnchor);
 
     return (
@@ -351,9 +360,9 @@ function PlaneMenu({
                     </ListItemIcon>
                     <ListItemText>{t("openWidget")}</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={swapCamera}>
+                <MenuItem onClick={handleCrossSectionClick}>
                     <ListItemIcon>
-                        <featuresConfig.orthoCam.Icon fontSize="small" />
+                        <CrossSectionIcon fontSize="small" />
                     </ListItemIcon>
                     <ListItemText>{t("crossSection")}</ListItemText>
                 </MenuItem>
