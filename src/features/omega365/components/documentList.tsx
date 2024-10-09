@@ -110,7 +110,7 @@ function DynamicDocument({
                     })}
                     {linkFields.length === 0 && fileFields.length === 0 ? null : (
                         <TableRow>
-                            <TableCell colSpan={2} sx={{ border: 0 }}>
+                            <TableCell colSpan={2} sx={{ border: 0, px: 0 }}>
                                 <Box display="flex" gap={1}>
                                     {linkFields.map((field) => {
                                         return (
