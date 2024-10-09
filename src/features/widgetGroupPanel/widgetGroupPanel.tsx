@@ -28,7 +28,6 @@ import { HudPanel } from "components/hudPanel";
 import IconButtonExt from "components/iconButtonExt";
 import { FeatureGroupKey, featureGroups, featuresConfig, FeatureType, Widget, WidgetKey } from "config/features";
 import { groupSorting } from "features/groupedWidgetList/sorting";
-import { ShareLink } from "features/shareLink";
 import { sorting } from "features/widgetList/sorting";
 import { useOpenWidget } from "hooks/useOpenWidget";
 import NovorenderIcon from "media/icons/novorender-small.svg?react";
@@ -91,6 +90,7 @@ export function WidgetGroupPanel() {
                     (widget) =>
                         (widget.type === FeatureType.Widget || widget.type === FeatureType.AdminWidget) &&
                         "groups" in widget &&
+                        widget.key !== "shareLink" && // share link is no longer widget and is accessible from bottom menu
                         widget.groups.includes(group.key as never),
                 );
 
@@ -327,10 +327,6 @@ function SectionWidgets({ onSelect, widgets }: { onSelect: (widgetKey: WidgetKey
                 const activeElsewhere = activeWidgets.includes(widget.key);
                 const unavailable = !isOnline && "offline" in widget && !widget.offline;
                 const { Icon } = widget;
-
-                if (widget.key === featuresConfig.shareLink.key) {
-                    return <ShareLink key={widget.key} asMenuItem onClick={() => onSelect(widget.key)} />;
-                }
 
                 return (
                     <MenuItem
