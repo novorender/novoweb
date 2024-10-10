@@ -7,7 +7,8 @@ import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
 import { CameraType, selectCameraType } from "features/render";
-import { explorerActions, selectWidgets } from "slices/explorer";
+import { useOpenWidget } from "hooks/useOpenWidget";
+import { selectWidgets } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { useFetchAssetList } from "./hooks/useFetchAssetList";
@@ -54,6 +55,7 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
         useAppSelector(selectCameraType) === CameraType.Orthographic && (isFormsWidgetOpen || alwaysShowMarkers);
     const dispatch = useAppDispatch();
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const openWidget = useOpenWidget();
 
     const assetList = useFetchAssetList({ skip: !active });
 
@@ -123,7 +125,7 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
                 });
             },
         }),
-        [renderedForms, view?.measure]
+        [renderedForms, view?.measure],
     );
 
     if (!view?.measure || locationForms.length === 0) {
@@ -141,7 +143,7 @@ export const FormsTopDown = forwardRef(function FormsTopDown(_props, ref) {
         } else {
             dispatch(formsActions.setCurrentFormsList(templateId));
             dispatch(formsActions.setSelectedFormId(id));
-            dispatch(explorerActions.forceOpenWidget(featuresConfig.forms.key));
+            openWidget(featuresConfig.forms.key, { force: true });
         }
     };
 
@@ -197,7 +199,7 @@ const FormButton = styled(IconButton, { shouldForwardProp: (prop) => prop !== "a
         &:hover {
             background-color: ${active ? theme.palette.primary.dark : theme.palette.secondary.dark};
         }
-    `
+    `,
 );
 
 const StateDot = styled("div")<{ state: FormState }>(
@@ -210,5 +212,5 @@ const StateDot = styled("div")<{ state: FormState }>(
         border-radius: 12px;
         border: 2px solid white;
         background: ${stateColors.get(state)};
-    `
+    `,
 );
