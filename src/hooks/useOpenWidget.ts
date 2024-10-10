@@ -26,6 +26,10 @@ export function useOpenWidget() {
 
     return useCallback(
         (widgetKey: WidgetKey, params: { replace?: WidgetKey } | { force?: boolean } = {}) => {
+            if (widgets.includes(widgetKey)) {
+                return;
+            }
+
             const replace = "replace" in params ? params.replace : false;
             const force = "force" in params ? params.force : false;
 
@@ -36,9 +40,7 @@ export function useOpenWidget() {
                 mixpanel?.track("Closed Widget", { "Widget Key": key });
             };
 
-            if (widgets.includes(widgetKey)) {
-                // already open, noop
-            } else if (replace && widgets.includes(replace)) {
+            if (replace && widgets.includes(replace)) {
                 trackClosed(replace);
                 trackOpened(widgetKey);
                 dispatch(explorerActions.replaceWidgetSlot({ replace: replace, key: widgetKey }));

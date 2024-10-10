@@ -12,11 +12,11 @@ export function useRemoveWidget() {
     return useCallback(
         (widgetKey: WidgetKey, { reason }: { reason?: "offline" } = {}) => {
             if (!widgets.includes(widgetKey)) {
-                // not open, noop
-            } else {
-                mixpanel?.track("Closed Widget", { "Widget Key": widgetKey, "Close Reason": reason });
-                dispatch(explorerActions.removeWidgetSlot(widgetKey));
+                return;
             }
+
+            mixpanel?.track("Closed Widget", { "Widget Key": widgetKey, "Close Reason": reason });
+            dispatch(explorerActions.removeWidgetSlot(widgetKey));
         },
         [widgets, dispatch],
     );
