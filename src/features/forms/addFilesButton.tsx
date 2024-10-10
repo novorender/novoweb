@@ -26,6 +26,7 @@ export default function AddFilesButton({
     const handleAddFilesClick: MouseEventHandler = () => fileInputRef.current?.click();
 
     const handleChange: ChangeEventHandler<HTMLInputElement> = (e) => {
+        e.preventDefault();
         onChange(e);
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
@@ -34,7 +35,15 @@ export default function AddFilesButton({
 
     return (
         <Box display="flex" onDragOver={stopPropagation} onDrop={stopPropagation}>
-            <input type="file" ref={fileInputRef} onChange={handleChange} accept={accept} multiple={multiple} hidden />
+            <input
+                type="file"
+                capture="environment"
+                ref={fileInputRef}
+                onChange={handleChange}
+                accept={accept}
+                multiple={multiple}
+                hidden
+            />
             <Button onClick={handleAddFilesClick} disabled={disabled || uploading} variant="contained">
                 {uploading ? <CircularProgress size={24} /> : t("addFile", { count: multiple ? 2 : 1 })}
             </Button>
