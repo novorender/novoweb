@@ -284,4 +284,7 @@ export type CustomProperties = {
     canvasContextMenu?: {
         features: string[];
     };
+    forms?: {
+        alwaysShowMarkers?: boolean;
+    };
 };
