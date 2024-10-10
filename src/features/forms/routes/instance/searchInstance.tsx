@@ -16,7 +16,7 @@ import { Route, Switch, useHistory, useLocation, useRouteMatch } from "react-rou
 
 import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, ScrollBox } from "components";
+import { Divider } from "components";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
@@ -81,6 +81,8 @@ export function SearchInstance() {
 
     const [updateForm, { isLoading: isFormUpdating }] = useUpdateSearchFormMutation();
 
+    const [title, setTitle] = useState(form?.title ?? "");
+
     useEffect(() => {
         if (!objectId || highlighted.includes(objectId)) {
             return;
@@ -92,6 +94,9 @@ export function SearchInstance() {
     useEffect(() => {
         if (form?.fields) {
             setItems(toFormItems(form.fields));
+        }
+        if (form?.title) {
+            setTitle(form?.title);
         }
     }, [form]);
 
@@ -112,6 +117,7 @@ export function SearchInstance() {
             objectGuid,
             formId,
             form: {
+                ...(title.trim().length > 0 ? { title } : {}),
                 fields: toFormFields(items),
             },
         }).then((res) => {
@@ -132,7 +138,18 @@ export function SearchInstance() {
         });
 
         setIsUpdated(false);
-    }, [isUpdated, updateForm, projectId, objectGuid, formId, items, objectId, dispatchHighlightCollections, form]);
+    }, [
+        isUpdated,
+        updateForm,
+        projectId,
+        objectGuid,
+        formId,
+        title,
+        items,
+        objectId,
+        dispatchHighlightCollections,
+        form,
+    ]);
 
     useEffect(() => {
         return () => {
@@ -201,7 +218,7 @@ export function SearchInstance() {
             const url = window.URL.createObjectURL(pdfBlob);
             const link = document.createElement("a");
             link.href = url;
-            link.setAttribute("download", `${form?.title ?? "Novorender form"}.pdf`);
+            link.setAttribute("download", `${title ?? "Novorender form"}.pdf`);
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -209,7 +226,7 @@ export function SearchInstance() {
         } catch (err) {
             console.error(`Failed to export form as PDF: ${err}`);
         }
-    }, [accessToken, form?.title, formId, formsBaseUrl, objectGuid, projectId]);
+    }, [accessToken, title, formId, formsBaseUrl, objectGuid, projectId]);
 
     const handleBackClick = useCallback(() => {
         dispatchHighlighted(highlightActions.setIds([]));
@@ -249,6 +266,18 @@ export function SearchInstance() {
         );
         setIsUpdated(true);
     }, []);
+
+    const handleTitleChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            e.stopPropagation();
+            const title = e.target.value;
+            setTitle(title);
+            if (title.trim().length > 0) {
+                setIsUpdated(true);
+            }
+        },
+        [setTitle],
+    );
 
     const handleFlyTo = useCallback(() => {
         if (!objectGuid) {
@@ -346,12 +375,17 @@ export function SearchInstance() {
                         <LinearProgress />
                     </Box>
                 )}
-                <ScrollBox m={1}>
-                    <Form form={form} items={items} setItems={handleSetItems} noItemsMsg={t("objectHasNoForms")} />
-                </ScrollBox>
+                <Form
+                    form={form}
+                    items={items}
+                    setItems={handleSetItems}
+                    title={title}
+                    handleTitleChange={handleTitleChange}
+                    noItemsMsg={t("objectHasNoForms")}
+                />
             </Route>
             <Route path={signRoute}>
-                <SignConfirmation objectGuid={objectGuid} formId={formId} title={form?.title} />
+                <SignConfirmation objectGuid={objectGuid} formId={formId} title={title} />
             </Route>
             <Route path={historyRoute}>
                 <FormHistory
@@ -359,12 +393,12 @@ export function SearchInstance() {
                     objectGuid={objectGuid}
                     templateId={formId}
                     formId={formId}
-                    title={form?.title}
+                    title={title}
                     isFinal={isFinal}
                 />
             </Route>
             <Route path={clearRoute}>
-                <ClearConfirmation title={form?.title} onClear={handleClear} />
+                <ClearConfirmation title={title} onClear={handleClear} />
             </Route>
         </Switch>
     );

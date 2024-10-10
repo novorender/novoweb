@@ -16,7 +16,7 @@ import { Route, Switch, useHistory, useLocation, useRouteMatch } from "react-rou
 
 import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, ScrollBox } from "components";
+import { Divider } from "components";
 import { useGetLocationFormQuery, useUpdateLocationFormMutation } from "features/forms/api";
 import { formsGlobalsActions, useDispatchFormsGlobals, useLazyFormsGlobals } from "features/forms/formsGlobals";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
@@ -390,15 +390,13 @@ export function LocationInstance() {
                         <LinearProgress />
                     </Box>
                 )}
-                <ScrollBox m={1}>
-                    <Form
-                        form={form}
-                        items={items}
-                        setItems={handleSetItems}
-                        title={title}
-                        handleTitleChange={handleTitleChange}
-                    />
-                </ScrollBox>
+                <Form
+                    form={form}
+                    items={items}
+                    setItems={handleSetItems}
+                    title={title}
+                    handleTitleChange={handleTitleChange}
+                />
             </Route>
             <Route path={signRoute}>
                 <SignConfirmation templateId={templateId} formId={formId} title={title} />
