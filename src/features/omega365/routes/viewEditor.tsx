@@ -65,16 +65,15 @@ export default function ViewEditor() {
     const selectedViewId = useAppSelector(selectSelectedViewId);
     const views = configDraft.views;
     const [view, setView] = useState<Omega365View>(
-        views && viewId
-            ? views.find((v) => v.id === viewId)!
-            : {
-                  id: crypto.randomUUID(),
-                  requestedType: RequestedType.View,
-                  viewOrResourceName: "",
-                  title: "",
-                  whereClause: "",
-                  fields: [],
-              },
+        views?.find((v) => v.id === viewId) ?? {
+            id: crypto.randomUUID(),
+            requestedType: RequestedType.View,
+            viewOrResourceName: "",
+            title: "",
+            whereClause: "",
+            fields: [],
+            groupBy: null,
+        },
     );
     const [preview] = useLazyPreviewOmega365ProjectViewConfigQuery();
     const [previewResult, setPreviewResult] = useState<AsyncState<Omega365DynamicDocument[]>>({
@@ -96,17 +95,19 @@ export default function ViewEditor() {
             whereClause: view.whereClause.trim() ? "" : t("valueIsRequired"),
             fieldGroup: view.fields.length > 0 ? "" : t("atLeastOneFieldIsRequired"),
             fields: view.fields.map((field) => {
-                let error = "";
                 if (!field.title) {
-                    error = t("titleIsEmpty");
-                } else if (!field.name) {
-                    error = t("fieldNameIsEmpty");
-                } else if (view.fields.find((f) => f.title === field.title) !== field) {
-                    error = t("thereIsAlreadyFieldWithThisTitle");
-                } else if (view.fields.find((f) => f.name === field.name) !== field) {
-                    error = t("thereIsAlreadyFieldWithThisName");
+                    return t("titleIsEmpty");
                 }
-                return error;
+                if (!field.name) {
+                    return t("fieldNameIsEmpty");
+                }
+                if (view.fields.find((f) => f.title === field.title) !== field) {
+                    return t("thereIsAlreadyFieldWithThisTitle");
+                }
+                if (view.fields.find((f) => f.name === field.name) !== field) {
+                    return t("thereIsAlreadyFieldWithThisName");
+                }
+                return "";
             }),
         };
     };
@@ -150,11 +151,7 @@ export default function ViewEditor() {
         try {
             const json = JSON.parse(text);
             if (!((json.resourceName || json.viewName) && json.whereClause && json.fields)) {
-                dispatch(
-                    omega365Actions.setSnackbarMessage(
-                        t("JSONMustHaveFollowingAttributes:ResourceNameOrViewName,WhereClause,Fields"),
-                    ),
-                );
+                dispatch(omega365Actions.setSnackbarMessage(t("omegaJsonImportMissingAttributesError")));
                 return;
             }
 
@@ -331,11 +328,8 @@ export default function ViewEditor() {
                                             >
                                                 <Box p={1} maxWidth={600}>
                                                     <Box>
-                                                        {t(
-                                                            "enterRequestWhereClause.YouCanUseSelectedObjectPropertyValuesWrappingThemInto",
-                                                        )}{" "}
-                                                        <code>{"{{"}</code> and <code>{"}}"}</code>.{" "}
-                                                        {t("propertyNameCanBeCopiedFrom")}{" "}
+                                                        {t("enterRequestWhereClause")} <code>{"{{"}</code> and{" "}
+                                                        <code>{"}}"}</code>. {t("propertyNameCanBeCopiedFrom")}{" "}
                                                         <Button onClick={openProperties}>{t("properties")}</Button>
                                                     </Box>
                                                     <Typography mt={1} fontWeight={600}>
@@ -348,11 +342,7 @@ export default function ViewEditor() {
                                                         <code>Objectinfo/Object code</code>{" "}
                                                         {t("willBeSubstitutedIntoTheWhereClause")}.
                                                     </Box>
-                                                    <Box>
-                                                        {t(
-                                                            "ifObjectDoesntHaveAnyOfTheUsedPropertiesNoAssociatedDocumentsWillBeReturned.",
-                                                        )}
-                                                    </Box>
+                                                    <Box>{t("omegaNoAssocDocsReturned")}</Box>
                                                 </Box>
                                             </InfoPopup>
                                         </InputAdornment>
@@ -370,7 +360,7 @@ export default function ViewEditor() {
                                 >
                                     <MenuItem value="">{t("dontGroup")}</MenuItem>
                                     {view.fields
-                                        .filter((f) => f.name && f.title && f.type !== Omega365ViewFieldType.Hidden)
+                                        .filter((f) => f.name && f.title)
                                         .map((field, i) => (
                                             <MenuItem key={i} value={field.name}>
                                                 {field.title}
@@ -385,9 +375,7 @@ export default function ViewEditor() {
                             groupError={errors.fieldGroup}
                             onChange={(fields) => {
                                 const groupBy =
-                                    view.groupBy && fields.some((f) => f.name === view.groupBy)
-                                        ? view.groupBy
-                                        : undefined;
+                                    view.groupBy && fields.some((f) => f.name === view.groupBy) ? view.groupBy : null;
                                 updateView({ fields, groupBy });
                             }}
                         />
@@ -416,34 +404,13 @@ function FieldList({
         setCurrentIndex(null);
     };
 
-    const handleMoveUp = (e: React.MouseEvent, index: number) => {
+    const handleMove = (e: React.MouseEvent, index: number, offset: number) => {
         e.stopPropagation();
-        onChange(
-            fields.map((f, i) => {
-                if (i === index) {
-                    return fields[index - 1];
-                } else if (i === index - 1) {
-                    return fields[index];
-                } else {
-                    return f;
-                }
-            }),
-        );
-    };
-
-    const handleMoveDown = (e: React.MouseEvent, index: number) => {
-        e.stopPropagation();
-        onChange(
-            fields.map((f, i) => {
-                if (i === index) {
-                    return fields[index + 1];
-                } else if (i === index + 1) {
-                    return fields[index];
-                } else {
-                    return f;
-                }
-            }),
-        );
+        const newFields = fields.slice();
+        const item = newFields[index];
+        newFields[index] = newFields[index + offset];
+        newFields[index + offset] = item;
+        onChange(newFields);
     };
 
     return (
@@ -469,10 +436,6 @@ function FieldList({
                 {fields.map((field, index) => {
                     const error = errors[index];
 
-                    if (field.type === Omega365ViewFieldType.Hidden) {
-                        return null;
-                    }
-
                     if (index === currentIndex) {
                         return (
                             <FieldEditor
@@ -496,12 +459,16 @@ function FieldList({
                                 }
                             />
                             <Box flex="0 0 auto">
-                                <IconButton size="small" onClick={(e) => handleMoveUp(e, index)} disabled={index === 0}>
+                                <IconButton
+                                    size="small"
+                                    onClick={(e) => handleMove(e, index, -1)}
+                                    disabled={index === 0}
+                                >
                                     <ArrowUpward />
                                 </IconButton>
                                 <IconButton
                                     size="small"
-                                    onClick={(e) => handleMoveDown(e, index)}
+                                    onClick={(e) => handleMove(e, index, 1)}
                                     disabled={index === fields.length - 1}
                                 >
                                     <ArrowDownward />
@@ -573,7 +540,7 @@ function FieldEditor({
                     label={t("fieldName")}
                     fullWidth
                 />
-                <Box display="flex" justifyContent="space-between">
+                <Box display="flex" justifyContent="space-between" alignItems="center">
                     <FormControl>
                         <RadioGroup
                             row
@@ -596,6 +563,11 @@ function FieldEditor({
                                 value={Omega365ViewFieldType.File}
                                 control={<Radio />}
                                 label={t("file")}
+                            />
+                            <FormControlLabel
+                                value={Omega365ViewFieldType.Hidden}
+                                control={<Radio />}
+                                label={t("hidden")}
                             />
                         </RadioGroup>
                     </FormControl>

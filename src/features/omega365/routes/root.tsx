@@ -93,7 +93,7 @@ export default function OmegaRoot({
                                 <DocumentList documents={documents || []} view={view} />
                             )}
                         </ScrollBox>
-                    )}{" "}
+                    )}
                 </>
             )}
         </>

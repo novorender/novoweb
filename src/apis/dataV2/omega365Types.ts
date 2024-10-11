@@ -16,7 +16,7 @@ export type Omega365View = {
     viewOrResourceName: string;
     title: string;
     whereClause: string;
-    groupBy?: string;
+    groupBy: string | null;
     fields: Omega365ViewField[];
 };
 

@@ -35,6 +35,7 @@ export default function ConfigEditor() {
     const theme = useTheme();
     const history = useHistory();
     const dispatch = useAppDispatch();
+    const [baseUrlError, setBaseUrlError] = useState("");
 
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
     const [showBackPopover, setShowBackPopover] = useState(false);
@@ -54,6 +55,15 @@ export default function ConfigEditor() {
         }
     };
 
+    const save = () => {
+        try {
+            new URL(configDraft.baseURL);
+            history.push("/save?closeAfter=true");
+        } catch {
+            setBaseUrlError(t("invalidUrl"));
+        }
+    };
+
     return (
         <>
             {/* Header */}
@@ -67,7 +77,7 @@ export default function ConfigEditor() {
                         {t("back")}
                     </Button>
                     <Box flex="auto" />
-                    <Button color="grey" onClick={() => history.push("/save?closeAfter=true")}>
+                    <Button color="grey" onClick={save}>
                         <Save sx={{ mr: 1 }} />
                         {t("save")}
                     </Button>
@@ -85,7 +95,14 @@ export default function ConfigEditor() {
             >
                 <Typography sx={{ p: 2 }}>{t("configurationWasUpdatedDoYouWantToSaveTheChanges")}</Typography>
                 <Box m={1} display="flex" justifyContent="flex-end">
-                    <Button onClick={() => history.push("/save?closeAfter=true")}>{t("yes")}</Button>
+                    <Button
+                        onClick={() => {
+                            setShowBackPopover(false);
+                            save();
+                        }}
+                    >
+                        {t("yes")}
+                    </Button>
                     <Button color="grey" onClick={(e) => handleBack(e, true)}>
                         {t("no")}
                     </Button>
@@ -100,11 +117,16 @@ export default function ConfigEditor() {
                 <Box mt={2} px={2}>
                     <TextField
                         value={configDraft.baseURL}
-                        onChange={(e) => updateConfigDraft({ baseURL: e.target.value })}
+                        onChange={(e) => {
+                            setBaseUrlError("");
+                            updateConfigDraft({ baseURL: e.target.value });
+                        }}
                         label={t("baseURL")}
                         placeholder="https://my-company.omega365.com"
                         fullWidth
                         required
+                        error={baseUrlError !== ""}
+                        helperText={baseUrlError}
                     />
                 </Box>
                 <Box gap={1} display="flex" alignItems="center" m={2} mb={0}>
@@ -197,35 +219,13 @@ function ViewListItem({
 
     const view = views[index];
 
-    const handleMoveUp = (e: React.MouseEvent) => {
+    const handleMove = (e: React.MouseEvent, offset: number) => {
         e.stopPropagation();
-        onChange(
-            views.map((view, i) => {
-                if (i === index) {
-                    return views[index - 1];
-                } else if (i === index - 1) {
-                    return views[index];
-                } else {
-                    return view;
-                }
-            }),
-        );
-        closeMenu();
-    };
-
-    const handleMoveDown = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        onChange(
-            views.map((view, i) => {
-                if (i === index) {
-                    return views[index + 1];
-                } else if (i === index + 1) {
-                    return views[index];
-                } else {
-                    return view;
-                }
-            }),
-        );
+        const newViews = views.slice();
+        const item = views[index];
+        newViews[index] = newViews[index + offset];
+        newViews[index + offset] = item;
+        onChange(newViews);
         closeMenu();
     };
 
@@ -257,13 +257,13 @@ function ViewListItem({
                 onClose={closeMenu}
                 MenuListProps={{ sx: { maxWidth: "100%", minWidth: 100 } }}
             >
-                <MenuItem onClick={handleMoveUp} disabled={index === 0}>
+                <MenuItem onClick={(e) => handleMove(e, -1)} disabled={index === 0}>
                     <ListItemIcon>
                         <ArrowUpward fontSize="small" />
                     </ListItemIcon>
                     <ListItemText>{t("moveUp")}</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={handleMoveDown} disabled={index === views.length - 1}>
+                <MenuItem onClick={(e) => handleMove(e, 1)} disabled={index === views.length - 1}>
                     <ListItemIcon>
                         <ArrowDownward fontSize="small" />
                     </ListItemIcon>

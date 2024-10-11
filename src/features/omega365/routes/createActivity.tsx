@@ -29,7 +29,7 @@ export function CreateActivity() {
 
     const [form, setForm] = useState({
         name: "",
-        objectId: originalObjectId ? `${originalObjectId}` : "",
+        objectId: originalObjectId ? originalObjectId.toString() : "",
         activityType: null as null | { id: number; name: string },
         orgUnit: null as null | { id: number; name: string },
     });
@@ -63,7 +63,11 @@ export function CreateActivity() {
                 setSaveStatus({ status: AsyncStatus.Success, data: { url: resp.newActivityUrl } });
 
                 if (resp.newActivityUrl) {
-                    window.open(resp.newActivityUrl);
+                    let url = resp.newActivityUrl;
+                    if (!url.match(/^https?:\/\//i)) {
+                        url = `https://${url}`;
+                    }
+                    window.open(url);
                 }
                 history.goBack();
             } catch (e) {
@@ -98,7 +102,7 @@ export function CreateActivity() {
                         label={t("objectId")}
                         value={form.objectId}
                         onChange={(e) => setForm({ ...form, objectId: e.target.value })}
-                        disabled={typeof originalObjectId === "number" || inputsDisabled}
+                        disabled={Number.isInteger(originalObjectId) || inputsDisabled}
                     />
                     <Autocomplete
                         fullWidth
