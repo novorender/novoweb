@@ -20,7 +20,7 @@ import { useGetTemplateQuery } from "features/forms/api";
 import { FormFilterMenu } from "features/forms/formFilterMenu";
 import { DELETE_TEMPLATE_ROUTE } from "features/forms/routes/constants";
 import { formsActions, selectCurrentFormsList, selectFormFilters } from "features/forms/slice";
-import { type FormId, type FormObject, type FormRecord, type FormState, TemplateType } from "features/forms/types";
+import { type FormId, type FormObject, type FormRecord, TemplateType } from "features/forms/types";
 import { mapGuidsToIds } from "features/forms/utils";
 import { ObjectVisibility, Picker, renderActions, selectPicker } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
@@ -59,22 +59,17 @@ export function FormsList() {
         templateId,
     });
 
-    const [items, setItems] = useState<
-        (FormObject & { formState: FormState })[] | (FormRecord & { id: number; formState: FormState })[]
-    >(
-        template?.type === TemplateType.Search
-            ? template.objects!.map((object: FormObject) => ({
-                  ...object,
-                  id: -1,
-                  formState: template.forms![object.guid].state,
-              }))
-            : template?.type === TemplateType.Location
-              ? Object.entries(template?.forms ?? {}).map(([id, form]: [string, FormRecord]) => ({
-                    ...form,
-                    formState: form.state,
-                    id: Number(id),
-                }))
-              : [],
+    const [items, setItems] = useState<(FormRecord & { id?: number; guid?: string; name?: string })[]>(
+        Object.entries(template?.forms ?? {}).map(([id, form]: [string, FormRecord]) => ({
+            ...form,
+            id: template?.type === TemplateType.Location ? Number(id) : undefined,
+            ...(template?.type === TemplateType.Search
+                ? {
+                      guid: id,
+                      name: template?.objects.find((object: FormObject) => object.guid === id)?.name,
+                  }
+                : {}),
+        })),
     );
     const [loadingItems, setLoadingItems] = useState(false);
 
@@ -85,31 +80,29 @@ export function FormsList() {
             return;
         }
 
+        setItems(
+            Object.entries(template?.forms ?? {}).map(([id, form]: [string, FormRecord]) => ({
+                ...form,
+                id: template?.type === TemplateType.Location ? Number(id) : undefined,
+                ...(template?.type === TemplateType.Search
+                    ? {
+                          guid: id,
+                          name: template?.objects.find((object: FormObject) => object.guid === id)?.name,
+                      }
+                    : {}),
+            })),
+        );
+
         if (template.type === TemplateType.Location) {
-            setItems(
-                Object.entries(template?.forms ?? {}).map(([id, form]: [string, FormRecord]) => ({
-                    ...form,
-                    formState: form.state,
-                    id: Number(id),
-                })) ?? [],
-            );
             dispatch(
                 formsActions.setTemplateLocationForms({
                     templateId: template.id!,
                     forms: Object.entries(template.forms || {}).map(([id, f]) => ({
                         ...f,
                         templateId: template.id!,
-                        id: id!,
+                        id,
                     })),
                 }),
-            );
-        } else if (template.type === TemplateType.Search) {
-            setItems(
-                template.objects!.map((object: FormObject) => ({
-                    ...object,
-                    id: -1,
-                    formState: template.forms![object.guid].state,
-                })) ?? [],
             );
         }
     }, [dispatch, template]);
@@ -130,8 +123,11 @@ export function FormsList() {
 
             setItems((prevItems) =>
                 prevItems.map((item) => {
-                    const id = map[(item as FormObject).guid];
-                    return { ...item, id } as FormObject & { formState: FormState };
+                    if (!item.guid) {
+                        return item;
+                    }
+                    const id = map[item.guid];
+                    return { ...item, id };
                 }),
             );
             setLoadingItems(false);
@@ -178,16 +174,15 @@ export function FormsList() {
     }, [dispatch, templateId]);
 
     const filterItems = useCallback(
-        (item: (FormObject & { formState: FormState }) | (FormRecord & { id: number; formState: FormState })) => {
-            const name = ("name" in item ? item.name : "title" in item ? item.title : "") ?? "";
-            const formState = item.formState;
+        (item: FormRecord & { id?: number; guid?: string; name?: string }) => {
+            const name = item.title ?? item.name ?? "";
 
             const activeStateFilters = Object.entries(formFilters)
                 .filter(([_, value]) => value === true)
                 .map(([filter]) => filter);
 
             const matches =
-                activeStateFilters.includes(formState) &&
+                activeStateFilters.includes(item.state) &&
                 (!formFilters.name || name.trim().toLowerCase().includes(formFilters.name.trim().toLowerCase()));
 
             return matches;
@@ -206,12 +201,12 @@ export function FormsList() {
 
         const forms = items.filter(filterItems);
 
-        const newGroup = formFilters.new ? forms.filter((form) => form.formState === "new").map((form) => form.id) : [];
+        const newGroup = formFilters.new ? forms.filter((form) => form.state === "new").map((form) => form.id!) : [];
         const ongoingGroup = formFilters.ongoing
-            ? forms.filter((form) => form.formState === "ongoing").map((form) => form.id)
+            ? forms.filter((form) => form.state === "ongoing").map((form) => form.id!)
             : [];
         const finishedGroup = formFilters.finished
-            ? forms.filter((form) => form.formState === "finished").map((form) => form.id)
+            ? forms.filter((form) => form.state === "finished").map((form) => form.id!)
             : [];
 
         dispatchHighlightCollections(highlightCollectionsActions.setIds(HighlightCollection.FormsNew, newGroup));

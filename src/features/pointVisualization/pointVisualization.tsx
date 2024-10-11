@@ -12,8 +12,9 @@ import { selectSelectedProfile } from "features/deviations";
 import { selectDefaultPointVisualization, selectPoints, selectTerrain, selectViewMode } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
+import { useOpenWidget } from "hooks/useOpenWidget";
 import { useToggle } from "hooks/useToggle";
-import { explorerActions, selectMaximized, selectMinimized } from "slices/explorer";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { ViewMode } from "types/misc";
 
 import { Header } from "./components/header";
@@ -49,6 +50,7 @@ function PointVisualizationInner() {
     const isDeviationMode = useAppSelector(selectViewMode) === ViewMode.Deviations && deviationProfile;
     const history = useHistory();
     const location = useLocation();
+    const openWidget = useOpenWidget();
 
     useEffect(() => {
         return () => {
@@ -64,7 +66,7 @@ function PointVisualizationInner() {
     }, [history, defaultPointVisualization]);
 
     const openDeviations = () => {
-        dispatch(explorerActions.forceOpenWidget(featuresConfig.deviations.key));
+        openWidget(featuresConfig.deviations.key, { force: true });
     };
 
     return (

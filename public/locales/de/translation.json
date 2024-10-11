@@ -696,7 +696,8 @@
     "field": "Feld",
     "text": "Text",
     "link": "Link",
-    "noClippingPlanes": "Keine Schnittebenen",
     "invalidUrl": "Ungültige URL",
-    "hidden": "Versteckt"
+    "hidden": "Versteckt",
+    "noClippingPlanes": "Keine Schnittebenen",
+    "capturePhoto": "Foto aufnehmen"
 }

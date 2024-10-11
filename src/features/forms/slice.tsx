@@ -1,7 +1,7 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { type RootState } from "app/store";
-import { selectBookmark } from "features/render";
+import { initScene } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { type FormGLtfAsset, type FormRecord, type Template, type TemplateId } from "./types";
@@ -134,13 +134,12 @@ export const formsSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
-        builder.addCase(selectBookmark, (state, action) => {
-            const { forms } = action.payload;
-            if (!forms) {
-                return;
-            }
+        builder.addCase(initScene, (state, action) => {
+            const props = action.payload.sceneData.customProperties;
 
-            state.alwaysShowMarkers = forms.alwaysShowMarkers ?? false;
+            if (props?.forms?.alwaysShowMarkers) {
+                state.alwaysShowMarkers = props.forms.alwaysShowMarkers;
+            }
         });
     },
 });

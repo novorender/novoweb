@@ -147,14 +147,7 @@ export function FormHistory({ objectId, objectGuid, templateId, formId, title, i
                         {t("formHistory", { title })}
                     </Typography>
                     <Divider sx={{ my: 1 }} />
-                    <ScrollBox m={1}>
-                        <Form
-                            form={selectedRevision!}
-                            title={selectedRevision?.title || formId}
-                            populateEditor
-                            disabled
-                        />
-                    </ScrollBox>
+                    <Form form={selectedRevision!} title={selectedRevision?.title || formId} populateEditor disabled />
                 </>
             </Route>
             <Route path={revertRoute}>

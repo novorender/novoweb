@@ -696,7 +696,8 @@
     "field": "Felt",
     "text": "Tekst",
     "link": "Lenke",
-    "noClippingPlanes": "Ingen klippeplaner",
     "invalidUrl": "Ugyldig URL",
-    "hidden": "Skjult"
+    "hidden": "Skjult",
+    "noClippingPlanes": "Ingen klippeplaner",
+    "capturePhoto": "Ta bilde"
 }
