@@ -24,32 +24,45 @@ export default function AddFilesButton({
     const isMobile = useAppSelector(selectIsMobile);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const photoInputRef = useRef<HTMLInputElement>(null);
 
     const stopPropagation: DragEventHandler = (e) => {
         e.preventDefault();
     };
 
     const handleAddFilesClick: MouseEventHandler = () => {
-        fileInputRef.current?.removeAttribute("capture");
-        fileInputRef.current?.click();
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+            fileInputRef.current.click();
+        }
     };
 
     const handleCapturePhotoClick: MouseEventHandler = () => {
-        fileInputRef.current?.setAttribute("capture", "environment");
-        fileInputRef.current?.click();
+        if (photoInputRef.current) {
+            photoInputRef.current.value = "";
+            photoInputRef.current.click();
+        }
     };
 
     const handleChange: ChangeEventHandler<HTMLInputElement> = (e) => {
         e.preventDefault();
         onChange(e);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
     };
 
     return (
         <Box display="flex" onDragOver={stopPropagation} onDrop={stopPropagation}>
             <input type="file" ref={fileInputRef} onChange={handleChange} accept={accept} multiple={multiple} hidden />
+            {isMobile && accept.includes("image") && (
+                <input
+                    type="file"
+                    capture="environment"
+                    ref={photoInputRef}
+                    onChange={handleChange}
+                    accept={accept}
+                    multiple={multiple}
+                    hidden
+                />
+            )}
             <ButtonGroup variant="contained">
                 <Button onClick={handleAddFilesClick} disabled={disabled || uploading}>
                     {uploading ? <CircularProgress size={24} /> : t("addFile", { count: multiple ? 2 : 1 })}
@@ -60,7 +73,7 @@ export default function AddFilesButton({
                         disabled={disabled || uploading}
                         startIcon={<PhotoCamera />}
                     >
-                        {t("capturePhoto")}
+                        {uploading ? <CircularProgress size={24} /> : t("capturePhoto")}
                     </Button>
                 )}
             </ButtonGroup>
