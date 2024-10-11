@@ -69,7 +69,7 @@ export function FormsList() {
                       name: template?.objects.find((object: FormObject) => object.guid === id)?.name,
                   }
                 : {}),
-        })) ?? [],
+        })),
     );
     const [loadingItems, setLoadingItems] = useState(false);
 
@@ -90,7 +90,7 @@ export function FormsList() {
                           name: template?.objects.find((object: FormObject) => object.guid === id)?.name,
                       }
                     : {}),
-            })) ?? [],
+            })),
         );
 
         if (template.type === TemplateType.Location) {
