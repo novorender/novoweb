@@ -650,5 +650,6 @@
     "youNeedToEnableOutlines": "You need to enable outlines.",
     "enableOutlines": "Enable outlines",
     "colorPerObject": "Color per object",
-    "noClippingPlanes": "No clipping planes"
+    "noClippingPlanes": "No clipping planes",
+    "capturePhoto": "Capture Photo"
 }

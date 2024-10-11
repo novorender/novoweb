@@ -650,5 +650,6 @@
     "youNeedToEnableOutlines": "Sie müssen die Umrisse aktivieren.",
     "enableOutlines": "Umrisse aktivieren",
     "colorPerObject": "Farbe pro Objekt",
-    "noClippingPlanes": "Keine Schnittebenen"
+    "noClippingPlanes": "Keine Schnittebenen",
+    "capturePhoto": "Foto aufnehmen"
 }

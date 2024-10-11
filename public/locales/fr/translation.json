@@ -650,5 +650,6 @@
     "youNeedToEnableOutlines": "Vous devez activer les contours.",
     "enableOutlines": "Activer les contours",
     "colorPerObject": "Couleur par objet",
-    "noClippingPlanes": "Aucun plan de découpe"
+    "noClippingPlanes": "Aucun plan de découpe",
+    "capturePhoto": "Prendre une photo"
 }
