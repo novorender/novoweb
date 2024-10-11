@@ -1,7 +1,7 @@
 import { PhotoCamera } from "@mui/icons-material";
 import { Box, Button, ButtonGroup, CircularProgress } from "@mui/material";
 import { t } from "i18next";
-import { type ChangeEventHandler, type DragEventHandler, type MouseEventHandler, useRef, useState } from "react";
+import { type ChangeEventHandler, type DragEventHandler, type MouseEventHandler, useRef } from "react";
 
 import { useAppSelector } from "app/redux-store-interactions";
 import { selectIsMobile } from "features/render";
@@ -24,19 +24,18 @@ export default function AddFilesButton({
     const isMobile = useAppSelector(selectIsMobile);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [capture, setCapture] = useState(false);
 
     const stopPropagation: DragEventHandler = (e) => {
         e.preventDefault();
     };
 
     const handleAddFilesClick: MouseEventHandler = () => {
-        setCapture(false);
+        fileInputRef.current?.removeAttribute("capture");
         fileInputRef.current?.click();
     };
 
     const handleCapturePhotoClick: MouseEventHandler = () => {
-        setCapture(true);
+        fileInputRef.current?.setAttribute("capture", "environment");
         fileInputRef.current?.click();
     };
 
@@ -50,15 +49,7 @@ export default function AddFilesButton({
 
     return (
         <Box display="flex" onDragOver={stopPropagation} onDrop={stopPropagation}>
-            <input
-                type="file"
-                capture={capture ? "environment" : undefined}
-                ref={fileInputRef}
-                onChange={handleChange}
-                accept={accept}
-                multiple={multiple}
-                hidden
-            />
+            <input type="file" ref={fileInputRef} onChange={handleChange} accept={accept} multiple={multiple} hidden />
             <ButtonGroup variant="contained">
                 <Button onClick={handleAddFilesClick} disabled={disabled || uploading}>
                     {uploading ? <CircularProgress size={24} /> : t("addFile", { count: multiple ? 2 : 1 })}
