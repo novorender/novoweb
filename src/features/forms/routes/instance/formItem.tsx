@@ -288,7 +288,7 @@ export function FormItem({
         );
     };
 
-    const handleRemoveFile = useCallback((item: FileItemType, index: number) => {
+    const handleRemoveFile = useCallback((index: number) => {
         setFileIndexToDelete(index);
     }, []);
 
@@ -441,11 +441,15 @@ export function FormItem({
                                 maxRows={5}
                                 sx={{ width: 1, pr: 0 }}
                                 id={item.id}
-                                autoFocus
-                                inputRef={(ref) => {
-                                    if (ref) {
-                                        ref.selectionStart = item.value?.[0].length ?? 0;
-                                    }
+                                autoFocus={Boolean(item.value?.length)}
+                                inputProps={{
+                                    // Reset the value in order to place the cursor at the end of the text
+                                    // instead of the beginning
+                                    onFocus: (e) => {
+                                        const val = e.target.value;
+                                        e.target.value = "";
+                                        e.target.value = val;
+                                    },
                                 }}
                             />
                         )}
@@ -548,7 +552,7 @@ export function FormItem({
                                             isReadonly={item.readonly || !isRelevant}
                                             activeImage={activeImage}
                                             isModalOpen={modalOpen}
-                                            removeFile={() => handleRemoveFile(item, index)}
+                                            removeFile={() => handleRemoveFile(index)}
                                             openImageModal={openImageModal}
                                         />
                                     )}
