@@ -115,7 +115,11 @@ export function useObjectOptions(term: string) {
             if (state.timeout) {
                 clearTimeout(state.timeout);
             }
-            state.abortController?.abort("stale");
+            try {
+                state.abortController?.abort("stale");
+            } catch {
+                // noop
+            }
             setLoading(false);
         };
     }, [db, term]);
