@@ -7,7 +7,7 @@ import { CustomProperties } from "types/project";
 
 import { AuthScope, ScopeRoleAssignment } from "./authTypes";
 import { DeviationProjectConfig } from "./deviationTypes";
-import { Omega365Document } from "./omega365Types";
+import { Omega365Configuration, Omega365DynamicDocument, Omega365View } from "./omega365Types";
 import { Permission } from "./permissions";
 import { BuildProgressResult, EpsgSearchResult, ProjectInfo } from "./projectTypes";
 import { getDataV2DynamicBaseQuery } from "./utils";
@@ -15,13 +15,59 @@ import { getDataV2DynamicBaseQuery } from "./utils";
 export const dataV2Api = createApi({
     reducerPath: "dataV2",
     baseQuery: getDataV2DynamicBaseQuery(),
-    tagTypes: ["PropertyTreeFavorites", "ProjectProgress", "Deviation", "Bookmarks", "Groups"],
+    tagTypes: ["PropertyTreeFavorites", "ProjectProgress", "Deviation", "Bookmarks", "Groups", "OmegaItems"],
     endpoints: (builder) => ({
-        isOmega365ConfiguredForProject: builder.query<{ configured: boolean }, { projectId: string }>({
-            query: ({ projectId }) => `/explorer/${projectId}/omega365/configured`,
+        getOmega365ProjectConfig: builder.query<Omega365Configuration, { projectId: string }>({
+            query: ({ projectId }) => `/explorer/${projectId}/omega365/configuration`,
         }),
-        getOmega365DocumentLinks: builder.query<Omega365Document[], { projectId: string; objectId: number }>({
-            query: ({ projectId, objectId }) => `/explorer/${projectId}/omega365/documents/${objectId}`,
+        setOmega365ProjectConfig: builder.mutation<void, { projectId: string; config: Omega365Configuration }>({
+            query: ({ projectId, config }) => ({
+                url: `/explorer/${projectId}/omega365/configuration`,
+                method: "PUT",
+                body: config,
+            }),
+        }),
+        previewOmega365ProjectViewConfig: builder.query<
+            Omega365DynamicDocument[],
+            { projectId: string; objectId: number; baseURL: string; view: Omega365View }
+        >({
+            query: ({ projectId, objectId, baseURL, view }) => ({
+                url: `/explorer/${projectId}/omega365/configuration/preview-view`,
+                method: "POST",
+                body: { objectId, baseURL, view },
+            }),
+        }),
+        getOmega365ViewDocumentLinks: builder.query<
+            Omega365DynamicDocument[],
+            { projectId: string; objectId: number; viewId: string }
+        >({
+            query: ({ projectId, objectId, viewId }) =>
+                `/explorer/${projectId}/omega365/views/${viewId}/documents/${objectId}`,
+            providesTags: ["OmegaItems"],
+        }),
+        getOmegaActivityTypes: builder.query<{ id: number; name: string }[], { projectId: string }>({
+            query: ({ projectId }) => `/explorer/${projectId}/omega365/activity-types`,
+            keepUnusedDataFor: 60 * 60,
+            transformResponse: idAndNameUniqueById,
+        }),
+        getOmegaOrgUnits: builder.query<{ id: number; name: string }[], { projectId: string }>({
+            query: ({ projectId }) => `/explorer/${projectId}/omega365/org-units`,
+            keepUnusedDataFor: 60 * 60,
+            transformResponse: idAndNameUniqueById,
+        }),
+        createOmegaActivity: builder.mutation<
+            { newActivityUrl: string },
+            {
+                projectId: string;
+                activity: { name: string; objectId: number; activityTypeId: number; orgUnitId: number };
+            }
+        >({
+            query: ({ projectId, activity }) => ({
+                url: `/explorer/${projectId}/omega365/activity`,
+                method: "POST",
+                body: activity,
+            }),
+            invalidatesTags: ["OmegaItems"],
         }),
         getPropertyTreeFavorites: builder.query<string[], { projectId: string }>({
             query: ({ projectId }) => `/explorer/${projectId}/propertytree/favorites`,
@@ -181,9 +227,24 @@ export const dataV2Api = createApi({
     }),
 });
 
+function idAndNameUniqueById(items: { id: number; name: string }[]) {
+    const result: typeof items = [];
+    for (const item of items) {
+        if (!result.some((e) => e.id === item.id)) {
+            result.push(item);
+        }
+    }
+    return result;
+}
+
 export const {
-    useIsOmega365ConfiguredForProjectQuery,
-    useGetOmega365DocumentLinksQuery,
+    useGetOmega365ProjectConfigQuery,
+    useSetOmega365ProjectConfigMutation,
+    useLazyPreviewOmega365ProjectViewConfigQuery,
+    useGetOmega365ViewDocumentLinksQuery,
+    useGetOmegaActivityTypesQuery,
+    useGetOmegaOrgUnitsQuery,
+    useCreateOmegaActivityMutation,
     useGetArcgisWidgetConfigQuery,
     usePutArcgisWidgetConfigMutation,
     useGetPropertyTreeFavoritesQuery,
