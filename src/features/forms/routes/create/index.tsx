@@ -1,14 +1,20 @@
 import { ArrowBack } from "@mui/icons-material";
 import { Box, Button, useTheme } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
-import { useCallback, useMemo, useState } from "react";
+import { skipToken } from "@reduxjs/toolkit/query";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
+import { Route, Switch, useHistory, useParams, useRouteMatch } from "react-router-dom";
 
 import { Divider } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { useGetTemplateQuery } from "features/forms/api";
+import { toFormItems } from "features/forms/utils";
+import { useSceneId } from "hooks/useSceneId";
+import { searchDeepByPatterns } from "utils/search";
 
-import { FormItem, TemplateType } from "../../types";
+import { type FormItem, type SearchTemplate, type TemplateId, TemplateType } from "../../types";
 import { AddFormItem } from "./addFormItem";
 import { AddObjects } from "./addObjects";
 import { CreateForm } from "./createForm";
@@ -18,11 +24,16 @@ const ADD_ITEM_ROUTE = "/add-item";
 const ADD_OBJECTS_ROUTE = "/add-objects";
 const SELECT_MARKER_ROUTE = "/select-marker";
 
-export function Create() {
+export function Create({ derived }: { derived?: boolean }) {
+    const {
+        state: { db },
+    } = useExplorerGlobals(true);
     const { t } = useTranslation();
+    const { templateId } = useParams<{ templateId?: TemplateId }>();
     const theme = useTheme();
     const history = useHistory();
     const match = useRouteMatch();
+    const projectId = useSceneId();
     const dispatchHighlighted = useDispatchHighlighted();
 
     const [type, setType] = useState(TemplateType.Search);
@@ -36,6 +47,40 @@ export function Create() {
         | undefined
     >();
     const [marker, setMarker] = useState<string>();
+
+    const { data: template } = useGetTemplateQuery(templateId ? { projectId, templateId } : skipToken);
+
+    useEffect(() => {
+        if (template) {
+            setType(template.type!);
+            setTitle(template.title ?? "");
+            setItems(template.fields ? toFormItems(template.fields) : []);
+            if (template.type === TemplateType.Search) {
+                // FIXME: Future update should allow to edit object selection query.
+                // There are quirks, so we don't allow it for now.
+                if (derived) {
+                    const searchPattern = (template as SearchTemplate).searchPattern
+                        ? JSON.parse((template as SearchTemplate).searchPattern)
+                        : [];
+                    if (searchPattern.length > 0) {
+                        searchDeepByPatterns({
+                            abortSignal: new AbortController().signal,
+                            db,
+                            searchPatterns: searchPattern,
+                            callback: (ids) => {
+                                setObjects((objects) => ({
+                                    searchPattern,
+                                    ids: Array.from(new Set([...(objects?.ids ?? []), ...ids])),
+                                }));
+                            },
+                        });
+                    }
+                }
+            } else {
+                setMarker(template.marker);
+            }
+        }
+    }, [db, derived, template]);
 
     const handleBackClick = useCallback(() => {
         dispatchHighlighted(highlightActions.setIds([]));
@@ -69,17 +114,15 @@ export function Create() {
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
-                <>
-                    <Box px={1}>
-                        <Divider />
-                    </Box>
-                    <Box display="flex">
-                        <Button color="grey" onClick={handleBackClick}>
-                            <ArrowBack sx={{ mr: 1 }} />
-                            {t("back")}
-                        </Button>
-                    </Box>
-                </>
+                <Box px={1}>
+                    <Divider />
+                </Box>
+                <Box m={1} display="flex" justifyContent="space-between">
+                    <Button color="grey" onClick={handleBackClick}>
+                        <ArrowBack sx={{ mr: 1 }} />
+                        {t("back")}
+                    </Button>
+                </Box>
             </Box>
             <Switch>
                 <Route path={addItemRoute}>
@@ -91,7 +134,7 @@ export function Create() {
                 <Route path={selectMarkerRoute}>
                     <SelectMarker marker={marker} onChange={handleSelectMarker} />
                 </Route>
-                <Route path={match.path} exact>
+                <Route path={match.url} exact>
                     <CreateForm
                         type={type}
                         setType={setType}
@@ -101,6 +144,7 @@ export function Create() {
                         setItems={handleSetItems}
                         objects={objects}
                         marker={marker}
+                        templateId={derived ? undefined : templateId}
                     />
                 </Route>
             </Switch>

@@ -48,8 +48,8 @@ export const selectEnabledWidgetsWithoutPermissionCheck = createSelector(
 );
 
 export const selectEnabledWidgets = createSelector(
-    [selectEnabledWidgetsWithoutPermissionCheck, selectProjectV2Info],
-    (widgets, projectInfo) => {
+    [selectEnabledWidgetsWithoutPermissionCheck, selectProjectV2Info, selectNewDesign],
+    (widgets, projectInfo, newDesign) => {
         if (projectInfo) {
             const permissionSet = new Set(projectInfo.permissions);
             const can = (p: Permission) => checkPermission(permissionSet, p);
@@ -57,6 +57,12 @@ export const selectEnabledWidgets = createSelector(
             return widgets.filter((w) => {
                 if (defaultEnabledWidgets.includes(w.key)) {
                     return true;
+                }
+
+                // Temp permission for Cross section component
+                // TODO redo when new UX is released
+                if ("newUx" in w && w.newUx) {
+                    return newDesign;
                 }
 
                 switch (w.key) {

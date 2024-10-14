@@ -100,6 +100,22 @@ export function flipGLtoCadQuat(b: quat) {
         aw * bw - ax * bx);
 }
 
+export function flipCADToGLQuat(b: quat) {
+    const ax = -0.7071067811865475,
+        aw = 0.7071067811865475;
+    const bx = b[0],
+        by = b[1],
+        bz = b[2],
+        bw = b[3];
+
+    // prettier-ignore
+    return quat.fromValues(
+        ax * bw + aw * bx,
+        aw * by + - ax * bz,
+        aw * bz + ax * by,
+        aw * bw - ax * bx);
+}
+
 export function isGlSpace(up: Vec3 | undefined) {
     return !vec3.equals(up ?? [0, 1, 0], [0, 0, 1]);
 }

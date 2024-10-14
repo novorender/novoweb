@@ -16,17 +16,22 @@ import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorer";
 
 import { useGoToSelectedForm } from "./hooks/useGoToSelectedForm";
-import { useLoadLocationTemplates } from "./hooks/useLoadLocationTemplates";
 import { Create, FormsList, LocationInstance, Object, SearchInstance, Templates } from "./routes";
+import {
+    CREATE_FROM_TEMPLATE_ROUTE,
+    DELETE_TEMPLATE_ROUTE,
+    DELETE_TEMPLATES_ROUTE,
+    EDIT_TEMPLATE_ROUTE,
+} from "./routes/constants";
 import { Settings } from "./routes/settings";
+import { DeleteTemplate } from "./routes/templates";
+import { DeleteTemplatesConfirmation } from "./routes/templates/dialogs/deleteTemplatesConfirmation";
 import { formsActions } from "./slice";
 
 export default function Forms() {
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.forms.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.forms.key);
-
-    useLoadLocationTemplates();
 
     return (
         <MemoryRouter>
@@ -62,6 +67,18 @@ export default function Forms() {
                         </Route>
                         <Route path="/create">
                             <Create />
+                        </Route>
+                        <Route path={DELETE_TEMPLATE_ROUTE}>
+                            <DeleteTemplate />
+                        </Route>
+                        <Route path={DELETE_TEMPLATES_ROUTE}>
+                            <DeleteTemplatesConfirmation />
+                        </Route>
+                        <Route path={EDIT_TEMPLATE_ROUTE}>
+                            <Create />
+                        </Route>
+                        <Route path={CREATE_FROM_TEMPLATE_ROUTE}>
+                            <Create derived />
                         </Route>
                         <Route path="/settings">
                             <Settings />

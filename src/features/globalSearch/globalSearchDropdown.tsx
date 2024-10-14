@@ -326,7 +326,7 @@ function CategorySelect({
                                     <Check />
                                 </ListItemIcon>
                             )}
-                            <ListItemText inset={!checked}>{categoryLabel(t, category)}</ListItemText>
+                            <ListItemText inset={!checked}>{getCategoryLabel(t, category)}</ListItemText>
                         </MenuItem>
                     );
                 })}
@@ -403,7 +403,7 @@ function SearchOptionItem({ option, term }: { option: SearchOption; term: string
 
     return (
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", width: "100%" }}>
-            <Chip label={categoryLabel(t, option.category)} sx={{ flex: "0 0 100px" }} />
+            <Chip label={getCategoryLabel(t, option.category)} sx={{ flex: "0 0 100px" }} />
             <Tooltip title={title} PopperProps={{ disablePortal: true }}>
                 <Box flex="auto">
                     <Highlight
@@ -418,10 +418,12 @@ function SearchOptionItem({ option, term }: { option: SearchOption; term: string
     );
 }
 
-function categoryLabel(t: ReturnType<typeof useTranslation>["t"], category: Category) {
+function getCategoryLabel(t: ReturnType<typeof useTranslation>["t"], category: Category) {
     switch (category) {
         case Category.Deviation:
             return t("deviationLowercase");
+        case Category.Object:
+            return t("objectLowercase");
         default:
             return t(category);
     }

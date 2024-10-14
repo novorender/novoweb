@@ -1,4 +1,4 @@
-import { ArrowBack, Clear, Delete, Download, FlightTakeoff, MoreVert } from "@mui/icons-material";
+import { ArrowBack, Clear, Create, Delete, Download, FlightTakeoff, History, MoreVert } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -10,26 +10,21 @@ import {
     MenuItem,
     useTheme,
 } from "@mui/material";
-import { type FormEvent, Fragment, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MouseEvent, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory, useLocation } from "react-router-dom";
+import { Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
 
 import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Confirmation, Divider, ScrollBox, TextField } from "components";
-import {
-    useDeleteLocationFormMutation,
-    useGetLocationFormQuery,
-    useUpdateLocationFormMutation,
-} from "features/forms/api";
-import { TransformEditor } from "features/forms/components/transformEditor";
+import { Divider } from "components";
+import { useGetLocationFormQuery, useUpdateLocationFormMutation } from "features/forms/api";
 import { formsGlobalsActions, useDispatchFormsGlobals, useLazyFormsGlobals } from "features/forms/formsGlobals";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
 import { formsActions, selectCurrentFormsList } from "features/forms/slice";
 import {
-    type Form,
+    type Form as FormType,
     type FormId,
-    type FormItem as FItype,
+    type FormItem,
     FormItemType,
     type FormRecord,
     type TemplateId,
@@ -40,13 +35,17 @@ import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectAccessToken, selectConfig } from "slices/explorer";
 
-import { FormItem } from "./formItem";
+import { CLEAR_ROUTE, DELETE_ROUTE, HISTORY_ROUTE, SIGN_ROUTE } from "./constants";
+import { ClearConfirmation, DeleteConfirmation, SignConfirmation } from "./dialogs";
+import { Form } from "./form";
+import { FormHistory } from "./formHistory";
 
 export function LocationInstance() {
     const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
-    const sceneId = useSceneId();
+    const match = useRouteMatch();
+    const projectId = useSceneId();
     const currentFormsList = useAppSelector(selectCurrentFormsList);
     const formsBaseUrl = useAppSelector(selectConfig).dataV2ServerUrl + "/forms/";
     const accessToken = useAppSelector(selectAccessToken);
@@ -57,16 +56,21 @@ export function LocationInstance() {
     const checkPermission = useCheckProjectPermission();
     const canDelete = checkPermission(Permission.FormsDelete);
     const canEdit = checkPermission(Permission.FormsFill);
+    const canSign = checkPermission(Permission.FormsSign);
 
     const location = useLocation();
     const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
     const templateId = queryParams.get("templateId") as TemplateId;
     const formId = queryParams.get("formId") as FormId;
 
+    const signRoute = useMemo(() => `${match.path}${SIGN_ROUTE}`, [match.path]);
+    const historyRoute = useMemo(() => `${match.path}${HISTORY_ROUTE}`, [match.path]);
+    const deleteRoute = useMemo(() => `${match.path}${DELETE_ROUTE}`, [match.path]);
+    const clearRoute = useMemo(() => `${match.path}${CLEAR_ROUTE}`, [match.path]);
+
     const willUnmount = useRef(false);
-    const [items, setItems] = useState<FItype[]>([]);
+    const [items, setItems] = useState<FormItem[]>([]);
     const [isUpdated, setIsUpdated] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const {
@@ -74,10 +78,12 @@ export function LocationInstance() {
         currentData: currentForm,
         isLoading: isFormLoading,
     } = useGetLocationFormQuery({
-        projectId: sceneId,
+        projectId,
         templateId,
         formId,
     });
+
+    const isFinal = useMemo(() => form?.isFinal ?? false, [form]);
 
     useEffect(() => {
         dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
@@ -85,8 +91,6 @@ export function LocationInstance() {
     }, [dispatch, formId]);
 
     const [updateForm, { isLoading: isFormUpdating }] = useUpdateLocationFormMutation();
-
-    const [deleteForm, { isLoading: isFormDeleting }] = useDeleteLocationFormMutation();
 
     const [title, setTitle] = useState(form?.title || formId);
 
@@ -127,63 +131,56 @@ export function LocationInstance() {
         };
     }, [templateId, formId]);
 
-    useEffect(() => {
-        return () => {
-            if (shouldUpdateForm.current) {
-                // eslint-disable-next-line react-hooks/exhaustive-deps
-                const transformDraft = lazyFormsGlobals.current.transformDraft;
+    const maybeUpdateForm = useCallback(() => {
+        const transformDraft = lazyFormsGlobals.current.transformDraft;
 
-                if (isUpdated || transformDraft?.updated) {
-                    const form: Partial<Form> = {
-                        title: title.trim().length > 0 ? title.trim() : formId,
-                        fields: toFormFields(items),
-                    };
-                    if (transformDraft?.updated) {
-                        form.location = transformDraft.location;
-                        form.rotation = transformDraft.rotation;
-                        form.scale = transformDraft.scale;
+        if (isUpdated || transformDraft?.updated) {
+            const form: Partial<FormType> = {
+                title: title.trim().length > 0 ? title.trim() : formId,
+                fields: toFormFields(items),
+            };
+            if (transformDraft?.updated) {
+                form.location = transformDraft.location;
+                form.rotation = transformDraft.rotation;
+                form.scale = transformDraft.scale;
 
-                        // Optimistic update so the form doesn't jump back and forth
-                        dispatch(
-                            formsActions.addLocationForms([
-                                {
-                                    ...(form as FormRecord),
-                                    id: formId,
-                                    templateId,
-                                },
-                            ]),
-                        );
-                    }
-                    updateForm({
-                        projectId: sceneId,
-                        templateId,
-                        formId,
-                        form,
-                    });
-                }
-
-                shouldUpdateForm.current = false;
-                setIsUpdated(false);
+                // Optimistic update so the form doesn't jump back and forth
+                dispatch(
+                    formsActions.addLocationForms([
+                        {
+                            ...(form as FormRecord),
+                            id: formId,
+                            templateId,
+                        },
+                    ]),
+                );
             }
-        };
-    }, [
-        sceneId,
-        templateId,
-        formId,
-        isUpdated,
-        items,
-        title,
-        updateForm,
-        lazyFormsGlobals,
-        dispatchFormsGlobals,
-        dispatch,
-    ]);
+            updateForm({
+                projectId,
+                templateId,
+                formId,
+                form,
+            });
+            setIsUpdated(false);
+        }
+    }, [projectId, templateId, formId, isUpdated, items, title, updateForm, lazyFormsGlobals, dispatch]);
 
-    useEffect(() => {
-        return () => {
+    useEffect(
+        () => () => {
+            if (shouldUpdateForm.current) {
+                maybeUpdateForm();
+                shouldUpdateForm.current = false;
+            }
+        },
+        [maybeUpdateForm],
+    );
+
+    useEffect(
+        () => () => {
             dispatchFormsGlobals(formsGlobalsActions.setTransformDraft(undefined));
-        };
-    }, [dispatchFormsGlobals]);
+        },
+        [dispatchFormsGlobals],
+    );
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -195,13 +192,15 @@ export function LocationInstance() {
     };
 
     const handleExportAsPdf = useCallback(async () => {
+        closeMenu();
+
         if (!formsBaseUrl) {
             return;
         }
 
         try {
             const response = await fetch(
-                `${formsBaseUrl}projects/${sceneId}/location/${templateId}/${formId}/download`,
+                `${formsBaseUrl}projects/${projectId}/location/${templateId}/${formId}/download`,
                 {
                     method: "GET",
                     headers: {
@@ -229,8 +228,7 @@ export function LocationInstance() {
         } catch (err) {
             console.error(`Failed to export form as PDF: ${err}`);
         }
-        closeMenu();
-    }, [accessToken, formId, formsBaseUrl, sceneId, templateId, title]);
+    }, [accessToken, formId, formsBaseUrl, projectId, templateId, title]);
 
     const handleBack = useCallback(() => {
         if (currentFormsList) {
@@ -241,7 +239,7 @@ export function LocationInstance() {
         dispatch(formsActions.setSelectedFormId(undefined));
     }, [currentFormsList, history, dispatch]);
 
-    const handleClearClick = useCallback(() => {
+    const handleClear = useCallback(() => {
         setItems((state) =>
             state.map((item) => {
                 switch (item.type) {
@@ -268,11 +266,11 @@ export function LocationInstance() {
             }),
         );
         setIsUpdated(true);
-        closeMenu();
     }, []);
 
     const handleTitleChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
+            e.stopPropagation();
             const title = e.target.value;
             setTitle(title);
             if (title.trim().length > 0) {
@@ -290,37 +288,56 @@ export function LocationInstance() {
         flyToForm({ location: form.location });
     }, [flyToForm, form?.location]);
 
-    const handleDelete = useCallback(
-        async (e: FormEvent) => {
-            e.preventDefault();
-            await deleteForm({
-                projectId: sceneId,
-                templateId,
-                formId,
-            });
-            dispatch(formsActions.setSelectedFormId(undefined));
-            history.goBack();
+    const handleSignBtnClick = useCallback(() => {
+        closeMenu();
+        maybeUpdateForm();
+        history.push({
+            pathname: signRoute,
+            search: `?templateId=${templateId}&formId=${formId}`,
+        });
+    }, [formId, history, maybeUpdateForm, signRoute, templateId]);
+
+    const handleHistoryClick = useCallback(() => {
+        closeMenu();
+        maybeUpdateForm();
+        history.push({
+            pathname: historyRoute,
+            search: `?templateId=${templateId}&formId=${formId}`,
+        });
+    }, [formId, history, historyRoute, maybeUpdateForm, templateId]);
+
+    const handleDeleteClick = useCallback(() => {
+        closeMenu();
+        history.push({
+            pathname: deleteRoute,
+            search: `?templateId=${templateId}&formId=${formId}`,
+        });
+    }, [deleteRoute, formId, history, templateId]);
+
+    const handleClearBtnClick = useCallback(() => {
+        closeMenu();
+        history.push({
+            pathname: clearRoute,
+            search: `?templateId=${templateId}&formId=${formId}`,
+        });
+    }, [history, clearRoute, templateId, formId]);
+
+    const handleSetItems = useCallback(
+        (item: SetStateAction<FormItem[]>) => {
+            setItems(item);
+            setIsUpdated(true);
         },
-        [sceneId, templateId, formId, deleteForm, dispatch, history],
+        [setItems],
     );
 
-    return isDeleting ? (
-        <Confirmation
-            title={`Delete form "${title}"?`}
-            confirmBtnText="Delete"
-            onCancel={() => setIsDeleting(false)}
-            component="form"
-            onSubmit={handleDelete}
-            loading={isFormDeleting}
-        />
-    ) : (
-        <>
-            <Box boxShadow={theme.customShadows.widgetHeader}>
-                <>
+    return (
+        <Switch>
+            <Route exact path={match.path}>
+                <Box boxShadow={theme.customShadows.widgetHeader}>
                     <Box px={1}>
                         <Divider />
                     </Box>
-                    <Box display="flex" justifyContent="space-between">
+                    <Box m={1} display="flex" justifyContent="space-between">
                         <Button color="grey" onClick={handleBack}>
                             <ArrowBack sx={{ mr: 1 }} />
                             {t("back")}
@@ -334,19 +351,31 @@ export function LocationInstance() {
                                 <MoreVert fontSize="small" />
                             </IconButton>
                             <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
+                                <MenuItem onClick={handleSignBtnClick} disabled={!canSign || isFinal}>
+                                    <ListItemIcon>
+                                        <Create fontSize="small" />
+                                    </ListItemIcon>
+                                    <ListItemText>{t("sign")}</ListItemText>
+                                </MenuItem>
+                                <MenuItem onClick={handleHistoryClick}>
+                                    <ListItemIcon>
+                                        <History fontSize="small" />
+                                    </ListItemIcon>
+                                    <ListItemText>{t("history")}</ListItemText>
+                                </MenuItem>
                                 <MenuItem onClick={handleExportAsPdf}>
                                     <ListItemIcon>
                                         <Download fontSize="small" />
                                     </ListItemIcon>
                                     <ListItemText>{t("exportAsPDF")}</ListItemText>
                                 </MenuItem>
-                                <MenuItem onClick={() => setIsDeleting(true)} disabled={!canDelete}>
+                                <MenuItem onClick={handleDeleteClick} disabled={!canDelete}>
                                     <ListItemIcon>
                                         <Delete fontSize="small" />
                                     </ListItemIcon>
                                     <ListItemText>{t("delete")}</ListItemText>
                                 </MenuItem>
-                                <MenuItem onClick={handleClearClick} disabled={!canEdit}>
+                                <MenuItem onClick={handleClearBtnClick} disabled={!canEdit || isFinal}>
                                     <ListItemIcon>
                                         <Clear fontSize="small" />
                                     </ListItemIcon>
@@ -355,42 +384,32 @@ export function LocationInstance() {
                             </Menu>
                         </>
                     </Box>
-                </>
-            </Box>
-            {(isFormLoading || isFormUpdating) && (
-                <Box position="relative">
-                    <LinearProgress />
                 </Box>
-            )}
-            <ScrollBox p={1} pt={2} pb={3}>
-                <Box my={2}>
-                    <TextField
-                        label="Form name"
-                        value={title}
-                        onChange={handleTitleChange}
-                        fullWidth
-                        disabled={!canEdit}
-                    />
-                </Box>
-                {items?.map((item, idx, array) => {
-                    return (
-                        <Fragment key={item.id}>
-                            <FormItem
-                                item={item}
-                                setItems={(itm) => {
-                                    setItems(itm);
-                                    setIsUpdated(true);
-                                }}
-                                disabled={!canEdit}
-                            />
-                            {idx !== array.length - 1 ? <Divider sx={{ mt: 1, mb: 2 }} /> : null}
-                        </Fragment>
-                    );
-                })}
-                <Box mt={2}>
-                    <TransformEditor disabled={!canEdit} />
-                </Box>
-            </ScrollBox>
-        </>
+                {(isFormLoading || isFormUpdating) && (
+                    <Box position="relative">
+                        <LinearProgress />
+                    </Box>
+                )}
+                <Form
+                    form={form}
+                    items={items}
+                    setItems={handleSetItems}
+                    title={title}
+                    handleTitleChange={handleTitleChange}
+                />
+            </Route>
+            <Route path={signRoute}>
+                <SignConfirmation templateId={templateId} formId={formId} title={title} />
+            </Route>
+            <Route path={historyRoute}>
+                <FormHistory title={title} templateId={templateId} formId={formId} isFinal={isFinal} />
+            </Route>
+            <Route path={deleteRoute}>
+                <DeleteConfirmation title={title} templateId={templateId} formId={formId} />
+            </Route>
+            <Route path={clearRoute}>
+                <ClearConfirmation title={title} onClear={handleClear} />
+            </Route>
+        </Switch>
     );
 }

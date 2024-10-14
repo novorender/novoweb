@@ -12,6 +12,7 @@ import { FlyToSelected } from "features/flyToSelected";
 import { HideSelected } from "features/hideSelected";
 import { Home } from "features/home";
 import { OrthoShortcut } from "features/orthoShortcut";
+import { ShareLink } from "features/shareLink";
 import { StepBack } from "features/stepBack";
 import { StepForwards } from "features/stepForwards";
 import { ViewOnlySelected } from "features/viewOnlySelected";
@@ -86,6 +87,7 @@ export function PrimaryMenuNew() {
                 <StepForwards newDesign />
                 <FlyToSelected newDesign />
                 <OrthoShortcut newDesign />
+                <ShareLink variant="primaryMenu" />
                 <Divider orientation="vertical" variant="middle" flexItem sx={{ mx: 1 }} />
                 <ViewOnlySelected newDesign />
                 <HideSelected newDesign />

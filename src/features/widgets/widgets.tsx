@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { WidgetErrorBoundary, WidgetSkeleton } from "components";
 import { featuresConfig, WidgetKey } from "config/features";
 import { MenuWidget } from "features/menuWidget";
+import { useRemoveWidget } from "hooks/useRemoveWidget";
 import {
     explorerActions,
     selectGridSize,
@@ -21,7 +22,6 @@ import {
 import { PositionedWidgetState } from "slices/explorer/types";
 import { getNextSlotPos, getTakenWidgetSlotCount } from "slices/explorer/utils";
 import { compareStrings } from "utils/misc";
-import { mixpanel } from "utils/mixpanel";
 
 const Properties = lazy(() => import("features/properties/properties"));
 const PropertiesTree = lazy(() => import("features/propertyTree/propertyTree"));
@@ -56,6 +56,8 @@ const Omega365 = lazy(() => import("features/omega365/omega365"));
 const Arcgis = lazy(() => import("features/arcgis/arcgis"));
 const Forms = lazy(() => import("features/forms/forms"));
 const Clash = lazy(() => import("features/clash/clash"));
+const PointVisualization = lazy(() => import("features/pointVisualization/pointVisualization"));
+const CrossSection = lazy(() => import("features/crossSection/crossSection"));
 
 const emptySlotKey = "emptySlot" as const;
 
@@ -82,6 +84,7 @@ function NewWidgets() {
     const slots = useAppSelector(selectWidgets);
     const positionedWidgets = useAppSelector(selectPositionedWidgets);
     const dispatch = useAppDispatch();
+    const removeWidget = useRemoveWidget();
 
     const showNewSlot = useMemo(() => {
         return widgetSlot.open && getTakenWidgetSlotCount(slots, maximized, maximizedHorizontal) < layout.widgets;
@@ -101,11 +104,11 @@ function NewWidgets() {
         if (!isOnline) {
             slots.forEach((slot) => {
                 if (!featuresConfig[slot].offline) {
-                    dispatch(explorerActions.removeWidgetSlot(slot));
+                    removeWidget(slot, { reason: "offline" });
                 }
             });
         }
-    }, [dispatch, isOnline, slots]);
+    }, [isOnline, slots, removeWidget]);
 
     const positionedSlots = useMemo(() => {
         const gap = theme.spacing(2);
@@ -228,6 +231,7 @@ function OldWidgets() {
     const layout = useAppSelector(selectWidgetLayout);
     const slots = useAppSelector(selectWidgets);
     const dispatch = useAppDispatch();
+    const removeWidget = useRemoveWidget();
 
     useEffect(
         function handleSettingsChange() {
@@ -243,12 +247,11 @@ function OldWidgets() {
         if (!isOnline) {
             slots.forEach((slot) => {
                 if (!featuresConfig[slot].offline) {
-                    mixpanel?.track("Closed Widget", { "Widget Key": slot });
-                    dispatch(explorerActions.removeWidgetSlot(slot));
+                    removeWidget(slot, { reason: "offline" });
                 }
             });
         }
-    }, [dispatch, isOnline, slots]);
+    }, [isOnline, slots, removeWidget]);
 
     const getGridLayout = () => {
         if (layout.widgets === 4) {
@@ -436,6 +439,12 @@ function getWidgetByKey(key: WidgetKey): JSX.Element | string {
             break;
         case featuresConfig.clash.key:
             Widget = Clash;
+            break;
+        case featuresConfig.pointVisualization.key:
+            Widget = PointVisualization;
+            break;
+        case featuresConfig.crossSection.key:
+            Widget = CrossSection;
             break;
         default:
             return key;

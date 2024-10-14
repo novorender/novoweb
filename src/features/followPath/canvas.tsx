@@ -117,18 +117,20 @@ export function FollowPathCanvas({
 
             const cameraState = getCameraState(view.renderState.camera);
             view.measure?.draw
-                .getDrawObjectFromPoints(section.points, false, false)
+                .getDrawObjectFromPoints(section.points, { closed: false, angles: false })
                 ?.objects.forEach((obj) =>
-                    obj.parts.forEach((part) => drawPart(ctx, cameraState, part, { lineColor }, 2, { type: "default" }))
+                    obj.parts.forEach((part) =>
+                        drawPart(ctx, cameraState, part, { lineColor }, 2, { type: "default" }),
+                    ),
                 );
 
             const slopeL = view.measure?.draw.getDrawText(
                 [section.slopes.left.start, section.slopes.left.end],
-                (section.slopes.left.slope * 100).toFixed(1) + "%"
+                (section.slopes.left.slope * 100).toFixed(1) + "%",
             );
             const slopeR = view.measure?.draw.getDrawText(
                 [section.slopes.right.start, section.slopes.right.end],
-                (section.slopes.right.slope * 100).toFixed(1) + "%"
+                (section.slopes.right.slope * 100).toFixed(1) + "%",
             );
             if (slopeL && slopeR) {
                 drawProduct(ctx, cameraState, slopeL, {}, 3, { type: "default" });
@@ -149,7 +151,7 @@ export function FollowPathCanvas({
         }
 
         const prods = roadCrossSectionData
-            .map((road) => view.measure?.draw.getDrawObjectFromPoints(road.points, false, false))
+            .map((road) => view.measure?.draw.getDrawObjectFromPoints(road.points, { closed: false, angles: false }))
             .filter((prod) => prod) as DrawProduct[];
 
         if (!prods.length) {
@@ -185,9 +187,9 @@ export function FollowPathCanvas({
                     2,
                     {
                         type: "default",
-                    }
-                )
-            )
+                    },
+                ),
+            ),
         );
     }, [canvas, pointerPosRef, roadCrossSectionData, size, traceVerical, tracerCtx, view]);
 
@@ -203,8 +205,8 @@ export function FollowPathCanvas({
                 view.measure?.draw.getDrawEntity(obj, {
                     cylinderMeasure: followCylindersFrom,
                     segmentLabelInterval: 10,
-                })
-            )
+                }),
+            ),
         );
 
         if (id !== selectedEntityDrawId.current) {
@@ -222,8 +224,8 @@ export function FollowPathCanvas({
                     cameraState,
                     prod,
                     { lineColor: "yellow", fillColor: measurementFillColor },
-                    3
-                )
+                    3,
+                ),
         );
     }, [canvas, followCylindersFrom, selectedEntitiesData, selectedEntityCtx, view]);
 
@@ -259,7 +261,7 @@ export function FollowPathCanvas({
             translateInteraction(svg.children.namedItem(`followInfo`), vec2.fromValues(pt[0], pt[1] - 55));
             translateInteraction(
                 svg.children.namedItem(`followClose`),
-                isFollowPathVisible ? undefined : vec2.fromValues(pt[0], pt[1] + 55)
+                isFollowPathVisible ? undefined : vec2.fromValues(pt[0], pt[1] + 55),
             );
         } else if (view.renderState.clipping.planes.length > 0) {
             const plane = view.renderState.clipping.planes[0].normalOffset;
@@ -279,11 +281,11 @@ export function FollowPathCanvas({
                 vec2.normalize(dir, dir);
                 translateInteraction(
                     svg.children.namedItem(`followPlus`),
-                    vec2.scaleAndAdd(vec2.create(), pt[0], dir, 40)
+                    vec2.scaleAndAdd(vec2.create(), pt[0], dir, 40),
                 );
                 translateInteraction(
                     svg.children.namedItem(`followMinus`),
-                    vec2.scaleAndAdd(vec2.create(), pt[0], dir, -40)
+                    vec2.scaleAndAdd(vec2.create(), pt[0], dir, -40),
                 );
                 translateInteraction(
                     svg.children.namedItem(`followInfo`),
@@ -291,8 +293,8 @@ export function FollowPathCanvas({
                         vec2.create(),
                         pt[0],
                         dir[0] > 0 ? vec2.fromValues(-dir[1], dir[0]) : vec2.fromValues(dir[1], -dir[0]),
-                        -45
-                    )
+                        -45,
+                    ),
                 );
                 translateInteraction(
                     svg.children.namedItem(`followClose`),
@@ -302,8 +304,8 @@ export function FollowPathCanvas({
                               vec2.create(),
                               pt[0],
                               dir[0] <= 0 ? vec2.fromValues(-dir[1], dir[0]) : vec2.fromValues(dir[1], -dir[0]),
-                              -45
-                          )
+                              -45,
+                          ),
                 );
             } else {
                 removeMarkers();
@@ -360,7 +362,7 @@ export function FollowPathCanvas({
 
                     return prev;
                 },
-                [[] as Vec2[], [] as string[]]
+                [[] as Vec2[], [] as string[]],
             );
             dispatch(deviationsActions.setRightmost2dDeviationCoordinate(Math.max(...pts2d.map((p) => p[0]))));
 
@@ -370,7 +372,7 @@ export function FollowPathCanvas({
                 drawLineStrip(deviationsCtx, deviations.line, vecToHex(followDeviations.lineColor));
             }
         },
-        [canvas, currentProfileCenter, deviationsCtx, followDeviations, view, dispatch]
+        [canvas, currentProfileCenter, deviationsCtx, followDeviations, view, dispatch],
     );
 
     useEffect(() => {

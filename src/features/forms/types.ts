@@ -39,20 +39,7 @@ type SimpleItem = BaseItem<string[] | null> & {
     >;
 };
 
-interface ItemWithOptions extends BaseItem<string[] | null> {
-    type: Exclude<
-        FormItemType,
-        | FormItemType.Input
-        | FormItemType.Text
-        | FormItemType.File
-        | FormItemType.Date
-        | FormItemType.Time
-        | FormItemType.DateTime
-    >;
-    options: string[];
-}
-
-interface ItemWithOptions extends BaseItem<string[] | null> {
+export interface ItemWithOptions extends BaseItem<string[] | null> {
     type: Exclude<
         FormItemType,
         | FormItemType.Input
@@ -199,7 +186,6 @@ type BaseTemplateHeader = {
     state: TemplateState;
     id: TemplateId;
     createdBy?: ChangeStamp;
-    modifiedBy?: ChangeStamp[];
 };
 
 type SearchTemplateHeader = BaseTemplateHeader & { type: TemplateType.Search };
@@ -220,8 +206,18 @@ type TemplateBase = {
 };
 
 export enum TemplateType {
+    /**
+     * @deprecated
+     */
     Search = "search",
+
+    /**
+     * @deprecated
+     */
     Location = "location",
+
+    Object = "object",
+    Geo = "geo",
 }
 
 export type SearchTemplate = TemplateBase & {
@@ -236,6 +232,23 @@ export type LocationTemplate = TemplateBase & {
 
 export type Template = SearchTemplate | LocationTemplate;
 
+export type MinimalTemplate = {
+    id: TemplateId;
+    type: TemplateType;
+    title: string;
+
+    // state-based counters for the form instances,
+    // computed from indexes on the backend
+    forms: {
+        finished: number;
+        total: number;
+    };
+};
+
+export type Signature = ChangeStamp & { isFinal?: boolean };
+
+export type FormHistory = Record<string, Partial<Form>>;
+
 export type Form = {
     id: FormId;
     title: string;
@@ -246,7 +259,9 @@ export type Form = {
     rotation?: quat;
     scale?: number;
     createdBy?: ChangeStamp;
-    modifiedBy?: ChangeStamp[];
+    signatures?: Signature[];
+    isFinal?: boolean;
+    version: number;
 };
 
 export type FormGLtfAsset = {
@@ -264,13 +279,11 @@ export type FormTransform = {
     // Meanwhile new selected object is rendered with the previous object transform causing flicker.
     // By attaching transformDraft to particular form we can avoid that flicker.
     // Another alternative could be to make it a state in locationInstance, but I want to localize
-    // form transformDraft as much as possible because it might update quite rabpidly.
-    templateId: string;
-    formId: string;
+    // form transformDraft as much as possible because it might update quite rapidly.
+    templateId: TemplateId;
+    formId: FormId;
     location: vec3;
     rotation?: quat;
     scale?: number;
     updated: boolean;
 };
-
-export type FileTypes = ("Documents" | "Images")[];

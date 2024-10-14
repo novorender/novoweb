@@ -5,25 +5,24 @@ import { getDataV2DynamicBaseQuery } from "apis/dataV2/utils";
 import {
     type Form,
     type FormFileUploadResponse,
+    type FormHistory,
     type FormId,
     type FormInstanceId,
     type FormObjectGuid,
+    type MinimalTemplate,
     type ProjectId,
     type Template,
     type TemplateId,
+    TemplateType,
 } from "./types";
 import { calculateFormState } from "./utils";
 
 export const formsApi = createApi({
     reducerPath: "formsApi",
     baseQuery: getDataV2DynamicBaseQuery("/forms/"),
-    tagTypes: ["Template", "Form", "Object"],
+    tagTypes: ["Template", "MinimalTemplate", "Form", "Object", "FormHistory"],
     keepUnusedDataFor: 60 * 5,
     endpoints: (builder) => ({
-        listTemplates: builder.query<TemplateId[], { projectId: ProjectId }>({
-            query: ({ projectId }) => `projects/${projectId}/templates/ids`,
-            providesTags: [{ type: "Template" as const, id: "ID_LIST" }],
-        }),
         createSearchForm: builder.mutation<TemplateId, { projectId: ProjectId; template: Partial<Template> }>({
             query: ({ projectId, template }) => ({
                 body: template,
@@ -35,7 +34,7 @@ export const formsApi = createApi({
                 },
             }),
             invalidatesTags: (result, _error, { projectId }) => [
-                { type: "Template" as const, id: "ID_LIST" },
+                { type: "MinimalTemplate" as const, id: "LIST" },
                 { type: "Template" as const, id: `${projectId}-${result}` },
                 { type: "Form" as const, id: `LIST-${projectId}` },
                 { type: "Form" as const, id: `${projectId}-${result}` },
@@ -52,13 +51,44 @@ export const formsApi = createApi({
                 },
             }),
             invalidatesTags: (result, _error, { projectId, form }) => [
-                { type: "Template" as const, id: `ID_LIST` },
+                { type: "MinimalTemplate" as const, id: "LIST" },
                 { type: "Template" as const, id: `${projectId}-${form.id}` },
+                { type: "MinimalTemplate" as const, id: `${projectId}-${form.id}` },
                 { type: "Form" as const, id: `${projectId}-${result}` },
                 {
                     type: "Form" as const,
                     id: `${projectId}-${form.id}-${result}`,
                 },
+            ],
+        }),
+        updateTemplate: builder.mutation<
+            Template,
+            { projectId: ProjectId; templateId: TemplateId; template: Partial<Template> }
+        >({
+            query: ({ projectId, templateId, template }) => ({
+                body: template,
+                url: `projects/${projectId}/templates/${templateId}`,
+                method: "PATCH",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (_result, _error, { projectId, templateId }) => [
+                { type: "Template" as const, id: `${projectId}-${templateId}` },
+                { type: "MinimalTemplate" as const, id: `${projectId}-${templateId}` },
+                { type: "Form" as const, id: `LIST-${projectId}` },
+                { type: "FormHistory" as const, id: `${projectId}-${templateId}` },
+                // Invalidate geo forms
+                ...Object.keys(_result?.forms ?? {}).map((formId: FormId) => ({
+                    type: "Form" as const,
+                    id: `${projectId}-${templateId}-${formId}`,
+                })),
+                // Invalidate object forms
+                ...Object.keys(_result?.forms ?? {}).map((formId: FormId) => ({
+                    type: "Form" as const,
+                    id: `${projectId}-${formId}-${templateId}`,
+                })),
             ],
         }),
         getSearchForm: builder.query<
@@ -82,7 +112,7 @@ export const formsApi = createApi({
                         id: `${projectId}-${templateId}-${formId}`,
                     },
                 ],
-            }
+            },
         ),
         getSearchForms: builder.query<Partial<Form>[], { projectId: ProjectId; objectGuid: FormObjectGuid }>({
             query: ({ projectId, objectGuid }) => `projects/${projectId}/objects/${objectGuid}/forms`,
@@ -97,18 +127,86 @@ export const formsApi = createApi({
                       ]
                     : [{ type: "Form" as const, id: `LIST-${projectId}` }],
         }),
-        getTemplate: builder.query<Partial<Template>, { projectId: ProjectId; templateId: TemplateId }>({
+        getTemplate: builder.query<Template, { projectId: ProjectId; templateId: TemplateId }>({
             query: ({ projectId, templateId }) => `projects/${projectId}/templates/${templateId}`,
             providesTags: (_result, _error, { projectId, templateId }) => [
                 { type: "Template" as const, id: `${projectId}-${templateId}` },
             ],
+        }),
+        getMinimalTemplate: builder.query<MinimalTemplate, { projectId: ProjectId; templateId: TemplateId }>({
+            query: ({ projectId, templateId }) => `projects/${projectId}/templates/${templateId}?minimal=true`,
+            providesTags: (_result, _error, { projectId, templateId }) => [
+                { type: "MinimalTemplate" as const, id: `${projectId}-${templateId}` },
+            ],
+        }),
+        getTemplates: builder.query<
+            (Partial<Template> & { id: FormId })[],
+            { projectId: ProjectId; type?: TemplateType }
+        >({
+            query: ({ projectId, ...params }) => {
+                const sp = new URLSearchParams(params as Record<string, string>).toString();
+                const queryString = params ? `?${sp}` : "";
+                return `projects/${projectId}/templates${queryString}`;
+            },
+            providesTags: (result, _error, { projectId }) =>
+                result ? result.map(({ id }) => ({ type: "Template" as const, id: `${projectId}-${id}` })) : [],
+        }),
+        getMinimalTemplates: builder.query<MinimalTemplate[], { projectId: ProjectId; type?: TemplateType }>({
+            query: ({ projectId, ...params }) => {
+                const sp = new URLSearchParams({ minimal: "true", ...params } as Record<string, string>).toString();
+                const queryString = params ? `?${sp}` : "";
+                return `projects/${projectId}/templates${queryString}`;
+            },
+            providesTags: (result, _error, { projectId }) =>
+                result
+                    ? [
+                          { type: "MinimalTemplate" as const, id: "LIST" },
+                          ...result.map(({ id }) => ({ type: "MinimalTemplate" as const, id: `${projectId}-${id}` })),
+                      ]
+                    : [{ type: "MinimalTemplate" as const, id: "LIST" }],
         }),
         deleteTemplate: builder.mutation<void, { projectId: ProjectId; templateId: TemplateId }>({
             query: ({ projectId, templateId }) => ({
                 url: `projects/${projectId}/templates/${templateId}`,
                 method: "DELETE",
             }),
-            invalidatesTags: () => [{ type: "Template" as const, id: "ID_LIST" }],
+            invalidatesTags: (_result, _error, { projectId, templateId }) => [
+                { type: "MinimalTemplate" as const, id: `${projectId}-${templateId}` },
+            ],
+        }),
+        getFormHistory: builder.query<
+            FormHistory,
+            { projectId: ProjectId; templateType: TemplateType; id: FormObjectGuid | FormId; formId: FormId }
+        >({
+            query: ({ projectId, templateType, id, formId }) =>
+                `projects/${projectId}/history/forms/${templateType}/${id}/${formId}`,
+            providesTags: (_result, _error, { projectId, id, formId }) => [
+                {
+                    type: "FormHistory" as const,
+                    id: `${projectId}-${id}-${formId}`,
+                },
+            ],
+        }),
+        revertForm: builder.mutation<
+            Form,
+            {
+                projectId: ProjectId;
+                templateType: TemplateType;
+                id: FormObjectGuid | FormId;
+                formId: FormId;
+                version: number;
+            }
+        >({
+            query: ({ projectId, templateType, id, formId, version }) => ({
+                url: `projects/${projectId}/history/forms/${templateType}/${id}/${formId}/revert/${version}`,
+                method: "POST",
+            }),
+            invalidatesTags: (_result, _error, { projectId, id, formId }) => [
+                { type: "FormHistory" as const, id: `${projectId}-${id}-${formId}` },
+                { type: "Form" as const, id: `${projectId}-${id}-${formId}` },
+                { type: "Template" as const, id: `${projectId}-${id}` },
+                { type: "MinimalTemplate" as const, id: `${projectId}-${id}` },
+            ],
         }),
         updateSearchForm: builder.mutation<
             Form,
@@ -124,7 +222,7 @@ export const formsApi = createApi({
                 },
             }),
             invalidatesTags: (_result, _error, { projectId, objectGuid, formId }) => [
-                { type: "Template" as const, id: "ID_LIST" },
+                { type: "MinimalTemplate" as const, id: "LIST" },
                 { type: "Template" as const, id: `${projectId}-${formId}` },
                 { type: "Form" as const, id: `LIST-${projectId}` },
                 {
@@ -132,6 +230,29 @@ export const formsApi = createApi({
                     id: `${projectId}-${objectGuid}-${formId}`,
                 },
                 { type: "Form" as const, id: `${projectId}-${formId}` },
+                { type: "FormHistory" as const, id: `${projectId}-${objectGuid}-${formId}` },
+            ],
+        }),
+        signSearchForm: builder.mutation<
+            void,
+            { projectId: ProjectId; objectGuid: FormObjectGuid; formId: FormId; isFinal?: boolean }
+        >({
+            query: ({ projectId, objectGuid, formId, isFinal = false }) => ({
+                body: { isFinal },
+                url: `projects/${projectId}/objects/${objectGuid}/forms/${formId}/sign`,
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (_result, _error, { projectId, objectGuid, formId }) => [
+                {
+                    type: "Form" as const,
+                    id: `${projectId}-${objectGuid}-${formId}`,
+                },
+                { type: "Form" as const, id: `${projectId}-${formId}` },
+                { type: "FormHistory" as const, id: `${projectId}-${objectGuid}-${formId}` },
             ],
         }),
         updateLocationForm: builder.mutation<
@@ -149,14 +270,16 @@ export const formsApi = createApi({
             }),
             invalidatesTags: (_result, _error, { projectId, templateId, formId }) => [
                 // Instead of invalidating - optimistically update state to avoid flickering
-                // { type: "Template" as const, id: `${projectId}-${templateId}` },
                 {
                     type: "Form" as const,
                     id: `${projectId}-${templateId}-${formId}`,
                 },
+                { type: "FormHistory" as const, id: `${projectId}-${templateId}-${formId}` },
             ],
             async onQueryStarted({ projectId, templateId, formId, form }, { dispatch, queryFulfilled }) {
-                const patchResult = dispatch(
+                let patchTemplatesResult: { undo: () => void } | undefined;
+
+                const patchTemplateResult = dispatch(
                     formsApi.util.updateQueryData("getTemplate", { projectId, templateId }, (draft) => {
                         const oldForm = draft.forms?.[formId];
                         if (oldForm) {
@@ -172,18 +295,51 @@ export const formsApi = createApi({
                             if (form.scale) {
                                 oldForm.scale = form.scale;
                             }
+
+                            const newFormState = calculateFormState(form);
+                            if (oldForm.state !== newFormState) {
+                                patchTemplatesResult = dispatch(
+                                    formsApi.util.updateQueryData("getMinimalTemplates", { projectId }, (draft) => {
+                                        const template = draft.find((t) => t.id === templateId);
+                                        if (template) {
+                                            if (oldForm.state === "finished") {
+                                                template.forms.finished -= 1;
+                                            } else if (newFormState === "finished") {
+                                                template.forms.finished += 1;
+                                            }
+                                        }
+                                    }),
+                                );
+                            }
+
                             if (form.fields) {
-                                oldForm.state = calculateFormState(form);
+                                oldForm.state = newFormState;
                             }
                         }
-                    })
+                    }),
                 );
+
                 try {
                     await queryFulfilled;
                 } catch {
-                    patchResult.undo();
+                    patchTemplateResult.undo();
+                    patchTemplatesResult?.undo();
                 }
             },
+        }),
+        signLocationForm: builder.mutation<
+            void,
+            { projectId: ProjectId; templateId: TemplateId; formId: FormId; isFinal?: boolean }
+        >({
+            query: ({ projectId, templateId, formId, isFinal = false }) => ({
+                body: { isFinal },
+                url: `projects/${projectId}/location/${templateId}/${formId}/sign`,
+                method: "POST",
+            }),
+            invalidatesTags: (_result, _error, { projectId, templateId, formId }) => [
+                { type: "Form" as const, id: `${projectId}-${templateId}-${formId}` },
+                { type: "FormHistory" as const, id: `${projectId}-${templateId}-${formId}` },
+            ],
         }),
         deleteLocationForm: builder.mutation<void, { projectId: ProjectId; templateId: TemplateId; formId: FormId }>({
             query: ({ projectId, templateId, formId }) => ({
@@ -199,7 +355,7 @@ export const formsApi = createApi({
                 url: `projects/${projectId}/forms`,
                 method: "DELETE",
             }),
-            invalidatesTags: (_result, _error) => [{ type: "Template" as const, id: "ID_LIST" }],
+            invalidatesTags: (_result, _error) => [{ type: "MinimalTemplate" as const, id: "LIST" }],
         }),
         uploadFiles: builder.mutation<
             { [key: string]: FormFileUploadResponse },
@@ -222,13 +378,10 @@ export const formsApi = createApi({
 });
 
 export const {
-    useListTemplatesQuery,
-    useLazyListTemplatesQuery,
     useGetSearchFormQuery,
     useGetLocationFormQuery,
     useGetSearchFormsQuery,
     useGetTemplateQuery,
-    useLazyGetTemplateQuery,
     useCreateSearchFormMutation,
     useCreateLocationFormMutation,
     useUpdateSearchFormMutation,
@@ -237,4 +390,13 @@ export const {
     useDeleteTemplateMutation,
     useDeleteAllFormsMutation,
     useUploadFilesMutation,
+    useGetTemplatesQuery,
+    useGetMinimalTemplatesQuery,
+    useLazyGetTemplatesQuery,
+    useLazyGetTemplateQuery,
+    useSignSearchFormMutation,
+    useSignLocationFormMutation,
+    useGetFormHistoryQuery,
+    useRevertFormMutation,
+    useUpdateTemplateMutation,
 } = formsApi;

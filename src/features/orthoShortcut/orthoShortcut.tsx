@@ -32,7 +32,7 @@ export function OrthoShortcut({ position, newDesign, ...speedDialProps }: Props)
 
     const handleClick = () => {
         if (cameraType === CameraType.Pinhole) {
-            if (planes.length > 0) {
+            if (planes.length > 0 && !newDesign) {
                 dispatch(
                     renderActions.setCamera({
                         type: CameraType.Orthographic,

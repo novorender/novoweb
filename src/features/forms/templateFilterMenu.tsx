@@ -1,5 +1,6 @@
 import { Place, Search } from "@mui/icons-material";
 import { Checkbox, InputAdornment, Menu, MenuItem, MenuProps, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { AppDispatch } from "app/store";
@@ -29,6 +30,7 @@ const TemplateFilterMenuItem = ({
 );
 
 export function TemplateFilterMenu({ ...MenuProps }: MenuProps) {
+    const { t } = useTranslation();
     const theme = useTheme();
 
     const templatesFilters = useAppSelector(selectTemplatesFilters);
@@ -46,7 +48,7 @@ export function TemplateFilterMenu({ ...MenuProps }: MenuProps) {
                     autoFocus
                     fullWidth
                     variant="standard"
-                    placeholder="Search by name"
+                    placeholder={t("searchByName")}
                     value={name}
                     onChange={(e) => dispatch(formsActions.setTemplatesFilters({ name: e.target.value }))}
                     InputProps={{

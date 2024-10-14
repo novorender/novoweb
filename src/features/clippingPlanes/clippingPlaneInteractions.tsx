@@ -27,9 +27,11 @@ import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { crossSectionActions } from "features/crossSection";
 import { getCameraDir } from "features/engine2D/utils";
 import { RenderState, selectClippingPlanes } from "features/render";
-import { explorerActions, selectWidgets } from "slices/explorer";
+import { useOpenWidget } from "hooks/useOpenWidget";
+import { selectNewDesign, selectWidgets } from "slices/explorer";
 import { rgbToHex, vecToRgb } from "utils/color";
 import { hasMouseSupport } from "utils/misc";
 
@@ -282,6 +284,8 @@ function PlaneMenu({
     const actions = useClippingPlaneActions();
     const plane = clipping.planes[index];
     const isWidgetOpen = useAppSelector((state) => selectWidgets(state).includes(featuresConfig.clippingPlanes.key));
+    const newDesign = useAppSelector(selectNewDesign);
+    const openWidget = useOpenWidget();
 
     const openMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -293,7 +297,7 @@ function PlaneMenu({
     };
 
     const showWidget = () => {
-        dispatch(explorerActions.forceOpenWidget(featuresConfig.clippingPlanes.key));
+        openWidget(featuresConfig.clippingPlanes.key, { force: true });
         closeMenu();
     };
 
@@ -321,6 +325,15 @@ function PlaneMenu({
         actions.setShowPlane(clipping.planes, index, showPlane);
         closeMenu();
     };
+
+    const openCrossSection = () => {
+        openWidget(featuresConfig.crossSection.key, { force: true });
+        dispatch(crossSectionActions.setPlaneIndex(index));
+        closeMenu();
+    };
+
+    const handleCrossSectionClick = newDesign ? openCrossSection : swapCamera;
+    const CrossSectionIcon = newDesign ? featuresConfig.crossSection.Icon : featuresConfig.orthoCam.Icon;
 
     visible = visible || Boolean(menuAnchor);
 
@@ -351,9 +364,9 @@ function PlaneMenu({
                     </ListItemIcon>
                     <ListItemText>{t("openWidget")}</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={swapCamera}>
+                <MenuItem onClick={handleCrossSectionClick}>
                     <ListItemIcon>
-                        <featuresConfig.orthoCam.Icon fontSize="small" />
+                        <CrossSectionIcon fontSize="small" />
                     </ListItemIcon>
                     <ListItemText>{t("crossSection")}</ListItemText>
                 </MenuItem>

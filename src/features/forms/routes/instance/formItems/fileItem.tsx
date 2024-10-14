@@ -18,6 +18,7 @@ import {
     styled,
     useTheme,
 } from "@mui/material";
+import { t } from "i18next";
 import { CSSProperties, type MouseEvent, useState } from "react";
 
 import { Tooltip } from "components";
@@ -39,7 +40,7 @@ const Img = styled("img")(
         width: 100%;
         object-fit: cover;
         display: block;
-    `
+    `,
 );
 
 export default function FileItem({
@@ -168,12 +169,12 @@ export default function FileItem({
                     }}
                 >
                     <Download fontSize="small" />
-                    <ListItemText primary="Download" />
+                    <ListItemText primary={t("download")} />
                 </MenuItem>
                 {!isReadonly && (
                     <MenuItem onClick={removeFile}>
                         <Delete fontSize="small" />
-                        <ListItemText primary="Remove" />
+                        <ListItemText primary={t("remove")} />
                     </MenuItem>
                 )}
             </Menu>

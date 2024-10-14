@@ -7,6 +7,7 @@ import { cameraStateActions, useDispatchCameraState } from "contexts/cameraState
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { measureActions } from "features/measure";
 import { orthoCamActions, selectCurrentTopDownElevation } from "features/orthoCam";
+import { selectNewDesign } from "slices/explorer";
 import { ViewMode } from "types/misc";
 
 import {
@@ -34,6 +35,7 @@ export function useHandleCameraMoved({
     const viewMode = useAppSelector(selectViewMode);
     const editClipping = useAppSelector(selectClippingInEdit);
     const currentTopDownElevation = useAppSelector(selectCurrentTopDownElevation);
+    const newDesign = useAppSelector(selectNewDesign);
 
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const orthoMovementTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -104,7 +106,7 @@ export function useHandleCameraMoved({
 
                     // Move clipping plane
                     const plane = view.renderState.clipping.planes[0];
-                    if (plane) {
+                    if (plane && !newDesign) {
                         prevCameraDir.current = z;
                         const w = vec3.dot(z, camera.position);
 
@@ -130,7 +132,7 @@ export function useHandleCameraMoved({
                                         .slice(1)
                                         .map((p) => ({ ...p, baseW: p.normalOffset[3] })),
                                 ] as DeepMutable<ReturnType<typeof selectClippingPlanes>["planes"]>,
-                            })
+                            }),
                         );
                     }
                 }, 100);
@@ -148,7 +150,7 @@ export function useHandleCameraMoved({
                             position: vec3.clone(position),
                             rotation: quat.clone(rotation),
                             fov,
-                        })
+                        }),
                     );
                 }, 500);
             }
@@ -163,6 +165,7 @@ export function useHandleCameraMoved({
             engine2dRenderFnRef,
             editClipping,
             containers,
-        ]
+            newDesign,
+        ],
     );
 }

@@ -82,7 +82,7 @@ export function ArcgisCanvas({
                         selectedFeature &&
                             selectedFeature.featureServerId === featureServer.id &&
                             selectedFeature.layerId === layer.id &&
-                            selectedFeature.featureId === attributes[layer.definition.data.objectIdField]
+                            selectedFeature.featureId === attributes[layer.definition.data.objectIdField],
                     );
 
                     if ("paths" in geometry) {
@@ -338,7 +338,7 @@ function getDrawStyleForSymbol(drawCtx: DrawingContext, symbol: FeatureSymbol): 
 
 function createPattern(
     baseCtx: CanvasRenderingContext2D,
-    produce: (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => void
+    produce: (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => void,
 ) {
     const patternCanvas = document.createElement("canvas");
     try {
@@ -365,7 +365,7 @@ function drawPolygon(
     feature: LayerFeature,
     geometry: FeatureGeometryPolygon,
     drawingInfo: LayerDrawingInfo,
-    isSelected: boolean
+    isSelected: boolean,
 ) {
     if (!feature.computedSymbol) {
         return;
@@ -380,15 +380,17 @@ function drawPolygon(
     const { colorSettings, pixelWidth = 2 } = drawStyle;
 
     for (const ring of geometry.rings) {
-        drawCtx.draw.getDrawObjectFromPoints(ring, true, false, false)?.objects.forEach((obj) => {
-            obj.parts.forEach((part) => {
-                drawPart(drawCtx.ctx, drawCtx.cameraState, part, colorSettings, pixelWidth);
+        drawCtx.draw
+            .getDrawObjectFromPoints(ring, { closed: true, angles: false, generateLineLabels: false })
+            ?.objects.forEach((obj) => {
+                obj.parts.forEach((part) => {
+                    drawPart(drawCtx.ctx, drawCtx.cameraState, part, colorSettings, pixelWidth);
 
-                if (isSelected) {
-                    drawPart(drawCtx.ctx, drawCtx.cameraState, part, SELECTED_POLYGON_COLOR_SETTINGS, 2);
-                }
+                    if (isSelected) {
+                        drawPart(drawCtx.ctx, drawCtx.cameraState, part, SELECTED_POLYGON_COLOR_SETTINGS, 2);
+                    }
+                });
             });
-        });
     }
 }
 
@@ -397,7 +399,7 @@ function drawPolyline(
     feature: LayerFeature,
     geometry: FeatureGeometryPolyline,
     drawingInfo: LayerDrawingInfo,
-    isSelected: boolean
+    isSelected: boolean,
 ) {
     if (!feature.computedSymbol) {
         return;
@@ -412,15 +414,23 @@ function drawPolyline(
     const { colorSettings, pixelWidth = 2 } = drawStyle;
 
     for (const path of geometry.paths) {
-        drawCtx.draw.getDrawObjectFromPoints(path, false, false, false)?.objects.forEach((obj) => {
-            obj.parts.forEach((part) => {
-                drawPart(drawCtx.ctx, drawCtx.cameraState, part, colorSettings, pixelWidth);
+        drawCtx.draw
+            .getDrawObjectFromPoints(path, { closed: false, angles: false, generateLineLabels: false })
+            ?.objects.forEach((obj) => {
+                obj.parts.forEach((part) => {
+                    drawPart(drawCtx.ctx, drawCtx.cameraState, part, colorSettings, pixelWidth);
 
-                if (isSelected) {
-                    drawPart(drawCtx.ctx, drawCtx.cameraState, part, SELECTED_POLYLINE_COLOR_SETTINGS, pixelWidth + 2);
-                }
+                    if (isSelected) {
+                        drawPart(
+                            drawCtx.ctx,
+                            drawCtx.cameraState,
+                            part,
+                            SELECTED_POLYLINE_COLOR_SETTINGS,
+                            pixelWidth + 2,
+                        );
+                    }
+                });
             });
-        });
     }
 }
 
@@ -428,7 +438,7 @@ function drawPoint(
     drawCtx: DrawingContext,
     geometry: FeatureGeometryPoint,
     drawingInfo: LayerDrawingInfo,
-    isSelected: boolean
+    isSelected: boolean,
 ) {
     if (drawingInfo.renderer.type === "simple") {
         const { symbol } = drawingInfo.renderer;
@@ -478,8 +488,8 @@ function drawPoint(
                 {
                     pointColor,
                 },
-                2
-            )
+                2,
+            ),
         );
     });
 }

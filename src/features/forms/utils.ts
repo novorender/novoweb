@@ -436,23 +436,17 @@ export function getFormItemTypeDisplayName(type: FormItemType): string {
 }
 
 export function calculateFormState(form: Partial<Form>): FormState {
-    let anyFilled = false;
     let allRequiredFilled = true;
     form.fields?.forEach((field) => {
         const isFilled = isFormFieldFilled(field);
-        anyFilled ||= isFilled;
         if (isFormFieldRequired(field)) {
             allRequiredFilled &&= isFilled;
         }
     });
 
-    if (!anyFilled) {
-        return "new";
-    } else if (allRequiredFilled) {
-        return "finished";
-    } else {
-        return "ongoing";
-    }
+    // We don't consider "new" state here, because
+    // in case the form was patched, it should be considered as "ongoing"
+    return allRequiredFilled ? "finished" : "ongoing";
 }
 
 function isFormFieldFilled(field: FormField): boolean {

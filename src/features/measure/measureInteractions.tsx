@@ -8,7 +8,8 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areaActions, selectAreas } from "features/area";
 import { pointLineActions, selectPointLines } from "features/pointLine";
 import { Picker, renderActions } from "features/render";
-import { explorerActions, selectEnabledWidgets } from "slices/explorer";
+import { useOpenWidget } from "hooks/useOpenWidget";
+import { selectEnabledWidgets } from "slices/explorer";
 
 import { measureActions, selectMeasure } from "./measureSlice";
 
@@ -26,7 +27,7 @@ const RemoveMarker = styled(
             <path d="M96,96 L104,104 M104,96 L96,104" stroke="white" strokeWidth={2}></path>
         </g>
     ),
-    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
+    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" },
 )(basicStyle);
 
 const InfoMarker = styled(
@@ -41,7 +42,7 @@ const InfoMarker = styled(
             ></path>
         </g>
     ),
-    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
+    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" },
 )(basicStyle);
 
 const UndoMarker = styled(
@@ -57,7 +58,7 @@ const UndoMarker = styled(
             ></path>
         </g>
     ),
-    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
+    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" },
 )(basicStyle);
 
 const FinalizeMarker = styled(
@@ -72,7 +73,7 @@ const FinalizeMarker = styled(
             ></path>
         </g>
     ),
-    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
+    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" },
 )(basicStyle);
 
 const ConnectMarker = styled(
@@ -88,7 +89,7 @@ const ConnectMarker = styled(
             ></path>
         </g>
     ),
-    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
+    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" },
 )(basicStyle);
 
 export type MeasureInteractionPositions = {
@@ -115,6 +116,7 @@ export function MeasureInteractions() {
     const pointLines = useAppSelector(selectPointLines);
     const widgetIsEnabled =
         useAppSelector(selectEnabledWidgets).find((widget) => widget.key === featuresConfig.measure.key) !== undefined;
+    const openWidget = useOpenWidget();
 
     return (
         <>
@@ -136,14 +138,14 @@ export function MeasureInteractions() {
                                         name={`infoMeasure-${idx}`}
                                         onClick={() => {
                                             dispatch(measureActions.selectMeasureSet(idx));
-                                            dispatch(explorerActions.forceOpenWidget(featuresConfig.measure.key));
+                                            openWidget(featuresConfig.measure.key, { force: true });
                                         }}
                                     />
                                 )}
                             </>
                         }
                     </Fragment>
-                ) : null
+                ) : null,
             )}
             {measure.duoMeasurementValues.map((result, idx) =>
                 result ? (
@@ -191,7 +193,7 @@ export function MeasureInteractions() {
                             }}
                         />
                     </Fragment>
-                ) : null
+                ) : null,
             )}
             {areas.map((area, idx) =>
                 area.points.length && area.area !== -1 ? (
@@ -224,11 +226,11 @@ export function MeasureInteractions() {
                             name={`infoArea-${idx}`}
                             onClick={() => {
                                 dispatch(areaActions.setCurrentArea(idx));
-                                dispatch(explorerActions.forceOpenWidget(featuresConfig.area.key));
+                                openWidget(featuresConfig.area.key, { force: true });
                             }}
                         />
                     </Fragment>
-                ) : null
+                ) : null,
             )}
 
             {pointLines.map((pointLine, idx) => (
@@ -272,7 +274,7 @@ export function MeasureInteractions() {
                                 name={`infoPl-${idx}`}
                                 onClick={() => {
                                     dispatch(pointLineActions.setCurrent(idx));
-                                    dispatch(explorerActions.forceOpenWidget(featuresConfig.pointLine.key));
+                                    openWidget(featuresConfig.pointLine.key, { force: true });
                                 }}
                             />
                         </>

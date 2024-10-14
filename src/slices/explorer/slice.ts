@@ -50,7 +50,7 @@ const initialState: State = {
         padWidgetsTop: false,
     },
     widgetGroupPanelState: {
-        open: true,
+        open: false,
         expanded: false,
     },
     maximized: [],

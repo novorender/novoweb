@@ -36,6 +36,7 @@ export enum Permission {
     FormsFill = "forms:fill",
     FormsManage = "forms:manage",
     FormsView = "forms:view",
+    FormsSign = "forms:sign",
     Group = "group",
     GroupManage = "group:manage",
     GroupRead = "group:read",
@@ -88,4 +89,5 @@ export enum Permission {
     WidgetSearch = "widget:search",
     WidgetSelectionBasket = "widget:selectionBasket",
     WidgetShareLink = "widget:shareLink",
+    WidgetPointVisualization = "widget:pointVisualization",
 }
