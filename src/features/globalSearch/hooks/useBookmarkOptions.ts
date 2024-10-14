@@ -11,11 +11,15 @@ export function useBookmarkOptions(skip: boolean) {
     const bookmarks = useAppSelector(selectBookmarks);
 
     return useMemo(() => {
+        if (skip) {
+            return [];
+        }
+
         return bookmarks.map((bm) => ({
             id: bm.id,
             label: bm.name,
             bookmark: bm,
             category: Category.Bookmark as const,
         }));
-    }, [bookmarks]);
+    }, [bookmarks, skip]);
 }

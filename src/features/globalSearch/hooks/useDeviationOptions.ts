@@ -6,11 +6,11 @@ import { AsyncStatus } from "types/misc";
 
 import { Category } from "../types";
 
-export function useDeviationOptions() {
+export function useDeviationOptions(skip: boolean) {
     const profiles = useAppSelector(selectDeviationProfiles);
 
     return useMemo(() => {
-        if (profiles.status !== AsyncStatus.Success) {
+        if (profiles.status !== AsyncStatus.Success || skip) {
             return [];
         }
 
@@ -20,5 +20,5 @@ export function useDeviationOptions() {
             profile,
             category: Category.Deviation,
         }));
-    }, [profiles]);
+    }, [profiles, skip]);
 }

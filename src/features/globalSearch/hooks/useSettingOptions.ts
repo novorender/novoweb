@@ -1,22 +1,18 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Permission } from "apis/dataV2/permissions";
 import { useAppSelector } from "app/redux-store-interactions";
 import { selectSubtrees, SubtreeStatus } from "features/render";
-import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 
 import { Category } from "../types";
 
-export function useSettingOptions() {
+export function useSettingOptions(skip: boolean) {
     const { t } = useTranslation();
-    const checkPermission = useCheckProjectPermission();
-    const canManage = checkPermission(Permission.SceneManage);
 
     const subtrees = useAppSelector(selectSubtrees);
 
     return useMemo(() => {
-        if (!canManage) {
+        if (skip) {
             return [];
         }
 
@@ -325,5 +321,5 @@ export function useSettingOptions() {
                 category: Category.Setting,
             };
         });
-    }, [canManage, t, subtrees]);
+    }, [skip, t, subtrees]);
 }

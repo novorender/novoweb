@@ -93,17 +93,21 @@ export default function GlobalSearchDropdown({ onSelect }: { onSelect?: () => vo
         }
         return availableCategories;
     });
+
+    // There can be more effective categories than available categories
+    // if person set up preferred categories in a project where they have more permissions.
+    // In this case remember these unallowed categories, but don't use them here.
     const effectiveCategories = useMemo(
         () => categories.filter((c) => availableCategories.includes(c)),
         [categories, availableCategories],
     );
     const inputRef = useRef<HTMLInputElement | null>(null);
 
-    const widgetOptions = useWidgetOptions();
-    const groupOptions = useGroupOptions();
-    const bookmarkOptions = useBookmarkOptions(!term);
-    const deviationOptions = useDeviationOptions();
-    const settingOptions = useSettingOptions();
+    const widgetOptions = useWidgetOptions(!effectiveCategories.includes(Category.Widget));
+    const groupOptions = useGroupOptions(!effectiveCategories.includes(Category.Group));
+    const bookmarkOptions = useBookmarkOptions(!term || !effectiveCategories.includes(Category.Bookmark));
+    const deviationOptions = useDeviationOptions(!effectiveCategories.includes(Category.Deviation));
+    const settingOptions = useSettingOptions(!effectiveCategories.includes(Category.Setting));
     const [objectOptions, loadingObjectOptions] = useObjectOptions(
         effectiveCategories.includes(Category.Object) ? term : "",
     );
@@ -119,12 +123,12 @@ export default function GlobalSearchDropdown({ onSelect }: { onSelect?: () => vo
 
     const options = useMemo(() => {
         const allOptions = [
-            ...(effectiveCategories.includes(Category.Widget) ? widgetOptions : []),
-            ...(effectiveCategories.includes(Category.Group) ? groupOptions : []),
-            ...(effectiveCategories.includes(Category.Bookmark) ? bookmarkOptions : []),
-            ...(effectiveCategories.includes(Category.Object) ? objectOptions : []),
-            ...(effectiveCategories.includes(Category.Deviation) ? deviationOptions : []),
-            ...(effectiveCategories.includes(Category.Setting) ? settingOptions : []),
+            ...widgetOptions,
+            ...groupOptions,
+            ...bookmarkOptions,
+            ...objectOptions,
+            ...deviationOptions,
+            ...settingOptions,
         ];
 
         return allOptions.sort((a, b) => {
@@ -135,15 +139,7 @@ export default function GlobalSearchDropdown({ onSelect }: { onSelect?: () => vo
             }
             return compareStrings(a.label, b.label);
         }) as SearchOption[];
-    }, [
-        widgetOptions,
-        groupOptions,
-        bookmarkOptions,
-        objectOptions,
-        deviationOptions,
-        settingOptions,
-        effectiveCategories,
-    ]);
+    }, [widgetOptions, groupOptions, bookmarkOptions, objectOptions, deviationOptions, settingOptions]);
 
     const handleSelect = useCallback(
         async (newValue: string | SearchOption | null) => {

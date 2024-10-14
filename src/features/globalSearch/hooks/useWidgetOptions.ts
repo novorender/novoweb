@@ -6,16 +6,20 @@ import { selectEnabledWidgets } from "slices/explorer";
 
 import { Category } from "../types";
 
-export function useWidgetOptions() {
+export function useWidgetOptions(skip: boolean) {
     const widgets = useAppSelector(selectEnabledWidgets);
     const { t } = useTranslation();
 
     return useMemo(() => {
+        if (skip) {
+            return [];
+        }
+
         return widgets.map((w) => ({
             id: `widget-${w.key}`,
             label: t(w.nameKey),
             widget: w,
             category: Category.Widget as const,
         }));
-    }, [t, widgets]);
+    }, [t, widgets, skip]);
 }

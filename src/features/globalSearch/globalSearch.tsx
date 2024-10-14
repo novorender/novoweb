@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { HudPanel } from "components/hudPanel";
@@ -9,13 +9,6 @@ const GlobalSearchDropdown = lazy(() => import("./globalSearchDropdown"));
 export function GlobalSearch() {
     const { t } = useTranslation();
     const [show, setShow] = useState(false);
-    const inputRef = useRef<HTMLDivElement | null>(null);
-
-    const focusInput = () => {
-        setTimeout(() => {
-            inputRef.current?.querySelector("input")?.focus();
-        }, 100);
-    };
 
     const hide = useCallback(() => {
         setShow(false);
@@ -25,7 +18,6 @@ export function GlobalSearch() {
         const onKeyDown = (e: KeyboardEvent) => {
             if (!show && (e.ctrlKey || e.metaKey) && e.code === "KeyK") {
                 setShow(true);
-                focusInput();
             }
             if (show && e.code === "Escape") {
                 hide();
