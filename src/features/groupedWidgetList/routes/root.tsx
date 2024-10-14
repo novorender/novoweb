@@ -18,7 +18,6 @@ import { Accordion } from "components/accordion";
 import { AccordionDetails } from "components/accordionDetails";
 import { AccordionSummary } from "components/accordionSummary";
 import { FeatureGroupKey, featureGroups, featuresConfig, FeatureType, Widget, WidgetKey } from "config/features";
-import { ShareLink } from "features/shareLink";
 import { sorting } from "features/widgetList/sorting";
 import {
     selectEnabledWidgets,
@@ -104,6 +103,7 @@ export function Root({
                               (widget) =>
                                   (widget.type === FeatureType.Widget || widget.type === FeatureType.AdminWidget) &&
                                   "groups" in widget &&
+                                  widget.key !== featuresConfig.shareLink.key && // share link is now in primary menu
                                   widget.groups.includes(group.key as never),
                           ),
             };
@@ -156,23 +156,19 @@ export function Root({
 
                                             return (
                                                 <Grid sx={{ mb: 1 }} xs={4} item key={type + key}>
-                                                    {key === featuresConfig.shareLink.key ? (
-                                                        <ShareLink />
-                                                    ) : (
-                                                        <WidgetMenuButtonWrapper
-                                                            activeCurrent={activeCurrent}
-                                                            activeElsewhere={activeElsewhere || unavailable}
-                                                            onClick={unavailable ? undefined : handleClick(key)}
+                                                    <WidgetMenuButtonWrapper
+                                                        activeCurrent={activeCurrent}
+                                                        activeElsewhere={activeElsewhere || unavailable}
+                                                        onClick={unavailable ? undefined : handleClick(key)}
+                                                    >
+                                                        <IconButton
+                                                            disabled={activeElsewhere || unavailable}
+                                                            size="large"
                                                         >
-                                                            <IconButton
-                                                                disabled={activeElsewhere || unavailable}
-                                                                size="large"
-                                                            >
-                                                                <Icon />
-                                                            </IconButton>
-                                                            <Typography textAlign={"center"}>{t(nameKey)}</Typography>
-                                                        </WidgetMenuButtonWrapper>
-                                                    )}
+                                                            <Icon />
+                                                        </IconButton>
+                                                        <Typography textAlign={"center"}>{t(nameKey)}</Typography>
+                                                    </WidgetMenuButtonWrapper>
                                                 </Grid>
                                             );
                                         })}
