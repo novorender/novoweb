@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Widget, WidgetKey } from "config/features";
+import { useRemoveWidget } from "hooks/useRemoveWidget";
 import {
     explorerActions,
     selectFavoriteWidgets,
@@ -14,7 +15,6 @@ import {
     selectNewDesign,
     selectPositionedWidgets,
 } from "slices/explorer";
-import { mixpanel } from "utils/mixpanel";
 
 import { Divider } from "./divider";
 
@@ -56,11 +56,12 @@ function WidgetHeaderNew({
     const minimized = useAppSelector(selectMinimized) === key;
     const isFavorite = useAppSelector((state) => selectFavoriteWidgets(state).includes(key));
     const dispatch = useAppDispatch();
+    const removeWidget = useRemoveWidget();
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const handleClose = () => {
-        dispatch(explorerActions.removeWidgetSlot(key));
+        removeWidget(key);
     };
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
@@ -220,12 +221,12 @@ function WidgetHeaderOld({
     const maximized = useAppSelector(selectMaximized).includes(key);
     const minimized = useAppSelector(selectMinimized) === key;
     const dispatch = useAppDispatch();
+    const removeWidget = useRemoveWidget();
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const handleClose = () => {
-        mixpanel?.track("Closed Widget", { "Widget Key": key });
-        dispatch(explorerActions.removeWidgetSlot(key));
+        removeWidget(key);
     };
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {

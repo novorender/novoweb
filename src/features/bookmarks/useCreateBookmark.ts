@@ -17,7 +17,6 @@ import {
     selectSelectedSubprofileIndex,
 } from "features/deviations/selectors";
 import { selectFollowPath } from "features/followPath/followPathSlice";
-import { selectAlwaysShowMarkers } from "features/forms/slice";
 import {
     selectManholeCollisionSettings,
     selectManholeCollisionTarget,
@@ -74,7 +73,6 @@ export function useCreateBookmark() {
     const deviationLegendFloating = useAppSelector(selectIsLegendFloating);
     const deviationLegendGroups = useAppSelector(selectDeviationLegendGroups);
     const arcgisFeatureServers = useAppSelector(selectArcgisFeatureServers);
-    const alwaysShowMarkerForms = useAppSelector(selectAlwaysShowMarkers);
 
     const {
         state: { view },
@@ -272,9 +270,6 @@ export function useCreateBookmark() {
                               })),
                           }
                         : undefined,
-                forms: {
-                    alwaysShowMarkers: alwaysShowMarkerForms,
-                },
             },
         };
     };

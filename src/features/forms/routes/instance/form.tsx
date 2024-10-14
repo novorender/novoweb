@@ -3,7 +3,7 @@ import { ChangeEvent, Fragment, type SetStateAction, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Permission } from "apis/dataV2/permissions";
-import { Divider, TextField } from "components";
+import { Divider, ScrollBox, TextField } from "components";
 import { Signature, Signatures } from "features/forms/components/signatures";
 import { TransformEditor } from "features/forms/components/transformEditor";
 import { type Form, type FormItem as FItype } from "features/forms/types";
@@ -14,7 +14,7 @@ import { FormItem } from "./formItem";
 
 interface FormProperties {
     form?: Partial<Form>;
-    title?: string;
+    title: string;
     handleTitleChange?: (event: ChangeEvent<HTMLInputElement>) => void;
     items?: FItype[];
     setItems?: (item: SetStateAction<FItype[]>) => void;
@@ -47,22 +47,16 @@ export function Form({
     const isGeoForm = useMemo(() => Boolean(form?.location), [form]);
 
     return (
-        <>
-            {isGeoForm ? (
-                <Box mt={2} mb={isFinal ? 0 : 2}>
-                    <TextField
-                        label={t("formName")}
-                        value={title}
-                        onChange={handleTitleChange}
-                        fullWidth
-                        disabled={disabled || !canEdit || isFinal}
-                    />
-                </Box>
-            ) : (
-                <Typography fontWeight={600} mb={isFinal ? 0 : 2}>
-                    {form?.title}
-                </Typography>
-            )}
+        <ScrollBox my={1} px={1}>
+            <Box mt={2} mb={isFinal ? 0 : 2}>
+                <TextField
+                    label={t("formName")}
+                    value={title}
+                    onChange={handleTitleChange}
+                    fullWidth
+                    disabled={disabled || !canEdit || isFinal}
+                />
+            </Box>
             {finalSignature && (
                 <List dense sx={{ my: 2, bgcolor: theme.palette.grey[100] }}>
                     <Signature signature={finalSignature!} />
@@ -84,6 +78,6 @@ export function Form({
                 )}
                 <Signatures signatures={form?.signatures} />
             </Stack>
-        </>
+        </ScrollBox>
     );
 }

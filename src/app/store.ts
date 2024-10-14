@@ -24,6 +24,7 @@ import { manholeReducer } from "features/manhole";
 import { measureReducer } from "features/measure";
 import { myLocationReducer } from "features/myLocation";
 import { offlineReducer } from "features/offline";
+import { omega365Reducer } from "features/omega365";
 import { orthoCamReducer } from "features/orthoCam";
 import { clippingOutlineLaserReducer } from "features/outlineLaser";
 import { pimsReducer } from "features/pims";
@@ -74,6 +75,7 @@ const rootReducer = combineReducers({
     [xsiteManageApi.reducerPath]: xsiteManageApi.reducer,
     [dataV2Api.reducerPath]: dataV2Api.reducer,
     arcgis: arcgisSlice.reducer,
+    omega365: omega365Reducer,
     [arcgisApi.reducerPath]: arcgisApi.reducer,
     [clashApi.reducerPath]: clashApi.reducer,
     clash: clashReducer,

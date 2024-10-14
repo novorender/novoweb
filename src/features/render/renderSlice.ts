@@ -912,6 +912,7 @@ export const selectSceneOrganization = (state: RootState) => state.render.sceneO
 export const selectGeneratedParametricData = (state: RootState) => state.render.generatedParametricData;
 export const selectClassificationColorGradient = (state: RootState) => state.render.points.classificationColorGradient;
 export const selectDefaultPointVisualization = (state: RootState) => state.render.points.defaultPointVisualization;
+export const selectIsMobile = (state: RootState) => state.render.deviceProfile.isMobile;
 
 const { reducer } = renderSlice;
 const actions = { ...renderSlice.actions, initScene, resetView, selectBookmark };
