@@ -359,6 +359,7 @@ function subtreesToHide(
 }
 
 function SwitchWrapper(props: BoxProps) {
+    const theme = useTheme();
     const highlightSetting = useAppSelector(selectHighlightSetting);
     const history = useHistory();
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -385,14 +386,16 @@ function SwitchWrapper(props: BoxProps) {
                 }
 
                 dispatch(explorerActions.setHighlightSetting(null));
-                field.animate([{ background: "unset" }, { background: "rgb(13, 71, 161)" }, { background: "unset" }], {
-                    duration: 500,
+                field.animate([{ background: theme.palette.primary.main }], {
+                    duration: 250,
                     delay: 200,
+                    direction: "alternate",
+                    iterations: 2,
                 });
                 field.scrollIntoView();
             }
         }
-    }, [history, highlightSetting, dispatch]);
+    }, [history, highlightSetting, dispatch, theme]);
 
     return <Box {...props} ref={containerRef} />;
 }

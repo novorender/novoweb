@@ -1,4 +1,4 @@
-import { AccordionProps } from "@mui/material";
+import { AccordionProps, useTheme } from "@mui/material";
 import { SyntheticEvent, useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 
@@ -9,6 +9,7 @@ import { sleep } from "utils/time";
 
 export function AdvSettingsAccordion(props: AccordionProps) {
     const [expanded, setExpanded] = useState(false);
+    const theme = useTheme();
     const highlightSetting = useAppSelector(selectHighlightSetting);
     const dispatch = useAppDispatch();
     const history = useHistory();
@@ -35,13 +36,15 @@ export function AdvSettingsAccordion(props: AccordionProps) {
                 return;
             }
 
-            field.animate([{ background: "unset" }, { background: "rgb(13, 71, 161)" }, { background: "unset" }], {
-                duration: 500,
+            field.animate([{ background: theme.palette.primary.main }], {
+                duration: 250,
                 delay: 200,
+                direction: "alternate",
+                iterations: 2,
             });
             field.scrollIntoView();
         }
-    }, [dispatch, highlightSetting, history, id, expanded]);
+    }, [dispatch, highlightSetting, history, id, expanded, theme]);
 
     const handleChange = (_e: SyntheticEvent, newExpanded: boolean) => {
         setExpanded(newExpanded);

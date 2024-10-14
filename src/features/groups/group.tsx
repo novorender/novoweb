@@ -23,6 +23,7 @@ import {
     MenuItem,
     styled,
     Typography,
+    useTheme,
 } from "@mui/material";
 import { MouseEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -53,6 +54,7 @@ export const StyledCheckbox = styled(Checkbox)`
 
 export function Group({ group, disabled }: { group: ObjectGroup; disabled: boolean }) {
     const { t } = useTranslation();
+    const theme = useTheme();
     const history = useHistory();
     const match = useRouteMatch();
     const checkPermission = useCheckProjectPermission();
@@ -71,13 +73,15 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
             const btn = buttonRef.current;
             if (btn) {
                 btn.scrollIntoView();
-                btn.animate([{ background: "unset" }, { background: "rgb(13, 71, 161)" }, { background: "unset" }], {
-                    duration: 500,
+                btn.animate([{ background: theme.palette.primary.main }], {
+                    duration: 250,
                     delay: 200,
+                    direction: "alternate",
+                    iterations: 2,
                 });
             }
         }
-    }, [dispatch, highlightGroupInWidget, group.id]);
+    }, [dispatch, highlightGroupInWidget, group.id, theme]);
 
     const toggleColorPicker = (event?: MouseEvent<HTMLElement>) => {
         setColorPickerAnchor(!colorPickerAnchor && event?.currentTarget ? event.currentTarget : null);
