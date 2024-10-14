@@ -78,9 +78,7 @@ export function WidgetGroupPanel() {
 
     const handleWidgetClick = (widgetKey: WidgetKey) => {
         closePopper();
-        if (widgetKey !== featuresConfig.shareLink.key) {
-            openWidget(widgetKey);
-        }
+        openWidget(widgetKey);
     };
 
     const nonEmptyGroups = useMemo(() => {
@@ -90,7 +88,7 @@ export function WidgetGroupPanel() {
                     (widget) =>
                         (widget.type === FeatureType.Widget || widget.type === FeatureType.AdminWidget) &&
                         "groups" in widget &&
-                        widget.key !== "shareLink" && // share link is no longer widget and is accessible from bottom menu
+                        widget.key !== featuresConfig.shareLink.key && // share link is now in primary menu
                         widget.groups.includes(group.key as never),
                 );
 
