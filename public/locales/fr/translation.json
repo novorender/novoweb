@@ -706,5 +706,7 @@
     "widget": "widget",
     "deviationLowercase": "écart",
     "setting": "paramètre",
-    "collection": "Collection"
+    "collection": "Collection",
+    "tmZone": "Zone TM",
+    "beta": "Bêta"
 }

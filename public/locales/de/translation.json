@@ -706,5 +706,7 @@
     "widget": "widget",
     "deviationLowercase": "abweichung",
     "setting": "einstellung",
-    "collection": "Sammlung"
+    "collection": "Sammlung",
+    "tmZone": "TM-Zone",
+    "beta": "Beta"
 }

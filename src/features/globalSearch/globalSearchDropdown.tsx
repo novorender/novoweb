@@ -170,12 +170,11 @@ export default function GlobalSearchDropdown({ onSelect }: { onSelect?: () => vo
                 }
                 case Category.Object: {
                     dispatch(renderActions.setMainObject(newValue.object.id));
-                    newValue.object.loadMetaData().then((data) => {
-                        const sphere = data.bounds?.sphere;
-                        if (sphere) {
-                            flyTo({ sphere });
-                        }
-                    });
+                    const data = await newValue.object.loadMetaData();
+                    const sphere = data.bounds?.sphere;
+                    if (sphere) {
+                        flyTo({ sphere });
+                    }
                     break;
                 }
                 case Category.Deviation: {
@@ -201,13 +200,16 @@ export default function GlobalSearchDropdown({ onSelect }: { onSelect?: () => vo
         [openWidget, selectBookmark, dispatch, flyTo, onSelect, shareLink, t],
     );
 
-    const updateCategories = (categories: Category[]) => {
-        const invisibleCategories = categories.filter((c) => !availableCategories.includes(c));
-        const newCategories = [...categories, ...invisibleCategories];
-        setCategories(newCategories);
-        localStorage.setItem(CATEGORIES_LOCAL_STORAGE_KEY, JSON.stringify(newCategories));
-        inputRef.current?.focus();
-    };
+    const updateCategories = useCallback(
+        (update: Category[]) => {
+            const invisibleCategories = categories.filter((c) => !availableCategories.includes(c));
+            const newCategories = [...update, ...invisibleCategories];
+            setCategories(newCategories);
+            localStorage.setItem(CATEGORIES_LOCAL_STORAGE_KEY, JSON.stringify(newCategories));
+            inputRef.current?.focus();
+        },
+        [categories, availableCategories],
+    );
 
     return (
         <Box sx={{ display: "flex", gap: 1 }}>
@@ -334,11 +336,12 @@ function CategorySelect({
 function SearchOptionItem({ option, term }: { option: SearchOption; term: string }) {
     const { t } = useTranslation();
     const theme = useTheme();
-    let addon: ReactNode | null = null;
-    let sublabel: ReactNode | null = null;
     const dispatchObjectGroups = useDispatchObjectGroups();
 
+    let addon: ReactNode | null = null;
+    let sublabel: ReactNode | null = null;
     let title = "";
+
     switch (option.category) {
         case Category.Widget: {
             addon = (
@@ -394,6 +397,8 @@ function SearchOptionItem({ option, term }: { option: SearchOption; term: string
                     </Typography>
                 );
             }
+
+            break;
         }
     }
 
@@ -426,6 +431,7 @@ function getCategoryLabel(t: ReturnType<typeof useTranslation>["t"], category: C
 }
 
 function Highlight({ text, term }: { text: string; term: string }) {
+    const theme = useTheme();
     const parts: { text: string; highlight: boolean }[] = [];
     let pos = 0;
 
@@ -449,7 +455,7 @@ function Highlight({ text, term }: { text: string; term: string }) {
         <>
             {parts.map(({ text, highlight }, i) =>
                 highlight ? (
-                    <span key={i} style={{ fontWeight: "bold" }}>
+                    <span key={i} style={{ color: theme.palette.primary.main }}>
                         {text}
                     </span>
                 ) : (

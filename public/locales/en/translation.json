@@ -43,7 +43,7 @@
     "remove": "Remove",
     "deviation": "Deviation:",
     "back": "Back",
-    "2d": "2d",
+    "2d": "2D",
     "startOver": "Start over",
     "profileStartName": "Profile start:",
     "profileEnd": "Profile end:",
@@ -706,5 +706,7 @@
     "widget": "widget",
     "deviationLowercase": "deviation",
     "setting": "setting",
-    "collection": "Collection"
+    "collection": "Collection",
+    "tmZone": "TM Zone",
+    "beta": "Beta"
 }

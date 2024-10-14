@@ -706,5 +706,7 @@
     "widget": "widget",
     "deviationLowercase": "avvik",
     "setting": "innstilling",
-    "collection": "Samling"
+    "collection": "Samling",
+    "tmZone": "TM-sone",
+    "beta": "Beta"
 }
