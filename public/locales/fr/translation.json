@@ -699,5 +699,12 @@
     "noClippingPlanes": "Aucun plan de découpe",
     "invalidUrl": "URL invalide",
     "hidden": "Caché",
-    "capturePhoto": "Prendre une photo"
+    "capturePhoto": "Prendre une photo",
+    "loading": "Chargement...",
+    "what": "quoi",
+    "objectLowercase": "objet",
+    "widget": "widget",
+    "deviationLowercase": "écart",
+    "setting": "paramètre",
+    "collection": "Collection"
 }
