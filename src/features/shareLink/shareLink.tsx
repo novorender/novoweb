@@ -1,5 +1,5 @@
 import { Close } from "@mui/icons-material";
-import { IconButton, ListItemIcon, ListItemText, MenuItem, Snackbar, Typography } from "@mui/material";
+import { Box, IconButton, Snackbar, Tooltip, Typography } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -19,7 +19,13 @@ enum Status {
     Success,
 }
 
-export function ShareLink({ asMenuItem, onClick }: { asMenuItem?: boolean; onClick?: () => void }) {
+export function ShareLink({
+    variant = "default",
+    onClick,
+}: {
+    variant?: "default" | "primaryMenu";
+    onClick?: () => void;
+}) {
     const { t } = useTranslation();
     const { Icon, nameKey, offline } = featuresConfig.shareLink;
 
@@ -79,7 +85,7 @@ export function ShareLink({ asMenuItem, onClick }: { asMenuItem?: boolean; onCli
             ]);
         }
 
-        if (asMenuItem) {
+        if (variant === "primaryMenu") {
             dispatch(explorerActions.setSnackbarMessage({ msg: t("copiedToClipboard") }));
         } else {
             setStatus(Status.Success);
@@ -87,14 +93,15 @@ export function ShareLink({ asMenuItem, onClick }: { asMenuItem?: boolean; onCli
         onClick?.();
     };
 
-    if (asMenuItem) {
+    if (variant === "primaryMenu") {
         return (
-            <MenuItem disabled={disabled} onClick={createLink}>
-                <ListItemIcon>
-                    <Icon />
-                </ListItemIcon>
-                <ListItemText>{t(nameKey)}</ListItemText>
-            </MenuItem>
+            <Tooltip title={t(nameKey)} placement="top">
+                <Box>
+                    <IconButton onClick={createLink} disabled={disabled}>
+                        <Icon />
+                    </IconButton>
+                </Box>
+            </Tooltip>
         );
     }
 
