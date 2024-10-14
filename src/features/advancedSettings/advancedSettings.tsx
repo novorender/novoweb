@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Link, MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
 
 import { useSaveCustomPropertiesMutation } from "apis/dataV2/dataV2Api";
-import { useAppSelector } from "app/redux-store-interactions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Divider,
     LinearProgress,
@@ -41,6 +41,7 @@ import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import {
+    explorerActions,
     selectCanvasContextMenuFeatures,
     selectEnabledWidgetsWithoutPermissionCheck,
     selectHighlightSetting,
@@ -361,6 +362,7 @@ function SwitchWrapper(props: BoxProps) {
     const highlightSetting = useAppSelector(selectHighlightSetting);
     const history = useHistory();
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const dispatch = useAppDispatch();
 
     useEffect(() => {
         highlight();
@@ -382,6 +384,7 @@ function SwitchWrapper(props: BoxProps) {
                     return;
                 }
 
+                dispatch(explorerActions.setHighlightSetting(null));
                 field.animate([{ background: "unset" }, { background: "rgb(13, 71, 161)" }, { background: "unset" }], {
                     duration: 500,
                     delay: 200,
@@ -389,7 +392,7 @@ function SwitchWrapper(props: BoxProps) {
                 field.scrollIntoView();
             }
         }
-    }, [history, highlightSetting]);
+    }, [history, highlightSetting, dispatch]);
 
     return <Box {...props} ref={containerRef} />;
 }

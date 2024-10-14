@@ -23,7 +23,7 @@ export function AdvSettingsAccordion(props: AccordionProps) {
                 return;
             }
 
-            dispatch(explorerActions.setHighlightSetting(undefined));
+            dispatch(explorerActions.setHighlightSetting(null));
 
             if (!expanded) {
                 setExpanded(true);

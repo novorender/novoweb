@@ -90,7 +90,7 @@ const initialState: State = {
     newDesign: false,
     canUseNewDesign: false,
     snackbarMessage: null,
-    highlightSetting: undefined,
+    highlightSetting: null,
 };
 
 export const explorerSlice = createSlice({

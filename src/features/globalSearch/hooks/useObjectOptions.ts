@@ -2,6 +2,7 @@ import { SearchPattern } from "@novorender/webgl-api";
 import { useEffect, useMemo, useState } from "react";
 
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { getObjectNameFromPath } from "utils/objectData";
 
 import { Category, OptionObject } from "../types";
 
@@ -40,6 +41,7 @@ export function useObjectOptions(term: string) {
             const abort = new AbortController();
             state.abortController = abort;
 
+            let searchString = cleanTerm;
             setLoading(true);
             let searchPattern: SearchPattern[] | string;
             if (term.includes("=")) {
@@ -50,6 +52,7 @@ export function useObjectOptions(term: string) {
                     exact = true;
                     value = value.slice(0, value.length - 1);
                 }
+                searchString = value;
                 searchPattern = [{ property, value, exact }];
             } else {
                 searchPattern = term;
@@ -88,11 +91,13 @@ export function useObjectOptions(term: string) {
                     }
                 }
 
+                const label = getObjectNameFromPath(meta.path);
                 result.push({
                     id: `object-${obj.id}`,
-                    label: meta.name,
+                    label,
                     object: obj,
                     match,
+                    searchString,
                     category: Category.Object,
                 });
 
@@ -110,7 +115,7 @@ export function useObjectOptions(term: string) {
             if (state.timeout) {
                 clearTimeout(state.timeout);
             }
-            state.abortController?.abort();
+            state.abortController?.abort("stale");
             setLoading(false);
         };
     }, [db, term]);

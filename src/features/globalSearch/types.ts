@@ -27,5 +27,6 @@ export type OptionObject = {
     label: string;
     object: HierarcicalObjectReference;
     match?: string;
+    searchString?: string;
     category: Category.Object;
 };

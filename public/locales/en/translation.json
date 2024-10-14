@@ -579,5 +579,12 @@
     "toExitCurrentSelectionMode": "to exit current selection mode",
     "copiedToClipboard": "Copied to clipboard",
     "showPlane": "Show plane",
-    "hidePlane": "Hide plane"
+    "hidePlane": "Hide plane",
+    "loading": "Loading...",
+    "what": "what",
+    "object": "object",
+    "widget": "widget",
+    "deviationLowercase": "deviation",
+    "setting": "setting",
+    "collection": "Collection"
 }

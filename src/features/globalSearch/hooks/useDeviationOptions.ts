@@ -15,7 +15,7 @@ export function useDeviationOptions() {
         }
 
         return profiles.data.profiles.map((profile) => ({
-            id: `deviation-${profile.id}`,
+            id: profile.id,
             label: profile.name,
             profile,
             category: Category.Deviation,
