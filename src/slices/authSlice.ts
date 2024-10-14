@@ -12,6 +12,7 @@ export type User = {
     user: string;
     name?: string;
     organization: string;
+    name: string;
     role: string | undefined;
     features: {
         [k: string]: Record<string, boolean | undefined> | boolean | undefined;

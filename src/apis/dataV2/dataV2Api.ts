@@ -224,6 +224,10 @@ export const dataV2Api = createApi({
                 body: data,
             }),
         }),
+        getIntercomConfig: builder.query<{ appId: string; hash: string }, void>({
+            query: () => `/explorer/intercom`,
+            keepUnusedDataFor: Number.MAX_SAFE_INTEGER,
+        }),
     }),
 });
 
@@ -267,4 +271,5 @@ export const {
     useSaveCustomPropertiesMutation,
     useLazyGetDitioTokenQuery,
     useSaveDitioConfigMutation,
+    useGetIntercomConfigQuery,
 } = dataV2Api;
