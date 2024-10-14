@@ -3,7 +3,6 @@ import { Box, Divider, IconButton, Tooltip, useTheme } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Permission } from "apis/dataV2/permissions";
 import { useAppSelector } from "app/redux-store-interactions";
 import { HudPanel } from "components/hudPanel";
 import { CameraSpeed } from "features/cameraSpeed";
@@ -17,7 +16,6 @@ import { ShareLink } from "features/shareLink";
 import { StepBack } from "features/stepBack";
 import { StepForwards } from "features/stepForwards";
 import { ViewOnlySelected } from "features/viewOnlySelected";
-import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useToggle } from "hooks/useToggle";
 import { selectWidgetGroupPanelState } from "slices/explorer";
 
@@ -30,7 +28,6 @@ export function PrimaryMenuNew() {
     const collapsedWidth = 56;
     const expandedWidthRef = useRef<number>();
     const [width, setWidth] = useState<number | undefined>();
-    const checkPermission = useCheckProjectPermission();
 
     const handleToggle = () => {
         setWidth(open ? collapsedWidth : expandedWidthRef.current);
@@ -90,7 +87,7 @@ export function PrimaryMenuNew() {
                 <StepForwards newDesign />
                 <FlyToSelected newDesign />
                 <OrthoShortcut newDesign />
-                {checkPermission(Permission.WidgetShareLink) && <ShareLink variant="primaryMenu" />}
+                <ShareLink variant="primaryMenu" />
                 <Divider orientation="vertical" variant="middle" flexItem sx={{ mx: 1 }} />
                 <ViewOnlySelected newDesign />
                 <HideSelected newDesign />
