@@ -12,7 +12,7 @@ export function useHandleCanvasCursor() {
     } = useExplorerGlobals();
     const picker = useAppSelector(selectPicker);
     const loadingHandles = useAppSelector(selectLoadingHandles);
-    const [usingSvgCursor, setUsingSvgCursor] = useState<"measure" | "cross" | "standard">("standard");
+    const [usingSvgCursor, setUsingSvgCursor] = useState<"measure" | "cross" | "gizmo" | "standard">("standard");
     const loading = loadingHandles.length !== 0;
 
     useEffect(() => {
@@ -32,7 +32,7 @@ export function useHandleCanvasCursor() {
             Picker.HeightProfileEntity,
         ].includes(picker);
 
-        setUsingSvgCursor(measureCursor ? "measure" : picker === Picker.OutlineLaser ? "cross" : "standard");
+        setUsingSvgCursor(measureCursor ? "measure" : picker === Picker.OutlineLaser ? "gizmo" : "standard");
     }, [picker, canvas]);
 
     useEffect(() => {

@@ -47,7 +47,7 @@ export function useCanvasEventHandlers({
     pointerDownStateRef,
 }: {
     pointerPosRef: MutableRefObject<[x: number, y: number]>;
-    cursor: "measure" | "cross" | "standard";
+    cursor: "measure" | "cross" | "gizmo" | "standard";
     svg: SVGSVGElement | null;
     engine2dRenderFnRef: MutableRefObject<((moved: boolean, isIdleFrame: boolean) => void) | undefined>;
     pointerDownStateRef: MutableRefObject<
@@ -297,7 +297,24 @@ export function useCanvasEventHandlers({
             turnOffLocationAutocenter();
         }
 
-        if (e.buttons === 0 && cursor === "measure") {
+        if (e.buttons === 0 && cursor === "gizmo") {
+            const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
+                sampleDiscRadius: 4,
+                async: false,
+                pickCameraPlane: planePicking,
+            });
+
+            moveSvgCursor({
+                svg,
+                view,
+                size,
+                pickResult: result,
+                x: e.nativeEvent.offsetX,
+                y: e.nativeEvent.offsetY,
+                color: "none",
+                overrideKind: "gizmo",
+            });
+        } else if (e.buttons === 0 && cursor === "measure") {
             const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
                 sampleDiscRadius: 4,
                 async: false,
