@@ -68,15 +68,22 @@ export default function Search() {
     const previousSearchPattern = useRef<SearchPattern[] | string>();
 
     const getSearchPattern = useCallback(() => {
-        const searchPattern = advanced
-            ? advancedInputs.filter(({ property, value }) => property || value)
-            : simpleInput;
+        let searchPattern = advanced ? advancedInputs.filter(({ property, value }) => property || value) : simpleInput;
 
         if (
             (Array.isArray(searchPattern) && !searchPattern.length) ||
             (typeof searchPattern === "string" && searchPattern.length < 3)
         ) {
             return;
+        }
+
+        if (typeof searchPattern !== "string") {
+            searchPattern = searchPattern.map((sp) => {
+                if (typeof sp.value === "string") {
+                    return { ...sp, value: [sp.value] };
+                }
+                return sp;
+            });
         }
 
         return searchPattern;
@@ -169,7 +176,12 @@ export default function Search() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.search} disableShadow={menuOpen}>
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.search}
+                    disableShadow={menuOpen}
+                >
                     {!menuOpen && !minimized ? (
                         <Box component="form" sx={{ mt: 1 }} onSubmit={handleSubmit}>
                             {advanced ? (

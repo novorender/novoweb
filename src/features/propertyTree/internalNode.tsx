@@ -24,13 +24,15 @@ import { FocusEvent, MouseEvent, MutableRefObject, useEffect, useState } from "r
 import { useTranslation } from "react-i18next";
 
 import { useGetPropertyTreeFavoritesQuery, useSetPropertyTreeFavoritesMutation } from "apis/dataV2/dataV2Api";
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LinearProgress } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectProjectIsV2 } from "slices/explorer";
+import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { hslToVec, VecRGBA } from "utils/color";
 import { getAssetUrl } from "utils/misc";
@@ -63,7 +65,8 @@ export function InternalNode({
 
     const [expanded, toggleExpand] = useToggle(false);
     const groups = useAppSelector((state) => selectGroupsAtProperty(state, path));
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.SceneManage);
     const searchStatus = useAppSelector((state) => state.propertyTree.searchStatus);
     const groupsCreationStatus = useAppSelector((state) => state.propertyTree.groupsCreationStatus);
     const isV2 = useAppSelector(selectProjectIsV2);
@@ -348,7 +351,7 @@ export function InternalNode({
                                 onChange={(_evt, checked) => handleVisibilityChange(checked)}
                                 onClick={stopPropagation}
                             />
-                            <Box flex="0 0 auto" sx={{ visibility: isAdmin ? "visible" : "hidden" }}>
+                            <Box flex="0 0 auto" sx={{ visibility: canManage ? "visible" : "hidden" }}>
                                 <IconButton
                                     sx={{ py: 0 }}
                                     aria-haspopup="true"

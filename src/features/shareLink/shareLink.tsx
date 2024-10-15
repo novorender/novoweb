@@ -1,16 +1,16 @@
 import { Close } from "@mui/icons-material";
-import { IconButton, Snackbar, Typography } from "@mui/material";
+import { Box, IconButton, Snackbar, Tooltip, Typography } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { dataApi } from "apis/dataV1";
-import { useAppSelector } from "app/redux-store-interactions";
+import { useSaveBookmarksMutation } from "apis/dataV2/dataV2Api";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { WidgetMenuButtonWrapper } from "components/widgetMenuButtonWrapper";
 import { featuresConfig } from "config/features";
 import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
 import { selectViewMode } from "features/render";
 import { useSceneId } from "hooks/useSceneId";
-import { selectIsOnline } from "slices/explorer";
+import { explorerActions, selectIsOnline } from "slices/explorer";
 import { ViewMode } from "types/misc";
 
 enum Status {
@@ -19,7 +19,13 @@ enum Status {
     Success,
 }
 
-export function ShareLink() {
+export function ShareLink({
+    variant = "default",
+    onClick,
+}: {
+    variant?: "default" | "primaryMenu";
+    onClick?: () => void;
+}) {
     const { t } = useTranslation();
     const { Icon, nameKey, offline } = featuresConfig.shareLink;
 
@@ -27,6 +33,8 @@ export function ShareLink() {
     const viewMode = useAppSelector(selectViewMode);
     const isOnline = useAppSelector(selectIsOnline);
     const sceneId = useSceneId();
+    const [saveBookmarks] = useSaveBookmarksMutation();
+    const dispatch = useAppDispatch();
 
     const [status, setStatus] = useState(Status.Initial);
 
@@ -52,12 +60,13 @@ export function ShareLink() {
             await navigator.clipboard.write([
                 new ClipboardItem({
                     "text/plain": (async () => {
-                        saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id, name: id }], { group: id });
+                        await saveBookmarks({
+                            projectId: sceneId,
+                            bookmarks: [{ ...bm, id, name: id }],
+                            group: id,
+                        }).unwrap();
 
-                        if (!saved) {
-                            throw new Error("Failed to save bookmark");
-                        }
-
+                        saved = true;
                         return blob;
                     })(),
                 }),
@@ -76,8 +85,25 @@ export function ShareLink() {
             ]);
         }
 
-        setStatus(Status.Success);
+        if (variant === "primaryMenu") {
+            dispatch(explorerActions.setSnackbarMessage({ msg: t("copiedToClipboard") }));
+        } else {
+            setStatus(Status.Success);
+        }
+        onClick?.();
     };
+
+    if (variant === "primaryMenu") {
+        return (
+            <Tooltip title={t(nameKey)} placement="top">
+                <Box>
+                    <IconButton onClick={createLink} disabled={disabled}>
+                        <Icon />
+                    </IconButton>
+                </Box>
+            </Tooltip>
+        );
+    }
 
     return (
         <>
@@ -87,7 +113,7 @@ export function ShareLink() {
                 autoHideDuration={2500}
                 open={status === Status.Success}
                 onClose={() => setStatus(Status.Initial)}
-                message="Copied to clipboard"
+                message={t("copiedToClipboard")}
                 action={
                     <IconButton
                         size="small"

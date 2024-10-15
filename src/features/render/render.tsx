@@ -22,6 +22,7 @@ import { useHandleOutlineLasers } from "features/outlineLaser";
 import { PerformanceStats } from "features/performanceStats";
 import { useHandleUrlSearch } from "features/search";
 import { useHandleXsiteManageKeepAlive, useHandleXsiteManageMachineLocations } from "features/xsiteManage";
+import { useRefreshProjectPermissions } from "hooks/useRefreshProjectPermissions";
 import { AsyncStatus } from "types/misc";
 
 import { useCanvasClickHandler } from "./hooks/useCanvasClickHandler";
@@ -37,6 +38,7 @@ import { useHandleGrid } from "./hooks/useHandleGrid";
 import { useHandleHighlights } from "./hooks/useHandleHighlights";
 import { useHandleInit } from "./hooks/useHandleInit";
 import { useHandleInitialBookmark } from "./hooks/useHandleInitialBookmark";
+import { useHandlePointVisualization } from "./hooks/useHandlePointVisualization";
 import { useHandleSubtrees } from "./hooks/useHandleSubtrees";
 import { useHandleTerrain } from "./hooks/useHandleTerrain";
 import { Images } from "./images";
@@ -59,7 +61,7 @@ const Canvas = styled("canvas")(
         bottom: 0;
         left: 0;
         z-index: 0;
-    `
+    `,
 );
 
 const Svg = styled("svg")(
@@ -75,7 +77,7 @@ const Svg = styled("svg")(
         g {
             will-change: transform;
         }
-    `
+    `,
 );
 
 export function Render3D() {
@@ -103,10 +105,11 @@ export function Render3D() {
         (el) => {
             dispatchGlobals(explorerGlobalsActions.update({ canvas: el }));
         },
-        [dispatchGlobals]
+        [dispatchGlobals],
     );
 
     useHandleInit();
+    useRefreshProjectPermissions();
     useHandleInitialBookmark();
     useHandleUrlSearch();
     useHandleCameraMoved({ engine2dRenderFnRef, containers: [htmlInteractionContainer, markersContainer] });
@@ -115,6 +118,7 @@ export function Render3D() {
     useHandleGrid();
     useHandleBackground();
     useHandleHighlights();
+    useHandlePointVisualization();
     useHandleSubtrees();
     useHandleTerrain();
     useHandleAdvancedSettings();

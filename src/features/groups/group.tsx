@@ -28,11 +28,11 @@ import { MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
-import { useAppSelector } from "app/redux-store-interactions";
+import { Permission } from "apis/dataV2/permissions";
 import { Tooltip } from "components";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
 import { ColorPicker } from "features/colorPicker";
-import { selectHasAdminCapabilities } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { rgbToVec, vecToRgb } from "utils/color";
 
 export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
@@ -52,7 +52,8 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
     const { t } = useTranslation();
     const history = useHistory();
     const match = useRouteMatch();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.GroupManage);
     const dispatchObjectGroups = useDispatchObjectGroups();
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -178,7 +179,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
             >
                 <Switch>
                     <Route path={match.path} exact>
-                        {(isAdmin
+                        {(canManage
                             ? [
                                   <MenuItem
                                       key="edit"

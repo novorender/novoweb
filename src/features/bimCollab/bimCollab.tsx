@@ -191,7 +191,12 @@ export default function BimCollab() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.bimcollab} disableShadow />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.bimcollab}
+                    disableShadow
+                />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexGrow={1}

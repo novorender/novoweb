@@ -1,4 +1,4 @@
-import type { SpeedDialActionProps } from "@mui/material";
+import { Box, IconButton, type SpeedDialActionProps, Tooltip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -16,7 +16,7 @@ import { renderActions, selectMainObject } from "features/render";
 
 type Props = SpeedDialActionProps;
 
-export function HideSelected(props: Props) {
+export function HideSelected({ newDesign, ...props }: Props & { newDesign?: boolean }) {
     const { t } = useTranslation();
     const { nameKey, Icon } = featuresConfig["hideSelected"];
     const mainObject = useAppSelector(selectMainObject);
@@ -47,6 +47,18 @@ export function HideSelected(props: Props) {
             dispatchHidden(hiddenActions.setIds([]));
         }
     };
+
+    if (newDesign) {
+        return (
+            <Tooltip title={t(nameKey)} placement="top">
+                <Box>
+                    <IconButton onClick={toggleHideSelected} disabled={disabled}>
+                        <Icon />
+                    </IconButton>
+                </Box>
+            </Tooltip>
+        );
+    }
 
     return (
         <SpeedDialAction

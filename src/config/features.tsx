@@ -1,4 +1,5 @@
 import {
+    AccountTree,
     AccountTreeRounded,
     Attachment,
     Ballot,
@@ -7,10 +8,12 @@ import {
     Category,
     CheckBox,
     ColorLens,
+    ContentCut,
     CropLandscape,
     Domain,
     DownloadForOffline,
     FiberSmartRecord,
+    FilterAlt,
     FlightTakeoff,
     Folder,
     GpsFixed,
@@ -23,6 +26,7 @@ import {
     List,
     MyLocation,
     Person,
+    Power,
     Public,
     Redo,
     RestartAlt,
@@ -37,9 +41,12 @@ import {
     Undo,
     Visibility,
     VisibilityOff,
+    Window,
 } from "@mui/icons-material";
 
 import ClashIcon from "media/icons/clash.svg?react";
+import CrossSectionIcon from "media/icons/cross-section.svg?react";
+import DeviationsIcon from "media/icons/deviations.svg?react";
 import Ditio from "media/icons/ditio.svg?react";
 import Jira from "media/icons/jira-software.svg?react";
 import NewformaKonekt from "media/icons/newforma-konekt.svg?react";
@@ -50,6 +57,7 @@ export enum FeatureType {
     Widget,
     AdminWidget,
     Tag,
+    Group,
 }
 
 export const featureTags = {
@@ -60,6 +68,65 @@ export const featureTags = {
         type: FeatureType.Tag,
     },
 } as const;
+
+export const featureGroups = {
+    clipping: {
+        key: "clipping",
+        nameKey: "clipping",
+        Icon: ContentCut,
+        type: FeatureType.Group,
+    },
+    measure: {
+        key: "measure",
+        nameKey: "measure",
+        Icon: Straighten,
+        type: FeatureType.Group,
+    },
+    filesAndAttributes: {
+        key: "filesAndAttributes",
+        nameKey: "filesAndAttributes",
+        Icon: AccountTree,
+        type: FeatureType.Group,
+    },
+    filter: {
+        key: "filter",
+        nameKey: "filter",
+        Icon: FilterAlt,
+        type: FeatureType.Group,
+    },
+    integrations: {
+        key: "integrations",
+        nameKey: "integrations",
+        Icon: Power,
+        type: FeatureType.Group,
+    },
+    search: {
+        key: "search",
+        nameKey: "search",
+        Icon: Search,
+        type: FeatureType.Group,
+    },
+    settings: {
+        key: "settings",
+        nameKey: "settings",
+        Icon: Settings,
+        type: FeatureType.Group,
+    },
+    other: {
+        key: "other",
+        nameKey: "other",
+        Icon: Window,
+        type: FeatureType.Group,
+    },
+    favorites: {
+        key: "favorites",
+        nameKey: "favorites",
+        Icon: Star,
+        type: FeatureType.Group,
+    },
+} as const;
+
+export type FeatureGroupKey = keyof typeof featureGroups;
 
 export const featuresConfig = {
     omegaPims365: {
@@ -72,6 +139,7 @@ export const featuresConfig = {
         // NOTE(OLA): POC! Enable only for nye veier
         defaultLocked: true,
         offline: false,
+        groups: [featureGroups.integrations.key],
     },
     omega365: {
         key: "omega365",
@@ -80,6 +148,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: true,
         offline: false,
+        groups: [featureGroups.integrations.key],
     },
     xsiteManage: {
         key: "xsiteManage",
@@ -88,6 +157,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: true,
         offline: false,
+        groups: [featureGroups.integrations.key],
     },
     jira: {
         key: "jira",
@@ -96,6 +166,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: true,
         offline: false,
+        groups: [featureGroups.integrations.key],
     },
     area: {
         key: "area",
@@ -104,6 +175,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         tags: [featureTags.review.key],
+        groups: [featureGroups.measure.key],
         offline: true,
     },
     pointLine: {
@@ -113,6 +185,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         tags: [featureTags.review.key],
+        groups: [featureGroups.measure.key],
         offline: true,
     },
     manhole: {
@@ -122,6 +195,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         tags: [featureTags.review.key],
+        groups: [featureGroups.measure.key],
         offline: true,
     },
     heightProfile: {
@@ -131,6 +205,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         tags: [featureTags.review.key],
+        groups: [featureGroups.measure.key],
         offline: true,
     },
     user: {
@@ -140,6 +215,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: false,
+        groups: [featureGroups.settings.key],
     },
     rangeSearch: {
         key: "rangeSearch",
@@ -148,6 +224,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: false,
+        groups: [featureGroups.search.key],
     },
     ditio: {
         key: "ditio",
@@ -156,6 +233,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: true,
         offline: false,
+        groups: [featureGroups.integrations.key],
     },
     myLocation: {
         key: "myLocation",
@@ -164,6 +242,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: true,
+        groups: [featureGroups.other.key],
     },
     bimcollab: {
         key: "bimcollab",
@@ -172,6 +251,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: true,
         offline: false,
+        groups: [featureGroups.integrations.key],
     },
     bimTrack: {
         key: "bimTrack",
@@ -180,6 +260,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: true,
         offline: false,
+        groups: [featureGroups.integrations.key],
     },
     advancedSettings: {
         key: "advancedSettings",
@@ -188,6 +269,7 @@ export const featuresConfig = {
         type: FeatureType.AdminWidget,
         defaultLocked: false,
         offline: false,
+        groups: [featureGroups.settings.key],
     },
     selectionBasket: {
         key: "selectionBasket",
@@ -196,6 +278,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: true,
+        groups: [featureGroups.filesAndAttributes.key],
     },
     modelTree: {
         key: "modelTree",
@@ -204,6 +287,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: false,
+        groups: [featureGroups.filesAndAttributes.key],
     },
     properties: {
         key: "properties",
@@ -212,6 +296,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: true,
+        groups: [featureGroups.filesAndAttributes.key],
     },
     propertyTree: {
         key: "propertyTree",
@@ -220,6 +305,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: false,
+        groups: [featureGroups.filesAndAttributes.key],
     },
     bookmarks: {
         key: "bookmarks",
@@ -228,6 +314,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: true,
+        groups: [featureGroups.filter.key],
     },
     groups: {
         key: "groups",
@@ -236,6 +323,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: true,
+        groups: [featureGroups.filter.key],
     },
     search: {
         key: "search",
@@ -244,6 +332,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: false,
+        groups: [featureGroups.search.key],
     },
     measure: {
         key: "measure",
@@ -253,6 +342,7 @@ export const featuresConfig = {
         defaultLocked: false,
         offline: true,
         tags: [featureTags.review.key],
+        groups: [featureGroups.measure.key],
     },
     outlineLaser: {
         key: "outlineLaser",
@@ -262,6 +352,7 @@ export const featuresConfig = {
         defaultLocked: false,
         offline: true,
         tags: [featureTags.review.key],
+        groups: [featureGroups.measure.key],
     },
     shareLink: {
         key: "shareLink",
@@ -270,6 +361,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: false,
+        groups: [featureGroups.filter.key],
     },
     clippingPlanes: {
         key: "clippingPlanes",
@@ -278,6 +370,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: true,
+        groups: [featureGroups.clipping.key],
     },
     orthoCam: {
         key: "orthoCam",
@@ -286,6 +379,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: true,
+        groups: [featureGroups.other.key],
     },
     images: {
         key: "images",
@@ -294,15 +388,17 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: false,
+        groups: [featureGroups.filesAndAttributes.key],
     },
     deviations: {
         key: "deviations",
         nameKey: "deviations",
-        Icon: BlurOn,
+        Icon: DeviationsIcon,
         type: FeatureType.Widget,
         defaultLocked: false,
         offline: true,
         tags: [featureTags.review.key],
+        groups: [featureGroups.measure.key],
         dependencies: {
             subtrees: [["points"]],
         },
@@ -315,6 +411,16 @@ export const featuresConfig = {
         defaultLocked: false,
         offline: true,
         tags: [featureTags.review.key],
+        groups: [featureGroups.measure.key],
+    },
+    pointVisualization: {
+        key: "pointVisualization",
+        nameKey: "pointVisualization",
+        Icon: BlurOn,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+        offline: true,
+        groups: [featureGroups.settings.key],
     },
     home: {
         key: "home",
@@ -427,6 +533,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: true,
         offline: true,
+        groups: [featureGroups.settings.key],
     },
     arcgis: {
         key: "arcgis",
@@ -435,6 +542,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: true,
         offline: false,
+        groups: [featureGroups.integrations.key],
     },
     forms: {
         key: "forms",
@@ -443,6 +551,7 @@ export const featuresConfig = {
         type: FeatureType.Widget,
         defaultLocked: true,
         offline: false,
+        groups: [featureGroups.filesAndAttributes.key],
     },
     clash: {
         key: "clash",
@@ -452,7 +561,19 @@ export const featuresConfig = {
         defaultLocked: false,
         offline: false,
         tags: [featureTags.review.key],
+        groups: [featureGroups.measure.key],
         beta: true,
+    },
+    crossSection: {
+        key: "crossSection",
+        nameKey: "crossSection",
+        Icon: CrossSectionIcon,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+        offline: true,
+        tags: [featureTags.review.key],
+        groups: [featureGroups.measure.key],
+        newUx: true,
     },
 } as const;
 

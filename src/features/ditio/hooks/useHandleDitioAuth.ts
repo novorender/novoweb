@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 
+import { useLazyGetDitioTokenQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
 import { useSceneId } from "hooks/useSceneId";
@@ -7,7 +8,6 @@ import { selectEnabledWidgets } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { secondsToMs } from "utils/time";
 
-import { useLazyGetTokenQuery } from "../api";
 import { ditioActions, selectDitioAccessToken } from "../slice";
 
 export function useHandleDitioAuth() {
@@ -15,11 +15,11 @@ export function useHandleDitioAuth() {
     const dispatch = useAppDispatch();
     const enabled = useAppSelector(selectEnabledWidgets).some((widget) => widget.key === featuresConfig.ditio.key);
     const token = useAppSelector(selectDitioAccessToken);
-    const [triggerAuthQuery] = useLazyGetTokenQuery();
+    const [triggerAuthQuery] = useLazyGetDitioTokenQuery();
     const timeoutId = useRef<number>();
 
     const authenticate = useCallback(async () => {
-        const res = await triggerAuthQuery({ sceneId })
+        const res = await triggerAuthQuery({ projectId: sceneId })
             .unwrap()
             .catch(() => {
                 console.warn("Ditio machines authentication failed");

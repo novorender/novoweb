@@ -1,11 +1,11 @@
 import { CoreModule, LoadStatus, MeasureEntity, PickSampleExt } from "@novorender/api";
 import { vec2, vec3 } from "gl-matrix";
 import {
-    KeyboardEvent,
     MouseEvent,
     MutableRefObject,
     PointerEvent as ReactPointerEvent,
     TouchEvent,
+    useEffect,
     useRef,
     WheelEvent,
 } from "react";
@@ -13,19 +13,22 @@ import {
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { store } from "app/store";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { lastPickSampleActions, useDispatchLastPickSample } from "contexts/lastPickSample";
+import { useClippingPlaneActions } from "features/clippingPlanes/useClippingPlaneActions";
 import { selectShowTracer } from "features/followPath";
 import { measureActions, selectMeasureHoverSettings } from "features/measure";
 import { myLocationActions, selectMyLocationAutocenter } from "features/myLocation";
 import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
+import { selectPointVisualizationStamp } from "features/pointVisualization/selectors";
 import { ViewMode } from "types/misc";
 
 import {
     renderActions,
     selectCameraType,
     selectClippingPlanes,
+    selectDefaultPointVisualization,
     selectGeneratedParametricData,
     selectPicker,
-    selectPoints,
     selectStamp,
     selectSubtrees,
     selectViewMode,
@@ -68,7 +71,6 @@ export function useCanvasEventHandlers({
     const clippingPlanes = useAppSelector(selectClippingPlanes);
     const picker = useAppSelector(selectPicker);
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
-    const deviation = useAppSelector(selectPoints).deviation;
     const stamp = useAppSelector(selectStamp);
     const subtrees = useAppSelector(selectSubtrees);
     const cameraType = useAppSelector(selectCameraType);
@@ -78,6 +80,11 @@ export function useCanvasEventHandlers({
     const lastMeasurePickResult = useRef<PickSampleExt>();
     const downloadHoveredBrepTimer = useRef<ReturnType<typeof setTimeout>>();
     const dispatch = useAppDispatch();
+    const dispatchLastPickSample = useDispatchLastPickSample();
+    const { movePlanes } = useClippingPlaneActions();
+    const movingPlaneControl = useRef<ReturnType<typeof movePlanes>>();
+    const defaultPointVisualization = useAppSelector(selectDefaultPointVisualization);
+    const pointVisStamp = useAppSelector(selectPointVisualizationStamp);
 
     const hideSvgCursor = () =>
         svg &&
@@ -93,40 +100,38 @@ export function useCanvasEventHandlers({
             overrideKind: undefined,
         });
 
+    const pickerRef = useRef(picker);
+    if (picker !== pickerRef.current) {
+        hideSvgCursor();
+    }
+    pickerRef.current = picker;
+
     const clippingPlaneCommitTimer = useRef<ReturnType<typeof setTimeout>>();
     const moveClippingPlanes = (delta: number) => {
         if (!view || cameraType === CameraType.Orthographic) {
             return;
         }
 
-        if (clippingPlaneCommitTimer.current) {
-            clearTimeout(clippingPlaneCommitTimer.current);
+        if (!movingPlaneControl.current) {
+            movingPlaneControl.current = movePlanes(
+                view,
+                clippingPlanes.planes,
+                clippingPlanes.planes.map((_, i) => i),
+            );
         }
 
-        view.modifyRenderState({
-            clipping: {
-                planes: view.renderState.clipping.planes.map((plane) => ({
-                    ...plane,
-                    normalOffset: [
-                        plane.normalOffset[0],
-                        plane.normalOffset[1],
-                        plane.normalOffset[2],
-                        plane.normalOffset[3] + -delta,
-                    ],
-                })),
-            },
-        });
+        if (clippingPlaneCommitTimer.current) {
+            clearTimeout(clippingPlaneCommitTimer.current);
+            clippingPlaneCommitTimer.current = undefined;
+        }
+
+        const newValues = view.renderState.clipping.planes.map((p) => p.normalOffset[3] - delta);
+        movingPlaneControl.current.update(newValues);
 
         clippingPlaneCommitTimer.current = setTimeout(() => {
-            dispatch(
-                renderActions.setClippingPlanes({
-                    planes: view.renderState.clipping.planes.map((plane) => ({
-                        color: plane.color ? [...plane.color] : [0, 1, 0, 1],
-                        baseW: plane.normalOffset[3],
-                        normalOffset: [...plane.normalOffset],
-                    })),
-                })
-            );
+            movingPlaneControl.current?.finish(true);
+            movingPlaneControl.current = undefined;
+            clippingPlaneCommitTimer.current = undefined;
         }, 100);
     };
 
@@ -317,10 +322,10 @@ export function useCanvasEventHandlers({
                 !localHoverEnt?.entity && !localResult?.objectId
                     ? "red"
                     : localHoverEnt?.status === "loaded"
-                    ? "lightgreen"
-                    : localHoverEnt?.status === "unknown"
-                    ? "blue"
-                    : "yellow";
+                      ? "lightgreen"
+                      : localHoverEnt?.status === "unknown"
+                        ? "blue"
+                        : "yellow";
 
             if (shouldPickHoverEnt) {
                 prevHoverUpdate.current = now;
@@ -338,18 +343,18 @@ export function useCanvasEventHandlers({
                                 const tolerance = applyCameraDistanceToMeasureTolerance(
                                     result.position,
                                     view.renderState.camera.position,
-                                    measureHoverSettings
+                                    measureHoverSettings,
                                 );
                                 hoverEnt = await view.measure.core.pickMeasureEntityOnCurrentObject(
                                     result.objectId,
                                     result.position,
                                     tolerance,
-                                    allowGeneratedParametric.enabled
+                                    allowGeneratedParametric.enabled,
                                 );
                             }
                             vec2.copy(
                                 previous2dSnapPos.current,
-                                vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
+                                vec2.fromValues(e.nativeEvent.offsetX, e.nativeEvent.offsetY),
                             );
                         } else {
                             checkResetHover();
@@ -390,7 +395,7 @@ export function useCanvasEventHandlers({
                             const tolerance = applyCameraDistanceToMeasureTolerance(
                                 result.position,
                                 view.renderState.camera.position,
-                                measureHoverSettings
+                                measureHoverSettings,
                             );
 
                             // TODO consider better way to download brep
@@ -398,7 +403,7 @@ export function useCanvasEventHandlers({
                                 result.objectId,
                                 result.position,
                                 tolerance,
-                                allowGeneratedParametric.enabled
+                                allowGeneratedParametric.enabled,
                             );
 
                             if (shouldStop()) {
@@ -411,10 +416,9 @@ export function useCanvasEventHandlers({
                                 return;
                             }
 
-                            svg?.querySelector("#cursor line, #cursor path")?.setAttribute(
-                                "stroke",
-                                getColor(hoverEnt, result)
-                            );
+                            svg
+                                ?.querySelector("#cursor line, #cursor path")
+                                ?.setAttribute("stroke", getColor(hoverEnt, result));
                             downloadHoveredBrepTimer.current = undefined;
                         }, 500);
 
@@ -466,28 +470,51 @@ export function useCanvasEventHandlers({
             hideSvgCursor();
         }
 
-        const setDeviationStamp =
+        const showInlineStamp =
             !stamp?.pinned &&
-            deviation.mixFactor !== 0 &&
             cameraType === CameraType.Orthographic &&
-            [ViewMode.CrossSection, ViewMode.FollowPath, ViewMode.Deviations].includes(viewMode) &&
             e.buttons === 0 &&
             subtrees.points === SubtreeStatus.Shown;
+        const setDeviationStamp =
+            showInlineStamp && [ViewMode.CrossSection, ViewMode.FollowPath, ViewMode.Deviations].includes(viewMode);
+        const setPointVisStamp =
+            showInlineStamp &&
+            pointVisStamp.enabled &&
+            ["classification", "intensity"].includes(defaultPointVisualization.kind);
         if (setDeviationStamp) {
             const isTouch = e.nativeEvent instanceof PointerEvent && e.nativeEvent.pointerType === "touch";
             const measurement = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
                 sampleDiscRadius: isTouch ? 8 : 1,
             });
 
-            if (measurement?.deviation !== undefined) {
+            if (measurement?.pointFactor !== undefined) {
                 dispatch(
                     renderActions.setStamp({
                         kind: StampKind.Deviation,
                         pinned: false,
                         mouseX: e.nativeEvent.offsetX,
                         mouseY: e.nativeEvent.offsetY,
-                        data: { deviation: measurement.deviation },
-                    })
+                        data: { deviation: measurement.pointFactor },
+                    }),
+                );
+            } else {
+                dispatch(renderActions.setStamp(null));
+            }
+        } else if (setPointVisStamp) {
+            const isTouch = e.nativeEvent instanceof PointerEvent && e.nativeEvent.pointerType === "touch";
+            const measurement = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
+                sampleDiscRadius: isTouch ? 8 : 1,
+            });
+
+            if (measurement?.pointFactor !== undefined) {
+                dispatch(
+                    renderActions.setStamp({
+                        kind: StampKind.Classification,
+                        pinned: false,
+                        mouseX: e.nativeEvent.offsetX,
+                        mouseY: e.nativeEvent.offsetY,
+                        data: { pointFactor: measurement.pointFactor },
+                    }),
                 );
             } else {
                 dispatch(renderActions.setStamp(null));
@@ -495,6 +522,9 @@ export function useCanvasEventHandlers({
         } else if (stamp && !stamp.pinned) {
             dispatch(renderActions.setStamp(null));
         }
+
+        const lastPickSample = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        dispatchLastPickSample(lastPickSampleActions.set(lastPickSample ?? null));
 
         if (contextMenuCursorState.current) {
             contextMenuCursorState.current.currentPos[0] += e.movementX;
@@ -535,12 +565,36 @@ export function useCanvasEventHandlers({
         hideSvgCursor();
     };
 
-    const onKeyUp = (evt: KeyboardEvent<HTMLCanvasElement>) => {
+    const onKeyUp = (evt: React.KeyboardEvent<HTMLCanvasElement>) => {
         if (evt.key === "Escape") {
             dispatch(renderActions.setPicker(Picker.Object));
             hideSvgCursor();
         }
     };
+
+    // Technically these are not canvas event listeners, but they logically affect canvas behavior
+    // these events work only when canvas is focused, but that's not always the case
+    useEffect(() => {
+        function onKeyDown(evt: KeyboardEvent) {
+            if (view && evt.key === "Shift" && cameraType === CameraType.Orthographic) {
+                // In orhto shift moves camera on Z axis
+                view.controllers.flight.input.disableWheelOnShift = false;
+            }
+        }
+
+        function onKeyUp(evt: KeyboardEvent) {
+            if (view && evt.key === "Shift") {
+                view.controllers.flight.input.disableWheelOnShift = true;
+            }
+        }
+
+        window.addEventListener("keydown", onKeyDown);
+        window.addEventListener("keyup", onKeyUp);
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+            window.removeEventListener("keyup", onKeyUp);
+        };
+    });
 
     return {
         onWheel,

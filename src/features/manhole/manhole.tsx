@@ -102,7 +102,12 @@ export default function Manhole() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.manhole} disableShadow={menuOpen}>
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.manhole}
+                    disableShadow={menuOpen}
+                >
                     {!menuOpen && !minimized ? (
                         <Box display="flex" justifyContent="space-between" alignItems="center">
                             <FormControlLabel

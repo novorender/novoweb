@@ -5,9 +5,16 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveCustomPropertiesMutation } from "apis/dataV2/dataV2Api";
 import { useAppSelector } from "app/redux-store-interactions";
-import { Divider, LinearProgress, LogoSpeedDial, ScrollBox, WidgetContainer, WidgetHeader } from "components";
+import {
+    Divider,
+    LinearProgress,
+    LogoSpeedDial,
+    WidgetBottomScrollBox,
+    WidgetContainer,
+    WidgetHeader,
+} from "components";
 import { canvasContextMenuConfig } from "config/canvasContextMenu";
 import { featuresConfig, FeatureType } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -35,7 +42,7 @@ import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import {
     selectCanvasContextMenuFeatures,
-    selectEnabledWidgets,
+    selectEnabledWidgetsWithoutPermissionCheck,
     selectIsAdminScene,
     selectMaximized,
     selectMinimized,
@@ -79,7 +86,7 @@ export default function AdvancedSettings() {
     const points = useAppSelector(selectPoints);
     const terrain = useAppSelector(selectTerrain);
     const { environments: _environments, ...background } = useAppSelector(selectBackground);
-    const enabledWidgets = useAppSelector(selectEnabledWidgets);
+    const enabledWidgets = useAppSelector(selectEnabledWidgetsWithoutPermissionCheck);
     const projectSettings = useAppSelector(selectProjectSettings);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
     const canvasCtxMenu = useAppSelector(selectCanvasContextMenuFeatures);
@@ -90,6 +97,7 @@ export default function AdvancedSettings() {
     const debugStats = useAppSelector(selectDebugStats);
     const navigationCube = useAppSelector(selectNavigationCube);
     const generatedParametricData = useAppSelector(selectGeneratedParametricData);
+    const [saveCustomProperties] = useSaveCustomPropertiesMutation();
 
     const save = async () => {
         setStatus(Status.Saving);
@@ -149,7 +157,7 @@ export default function AdvancedSettings() {
                 tmZone: projectSettings.tmZone,
             });
 
-            await dataApi.putScene(updated);
+            await saveCustomProperties({ projectId: sceneId, data: updated.customProperties }).unwrap();
 
             return setStatus(Status.SaveSuccess);
         } catch (e) {
@@ -169,14 +177,15 @@ export default function AdvancedSettings() {
         try {
             const [originalScene] = await loadScene(sceneId);
 
-            await dataApi.putScene(
-                mergeRecursive(originalScene, {
+            await saveCustomProperties({
+                projectId: sceneId,
+                data: mergeRecursive(originalScene, {
                     url: isAdminScene ? scene.id : `${sceneId}:${scene.id}`,
                     customProperties: {
                         initialCameraState: cameraState,
                     },
-                }),
-            );
+                }).customProperties,
+            });
         } catch (e) {
             console.warn(e);
             return setStatus(Status.SaveError);
@@ -191,6 +200,8 @@ export default function AdvancedSettings() {
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
                 <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
                     widget={{ ...featuresConfig.advancedSettings, nameKey: "advancedSettings" }}
                     disableShadow
                 />
@@ -295,7 +306,7 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} mt={1} pb={3} display="flex" flexDirection="column">
+            <WidgetBottomScrollBox height={1} mt={1} pb={3} display="flex" flexDirection="column">
                 <List disablePadding>
                     <ListItemButton sx={{ pl: 1, fontWeight: 600 }} disableGutters component={Link} to="/scene">
                         {t("scene")}
@@ -327,7 +338,7 @@ function Root({ save, saving }: { save: () => Promise<void>; saving: boolean }) 
                         {t("performance")}
                     </ListItemButton>
                 </List>
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }

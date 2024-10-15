@@ -49,7 +49,7 @@ export function ManholeCanvas({
                 cameraState,
                 manholeDrawObject,
                 { lineColor: "yellow", fillColor: measurementFillColor },
-                3
+                3,
             );
         }
 
@@ -59,13 +59,13 @@ export function ManholeCanvas({
                 cameraState,
                 manholeCollisionEntityDrawObject,
                 { lineColor: "yellow", fillColor: measurementFillColor },
-                3
+                3,
             );
         }
 
         if (manholeCollisionValues && (manholeCollisionValues.outer || manholeCollisionValues.inner)) {
             view.measure?.draw
-                .getDrawObjectFromPoints(manholeCollisionValues.lid, false, true)
+                .getDrawObjectFromPoints(manholeCollisionValues.lid, { closed: false, angles: true })
                 ?.objects.forEach((obj) =>
                     obj.parts.forEach((part) =>
                         drawPart(
@@ -86,14 +86,14 @@ export function ManholeCanvas({
                                             vec3.sub(
                                                 vec3.create(),
                                                 manholeCollisionValues.lid[0],
-                                                manholeCollisionValues.lid[1]
-                                            )
+                                                manholeCollisionValues.lid[1],
+                                            ),
                                         )
                                         .toFixed(2),
                                 ],
-                            }
-                        )
-                    )
+                            },
+                        ),
+                    ),
                 );
         }
     }, [view, ctx, canvas, manhole, manholeCollisionEntity, manholeCollisionValues]);

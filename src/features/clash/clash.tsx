@@ -19,7 +19,7 @@ export default function Clash() {
     return (
         <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.clash} disableShadow />
+                <WidgetHeader menuOpen={menuOpen} toggleMenu={toggleMenu} widget={featuresConfig.clash} disableShadow />
 
                 <Box
                     display={!menuOpen && !minimized ? "flex" : "none"}

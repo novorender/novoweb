@@ -104,8 +104,8 @@ export function Object() {
             <Redirect
                 push={false}
                 to={{
-                    pathname: `/search-instance/${object.guid}-${currentFormsList || forms[0].id}`,
-                    state: { objectId: object.id },
+                    pathname: "/search-instance",
+                    search: `?objectId=${object.id}&objectGuid=${object.guid}&formId=${currentFormsList || forms[0].id}`,
                 }}
             />
         );
@@ -130,21 +130,19 @@ export function Object() {
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
-                <>
-                    <Box px={1}>
-                        <Divider />
-                    </Box>
-                    <Box display="flex" justifyContent="space-between">
-                        <Button color="grey" onClick={handleBackClick}>
-                            <ArrowBack sx={{ mr: 1 }} />
-                            {t("back")}
-                        </Button>
-                        <Button color="grey" onClick={handleHomeClick}>
-                            <Checklist sx={{ mr: 1 }} />
-                            {t("allForms")}
-                        </Button>
-                    </Box>
-                </>
+                <Box px={1}>
+                    <Divider />
+                </Box>
+                <Box m={1} display="flex" justifyContent="space-between">
+                    <Button color="grey" onClick={handleBackClick}>
+                        <ArrowBack sx={{ mr: 1 }} />
+                        {t("back")}
+                    </Button>
+                    <Button color="grey" onClick={handleHomeClick}>
+                        <Checklist sx={{ mr: 1 }} />
+                        {t("allForms")}
+                    </Button>
+                </Box>
             </Box>
             {isLoading || formsLoading || isUninitialized ? (
                 <Box position="relative">
@@ -165,8 +163,8 @@ export function Object() {
                                         onClick={() => {
                                             if (object?.guid) {
                                                 history.push({
-                                                    pathname: `/search-instance/${object.guid}-${form.id}`,
-                                                    state: { objectId: object.id },
+                                                    pathname: "/search-instance",
+                                                    search: `?objectId=${object.id}&objectGuid=${object.guid}&formId=${form.id}`,
                                                 });
                                             }
                                         }}

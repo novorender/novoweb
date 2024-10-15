@@ -34,7 +34,13 @@ export default function Groups() {
     return (
         <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.groups} WidgetMenu={WidgetMenu} disableShadow />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.groups}
+                    WidgetMenu={WidgetMenu}
+                    disableShadow
+                />
 
                 {showSnackbar ? (
                     <Snackbar

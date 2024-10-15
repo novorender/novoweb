@@ -1,4 +1,4 @@
-import type { SpeedDialActionProps } from "@mui/material";
+import { Box, IconButton, type SpeedDialActionProps, Tooltip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -11,9 +11,10 @@ import WalkIcon from "media/icons/walk.svg?react";
 
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
+    newDesign?: boolean;
 };
 
-export function CameraSpeed({ position, ...speedDialProps }: Props) {
+export function CameraSpeed({ position, newDesign, ...speedDialProps }: Props) {
     const { nameKey } = featuresConfig["cameraSpeed"];
     const { t } = useTranslation();
     const level = useAppSelector(selectCurrentCameraSpeedLevel);
@@ -25,6 +26,18 @@ export function CameraSpeed({ position, ...speedDialProps }: Props) {
     const speed = level === CameraSpeedLevel.Slow ? "Slow" : level === CameraSpeedLevel.Default ? "Default" : "Fast";
 
     const Icon = level === CameraSpeedLevel.Slow ? WalkIcon : level === CameraSpeedLevel.Default ? RunIcon : SprintIcon;
+
+    if (newDesign) {
+        return (
+            <Tooltip title={`${t(nameKey)} - ${speed}`} placement="top">
+                <Box>
+                    <IconButton onClick={handleClick}>
+                        <Icon />
+                    </IconButton>
+                </Box>
+            </Tooltip>
+        );
+    }
 
     return (
         <SpeedDialAction

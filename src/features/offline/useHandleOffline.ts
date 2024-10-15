@@ -1,12 +1,14 @@
 import { OfflineErrorCode, OfflineViewState, View } from "@novorender/api";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 
 import { dataApi } from "apis/dataV1";
+import { useLazyGetBookmarksQuery, useLazyGetGroupIdsQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useAbortController } from "hooks/useAbortController";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
+import { selectProjectV2Info } from "slices/explorer";
 
 import { offlineActions, selectOfflineAction } from "./offlineSlice";
 
@@ -53,23 +55,9 @@ export function useHandleOffline() {
     const [abortController, abort] = useAbortController();
     const createLogger = useCreateLogger();
     const dispatch = useAppDispatch();
-
-    // TODO replace with proper projectId once merged with new auth
-    const [projectId, setProjectId] = useState(view?.renderState.scene?.config.id);
-
-    useEffect(() => {
-        // scene.config.id can be uninitialized in the beginning
-        const interval = setInterval(() => {
-            if (view?.renderState.scene?.config.id) {
-                setProjectId(view.renderState.scene.config.id);
-                clearInterval(interval);
-            }
-        }, 100);
-
-        return () => {
-            clearInterval(interval);
-        };
-    }, [view]);
+    const [getBookmarks] = useLazyGetBookmarksQuery();
+    const [getGroupIds] = useLazyGetGroupIdsQuery();
+    const projectId = useAppSelector(selectProjectV2Info)?.id;
 
     useEffect(
         function initOfflineScenes() {
@@ -94,13 +82,13 @@ export function useHandleOffline() {
                         scanProgress: "",
                         size: scene.manifest.totalByteSize,
                         viewerScenes: meta.viewerScenes,
-                    })
+                    }),
                 );
 
                 scene.logger = createLogger(scene.id);
             });
         },
-        [offlineWorkerState, dispatch, projectId, createLogger]
+        [offlineWorkerState, dispatch, projectId, createLogger],
     );
 
     useEffect(() => {
@@ -148,7 +136,7 @@ export function useHandleOffline() {
                                 scanProgress: "",
                                 size: 0,
                                 viewerScenes: [],
-                            })
+                            }),
                         );
                         break;
                     }
@@ -160,11 +148,11 @@ export function useHandleOffline() {
                     }
 
                     await Promise.all([
-                        dataApi.getBookmarks(viewerSceneId),
-                        user ? dataApi.getBookmarks(viewerSceneId, { personal: true }) : Promise.resolve(),
+                        getBookmarks({ projectId: viewerSceneId }).unwrap(),
+                        user ? getBookmarks({ projectId: viewerSceneId, personal: true }).unwrap() : Promise.resolve(),
                         ...sceneData.objectGroups
                             .filter((group) => group.id && !group.ids)
-                            .map((group) => dataApi.getGroupIds(viewerSceneId, group.id)),
+                            .map((group) => getGroupIds({ projectId: viewerSceneId, groupId: group.id }).unwrap()),
                     ]);
 
                     const persisted = await navigator.storage.persisted();
@@ -201,7 +189,7 @@ export function useHandleOffline() {
                             scanProgress: "",
                             size: scene.manifest.totalByteSize,
                             viewerScenes: toStore.viewerScenes,
-                        })
+                        }),
                     );
 
                     scene.logger = createLogger(parentSceneId);
@@ -222,7 +210,7 @@ export function useHandleOffline() {
                             updates: {
                                 size,
                             },
-                        })
+                        }),
                     );
                     break;
                 }
@@ -245,11 +233,11 @@ export function useHandleOffline() {
                     const availableSize = Math.max(
                         0,
                         offlineWorkerState.initialStorageEstimate.quota -
-                            offlineWorkerState.initialStorageEstimate.usage
+                            offlineWorkerState.initialStorageEstimate.usage,
                     );
                     const totalSize = await scene.readManifest(
                         view.offline!.manifestUrl,
-                        abortController.current.signal
+                        abortController.current.signal,
                     );
                     const usedSize = await scene.getUsedSize();
 
@@ -264,7 +252,7 @@ export function useHandleOffline() {
                                 totalSize,
                                 usedSize,
                                 availableSize,
-                            })
+                            }),
                         );
                     } else {
                         resetAction = false;
@@ -289,11 +277,11 @@ export function useHandleOffline() {
                     }
 
                     await Promise.all([
-                        dataApi.getBookmarks(viewerSceneId),
-                        user ? dataApi.getBookmarks(viewerSceneId, { personal: true }) : Promise.resolve(),
+                        getBookmarks({ projectId: viewerSceneId }).unwrap(),
+                        user ? getBookmarks({ projectId: viewerSceneId, personal: true }).unwrap() : Promise.resolve(),
                         ...sceneData.objectGroups
                             .filter((group) => group.id && !group.ids)
-                            .map((group) => dataApi.getGroupIds(viewerSceneId, group.id)),
+                            .map((group) => getGroupIds({ projectId: viewerSceneId, groupId: group.id })),
                     ]);
 
                     const persisted = await navigator.storage.persisted();
@@ -331,7 +319,7 @@ export function useHandleOffline() {
                             scanProgress: "",
                             size: scene.manifest.totalByteSize,
                             viewerScenes: toStore.viewerScenes,
-                        })
+                        }),
                     );
                     scene.sync(getSceneIndexUrl(view), abortController.current.signal);
                     break;
@@ -352,6 +340,8 @@ export function useHandleOffline() {
         createLogger,
         viewerSceneId,
         user,
+        getGroupIds,
+        getBookmarks,
         projectId,
     ]);
 }
@@ -383,7 +373,7 @@ function useCreateLogger() {
                                     lastSync: now,
                                     size: offlineWorkerState?.scenes.get(parentSceneId)?.manifest.totalByteSize ?? 0,
                                 },
-                            })
+                            }),
                         );
                     } else {
                         dispatch(offlineActions.updateScene({ id: parentSceneId, updates: { status } }));
@@ -396,7 +386,7 @@ function useCreateLogger() {
                             offlineActions.updateScene({
                                 id: parentSceneId,
                                 updates: { status: "error", error: "Not enough disk drive space on the device." },
-                            })
+                            }),
                         );
                     }
                 },
@@ -407,7 +397,7 @@ function useCreateLogger() {
                                 offlineActions.updateScene({
                                     id: parentSceneId,
                                     updates: { progress: "100%", size: max },
-                                })
+                                }),
                             );
                         }
 
@@ -418,13 +408,13 @@ function useCreateLogger() {
                         if (current !== undefined && max !== undefined) {
                             const progress = ((current / max) * 100).toFixed(2);
                             dispatch(
-                                offlineActions.updateScene({ id: parentSceneId, updates: { progress, size: max } })
+                                offlineActions.updateScene({ id: parentSceneId, updates: { progress, size: max } }),
                             );
                         }
                     } else {
                         if (current === max) {
                             dispatch(
-                                offlineActions.updateScene({ id: parentSceneId, updates: { scanProgress: "100%" } })
+                                offlineActions.updateScene({ id: parentSceneId, updates: { scanProgress: "100%" } }),
                             );
                         }
 
@@ -433,7 +423,7 @@ function useCreateLogger() {
                                 offlineActions.updateScene({
                                     id: parentSceneId,
                                     updates: { scanProgress: String(current) },
-                                })
+                                }),
                             );
                         }
 
@@ -445,7 +435,7 @@ function useCreateLogger() {
                 },
             };
         },
-        [dispatch, offlineWorkerState]
+        [dispatch, offlineWorkerState],
     );
 
     return createLogger;

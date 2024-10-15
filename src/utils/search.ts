@@ -113,7 +113,7 @@ export async function searchDeepByPatterns({
 
                 return acc;
             },
-            [[], []] as [cached: ObjectId[], uncached: HierarcicalObjectReference[]]
+            [[], []] as [cached: ObjectId[], uncached: HierarcicalObjectReference[]],
         );
 
         callback(cachedDescendants);
@@ -130,9 +130,9 @@ export async function searchDeepByPatterns({
                             callback: (results) => callback(results.map((res) => res.id)),
                             callbackInterval: callbackInterval,
                             parentPath: obj.path,
-                        })
+                        }),
                     ),
-            { concurrency: 10 }
+            { concurrency: 10 },
         );
     }
 }
@@ -256,7 +256,7 @@ export async function batchedPropertySearch<T = HierarcicalObjectReference>({
 
             return acc;
         },
-        [[]] as string[][]
+        [[]] as string[][],
     );
 
     const concurrentRequests = 5;
@@ -282,7 +282,7 @@ export async function batchedPropertySearch<T = HierarcicalObjectReference>({
                 }).catch(() => {
                     // continue
                 });
-            })
+            }),
         );
     }
 

@@ -4,14 +4,15 @@ import { MouseEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveBookmarksMutation } from "apis/dataV2/dataV2Api";
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Divider, LinearProgress, ScrollBox } from "components";
+import { Divider, LinearProgress, WidgetBottomScrollBox } from "components";
 import { GroupStatus } from "contexts/objectGroups";
 import { selectViewMode } from "features/render";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectUser } from "slices/authSlice";
-import { selectHasAdminCapabilities } from "slices/explorer";
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import { Bookmark } from "../bookmark";
@@ -43,10 +44,12 @@ export function BookmarkList() {
     const bookmarksStatus = useAppSelector(selectBookmarksStatus);
     const filters = useAppSelector(selectBookmarkFilters);
     const dispatch = useAppDispatch();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.BookmarkManage);
 
     const [filterMenuAnchor, setFilterMenuAnchor] = useState<HTMLElement | null>(null);
     const [filteredBookmarks, setFilteredBookmarks] = useState(bookmarks);
+    const [saveBookmarks] = useSaveBookmarksMutation();
 
     useEffect(
         function filterBookmarks() {
@@ -68,21 +71,35 @@ export function BookmarkList() {
         dispatch(bookmarksActions.setSaveStatus({ status: AsyncStatus.Loading }));
 
         try {
-            const publicBmks = isAdmin
-                ? dataApi.saveBookmarks(
-                      sceneId,
-                      bookmarks
+            const publicBmks = canManage
+                ? saveBookmarks({
+                      projectId: sceneId,
+                      bookmarks: bookmarks
                           .filter((bm) => bm.access !== BookmarkAccess.Personal)
                           .map(({ access: _access, ...bm }) => bm),
-                      { personal: false },
-                  )
+                      personal: false,
+                  })
+                      .unwrap()
+                      .then(() => true)
+                      .catch((error) => {
+                          console.error(error);
+                          return false;
+                      })
                 : Promise.resolve(true);
 
-            const personalBmks = dataApi.saveBookmarks(
-                sceneId,
-                bookmarks.filter((bm) => bm.access === BookmarkAccess.Personal).map(({ access: _access, ...bm }) => bm),
-                { personal: true },
-            );
+            const personalBmks = saveBookmarks({
+                projectId: sceneId,
+                bookmarks: bookmarks
+                    .filter((bm) => bm.access === BookmarkAccess.Personal)
+                    .map(({ access: _access, ...bm }) => bm),
+                personal: true,
+            })
+                .unwrap()
+                .then(() => true)
+                .catch((error) => {
+                    console.error(error);
+                    return false;
+                });
 
             const [savedPublic, savedPersonal] = await Promise.all([publicBmks, personalBmks]);
 
@@ -162,7 +179,7 @@ export function BookmarkList() {
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox display="flex" flexDirection="column" height={1} pb={2}>
+            <WidgetBottomScrollBox display="flex" flexDirection="column" height={1} pb={2}>
                 {bookmarksStatus === AsyncStatus.Error && (
                     <>
                         <Typography p={1} mb={3}>
@@ -185,7 +202,7 @@ export function BookmarkList() {
                 {collections.map((collection) => (
                     <Collection bookmarks={filteredBookmarks} key={collection} collection={collection} />
                 ))}
-            </ScrollBox>
+            </WidgetBottomScrollBox>
             <FilterMenu
                 anchorEl={filterMenuAnchor}
                 open={Boolean(filterMenuAnchor)}

@@ -1,11 +1,14 @@
 import { ArrowBack, Delete, FilterAlt } from "@mui/icons-material";
-import { Box, Button, FormControlLabel, List, Typography, useTheme } from "@mui/material";
-import { type FormEvent, type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { Box, Button, FormControlLabel, Typography, useTheme } from "@mui/material";
+import { memo, type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useParams } from "react-router-dom";
+import AutoSizer from "react-virtualized-auto-sizer";
+import { FixedSizeList as List } from "react-window";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Confirmation, Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
+import { Divider, IosSwitch, LinearProgress, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,
@@ -13,13 +16,15 @@ import {
     useDispatchHighlightCollections,
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { useDeleteTemplateMutation, useGetTemplateQuery } from "features/forms/api";
+import { useGetTemplateQuery } from "features/forms/api";
 import { FormFilterMenu } from "features/forms/formFilterMenu";
+import { DELETE_TEMPLATE_ROUTE } from "features/forms/routes/constants";
 import { formsActions, selectCurrentFormsList, selectFormFilters } from "features/forms/slice";
-import { type FormId, type FormObject, type FormRecord, type FormState, TemplateType } from "features/forms/types";
+import { type FormId, type FormObject, type FormRecord, TemplateType } from "features/forms/types";
 import { mapGuidsToIds } from "features/forms/utils";
 import { ObjectVisibility, Picker, renderActions, selectPicker } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 
 import { FormsListItem } from "./formsListItem";
@@ -43,6 +48,9 @@ export function FormsList() {
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const isPickingLocation = useAppSelector(selectPicker) === Picker.FormLocation;
+    const checkPermission = useCheckProjectPermission();
+    const canDelete = checkPermission(Permission.FormsDelete);
+    const canAdd = checkPermission(Permission.FormsManage);
 
     const dispatchHighlightCollections = useDispatchHighlightCollections();
 
@@ -51,27 +59,19 @@ export function FormsList() {
         templateId,
     });
 
-    const [deleteTemplate, { isLoading: isTemplateDeleting }] = useDeleteTemplateMutation();
-
-    const [items, setItems] = useState<
-        (FormObject & { formState: FormState })[] | (FormRecord & { id: number; formState: FormState })[]
-    >(
-        template?.type === TemplateType.Search
-            ? template.objects!.map((object: FormObject) => ({
-                  ...object,
-                  id: -1,
-                  formState: template.forms![object.guid].state,
-              }))
-            : template?.type === TemplateType.Location
-              ? Object.entries(template?.forms ?? {}).map(([id, form]: [string, FormRecord]) => ({
-                    ...form,
-                    formState: form.state,
-                    id: Number(id),
-                }))
-              : [],
+    const [items, setItems] = useState<(FormRecord & { id?: number; guid?: string; name?: string })[]>(
+        Object.entries(template?.forms ?? {}).map(([id, form]: [string, FormRecord]) => ({
+            ...form,
+            id: template?.type === TemplateType.Location ? Number(id) : undefined,
+            ...(template?.type === TemplateType.Search
+                ? {
+                      guid: id,
+                      name: template?.objects.find((object: FormObject) => object.guid === id)?.name,
+                  }
+                : {}),
+        })),
     );
     const [loadingItems, setLoadingItems] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
 
     const abortSignal = abortController.current.signal;
 
@@ -80,31 +80,29 @@ export function FormsList() {
             return;
         }
 
+        setItems(
+            Object.entries(template?.forms ?? {}).map(([id, form]: [string, FormRecord]) => ({
+                ...form,
+                id: template?.type === TemplateType.Location ? Number(id) : undefined,
+                ...(template?.type === TemplateType.Search
+                    ? {
+                          guid: id,
+                          name: template?.objects.find((object: FormObject) => object.guid === id)?.name,
+                      }
+                    : {}),
+            })),
+        );
+
         if (template.type === TemplateType.Location) {
-            setItems(
-                Object.entries(template?.forms ?? {}).map(([id, form]: [string, FormRecord]) => ({
-                    ...form,
-                    formState: form.state,
-                    id: Number(id),
-                })) ?? [],
-            );
             dispatch(
                 formsActions.setTemplateLocationForms({
                     templateId: template.id!,
                     forms: Object.entries(template.forms || {}).map(([id, f]) => ({
                         ...f,
                         templateId: template.id!,
-                        id: id!,
+                        id,
                     })),
                 }),
-            );
-        } else if (template.type === TemplateType.Search) {
-            setItems(
-                template.objects!.map((object: FormObject) => ({
-                    ...object,
-                    id: -1,
-                    formState: template.forms![object.guid].state,
-                })) ?? [],
             );
         }
     }, [dispatch, template]);
@@ -125,8 +123,11 @@ export function FormsList() {
 
             setItems((prevItems) =>
                 prevItems.map((item) => {
-                    const id = map[(item as FormObject).guid];
-                    return { ...item, id } as FormObject & { formState: FormState };
+                    if (!item.guid) {
+                        return item;
+                    }
+                    const id = map[item.guid];
+                    return { ...item, id };
                 }),
             );
             setLoadingItems(false);
@@ -173,16 +174,15 @@ export function FormsList() {
     }, [dispatch, templateId]);
 
     const filterItems = useCallback(
-        (item: (FormObject & { formState: FormState }) | (FormRecord & { id: number; formState: FormState })) => {
-            const name = ("name" in item ? item.name : "title" in item ? item.title : "") ?? "";
-            const formState = item.formState;
+        (item: FormRecord & { id?: number; guid?: string; name?: string }) => {
+            const name = item.title ?? item.name ?? "";
 
             const activeStateFilters = Object.entries(formFilters)
                 .filter(([_, value]) => value === true)
                 .map(([filter]) => filter);
 
             const matches =
-                activeStateFilters.includes(formState) &&
+                activeStateFilters.includes(item.state) &&
                 (!formFilters.name || name.trim().toLowerCase().includes(formFilters.name.trim().toLowerCase()));
 
             return matches;
@@ -190,26 +190,23 @@ export function FormsList() {
         [formFilters],
     );
 
+    const filteredItems = useMemo(() => items.filter(filterItems), [items, filterItems]);
+
     useEffect(() => {
-        if (template?.type !== TemplateType.Search) {
-            dispatch(
-                renderActions.setDefaultVisibility(
-                    items.length > 0 ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral,
-                ),
-            );
-            return;
-        }
+        dispatch(
+            renderActions.setDefaultVisibility(
+                items.length > 0 ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral,
+            ),
+        );
 
         const forms = items.filter(filterItems);
 
-        dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
-
-        const newGroup = formFilters.new ? forms.filter((form) => form.formState === "new").map((form) => form.id) : [];
+        const newGroup = formFilters.new ? forms.filter((form) => form.state === "new").map((form) => form.id!) : [];
         const ongoingGroup = formFilters.ongoing
-            ? forms.filter((form) => form.formState === "ongoing").map((form) => form.id)
+            ? forms.filter((form) => form.state === "ongoing").map((form) => form.id!)
             : [];
         const finishedGroup = formFilters.finished
-            ? forms.filter((form) => form.formState === "finished").map((form) => form.id)
+            ? forms.filter((form) => form.state === "finished").map((form) => form.id!)
             : [];
 
         dispatchHighlightCollections(highlightCollectionsActions.setIds(HighlightCollection.FormsNew, newGroup));
@@ -240,102 +237,111 @@ export function FormsList() {
     const addLocationForm = () => {
         if (isPickingLocation) {
             dispatch(renderActions.stopPicker(Picker.FormLocation));
-            dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
+            dispatch(
+                renderActions.setDefaultVisibility(
+                    items.length > 0 ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral,
+                ),
+            );
         } else {
             dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
             dispatch(renderActions.setPicker(Picker.FormLocation));
         }
     };
 
-    const handleDelete = useCallback(
-        async (e: FormEvent) => {
-            e.preventDefault();
-            await deleteTemplate({ projectId: sceneId, templateId });
-            if (template?.type === TemplateType.Location) {
-                if (isPickingLocation) {
-                    dispatch(renderActions.stopPicker(Picker.FormLocation));
-                }
-            }
-            history.push("/");
-        },
-        [deleteTemplate, dispatch, history, isPickingLocation, sceneId, template, templateId],
-    );
+    const handleDeleteClick = useCallback(() => {
+        history.push({
+            pathname: DELETE_TEMPLATE_ROUTE,
+            state: {
+                title: template?.title,
+                templateId,
+                templateType: template?.type,
+            },
+        });
+    }, [history, template?.title, templateId, template?.type]);
 
-    return isDeleting ? (
-        <Confirmation
-            title={`Delete all "${template?.title}" forms?`}
-            confirmBtnText="Delete"
-            onCancel={() => setIsDeleting(false)}
-            component="form"
-            onSubmit={handleDelete}
-            loading={isTemplateDeleting}
-        />
-    ) : (
+    const ListItem = memo(({ index, style }: { index: number; style: React.CSSProperties }) => {
+        const item = filteredItems[index];
+        return (
+            <div style={style}>
+                <FormsListItem key={"guid" in item ? item.guid : item.id} item={item} formId={templateId} />
+            </div>
+        );
+    });
+
+    return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
-                <>
-                    <Box px={1}>
-                        <Divider />
-                    </Box>
-                    <Box display="flex" justifyContent="space-between">
-                        <Box display="flex">
-                            <Button color="grey" onClick={handleBackClick}>
-                                <ArrowBack sx={{ mr: 1 }} />
-                                {t("back")}
-                            </Button>
-                            <Button
-                                color="grey"
-                                onClick={openFilters}
-                                aria-haspopup="true"
-                                aria-controls={FILTER_MENU_ID}
-                                aria-expanded={Boolean(filterMenuAnchor)}
-                            >
-                                <FilterAlt sx={{ mr: 1 }} />
-                                {t("filters")}
-                            </Button>
-                            {template?.type === TemplateType.Location && (
-                                <FormControlLabel
-                                    control={
-                                        <IosSwitch
-                                            size="medium"
-                                            color="primary"
-                                            checked={isPickingLocation}
-                                            onChange={addLocationForm}
-                                        />
-                                    }
-                                    label={<Box fontSize={14}>{t("add")}</Box>}
-                                    sx={{ ml: 1 }}
-                                />
-                            )}
-                        </Box>
+                <Box px={1}>
+                    <Divider />
+                </Box>
+                <Box m={1} display="flex" justifyContent="space-between">
+                    <Box display="flex">
+                        <Button color="grey" onClick={handleBackClick}>
+                            <ArrowBack sx={{ mr: 1 }} />
+                            {t("back")}
+                        </Button>
                         <Button
                             color="grey"
-                            onClick={() => setIsDeleting(true)}
-                            disabled={loadingTemplate || loadingItems || !items.length}
+                            onClick={openFilters}
+                            aria-haspopup="true"
+                            aria-controls={FILTER_MENU_ID}
+                            aria-expanded={Boolean(filterMenuAnchor)}
                         >
-                            <Delete fontSize="small" sx={{ mr: 1 }} />
-                            {t("deleteAll")}
+                            <FilterAlt sx={{ mr: 1 }} />
+                            {t("filters")}
                         </Button>
+                        {template?.type === TemplateType.Location && (
+                            <FormControlLabel
+                                control={
+                                    <IosSwitch
+                                        size="medium"
+                                        color="primary"
+                                        checked={isPickingLocation}
+                                        onChange={addLocationForm}
+                                        disabled={!canAdd}
+                                    />
+                                }
+                                label={<Box fontSize={14}>{t("add")}</Box>}
+                                sx={{ m: 0 }}
+                            />
+                        )}
                     </Box>
-                </>
+                    <Button
+                        color="grey"
+                        onClick={handleDeleteClick}
+                        disabled={!canDelete || loadingTemplate || loadingItems || !items.length}
+                    >
+                        <Delete fontSize="small" sx={{ mr: 1 }} />
+                        {t("deleteAll")}
+                    </Button>
+                </Box>
             </Box>
             {(loadingTemplate || loadingItems) && (
                 <Box position="relative">
                     <LinearProgress />
                 </Box>
             )}
-            <ScrollBox pt={2} pb={3}>
-                <Typography px={1} fontWeight={600} mb={1}>
-                    {template?.title ?? ""}
-                </Typography>
-                {items.length === 0 && <Typography px={1}>{t("noForms")}</Typography>}
-                <List dense disablePadding>
-                    {items
-                        ?.filter(filterItems)
-                        .map((item) => (
-                            <FormsListItem key={"guid" in item ? item.guid : item.id} item={item} formId={templateId} />
-                        ))}
-                </List>
+            <Typography py={2} px={1} fontWeight={600}>
+                {template?.title ?? ""}
+            </Typography>
+            <ScrollBox pb={2} flex={1}>
+                {items.length === 0 ? (
+                    <Typography px={1}>{t("noForms")}</Typography>
+                ) : (
+                    <AutoSizer disableWidth>
+                        {({ height }) => (
+                            <List
+                                height={height}
+                                itemCount={filteredItems.length}
+                                itemSize={48}
+                                width="100%"
+                                overscanCount={5}
+                            >
+                                {ListItem}
+                            </List>
+                        )}
+                    </AutoSizer>
+                )}
             </ScrollBox>
             <FormFilterMenu
                 anchorEl={filterMenuAnchor}

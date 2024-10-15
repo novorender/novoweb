@@ -3,15 +3,16 @@ import { ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/mate
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
-import { useAppSelector } from "app/redux-store-interactions";
-import { selectHasAdminCapabilities } from "slices/explorer";
+import { Permission } from "apis/dataV2/permissions";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 
 export function WidgetMenu(props: MenuProps) {
     const { t } = useTranslation();
     const history = useHistory();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntArcgisManage);
 
-    if (!isAdmin) {
+    if (!canManage) {
         return null;
     }
 

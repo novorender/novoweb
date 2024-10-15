@@ -29,6 +29,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Accordion,
@@ -37,14 +38,14 @@ import {
     Divider,
     IosSwitch,
     LinearProgress,
-    ScrollBox,
     Tooltip,
+    WidgetBottomScrollBox,
 } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectMainObject } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
-import { selectHasAdminCapabilities } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { NodeType } from "types/misc";
 import {
     extractObjectIds,
@@ -329,7 +330,7 @@ export function Root() {
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox pb={2} {...bindResizeHandlers()}>
+            <WidgetBottomScrollBox pb={2} {...bindResizeHandlers()}>
                 {mainObject === undefined && <Box p={1}>{t("selectAnObjectToViewProperties")}</Box>}
                 {mainObject !== undefined && object ? (
                     <>
@@ -363,7 +364,7 @@ export function Root() {
                         ) : null}
                     </>
                 ) : null}
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }
@@ -494,7 +495,8 @@ function PropertyItem({
     const { t } = useTranslation();
 
     const isUrl = value.startsWith("http");
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.SceneManage);
     const starred = useAppSelector(selectStarredProperties);
     const stampSettings = useAppSelector(selectPropertiesStampSettings);
     const dispatch = useAppDispatch();
@@ -576,7 +578,7 @@ function PropertyItem({
                         id={id}
                         MenuListProps={{ sx: { maxWidth: "100%" } }}
                     >
-                        {isAdmin && stampSettings.enabled && (
+                        {canManage && stampSettings.enabled && (
                             <MenuItem
                                 onClick={() => {
                                     if (isStarred) {

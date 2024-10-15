@@ -55,6 +55,10 @@ export function rgbToVec(color: RGB): VecRGBA {
     return [color.r / 255, color.g / 255, color.b / 255, color.a ?? 1];
 }
 
+export function rgbToVecRGB(color: RGB): VecRGB {
+    return [color.r / 255, color.g / 255, color.b / 255];
+}
+
 export function rgbToHex(color: RGB, argb = false): Hex {
     const toHex = (num: number): string => {
         const hex = Math.round(num).toString(16);
@@ -75,4 +79,11 @@ export function hslToVec(h: number, s: number, l: number): VecRGB {
 export function vecRgbaToRgbaString(color: VecRGBA) {
     const [r, g, b, a] = color;
     return `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${a ?? 1})`;
+}
+
+export function getRandomColorForObjectId(objectId: number) {
+    const h = ((objectId % 360) * 10) % 360;
+    const s = 0.5 + ((objectId % 30) / 30) * 0.3;
+    const l = 0.5 + ((objectId % 10) / 10) * 0.5;
+    return hslToVec(h, s, l);
 }

@@ -10,7 +10,7 @@ import { CadCamera, SceneConfig, Subtrees, SubtreeStatus } from "./types";
 
 export function getSubtrees(
     hidden: NonNullable<NonNullable<CustomProperties["explorerProjectState"]>["renderSettings"]>["hide"],
-    subtrees: string[]
+    subtrees: string[],
 ): Subtrees {
     return {
         terrain: subtrees.includes("terrain")
@@ -77,6 +77,13 @@ export function flip<T extends number[]>(v: T): T {
     return flipped as T;
 }
 
+export function flipBack<T extends number[]>(v: T): T {
+    const flipped = [...v];
+    flipped[1] = v[2];
+    flipped[2] = -v[1];
+    return flipped as T;
+}
+
 export function flipGLtoCadQuat(b: quat) {
     const ax = 0.7071067811865475;
     const aw = 0.7071067811865475;
@@ -93,12 +100,32 @@ export function flipGLtoCadQuat(b: quat) {
         aw * bw - ax * bx);
 }
 
+export function flipCADToGLQuat(b: quat) {
+    const ax = -0.7071067811865475,
+        aw = 0.7071067811865475;
+    const bx = b[0],
+        by = b[1],
+        bz = b[2],
+        bw = b[3];
+
+    // prettier-ignore
+    return quat.fromValues(
+        ax * bw + aw * bx,
+        aw * by + - ax * bz,
+        aw * bz + ax * by,
+        aw * bw - ax * bx);
+}
+
 export function isGlSpace(up: Vec3 | undefined) {
     return !vec3.equals(up ?? [0, 1, 0], [0, 0, 1]);
 }
 
 export function latLon2Tm({ coords, tmZone }: { coords: GeoLocation; tmZone: string }) {
     return flip(dataApi.latLon2tm(coords, tmZone));
+}
+
+export function tm2LatLon({ coords, tmZone }: { coords: ReadonlyVec3; tmZone: string }) {
+    return dataApi.tm2LatLon(flipBack(coords), tmZone);
 }
 
 export async function loadScene(id: string): Promise<[SceneConfig, CadCamera | undefined]> {
@@ -130,7 +157,7 @@ export async function loadScene(id: string): Promise<[SceneConfig, CadCamera | u
                                   cfg.camera.referenceCoordSys[8],
                                   cfg.camera.referenceCoordSys[9],
                                   cfg.camera.referenceCoordSys[10],
-                              ])
+                              ]),
                           ),
                           fov: cfg.camera.fieldOfView,
                       }
@@ -166,7 +193,7 @@ function getBackgroundColor(color: vec4 | undefined): vec4 {
 export function applyCameraDistanceToMeasureTolerance(
     position: ReadonlyVec3,
     cameraPos: ReadonlyVec3,
-    settings: SnapTolerance
+    settings: SnapTolerance,
 ): SnapTolerance {
     const newObjectThreshold = vec3.dist(position, cameraPos);
     const hoverScale = Math.min(Math.max(newObjectThreshold, 0.15), 100);

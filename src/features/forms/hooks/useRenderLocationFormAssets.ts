@@ -8,12 +8,14 @@ import {
 import { ReadonlyQuat, ReadonlyVec3 } from "gl-matrix";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
 import { CameraType, selectCameraType } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { selectConfig, selectWidgets } from "slices/explorer";
 import { AsyncState, AsyncStatus } from "types/misc";
 
@@ -29,7 +31,7 @@ import {
 } from "../slice";
 import { FormGLtfAsset, LocationTemplate } from "../types";
 import { useFetchAssetList } from "./useFetchAssetList";
-import { useFetchInitialLocationForms } from "./useFetchLocationForms";
+import { useFetchLocationForms } from "./useFetchLocationForms";
 
 type RenderedForm = {
     templateId: string;
@@ -76,9 +78,11 @@ export function useRenderLocationFormAssets() {
     const alwaysShowMarkers = useAppSelector(selectAlwaysShowMarkers);
     const active = useAppSelector(selectCameraType) === CameraType.Pinhole && (isFormsWidgetOpen || alwaysShowMarkers);
     const assetsUrl = useAppSelector(selectConfig).assetsUrl;
+    const checkPermission = useCheckProjectPermission();
+    const canView = checkPermission(Permission.FormsView) ?? true;
 
     useFetchAssetList({ skip: !active });
-    useFetchInitialLocationForms();
+    useFetchLocationForms();
 
     const [assetAbortController, assetAbort] = useAbortController();
     const [assetGltfMap, setAssetGltfMap] = useState<AsyncState<Map<string, readonly RenderStateDynamicObject[]>>>({
@@ -88,7 +92,7 @@ export function useRenderLocationFormAssets() {
 
     const prevRenderedForms = useRef<RenderedForm[]>();
     const renderedForms = useMemo(() => {
-        if (!active || templates.status !== AsyncStatus.Success) {
+        if (!canView || !active || templates.status !== AsyncStatus.Success) {
             return [];
         }
 
@@ -97,7 +101,12 @@ export function useRenderLocationFormAssets() {
         const result = locationForms
             .filter((form) => form.location)
             .map((form) => {
-                const template = templateMap.get(form.templateId)! as LocationTemplate;
+                const template = templateMap.get(form.templateId) as LocationTemplate | undefined;
+
+                if (!template) {
+                    return null;
+                }
+
                 const result = {
                     templateId: template.id,
                     id: form.id,
@@ -113,7 +122,8 @@ export function useRenderLocationFormAssets() {
                     result.scale = transform.scale;
                 }
                 return result;
-            });
+            })
+            .filter((form) => form !== null) as RenderedForm[];
 
         if (areArraysEqual(result, prevRenderedForms.current, areRenderedFormsEqual)) {
             return prevRenderedForms.current!;
@@ -121,8 +131,7 @@ export function useRenderLocationFormAssets() {
             prevRenderedForms.current = result;
             return result;
         }
-    }, [templates, locationForms, active, transform]);
-
+    }, [templates, locationForms, active, transform, canView]);
     const baseObjectIdSet = useMemo(() => {
         const baseObjectIdSet = new Set<number>();
         if (assetInfoList.status === AsyncStatus.Success) {
@@ -144,14 +153,15 @@ export function useRenderLocationFormAssets() {
     }, [renderedForms]);
 
     useEffect(() => {
-        setAssetGltfMap({ status: AsyncStatus.Initial });
-        assetAbort();
         loadAssets();
 
         async function loadAssets() {
-            if (assetInfoList.status !== AsyncStatus.Success) {
+            if (!canView || !active || assetInfoList.status !== AsyncStatus.Success) {
                 return;
             }
+
+            setAssetGltfMap({ status: AsyncStatus.Initial });
+            assetAbort();
 
             const result = new Map<string, readonly RenderStateDynamicObject[]>();
 
@@ -168,7 +178,7 @@ export function useRenderLocationFormAssets() {
 
             setAssetGltfMap({ status: AsyncStatus.Success, data: result });
         }
-    }, [uniqueMarkers, assetInfoList, assetAbort, assetAbortController, assetsUrl]);
+    }, [canView, active, uniqueMarkers, assetInfoList, assetAbort, assetAbortController, assetsUrl]);
 
     const willUnmount = useRef(false);
     useEffect(() => {
@@ -209,7 +219,12 @@ export function useRenderLocationFormAssets() {
         }
 
         function updateDynamicObjects() {
-            if (!view || assetInfoList.status !== AsyncStatus.Success || assetGltfMap.status !== AsyncStatus.Success) {
+            if (
+                !canView ||
+                !view ||
+                assetInfoList.status !== AsyncStatus.Success ||
+                assetGltfMap.status !== AsyncStatus.Success
+            ) {
                 return;
             }
 
@@ -328,6 +343,7 @@ export function useRenderLocationFormAssets() {
         active,
         assetGltfMap,
         dispatchFormsGlobals,
+        canView,
         baseObjectIdSet,
     ]);
 }

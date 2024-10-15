@@ -126,24 +126,39 @@ const FormItemHeader = ({
     item,
     toggleRelevant,
     hideToggle = false,
+    disabled,
 }: {
     item: FormItem;
     toggleRelevant?: () => void;
     hideToggle?: boolean;
+    disabled?: boolean;
 }) => (
     <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
         <FormLabel component="legend" sx={{ fontWeight: 600, color: "text.primary" }}>
             {item.title}
         </FormLabel>
         {!hideToggle && !item.required && typeof toggleRelevant === "function" && (
-            <IconButton size="small" color={item.relevant ? "secondary" : "primary"} onClick={toggleRelevant}>
+            <IconButton
+                size="small"
+                color={item.relevant ? "secondary" : "primary"}
+                onClick={toggleRelevant}
+                disabled={disabled}
+            >
                 <NotInterested fontSize="small" />
             </IconButton>
         )}
     </Box>
 );
 
-export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatch<SetStateAction<FormItem[]>> }) {
+export function FormItem({
+    item,
+    setItems,
+    disabled,
+}: {
+    item: FormItem;
+    setItems?: Dispatch<SetStateAction<FormItem[]>>;
+    disabled?: boolean;
+}) {
     const { t } = useTranslation();
     const sceneId = useSceneId();
     const theme = useTheme();
@@ -160,7 +175,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         if (!editing) {
             setEditing(true);
         }
-        setItems((state) =>
+        setItems?.((state) =>
             state.map((_item) => {
                 if (_item === item) {
                     switch (item.type) {
@@ -192,7 +207,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         const relevant = item.required ? true : !isRelevant;
         setIsRelevant(relevant);
         setEditing(relevant);
-        setItems((state) =>
+        setItems?.((state) =>
             state.map((_item) =>
                 _item === item
                     ? {
@@ -237,7 +252,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         });
 
         if (showFileSizeWarning) {
-            setInfoMessage(`Some files were not added because they are larger than ${FILE_SIZE_LIMIT} MB.`);
+            setInfoMessage(t("filesNotAddedMessage", { limit: FILE_SIZE_LIMIT }));
         }
 
         if (filteredFiles.length === 0) {
@@ -253,10 +268,10 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                 }
             });
         } else {
-            setInfoMessage("An error occurred while uploading files. Please try again.");
+            setInfoMessage(t("filesUploadingError"));
         }
 
-        setItems((state) =>
+        setItems?.((state) =>
             state.map((item) => {
                 if (item.id === itemId) {
                     return item.type === FormItemType.File
@@ -273,7 +288,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         );
     };
 
-    const handleRemoveFile = useCallback((item: FileItemType, index: number) => {
+    const handleRemoveFile = useCallback((index: number) => {
         setFileIndexToDelete(index);
     }, []);
 
@@ -281,7 +296,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         (e: FormEvent) => {
             e.preventDefault();
             if (Number.isInteger(fileIndexToDelete) && item.type === FormItemType.File) {
-                setItems((state) =>
+                setItems?.((state) =>
                     state.map((_item) =>
                         _item.id === item.id
                             ? ({
@@ -305,8 +320,8 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
     switch (item.type) {
         case FormItemType.Checkbox:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <FormGroup row>
                         {item.options.map((option) => (
                             <FormControlLabel
@@ -318,7 +333,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                                     />
                                 }
                                 onChange={(_e, checked) =>
-                                    setItems((state) =>
+                                    setItems?.((state) =>
                                         state.map((_item) =>
                                             _item === item
                                                 ? {
@@ -340,8 +355,8 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
 
         case FormItemType.YesNo:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <RadioGroup
                         value={item.value ? item.value[0] : ""}
                         onChange={(_e, value) => handleChange(value)}
@@ -349,16 +364,16 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                         aria-labelledby={item.id}
                         name={item.title}
                     >
-                        <FormControlLabel value={"no"} control={<Radio size="small" />} label="No" />
-                        <FormControlLabel value={"yes"} control={<Radio size="small" />} label="Yes" />
+                        <FormControlLabel value={"no"} control={<Radio size="small" />} label={t("no")} />
+                        <FormControlLabel value={"yes"} control={<Radio size="small" />} label={t("yes")} />
                     </RadioGroup>
                 </FormControl>
             );
 
         case FormItemType.TrafficLight:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <RadioGroup
                         value={item.value ? item.value[0] : ""}
                         onChange={(_e, value) => handleChange(value)}
@@ -366,9 +381,9 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                         aria-labelledby={item.id}
                         name={item.title}
                     >
-                        <FormControlLabel value={"red"} control={<Radio size="small" />} label="Red" />
-                        <FormControlLabel value={"yellow"} control={<Radio size="small" />} label="Yellow" />
-                        <FormControlLabel value={"green"} control={<Radio size="small" />} label="Green" />
+                        <FormControlLabel value={"red"} control={<Radio size="small" />} label={t("red")} />
+                        <FormControlLabel value={"yellow"} control={<Radio size="small" />} label={t("yellow")} />
+                        <FormControlLabel value={"green"} control={<Radio size="small" />} label={t("green")} />
                     </RadioGroup>
                 </FormControl>
             );
@@ -376,13 +391,13 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         case FormItemType.Dropdown:
             return (
                 <FormControl
-                    disabled={!item.required && !item.relevant}
+                    disabled={disabled || (!item.required && !item.relevant)}
                     component="fieldset"
                     fullWidth
                     size="small"
                     sx={{ pb: 1 }}
                 >
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <Select
                         value={item.value ? item.value[0] : ""}
                         onChange={(evt) => handleChange(evt.target.value)}
@@ -400,13 +415,13 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
         case FormItemType.Input:
             return (
                 <FormControl
-                    disabled={!item.required && !item.relevant && !item.value}
+                    disabled={disabled || (!item.required && !item.relevant && !item.value)}
                     component="fieldset"
                     fullWidth
                     size="small"
                     sx={{ pb: 1 }}
                 >
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <Box onClick={handleTextFieldClick}>
                         {!editing && (!!item.value || (!item.required && !item.relevant)) ? (
                             <Box>
@@ -426,11 +441,15 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                                 maxRows={5}
                                 sx={{ width: 1, pr: 0 }}
                                 id={item.id}
-                                autoFocus
-                                inputRef={(ref) => {
-                                    if (ref) {
-                                        ref.selectionStart = item.value?.[0].length ?? 0;
-                                    }
+                                autoFocus={Boolean(item.value?.length)}
+                                inputProps={{
+                                    // Reset the value in order to place the cursor at the end of the text
+                                    // instead of the beginning
+                                    onFocus: (e) => {
+                                        const val = e.target.value;
+                                        e.target.value = "";
+                                        e.target.value = val;
+                                    },
                                 }}
                             />
                         )}
@@ -454,8 +473,8 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
 
         case FormItemType.Date:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <DatePicker
                         value={item.value}
                         onChange={handleChange}
@@ -467,8 +486,8 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
 
         case FormItemType.Time:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <TimePicker
                         value={item.value}
                         onChange={handleChange}
@@ -480,8 +499,8 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
 
         case FormItemType.DateTime:
             return (
-                <FormControl disabled={!item.required && !item.relevant} component="fieldset" fullWidth>
-                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} />
+                <FormControl disabled={disabled || (!item.required && !item.relevant)} component="fieldset" fullWidth>
+                    <FormItemHeader item={item} toggleRelevant={toggleRelevant} disabled={disabled} />
                     <DateTimePicker
                         value={item.value}
                         onChange={handleChange}
@@ -501,8 +520,10 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                     />
                     {Number.isInteger(fileIndexToDelete) ? (
                         <Confirmation
-                            title={`Delete file "${(item.value as FormsFile[])[fileIndexToDelete as number].name}"?`}
-                            confirmBtnText="Delete"
+                            title={t("deleteFile", {
+                                fileName: (item.value as FormsFile[])[fileIndexToDelete as number].name,
+                            })}
+                            confirmBtnText={t("delete")}
                             textAlign="center"
                             onCancel={() => setFileIndexToDelete(null)}
                             component="form"
@@ -531,7 +552,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                                             isReadonly={item.readonly || !isRelevant}
                                             activeImage={activeImage}
                                             isModalOpen={modalOpen}
-                                            removeFile={() => handleRemoveFile(item, index)}
+                                            removeFile={() => handleRemoveFile(index)}
                                             openImageModal={openImageModal}
                                         />
                                     )}
@@ -546,7 +567,7 @@ export function FormItem({ item, setItems }: { item: FormItem; setItems: Dispatc
                                 multiple={item.multiple}
                                 onChange={(e) => handleFileUpload(e, item.id!)}
                                 uploading={uploading}
-                                disabled={!isRelevant}
+                                disabled={disabled || !isRelevant}
                             />
                         </>
                     )}

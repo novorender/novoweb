@@ -3,7 +3,7 @@ import { ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
-import { FormId, FormObject, FormRecord, type FormState } from "features/forms/types";
+import { type FormId, type FormRecord } from "features/forms/types";
 import { VecRGBA } from "utils/color";
 
 const HIGHLIGHT_COLOR = [1, 0.4, 0.7, 1] as VecRGBA;
@@ -12,7 +12,7 @@ export function FormsListItem({
     item,
     formId,
 }: {
-    item: (FormObject & { formState: FormState }) | (FormRecord & { id: number; formState: FormState });
+    item: FormRecord & { id?: number; guid?: string; name?: string };
     formId: FormId;
 }) {
     const history = useHistory();
@@ -27,21 +27,27 @@ export function FormsListItem({
     const handleClick = () => {
         const id = searchForm ? item.guid : item.id;
         if (searchForm) {
-            history.push(`/search-instance/${id}-${formId}`);
+            history.push({
+                pathname: "/search-instance",
+                search: `?objectGuid=${id}&formId=${formId}`,
+            });
         } else {
-            history.push(`/location-instance/${formId}-${id}`);
+            history.push({
+                pathname: "/location-instance",
+                search: `?templateId=${formId}&formId=${id}`,
+            });
         }
     };
 
     const handleMouseEnter = () => {
         if (searchForm) {
-            dispatchHighlighted(highlightActions.set({ color: HIGHLIGHT_COLOR, ids: [item.id] }));
+            dispatchHighlighted(highlightActions.set({ color: HIGHLIGHT_COLOR, ids: [item.id!] }));
         }
     };
 
     const handleMouseLeave = () => {
         if (searchForm) {
-            dispatchHighlighted(highlightActions.remove([item.id]));
+            dispatchHighlighted(highlightActions.remove([item.id!]));
         }
     };
 
@@ -64,11 +70,11 @@ export function FormsListItem({
                 }}
             >
                 <Circle
-                    htmlColor={item.formState === "new" ? "red" : item.formState === "finished" ? "green" : "orange"}
+                    htmlColor={item.state === "new" ? "red" : item.state === "finished" ? "green" : "orange"}
                     fontSize="inherit"
                 />
             </ListItemIcon>
-            <ListItemText>{"name" in item ? item.name : "title" in item && item.title}</ListItemText>
+            <ListItemText>{item.title ?? item.name ?? item.guid}</ListItemText>
         </ListItemButton>
     );
 }

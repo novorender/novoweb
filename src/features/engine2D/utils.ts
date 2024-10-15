@@ -39,7 +39,7 @@ export function drawProduct(
     colorSettings: ColorSettings,
     pixelWidth: number,
     textSettings?: TextSettings,
-    lineCap?: LineCap
+    lineCap?: LineCap,
 ) {
     for (const obj of product.objects) {
         if (colorSettings.complexCylinder && obj.kind === "cylinder") {
@@ -63,7 +63,7 @@ export function drawProduct(
                     cylinderLine,
                     { lineColor: gradient, outlineColor: "rgba(80, 80, 80, .8)" },
                     pixelWidth,
-                    { type: "centerOfLine", unit: " " }
+                    { type: "centerOfLine", unit: " " },
                 );
             }
 
@@ -76,7 +76,7 @@ export function drawProduct(
                     obj.parts[i],
                     { lineColor: col, outlineColor: "rgba(80, 80, 80, .8)" },
                     pixelWidth,
-                    { type: "center" }
+                    { type: "center" },
                 );
             }
 
@@ -103,7 +103,7 @@ export function drawPart(
     colorSettings: ColorSettings,
     pixelWidth: number,
     textSettings?: TextSettings,
-    lineCap?: LineCap
+    lineCap?: LineCap,
 ): boolean {
     if (part.vertices2D) {
         ctx.lineWidth = pixelWidth;
@@ -278,7 +278,7 @@ function drawLinesOrPolygon(
     part: DrawPart,
     colorSettings: ColorSettings,
     text?: TextSettings,
-    lineCap?: LineCap
+    lineCap?: LineCap,
 ) {
     const lineColArray = colorSettings.lineColor !== undefined && Array.isArray(colorSettings.lineColor);
     if (part.vertices2D) {
@@ -352,7 +352,7 @@ function drawLinesOrPolygon(
             for (let i = 0; i < part.vertices2D.length; ++i) {
                 ctx.fillStyle = colorSettings.pointColor
                     ? getPointColor(colorSettings.pointColor, i, part.vertices2D.length)
-                    : colorSettings.fillColor ?? "black";
+                    : (colorSettings.fillColor ?? "black");
                 ctx.lineWidth = 2;
                 ctx.strokeStyle = "black";
                 ctx.beginPath();
@@ -403,7 +403,7 @@ function drawLinesOrPolygon(
                 const drawTextsFromPart = (
                     points: ReadonlyVec2[],
                     indicesOnScreen: number[] | undefined,
-                    textList: string[]
+                    textList: string[],
                 ) => {
                     const indexer = (i: number) => (indicesOnScreen ? indicesOnScreen[i] : i);
                     for (let i = 0; i < points.length - 1; ++i) {
@@ -449,7 +449,7 @@ function getLineColor(lineColor: string | CanvasGradient | string[] | undefined,
 function getPointColor(
     pointColor: string | { start: string; middle: string; end: string },
     idx: number,
-    length: number
+    length: number,
 ) {
     if (typeof pointColor === "string") {
         return pointColor;
@@ -467,7 +467,7 @@ function drawPoints(ctx: CanvasRenderingContext2D, part: DrawPart, colorSettings
         for (let i = 0; i < part.vertices2D.length; ++i) {
             const color = colorSettings.pointColor
                 ? getPointColor(colorSettings.pointColor, i, part.vertices2D.length)
-                : colorSettings.fillColor ?? "black";
+                : (colorSettings.fillColor ?? "black");
             drawPoint(ctx, part.vertices2D[i], color);
         }
         return true;
@@ -493,7 +493,7 @@ export function drawLineStrip(
     ctx: CanvasRenderingContext2D,
     vertices2D: ReadonlyVec2[],
     color?: string,
-    lineWidth?: number
+    lineWidth?: number,
 ) {
     ctx.beginPath();
     ctx.moveTo(vertices2D[0][0], vertices2D[0][1]);
@@ -520,14 +520,18 @@ export function drawPoint(ctx: CanvasRenderingContext2D, point: ReadonlyVec2, co
     ctx.stroke();
 }
 
-export function drawText(ctx: CanvasRenderingContext2D, vertices2D: ReadonlyVec2[], text: string) {
+function setupDrawText(ctx: CanvasRenderingContext2D) {
     ctx.strokeStyle = "black";
     ctx.fillStyle = "white";
     ctx.lineWidth = 2;
-    ctx.font = `bold ${16}px "Open Sans", sans-serif`;
+    ctx.font = `bold 16px "Open Sans", sans-serif`;
     ctx.textBaseline = "bottom";
     ctx.textAlign = "center";
+}
+
+function drawText(ctx: CanvasRenderingContext2D, vertices2D: ReadonlyVec2[], text: string) {
     if (vertices2D.length === 1) {
+        setupDrawText(ctx);
         ctx.strokeText(text, vertices2D[0][0], vertices2D[0][1]);
         ctx.fillText(text, vertices2D[0][0], vertices2D[0][1]);
     } else if (vertices2D.length === 2) {
@@ -535,8 +539,14 @@ export function drawText(ctx: CanvasRenderingContext2D, vertices2D: ReadonlyVec2
             vertices2D[0][0] > vertices2D[1][0]
                 ? vec2.sub(vec2.create(), vertices2D[0], vertices2D[1])
                 : vec2.sub(vec2.create(), vertices2D[1], vertices2D[0]);
-        const pixLen = ctx.measureText(text).width + 20;
-        if (vec2.sqrLen(dir) > pixLen * pixLen) {
+        const dirSqrLen = vec2.sqrLen(dir);
+        let pixLen = 20;
+        let isLongEnough = dirSqrLen > pixLen * pixLen;
+        if (isLongEnough) {
+            pixLen += ctx.measureText(text).width;
+            isLongEnough = dirSqrLen > pixLen * pixLen;
+        }
+        if (isLongEnough) {
             const center = vec2.create();
             vec2.lerp(center, vertices2D[0], vertices2D[1], 0.5);
             const x = center[0];
@@ -545,6 +555,7 @@ export function drawText(ctx: CanvasRenderingContext2D, vertices2D: ReadonlyVec2
             const angle = Math.atan2(dir[1], dir[0]);
             ctx.translate(x, y);
             ctx.rotate(angle);
+            setupDrawText(ctx);
             ctx.strokeText(text, 0, 0);
             ctx.fillText(text, 0, 0);
             ctx.resetTransform();
@@ -554,6 +565,7 @@ export function drawText(ctx: CanvasRenderingContext2D, vertices2D: ReadonlyVec2
         for (const p of vertices2D) {
             vec2.add(center, center, p);
         }
+        setupDrawText(ctx);
         ctx.strokeText(text, center[0] / vertices2D.length, center[1] / vertices2D.length);
         ctx.fillText(text, center[0] / vertices2D.length, center[1] / vertices2D.length);
     }
@@ -635,7 +647,7 @@ export function translateInteraction(el: Element | null, pos?: vec2, rot?: numbe
             ? rot
                 ? `translate(${pos[0] - 100} ${pos[1] - 98}), rotate(${rot}, 100, 100)`
                 : `translate(${pos[0] - 100} ${pos[1] - 98})`
-            : "translate(-1000 -1000)"
+            : "translate(-1000 -1000)",
     );
 }
 

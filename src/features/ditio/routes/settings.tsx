@@ -6,7 +6,7 @@ import { FormEventHandler, SyntheticEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveCustomPropertiesMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { featuresConfig } from "config/features";
@@ -41,6 +41,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const allProjects = _allProjects
         ? Object.fromEntries(_allProjects.map((project) => [project.id, project]))
         : undefined;
+    const [saveCustomProperties] = useSaveCustomPropertiesMutation();
 
     // const handleProjectsChange = (_e: SyntheticEvent, value: any[]) => {
     const handleProjectsChange = (_e: SyntheticEvent, value: string | null) => {
@@ -77,7 +78,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                 },
             });
 
-            dataApi.putScene(updated);
+            saveCustomProperties({ projectId: sceneId, data: updated.customProperties }).unwrap();
         } catch {
             console.warn(`Failed to save ${t(featuresConfig.ditio.nameKey)} settings.`);
         }

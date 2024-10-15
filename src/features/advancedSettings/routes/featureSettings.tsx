@@ -16,7 +16,15 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
+import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    Divider,
+    LinearProgress,
+    Switch,
+    WidgetBottomScrollBox,
+} from "components";
 import { CanvasContextMenuFeatureKey, canvasContextMenuFeatures } from "config/canvasContextMenu";
 import {
     betaViewerWidgets,
@@ -27,12 +35,15 @@ import {
     Widget,
     WidgetKey,
 } from "config/features";
+import { useToggleNewDesign } from "features/newDesign/useToggleNewDesign";
 import { renderActions, selectDebugStats, selectGeneratedParametricData, selectNavigationCube } from "features/render";
 import {
     explorerActions,
+    selectCanUseNewDesign,
     selectCanvasContextMenuFeatures,
-    selectEnabledWidgets,
+    selectEnabledWidgetsWithoutPermissionCheck,
     selectLockedWidgets,
+    selectNewDesign,
     selectPrimaryMenu,
 } from "slices/explorer";
 
@@ -42,13 +53,17 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
     const { t, i18n } = useTranslation();
 
     const dispatch = useAppDispatch();
-    const enabledWidgets = useAppSelector(selectEnabledWidgets);
+    // admins should be able to enable widgets even if they don't have access to it
+    const enabledWidgets = useAppSelector(selectEnabledWidgetsWithoutPermissionCheck);
     const lockedWidgets = useAppSelector(selectLockedWidgets);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
     const enabledCanvasContextMenuFeatures = useAppSelector(selectCanvasContextMenuFeatures);
     const navigationCube = useAppSelector(selectNavigationCube);
     const debugStats = useAppSelector(selectDebugStats);
     const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
+    const newDesign = useAppSelector(selectNewDesign);
+    const canUseNewDesign = useAppSelector(selectCanUseNewDesign);
+    const toggleNewDesign = useToggleNewDesign();
 
     const toggleWidget = (key: WidgetKey, checked: boolean) => {
         const keys = enabledWidgets.map((w) => w.key);
@@ -99,7 +114,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} mt={1} pb={3}>
+            <WidgetBottomScrollBox height={1} mt={1} pb={3}>
                 <Typography p={1} pb={0} variant="h6" fontWeight={600}>
                     {t("featureSettings")}
                 </Typography>
@@ -128,32 +143,40 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                     <AccordionSummary>{t("widgets")}</AccordionSummary>
                     <AccordionDetails>
                         <Grid container p={1}>
-                            {sortWidgets([...releasedViewerWidgets]).map((widget) =>
-                                defaultEnabledWidgets.includes(widget.key) ? null : (
-                                    <Grid item xs={6} key={widget.key}>
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    size="small"
-                                                    color="primary"
-                                                    name={widget.key}
-                                                    checked={
-                                                        enabledWidgets.some((enabled) => enabled.key === widget.key) &&
-                                                        !lockedWidgets.includes(widget.key)
-                                                    }
-                                                    onChange={(_e, checked) => toggleWidget(widget.key, checked)}
-                                                    disabled={lockedWidgets.includes(widget.key)}
-                                                />
-                                            }
-                                            label={
-                                                <Box mr={0.5} sx={{ userSelect: "none" }}>
-                                                    {t(widget.nameKey)}
-                                                </Box>
-                                            }
-                                        />
-                                    </Grid>
-                                ),
-                            )}
+                            {sortWidgets([...releasedViewerWidgets])
+                                .filter((widget) => {
+                                    if ("newUx" in widget && widget.newUx && !newDesign) {
+                                        return false;
+                                    }
+                                    return true;
+                                })
+                                .map((widget) =>
+                                    defaultEnabledWidgets.includes(widget.key) ? null : (
+                                        <Grid item xs={6} key={widget.key}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        size="small"
+                                                        color="primary"
+                                                        name={widget.key}
+                                                        checked={
+                                                            enabledWidgets.some(
+                                                                (enabled) => enabled.key === widget.key,
+                                                            ) && !lockedWidgets.includes(widget.key)
+                                                        }
+                                                        onChange={(_e, checked) => toggleWidget(widget.key, checked)}
+                                                        disabled={lockedWidgets.includes(widget.key)}
+                                                    />
+                                                }
+                                                label={
+                                                    <Box mr={0.5} sx={{ userSelect: "none" }}>
+                                                        {t(widget.nameKey)}
+                                                    </Box>
+                                                }
+                                            />
+                                        </Grid>
+                                    ),
+                                )}
                         </Grid>
                     </AccordionDetails>
                 </Accordion>
@@ -384,10 +407,21 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     }
                                 />
                             ))}
+                            {canUseNewDesign && (
+                                <FormControlLabel
+                                    sx={{ ml: 0, mb: 1 }}
+                                    control={<Switch checked={newDesign} onChange={toggleNewDesign} />}
+                                    label={
+                                        <Box ml={1} fontSize={16}>
+                                            {t("newDesign")}
+                                        </Box>
+                                    }
+                                />
+                            )}
                         </Box>
                     </AccordionDetails>
                 </Accordion>
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }

@@ -64,9 +64,11 @@ declare module "@novorender/data-js-api" {
             planes: {
                 normalOffset: [number, number, number, number];
                 color: [number, number, number, number];
+                showPlane: boolean;
                 outline?: {
                     enabled: boolean;
                 };
+                anchorPos?: [number, number, number];
             }[];
         };
         grid: {
@@ -82,6 +84,16 @@ declare module "@novorender/data-js-api" {
         };
         terrain: {
             asBackground: boolean;
+            elevationGradient: {
+                knots: { position: number; color: VecRGB }[];
+            };
+        };
+        pointVisualization: {
+            classificationColorGradient: {
+                knots: LabeledKnot[];
+                undefinedColor: VecRGBA;
+            };
+            defaultPointVisualization: PointVisualization;
         };
         measurements: {
             area:
@@ -182,9 +194,6 @@ declare module "@novorender/data-js-api" {
                     checked: boolean;
                 }[];
             }[];
-        };
-        forms?: {
-            alwaysShowMarkers: boolean;
         };
     };
 

@@ -5,11 +5,12 @@ import { useTranslation } from "react-i18next";
 import { Link, Redirect, useHistory } from "react-router-dom";
 import AutoSizer from "react-virtualized-auto-sizer";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, FixedSizeVirualizedList, ImgTooltip, IosSwitch, LinearProgress, Tooltip } from "components";
 import { featuresConfig } from "config/features";
 import { FormattedText } from "features/ditio/formattedText";
-import { selectHasAdminCapabilities } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 
 import { baseUrl, useFeedWebRawQuery } from "../../api";
 import {
@@ -32,7 +33,8 @@ export function Feed() {
     const showMachineMarkers = useAppSelector(selectShowDitioMachineMarkers);
     const feedScrollOffset = useAppSelector(selectFeedScrollOffset);
     const filters = useAppSelector(selectFilters);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntDitioManage);
 
     const projects = useAppSelector(selectDitioProjects);
     const { data: feed, isLoading } = useFeedWebRawQuery({ projects, filters }, { skip: !projects.length });
@@ -48,7 +50,7 @@ export function Feed() {
     }, [dispatch]);
 
     if (!projects.length) {
-        if (isAdmin) {
+        if (canManage) {
             return <Redirect to="/settings" />;
         } else {
             return (

@@ -32,7 +32,8 @@ import {
     selectOutlineLaserPlane,
 } from "features/outlineLaser";
 import { pointLineActions, selectLockPointLineElevation } from "features/pointLine";
-import { selectCanvasContextMenuFeatures } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
+import { selectCanvasContextMenuFeatures, selectIsOnline } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { getPerpendicular } from "utils/math";
 import {
@@ -124,6 +125,7 @@ function Selection() {
     const {
         state: { db, view },
     } = useExplorerGlobals(true);
+    const checkProjectPermission = useCheckProjectPermission();
 
     const features = useAppSelector(selectCanvasContextMenuFeatures);
     const clippingPlanes = useAppSelector(selectClippingPlanes).planes;
@@ -133,6 +135,8 @@ function Selection() {
         layer: [string, string] | undefined;
         file: [string, string] | undefined;
     }>();
+    const isOnline = useAppSelector(selectIsOnline);
+    const [isClipping, setClipping] = useState(false);
 
     useEffect(() => {
         loadObjectData();
@@ -236,9 +240,16 @@ function Selection() {
         const w = vec3.dot(normal, position);
         let rotation = 0;
         if (object) {
-            const rotationQuat = await getObjectMetadataRotation(view, db, object);
-            if (rotationQuat) {
-                rotation = getLocalRotationAroundNormal(rotationQuat, normal);
+            try {
+                setClipping(true);
+                const rotationQuat = await getObjectMetadataRotation(view, db, object);
+                if (rotationQuat) {
+                    rotation = getLocalRotationAroundNormal(rotationQuat, normal);
+                }
+            } catch (ex) {
+                console.warn("Error getting clip rotation", ex);
+            } finally {
+                setClipping(false);
             }
         }
         const normalOffset = vec4.fromValues(normal[0], normal[1], normal[2], w);
@@ -253,6 +264,8 @@ function Selection() {
                 normalOffset,
                 baseW: w,
                 rotation,
+                anchorPos: position,
+                showPlane: false,
             }),
         );
 
@@ -264,7 +277,10 @@ function Selection() {
             {stamp.data.object !== undefined && !properties && <LinearProgress sx={{ mt: -1 }} />}
             <Box>
                 {features.includes(config.hide.key) && (
-                    <MenuItem onClick={hide} disabled={stamp.data.object === undefined}>
+                    <MenuItem
+                        onClick={hide}
+                        disabled={stamp.data.object === undefined || !checkProjectPermission(config.hide.permission)}
+                    >
                         <ListItemIcon>
                             <VisibilityOff fontSize="small" />
                         </ListItemIcon>
@@ -272,7 +288,12 @@ function Selection() {
                     </MenuItem>
                 )}
                 {features.includes(config.hideLayer.key) && (
-                    <MenuItem onClick={hideLayer} disabled={!properties?.layer}>
+                    <MenuItem
+                        onClick={hideLayer}
+                        disabled={
+                            !isOnline || !properties?.layer || !checkProjectPermission(config.hideLayer.permission)
+                        }
+                    >
                         <ListItemIcon>
                             <LayersClear fontSize="small" />
                         </ListItemIcon>
@@ -287,7 +308,12 @@ function Selection() {
                     </MenuItem>
                 )}
                 {features.includes(config.addFileToBasket.key) && (
-                    <MenuItem onClick={addToBasket} disabled={!properties?.file}>
+                    <MenuItem
+                        onClick={addToBasket}
+                        disabled={
+                            !isOnline || !properties?.file || !checkProjectPermission(config.addFileToBasket.permission)
+                        }
+                    >
                         <ListItemIcon>
                             <Layers fontSize="small" />
                         </ListItemIcon>
@@ -298,10 +324,16 @@ function Selection() {
                 {features.includes(config.clip.key) && (
                     <MenuItem
                         onClick={clip}
-                        disabled={!stamp.data.normal || !stamp.data.position || clippingPlanes.length > 5}
+                        disabled={
+                            !stamp.data.normal ||
+                            !stamp.data.position ||
+                            clippingPlanes.length > 5 ||
+                            !checkProjectPermission(config.clip.permission) ||
+                            isClipping
+                        }
                     >
                         <ListItemIcon>
-                            <CropLandscape fontSize="small" />
+                            {isClipping ? <CircularProgress size={24} /> : <CropLandscape fontSize="small" />}
                         </ListItemIcon>
                         <ListItemText>{config.clip.name}</ListItemText>
                     </MenuItem>
@@ -419,6 +451,7 @@ function Measure() {
     const lockElevation = useAppSelector(selectLockPointLineElevation);
     const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
     const measurePickSettings = useAppSelector(selectMeasurePickSettings);
+    const checkProjectPermission = useCheckProjectPermission();
 
     const isCrossSection = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
 
@@ -685,7 +718,14 @@ function Measure() {
         <>
             <Box>
                 {features.includes(config.measure.key) && (
-                    <MenuItem onClick={measure} disabled={!measureEntity || measureEntity.drawKind === "vertex"}>
+                    <MenuItem
+                        onClick={measure}
+                        disabled={
+                            !measureEntity ||
+                            measureEntity.drawKind === "vertex" ||
+                            !checkProjectPermission(config.measure.permission)
+                        }
+                    >
                         <ListItemIcon>
                             <Straighten fontSize="small" />
                         </ListItemIcon>
@@ -693,7 +733,12 @@ function Measure() {
                     </MenuItem>
                 )}
                 {features.includes(config.laser.key) && (
-                    <MenuItem onClick={addLaser} disabled={!laser || status !== AsyncStatus.Success}>
+                    <MenuItem
+                        onClick={addLaser}
+                        disabled={
+                            !laser || status !== AsyncStatus.Success || !checkProjectPermission(config.laser.permission)
+                        }
+                    >
                         <ListItemIcon>
                             {status !== AsyncStatus.Success ? (
                                 <CircularProgress size={24} />
@@ -705,7 +750,10 @@ function Measure() {
                     </MenuItem>
                 )}
                 {features.includes(config.area.key) && (
-                    <MenuItem onClick={startArea} disabled={!stamp.data.position}>
+                    <MenuItem
+                        onClick={startArea}
+                        disabled={!stamp.data.position || !checkProjectPermission(config.area.permission)}
+                    >
                         <ListItemIcon>
                             <Straighten fontSize="small" />
                         </ListItemIcon>
@@ -713,7 +761,10 @@ function Measure() {
                     </MenuItem>
                 )}
                 {features.includes(config.pointLine.key) && (
-                    <MenuItem onClick={startPointLine} disabled={!stamp.data.position}>
+                    <MenuItem
+                        onClick={startPointLine}
+                        disabled={!stamp.data.position || !checkProjectPermission(config.pointLine.permission)}
+                    >
                         <ListItemIcon>
                             <Straighten fontSize="small" />
                         </ListItemIcon>
@@ -723,7 +774,7 @@ function Measure() {
                 {features.includes(config.pickPoint.key) && (
                     <MenuItem
                         onClick={handleClickOutlinePoint}
-                        disabled={!pickPoint}
+                        disabled={!pickPoint || !checkProjectPermission(config.pickPoint.permission)}
                         onMouseEnter={handleHoverOutlinePoint}
                         onMouseLeave={removeHover}
                     >

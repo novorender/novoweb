@@ -19,8 +19,7 @@ import { useGetProjectQuery, useSearchEpsgQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { renderActions, selectProjectSettings, selectSceneOrganization } from "features/render/renderSlice";
-import { useSceneId } from "hooks/useSceneId";
-import { selectConfig, selectProjectIsV2 } from "slices/explorer";
+import { selectConfig, selectProjectIsV2, selectProjectV2Info } from "slices/explorer";
 import { projectV1ZoneNameToEpsg } from "utils/misc";
 
 const filter = createFilterOptions<Option>();
@@ -39,7 +38,7 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
 
     const settings = useAppSelector(selectProjectSettings);
     const dispatch = useAppDispatch();
-    const projectId = useSceneId();
+    const projectId = useAppSelector(selectProjectV2Info)?.id;
     const org = useAppSelector(selectSceneOrganization);
 
     const projectV2 = useGetProjectQuery(projectId && isV2 ? { projectId } : skipToken, {

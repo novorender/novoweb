@@ -18,7 +18,7 @@ import { FormEventHandler, SyntheticEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveCustomPropertiesMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionSummary, Divider, ScrollBox, TextField } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -60,6 +60,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
     const currentSpace = useAppSelector(selectJiraSpace);
     const currentComponent = useAppSelector(selectJiraComponent);
     const currentMarkerConfig = useAppSelector(selectJiraMarkersConfig);
+    const [saveCustomProperties] = useSaveCustomPropertiesMutation();
 
     const { data: accessibleResources } = useGetAccessibleResourcesQuery(
         { accessToken: accessToken },
@@ -155,7 +156,7 @@ export function Settings({ sceneId }: { sceneId: string }) {
                 },
             });
 
-            dataApi.putScene(updated);
+            saveCustomProperties({ projectId: sceneId, data: updated.customProperties }).unwrap();
         } catch {
             console.warn("Failed to save Jira settings.");
         }

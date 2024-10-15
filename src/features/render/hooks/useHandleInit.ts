@@ -1,11 +1,14 @@
 import { DeviceProfile, getDeviceProfile, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
+import { SearchOptions } from "@novorender/webgl-api";
 import { getGPUTier } from "detect-gpu";
+import { ReadonlyVec3 } from "gl-matrix";
 import { useEffect, useRef } from "react";
 
 import { useLazyGetProjectQuery } from "apis/dataV2/dataV2Api";
+import { Permission } from "apis/dataV2/permissions";
 import { ProjectInfo } from "apis/dataV2/projectTypes";
-import { useAppDispatch } from "app/redux-store-interactions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { explorerGlobalsActions, useExplorerGlobals } from "contexts/explorerGlobals";
 import {
     HighlightCollection,
@@ -14,19 +17,22 @@ import {
 } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { GroupStatus, ObjectGroup, objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
-import { fillGroupIds } from "features/deviations/utils";
+import { useFillGroupIds } from "hooks/useFillGroupIds";
 import { useSceneId } from "hooks/useSceneId";
-import { ProjectType } from "slices/explorer";
+import { ProjectType, selectConfig } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { VecRGBA } from "utils/color";
+import { mixpanel } from "utils/mixpanel";
 import { sleep } from "utils/time";
 
 import { renderActions } from "../renderSlice";
 import { ErrorKind } from "../sceneError";
-import { getDefaultCamera, loadScene } from "../utils";
+import { getDefaultCamera, loadScene, tm2LatLon } from "../utils";
+import { useCachedCheckPermissionsQuery } from "./useCachedLazyCheckPermissionsQuery";
 
 export function useHandleInit() {
     const sceneId = useSceneId();
+    const config = useAppSelector(selectConfig);
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const dispatchObjectGroups = useDispatchObjectGroups();
@@ -38,6 +44,8 @@ export function useHandleInit() {
     const dispatch = useAppDispatch();
 
     const [getProject] = useLazyGetProjectQuery();
+    const checkPermissions = useCachedCheckPermissionsQuery();
+    const fillGroupIds = useFillGroupIds();
 
     const initialized = useRef(false);
 
@@ -67,6 +75,19 @@ export function useHandleInit() {
 
             try {
                 const [{ url: _url, db, ...sceneData }, sceneCamera] = await loadScene(sceneId);
+                const { projectId } = sceneData;
+
+                const projectV2 = await getProject({ projectId: sceneId })
+                    .unwrap()
+                    .catch((e) => {
+                        if (e.status === 401 || e.status === 403) {
+                            throw { error: "Not authorized" };
+                        }
+                        throw e;
+                    });
+
+                const projectIsV2 = Boolean(projectV2);
+
                 const url = new URL(_url);
                 const parentSceneId = url.pathname.replaceAll("/", "");
                 url.pathname = "";
@@ -74,13 +95,30 @@ export function useHandleInit() {
                     url,
                     parentSceneId,
                     "index.json",
-                    new AbortController().signal
+                    new AbortController().signal,
                 );
-                const projectV2 = await getProject({ projectId: sceneId })
-                    .unwrap()
-                    .catch(() => undefined);
-                const projectIsV2 = Boolean(projectV2);
-                const tmZoneForCalc = await loadTmZoneForCalc(projectV2, sceneData.tmZone);
+
+                const [tmZoneForCalc, permissions] = await Promise.all([
+                    loadTmZoneForCalc(projectV2, sceneData.tmZone, octreeSceneConfig.center),
+                    checkPermissions({
+                        scope: {
+                            organizationId: sceneData.organization,
+                            projectId,
+                            viewerSceneId: sceneId === projectId ? undefined : sceneId,
+                        },
+                        permissions: Object.values(Permission),
+                    }),
+                ]);
+
+                mixpanel?.register(
+                    { "Scene ID": sceneId, "Scene Title": sceneData.title, "Scene Org": sceneData.organization },
+                    { persistent: false },
+                );
+                mixpanel?.track_pageview({
+                    "Scene ID": sceneId,
+                    "Scene Title": sceneData.title,
+                    "Scene Org": sceneData.organization,
+                });
 
                 const offlineWorkerState =
                     view.offline &&
@@ -93,6 +131,7 @@ export function useHandleInit() {
                 dispatch(
                     renderActions.initScene({
                         projectType: projectIsV2 ? ProjectType.V2 : ProjectType.V1,
+                        projectV2Info: { ...projectV2, permissions },
                         tmZoneForCalc,
                         sceneData,
                         sceneConfig: octreeSceneConfig,
@@ -104,7 +143,7 @@ export function useHandleInit() {
                                 kind: view.renderState.camera.kind,
                             },
                         deviceProfile,
-                    })
+                    }),
                 );
 
                 const groups: ObjectGroup[] = sceneData.objectGroups
@@ -120,10 +159,10 @@ export function useHandleInit() {
                         status: group.selected
                             ? GroupStatus.Selected
                             : group.hidden
-                            ? GroupStatus.Hidden
-                            : group.frozen
-                            ? GroupStatus.Frozen
-                            : GroupStatus.None,
+                              ? GroupStatus.Hidden
+                              : group.frozen
+                                ? GroupStatus.Frozen
+                                : GroupStatus.None,
                         // NOTE(OLA): Pass IDs as undefined to be loaded when group is activated.
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         ids: group.ids ? new Set(group.ids) : (undefined as any),
@@ -132,19 +171,19 @@ export function useHandleInit() {
                 // Ensure frozen groups are loaded before rendering anything to not even put them into memory
                 // (some scenes on some devices may crash upon loading because there's too much data)
                 await fillGroupIds(
+                    groups.filter((g) => g.status === GroupStatus.Frozen),
                     sceneId,
-                    groups.filter((g) => g.status === GroupStatus.Frozen)
                 );
 
                 dispatchObjectGroups(objectGroupsActions.set(groups));
                 dispatchHighlighted(
-                    highlightActions.setColor(sceneData.customProperties.highlights?.primary.color ?? [1, 0, 0, 1])
+                    highlightActions.setColor(sceneData.customProperties.highlights?.primary.color ?? [1, 0, 0, 1]),
                 );
                 dispatchHighlightCollections(
                     highlightCollectionsActions.setColor(
                         HighlightCollection.SecondaryHighlight,
-                        sceneData.customProperties.highlights?.secondary.color ?? [1, 1, 0, 1]
-                    )
+                        sceneData.customProperties.highlights?.secondary.color ?? [1, 1, 0, 1],
+                    ),
                 );
 
                 window.document.title = `${sceneData.title} - Novorender`;
@@ -156,10 +195,12 @@ export function useHandleInit() {
                                     width: entry.contentRect.width,
                                     height: entry.contentRect.height,
                                 },
-                            })
+                            }),
                         );
                     }
                 });
+
+                patchDb(db, config.dataV2ServerUrl, sceneId);
 
                 resizeObserver.observe(canvas);
                 dispatchGlobals(
@@ -168,7 +209,7 @@ export function useHandleInit() {
                         view: view,
                         scene: octreeSceneConfig,
                         offlineWorkerState,
-                    })
+                    }),
                 );
 
                 await sleep(2000);
@@ -180,22 +221,22 @@ export function useHandleInit() {
 
                     if (error === "Not authorized") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.NOT_AUTHORIZED })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.NOT_AUTHORIZED }),
                         );
                     } else if (error === "Scene not found") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.INVALID_SCENE })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.INVALID_SCENE }),
                         );
                     } else if (error === "Scene deleted") {
                         dispatch(
-                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.DELETED_SCENE })
+                            renderActions.setSceneStatus({ status: AsyncStatus.Error, msg: ErrorKind.DELETED_SCENE }),
                         );
                     } else {
                         dispatch(
                             renderActions.setSceneStatus({
                                 status: AsyncStatus.Error,
                                 msg: navigator.onLine ? ErrorKind.UNKNOWN_ERROR : ErrorKind.OFFLINE_UNAVAILABLE,
-                            })
+                            }),
                         );
                     }
                 } else if (e instanceof Error) {
@@ -204,7 +245,7 @@ export function useHandleInit() {
                             renderActions.setSceneStatus({
                                 status: AsyncStatus.Error,
                                 msg: ErrorKind.LEGACY_BINARY_FORMAT,
-                            })
+                            }),
                         );
                     } else {
                         dispatch(
@@ -214,9 +255,9 @@ export function useHandleInit() {
                                 stack: e.stack
                                     ? e.stack
                                     : typeof e.cause === "string"
-                                    ? e.cause
-                                    : `${e.name}: ${e.message}`,
-                            })
+                                      ? e.cause
+                                      : `${e.name}: ${e.message}`,
+                            }),
                         );
                     }
                 }
@@ -231,6 +272,9 @@ export function useHandleInit() {
         dispatchHighlighted,
         dispatchHighlightCollections,
         getProject,
+        checkPermissions,
+        config,
+        fillGroupIds,
     ]);
 }
 
@@ -298,20 +342,86 @@ async function createView(canvas: HTMLCanvasElement, options?: { deviceProfile?:
     const imports = await View.downloadImports({ baseUrl: url });
     const view = new View(canvas, deviceProfile, imports);
     view.controllers.flight.input.mouseMoveSensitivity = 4;
+    view.controllers.flight.input.disableWheelOnShift = true;
     return view;
 }
 
-async function loadTmZoneForCalc(projectV2: ProjectInfo | undefined, tmZoneV1: string | undefined) {
+async function loadTmZoneForCalc(
+    projectV2: ProjectInfo | undefined,
+    tmZoneV1: string | undefined,
+    sceneCenter: ReadonlyVec3,
+) {
     if (projectV2) {
         if (projectV2.epsg) {
-            const resp = await fetch(`https://epsg.io/${projectV2.epsg}.wkt`);
-            if (resp.ok) {
-                return resp.text();
+            // Try to use either .wkt or .proj4
+            // Some conversions don't work in WKT, probably because proj4 doesn't support newer WKT versions
+            // And some conversions don't work in proj4, because they require downloading additional
+            const respWkt = await fetch(`https://epsg.io/${projectV2.epsg}.wkt`);
+            if (respWkt.ok) {
+                try {
+                    const wkt = await respWkt.text();
+                    const converted = tm2LatLon({
+                        tmZone: wkt,
+                        coords: sceneCenter,
+                    });
+                    if (!Number.isNaN(converted.latitude) && !Number.isNaN(converted.longitude)) {
+                        return wkt;
+                    }
+                } catch (ex) {
+                    console.warn("Error using WKT string for coordinate conversion, use proj4 instead", ex);
+                }
             } else {
-                console.warn(resp.text());
+                console.warn(await respWkt.text());
+            }
+
+            // WKT failed, try proj4
+            const respProj = await fetch(`https://epsg.io/${projectV2.epsg}.proj4`);
+            if (respProj.ok) {
+                return await respProj.text();
+            } else {
+                console.warn(await respProj.text());
             }
         }
     } else {
         return tmZoneV1;
     }
+}
+
+// TODO(ND): remove patches once API is updated
+// Some changes to ObjectDB to make it work with data-v2 without changing lib internals
+// and changing all the search calls
+function patchDb(db: ObjectDB | undefined, dataV2ServerUrl: string, sceneId: string) {
+    if (!db) {
+        return;
+    }
+
+    // Override object metadata URL
+    const patchedDb = db as ObjectDB & { url: string };
+    patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}`;
+    const originalGetObjectMetdata = patchedDb.getObjectMetdata.bind(patchedDb);
+    patchedDb.getObjectMetdata = (id: number) => {
+        patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}/metadata`;
+        try {
+            return originalGetObjectMetdata(id);
+        } finally {
+            patchedDb.url = `${dataV2ServerUrl}/projects/${sceneId}`;
+        }
+    };
+
+    // Search no longer accepts simple string when searching nor single string for `value`
+    // Wrap all values to avoid updating all the consuming code
+    const originalSearch = patchedDb.search.bind(patchedDb);
+    patchedDb.search = (filter: SearchOptions, signal: AbortSignal | undefined) => {
+        const searchPattern =
+            typeof filter.searchPattern === "string"
+                ? [{ value: [filter.searchPattern] }]
+                : filter.searchPattern?.map((pattern) => {
+                      if (typeof pattern.value === "string") {
+                          return { ...pattern, value: [pattern.value] };
+                      }
+                      return pattern;
+                  });
+
+        return originalSearch({ ...filter, searchPattern }, signal);
+    };
 }

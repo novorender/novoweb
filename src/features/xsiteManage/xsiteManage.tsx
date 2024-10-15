@@ -4,14 +4,16 @@ import { PropsWithChildren, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation, useRouteMatch } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
 import WidgetList from "features/widgetList/widgetList";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage } from "utils/storage";
 
@@ -39,7 +41,13 @@ export default function XsiteManage() {
     return (
         <MemoryRouter initialEntries={["/machines", lastViewedPath]} initialIndex={1}>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.xsiteManage} disableShadow />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    WidgetMenu={WidgetMenu}
+                    widget={featuresConfig.xsiteManage}
+                    disableShadow
+                />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection="column"
@@ -80,7 +88,8 @@ export default function XsiteManage() {
 function WidgetMenu(props: MenuProps) {
     const settingsPaths = ["/*"];
     const accessToken = useAppSelector(selectXsiteManageAccessToken);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntXsiteManageManage);
 
     if (accessToken.status !== AsyncStatus.Success) {
         return null;
@@ -90,7 +99,7 @@ function WidgetMenu(props: MenuProps) {
         <>
             <Menu {...props}>
                 <LogoutMenuItem onClose={props.onClose} />
-                {isAdmin && (
+                {canManage && (
                     <Route path={settingsPaths} exact>
                         <SettingsMenuItem onClose={props.onClose} />
                     </Route>

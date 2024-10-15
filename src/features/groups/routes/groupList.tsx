@@ -3,8 +3,9 @@ import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppSelector } from "app/redux-store-interactions";
-import { Divider, LinearProgress, ScrollBox } from "components";
+import { Divider, LinearProgress, WidgetBottomScrollBox } from "components";
 import {
     GroupStatus,
     isInternalGroup,
@@ -12,7 +13,7 @@ import {
     useDispatchObjectGroups,
     useObjectGroups,
 } from "contexts/objectGroups";
-import { selectHasAdminCapabilities } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { AsyncStatus } from "types/misc";
 
 import { Collection } from "../collection";
@@ -23,7 +24,8 @@ export function GroupList() {
     const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.GroupManage);
     const loadingIds = useAppSelector(selectLoadingIds);
     const saveStatus = useAppSelector(selectSaveStatus);
     const objectGroups = useObjectGroups().filter((grp) => !isInternalGroup(grp));
@@ -55,7 +57,7 @@ export function GroupList() {
 
     return (
         <>
-            {isAdmin ? (
+            {canManage ? (
                 <Box boxShadow={theme.customShadows.widgetHeader}>
                     <Box px={1}>
                         <Divider />
@@ -95,7 +97,7 @@ export function GroupList() {
                 </Box>
             ) : null}
 
-            <ScrollBox display="flex" flexDirection="column" height={1} pt={1} pb={2}>
+            <WidgetBottomScrollBox display="flex" flexDirection="column" height={1} pt={1} pb={2}>
                 <StyledListItemButton
                     disableRipple
                     disabled={isLoading}
@@ -181,7 +183,7 @@ export function GroupList() {
                 {collections.map((collection) => (
                     <Collection disabled={isLoading} key={collection} collection={collection} />
                 ))}
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }

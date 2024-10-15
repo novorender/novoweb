@@ -45,7 +45,7 @@ export function AddObjects({
     const focusedInput = advancedInputs[focusedInputIdx];
 
     const [ids, setIds] = useState(objects?.ids ?? []);
-    const [limitSnackbarOpen, setLimitSnackbarOpen] = useState(ids.length > MAX_OBJECTS_COUNT);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [{ status }, setStatus] = useState<AsyncState<null>>({
         status: AsyncStatus.Initial,
@@ -56,11 +56,11 @@ export function AddObjects({
         if (objects?.ids) {
             dispatchHighlighted(highlightActions.setIds(objects.ids));
             if (objects.ids.length > MAX_OBJECTS_COUNT) {
-                setLimitSnackbarOpen(true);
-                setSnackbarMessage(`Your search is over the limit (${MAX_OBJECTS_COUNT}).`);
+                setSnackbarOpen(true);
+                setSnackbarMessage(t("searchIsOverLimit", { limit: MAX_OBJECTS_COUNT }));
             }
         }
-    }, [dispatchHighlighted, objects?.ids]);
+    }, [dispatchHighlighted, objects?.ids, t]);
 
     const getSearchPattern = useCallback(() => {
         if (!advanced && simpleInput.length < 3) {
@@ -75,10 +75,10 @@ export function AddObjects({
             return;
         }
 
-        return [...searchPattern, { property: "GUID", range: { min: "0", max: "z" } }];
+        return [...searchPattern, { property: "GUID", exact: true }];
     }, [advanced, advancedInputs, simpleInput]);
 
-    const handleSearch = async () => {
+    const handleSearch = useCallback(async () => {
         const abortSignal = abortController.current.signal;
 
         const searchPatterns = getSearchPattern();
@@ -100,8 +100,8 @@ export function AddObjects({
                 callback: (ids) => {
                     setIds((state) => {
                         if (state.length + ids.length > MAX_OBJECTS_COUNT) {
-                            setLimitSnackbarOpen(true);
-                            setSnackbarMessage(`Your search is over the limit (${MAX_OBJECTS_COUNT}).`);
+                            setSnackbarOpen(true);
+                            setSnackbarMessage(t("searchIsOverLimit", { limit: MAX_OBJECTS_COUNT }));
                             abort();
                             return state;
                         }
@@ -113,20 +113,20 @@ export function AddObjects({
                 },
             });
 
-            if (idCount === 0) {
-                setLimitSnackbarOpen(true);
+            if (!abortSignal.aborted && idCount === 0) {
+                setSnackbarOpen(true);
                 setSnackbarMessage(t("noObjectsFound"));
             }
         } catch {
             return setStatus({
                 status: AsyncStatus.Error,
-                msg: "An error occurred while searching in the DB.",
+                msg: t("errorSearchingInDb"),
             });
         }
 
         setIds((ids) => uniqueArray(ids));
         setStatus({ status: AsyncStatus.Success, data: null });
-    };
+    }, [abort, abortController, db, dispatchHighlighted, getSearchPattern, t]);
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -150,7 +150,7 @@ export function AddObjects({
     };
 
     const handleLimitSnackbarClose = () => {
-        setLimitSnackbarOpen(false);
+        setSnackbarOpen(false);
     };
 
     return (
@@ -285,7 +285,7 @@ export function AddObjects({
                         top: { xs: 24, sm: "auto" },
                     }}
                     autoHideDuration={10000}
-                    open={limitSnackbarOpen}
+                    open={snackbarOpen}
                     onClose={handleLimitSnackbarClose}
                     message={snackbarMessage}
                     action={

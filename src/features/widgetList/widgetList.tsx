@@ -1,15 +1,30 @@
 import { MemoryRouter, Route, Switch } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { featuresConfig, type WidgetKey } from "config/features";
-import { explorerActions, selectWidgets } from "slices/explorer";
+import { useAppSelector } from "app/redux-store-interactions";
+import { FeatureGroupKey, featuresConfig, type WidgetKey } from "config/features";
+import GroupedWidgetList from "features/groupedWidgetList/groupedWidgetList";
+import { useOpenWidget } from "hooks/useOpenWidget";
+import { selectNewDesign, selectWidgets } from "slices/explorer";
 
 import { Root } from "./routes/root";
 import { Tag } from "./routes/tag";
 
-export default function WidgetList({ widgetKey, onSelect }: { widgetKey?: WidgetKey; onSelect: () => void }) {
+export default function WidgetList(props: {
+    widgetKey?: WidgetKey;
+    featureGroupKey?: FeatureGroupKey;
+    onSelect: () => void;
+}) {
+    const newDesign = useAppSelector(selectNewDesign);
+    if (newDesign) {
+        return <GroupedWidgetList {...props} />;
+    } else {
+        return <WidgetListInner {...props} />;
+    }
+}
+
+function WidgetListInner({ widgetKey, onSelect }: { widgetKey?: WidgetKey; onSelect: () => void }) {
     const activeWidgets = useAppSelector(selectWidgets);
-    const dispatch = useAppDispatch();
+    const openWidget = useOpenWidget();
 
     const handleClick = (key: WidgetKey) => () => {
         const active = key !== widgetKey && activeWidgets.includes(key);
@@ -20,11 +35,12 @@ export default function WidgetList({ widgetKey, onSelect }: { widgetKey?: Widget
 
         if (!widgetKey) {
             onSelect();
-            return dispatch(explorerActions.addWidgetSlot(key));
+            openWidget(key);
+            return;
         }
 
         onSelect();
-        dispatch(explorerActions.replaceWidgetSlot({ replace: widgetKey, key }));
+        openWidget(key, { replace: widgetKey });
     };
 
     const config = widgetKey ? featuresConfig[widgetKey] : undefined;

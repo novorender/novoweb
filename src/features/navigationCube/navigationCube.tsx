@@ -8,6 +8,7 @@ import { useHighlighted } from "contexts/highlighted";
 import { renderActions, selectCameraType } from "features/render";
 import { isGlSpace } from "features/render/utils";
 import { useAbortController } from "hooks/useAbortController";
+import { selectNewDesign } from "slices/explorer";
 import { objIdsToTotalBoundingSphere } from "utils/objectData";
 
 // prettier-ignore
@@ -72,9 +73,13 @@ class Face {
 // https://codepen.io/MRokas/pen/aNBjdQ
 
 class Cube {
-    faces: Face[] = [];
+    private faces: Face[] = [];
+    private rotation: quat = quat.create();
 
-    constructor(readonly center: vec3, readonly size: number) {
+    constructor(
+        readonly center: vec3,
+        readonly size: number,
+    ) {
         const d = size / 2;
 
         const vertices = [
@@ -111,7 +116,7 @@ class Cube {
             const firstPoint = this.Project(face.vertices[0]);
             const mid = vec2.fromValues(
                 (firstPoint[0] + face.vertices[2][0]) / 2,
-                (firstPoint[1] + face.vertices[2][1]) / 2
+                (firstPoint[1] + face.vertices[2][1]) / 2,
             );
 
             let path = `M${firstPoint[0] + dx} ${-firstPoint[1] + dy}`;
@@ -137,6 +142,8 @@ class Cube {
     }
 
     setRotation(q: quat) {
+        this.rotation = quat.clone(q);
+
         const rot = mat3.fromQuat(mat3.create(), q);
         const d = this.size / 2;
 
@@ -144,52 +151,61 @@ class Cube {
             vec3.transformMat3(
                 vec3.create(),
                 vec3.fromValues(this.center[0] - d, this.center[1] - d, this.center[2] + d),
-                rot
+                rot,
             ),
             vec3.transformMat3(
                 vec3.create(),
                 vec3.fromValues(this.center[0] - d, this.center[1] - d, this.center[2] - d),
-                rot
+                rot,
             ),
             vec3.transformMat3(
                 vec3.create(),
                 vec3.fromValues(this.center[0] + d, this.center[1] - d, this.center[2] - d),
-                rot
+                rot,
             ),
             vec3.transformMat3(
                 vec3.create(),
                 vec3.fromValues(this.center[0] + d, this.center[1] - d, this.center[2] + d),
-                rot
+                rot,
             ),
             vec3.transformMat3(
                 vec3.create(),
                 vec3.fromValues(this.center[0] + d, this.center[1] + d, this.center[2] + d),
-                rot
+                rot,
             ),
             vec3.transformMat3(
                 vec3.create(),
                 vec3.fromValues(this.center[0] + d, this.center[1] + d, this.center[2] - d),
-                rot
+                rot,
             ),
             vec3.transformMat3(
                 vec3.create(),
                 vec3.fromValues(this.center[0] - d, this.center[1] + d, this.center[2] - d),
-                rot
+                rot,
             ),
             vec3.transformMat3(
                 vec3.create(),
                 vec3.fromValues(this.center[0] - d, this.center[1] + d, this.center[2] + d),
-                rot
+                rot,
             ),
         ];
         this.updateFaces(vertices);
     }
+
+    isSidefacing() {
+        const bottom = vec3.fromValues(0, 0, -1);
+        const rotatedBottom = vec3.transformQuat(vec3.create(), bottom, this.rotation);
+        return 0.98 <= rotatedBottom[1] && Math.trunc(rotatedBottom[1]) <= 1;
+    }
 }
 
-const CubeContainer = styled("svg", { shouldForwardProp: (prop) => prop !== "loading" })<{ loading?: boolean }>(
-    ({ loading }) => css`
+const CubeContainer = styled("svg", { shouldForwardProp: (prop) => prop !== "loading" && prop !== "newDesign" })<{
+    loading?: boolean;
+    newDesign?: boolean;
+}>(
+    ({ loading, newDesign }) => css`
         position: absolute;
-        top: 30px;
+        top: ${newDesign ? "100px" : "30px"};
         left: 30px;
         overflow: visible;
         pointer-events: none;
@@ -224,7 +240,7 @@ const CubeContainer = styled("svg", { shouldForwardProp: (prop) => prop !== "loa
                       }
                   `}
         }
-    `
+    `,
 );
 
 const createCircle = (radius: number, y: number) => {
@@ -267,7 +283,7 @@ class Circle {
 
                 return prev;
             },
-            [[]] as vec3[][]
+            [[]] as vec3[][],
         );
 
         return batches.map((batch, idx, arr) => {
@@ -348,7 +364,7 @@ const innerCircle = new Circle(radius, radius / 2 + 10);
 const compass = new Compass(15, radius / 2 + 10, radius);
 
 type Path = {
-    id: string;
+    id: "front" | "right" | "back" | "left" | "bottom" | "top" | `compass-${number}` | `circle-${number}-${number}`;
     zIndex: number;
     path: string;
 } & (
@@ -370,6 +386,7 @@ export function NavigationCube() {
     const [loading, setLoading] = useState(false);
     const [abortController, abort] = useAbortController();
     const cameraType = useAppSelector(selectCameraType);
+    const newDesign = useAppSelector(selectNewDesign);
     const dispatch = useAppDispatch();
 
     const highlightedBoundingSphereCenter = useRef<ReadonlyVec3>();
@@ -444,7 +461,7 @@ export function NavigationCube() {
                     rotation: quat.fromMat3(quat.create(), mat),
                     fov: view.renderState.camera.fov,
                 },
-            })
+            }),
         );
     };
 
@@ -473,7 +490,7 @@ export function NavigationCube() {
     }, [view]);
 
     return (
-        <CubeContainer loading={loading} height={cubeSize * 2} width={cubeSize * 2}>
+        <CubeContainer loading={loading} newDesign={newDesign} height={cubeSize * 2} width={cubeSize * 2}>
             <defs>
                 <linearGradient id="navigation-cube-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" style={{ stopColor: theme.palette.secondary.dark, stopOpacity: 1 }} />
@@ -497,25 +514,27 @@ export function NavigationCube() {
                         key={`${path.id}`}
                         id={path.id}
                     />
-                ) : null
+                ) : null,
             )}
 
             {compassPaths.map((path) =>
                 path.kind === "compass"
-                    ? path.pts.map((pt, i) => (
-                          <text
-                              key={i}
-                              x={pt[0] + cubeSize}
-                              y={-pt[1] + cubeSize}
-                              dominantBaseline="middle"
-                              textAnchor="middle"
-                              fill="#fff"
-                              fontWeight={"bold"}
-                          >
-                              {i === 0 ? "N" : i === 1 ? "E" : i === 2 ? "S" : "W"}
-                          </text>
-                      ))
-                    : null
+                    ? path.pts.map((pt, i) =>
+                          cube.isSidefacing() && Math.abs(pt[0]) < 70 ? null : (
+                              <text
+                                  key={i}
+                                  x={pt[0] + cubeSize}
+                                  y={-pt[1] + cubeSize}
+                                  dominantBaseline="middle"
+                                  textAnchor="middle"
+                                  fill="#fff"
+                                  fontWeight="bold"
+                              >
+                                  {i === 0 ? "N" : i === 1 ? "E" : i === 2 ? "S" : "W"}
+                              </text>
+                          ),
+                      )
+                    : null,
             )}
 
             {[...cubePaths]
@@ -536,15 +555,15 @@ export function NavigationCube() {
                                         path.center.x <= cubeSize - cubeSize / 5
                                             ? path.center.x - (cubeSize - cubeSize / 5 - path.center.x)
                                             : path.center.x >= cubeSize + cubeSize / 5
-                                            ? path.center.x + (path.center.x - (cubeSize + cubeSize / 5))
-                                            : path.center.x
+                                              ? path.center.x + (path.center.x - (cubeSize + cubeSize / 5))
+                                              : path.center.x
                                     }
                                     y={
                                         path.center.y <= cubeSize - cubeSize / 3.5
                                             ? path.center.y - (cubeSize - cubeSize / 3.5 - path.center.y)
                                             : path.center.y >= cubeSize + cubeSize / 3.5
-                                            ? path.center.y + (path.center.y - (cubeSize + cubeSize / 3.5))
-                                            : path.center.y
+                                              ? path.center.y + (path.center.y - (cubeSize + cubeSize / 3.5))
+                                              : path.center.y
                                     }
                                     dominantBaseline="middle"
                                     textAnchor="middle"
@@ -554,7 +573,7 @@ export function NavigationCube() {
                                 </text>
                             </g>
                         </Fragment>
-                    ) : null
+                    ) : null,
                 )}
         </CubeContainer>
     );

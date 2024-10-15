@@ -17,7 +17,7 @@ export function WidgetSkeleton({ widgetKey }: { widgetKey: WidgetKey }) {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={config} />
+                <WidgetHeader menuOpen={true} widget={config} />
                 <Box position="relative">
                     <LinearProgress />
                 </Box>

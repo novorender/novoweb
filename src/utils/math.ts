@@ -17,7 +17,7 @@ export function projectPointOnLineSegment2D(
     out: vec2,
     p: ReadonlyVec2,
     l1: ReadonlyVec2,
-    l2: ReadonlyVec2
+    l2: ReadonlyVec2,
 ): vec2 | undefined {
     const lVec = vec2.sub(vec2.create(), l1, l2);
     const pVec = vec2.sub(vec2.create(), l1, p);
@@ -38,6 +38,20 @@ export function pointToPlaneDistance(p: ReadonlyVec3, normalOffset: ReadonlyVec4
     const [a, b, c] = normalOffset;
     const d = -normalOffset[3];
     return Math.abs(a * x0 + b * y0 + c * z0 + d) / Math.sqrt(a * a + b * b + c * c);
+}
+
+export function projectPointOntoPlane(point: ReadonlyVec3, planeNormal: ReadonlyVec3, planePoint: ReadonlyVec3): vec3 {
+    const planeToPoint = vec3.subtract(vec3.create(), point, planePoint);
+    const d = vec3.dot(planeToPoint, planeNormal);
+    const projection = vec3.scaleAndAdd(vec3.create(), point, planeNormal, -d);
+    return projection;
+}
+
+export function decomposeNormalOffset(normalOffset: ReadonlyVec4) {
+    const normal = vec3.fromValues(normalOffset[0], normalOffset[1], normalOffset[2]);
+    const point = vec3.create();
+    vec3.scaleAndAdd(point, point, normal, normalOffset[3]);
+    return { normal, point };
 }
 
 export function pointToRectDistance(point: ReadonlyVec2, rect: AABB2) {
