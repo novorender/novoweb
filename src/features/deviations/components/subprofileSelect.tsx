@@ -71,7 +71,7 @@ export function SubprofileSelect() {
         [objectGroups, selectedProfile, landXmlPaths, t],
     );
 
-    if (!options || options.length < 2 || landXmlPaths.status !== AsyncStatus.Success) {
+    if (!options || landXmlPaths.status !== AsyncStatus.Success) {
         return null;
     }
 

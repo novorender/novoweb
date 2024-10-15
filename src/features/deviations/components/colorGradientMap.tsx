@@ -1,4 +1,4 @@
-import { Box, css, styled } from "@mui/material";
+import { Box } from "@mui/material";
 import { LineSubject } from "@visx/annotation";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { Brush } from "@visx/brush";
@@ -32,10 +32,11 @@ import {
     selectSelectedSubprofileIndex,
 } from "../selectors";
 import { accountForAbsValues } from "../utils";
+import { ChartHeaderButton } from "./chartHeaderButton";
 
 export function ColorGradientMap() {
     return (
-        <div style={{ width: "100%", height: "80px" }}>
+        <div style={{ width: "100%", height: "140px" }}>
             <ParentSize>{({ width, height }) => <ColorGradientMapInner width={width} height={height} />}</ParentSize>
         </div>
     );
@@ -373,14 +374,14 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                     </div>
                 )}
                 <Box position="absolute" top="0" right="0">
-                    <HeaderButton
+                    <ChartHeaderButton
                         onClick={() => {
                             reset();
                             brushRef.current?.reset();
                         }}
                     >
                         Reset
-                    </HeaderButton>
+                    </ChartHeaderButton>
                 </Box>
             </Box>
         );
@@ -406,13 +407,3 @@ function BrushHandle({ x, height, isBrushActive }: BrushHandleRenderProps) {
         </Group>
     );
 }
-
-const HeaderButton = styled("button", {
-    shouldForwardProp: (prop) => prop !== "active",
-})<React.DetailedHTMLProps<React.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement> & { active?: boolean }>(
-    ({ active }) => css`
-        border: 0;
-        opacity: 0.7;
-        background: ${active ? "grey" : "transparent"};
-    `
-);

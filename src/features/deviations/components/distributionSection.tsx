@@ -1,6 +1,6 @@
 import { ExpandMore } from "@mui/icons-material";
 import { accordionSummaryClasses, Badge, Box, css, FormControlLabel, styled, Typography } from "@mui/material";
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary, IosSwitch, LinearProgress } from "components";
@@ -19,12 +19,27 @@ export const DistributionSection = memo(DistributionSectionInner);
 function DistributionSectionInner() {
     const isTopDownOrthoCamera = useIsTopDownOrthoCamera();
     const [distrExpanded, setDistrExpanded] = useState(false);
+    const [hasDistributionData, setHasDistributionData] = useState(false);
     const rangeFollowsCamera = useAppSelector(selectRangeFollowsCamera);
     const distribution = useAppSelector(selectCurrentSubprofileDeviationDistributions);
 
     const dispatch = useAppDispatch();
 
-    useCalcSubprofileDevDistr({ skip: !distrExpanded });
+    useCalcSubprofileDevDistr();
+
+    useEffect(() => {
+        if (
+            distribution?.data.status === AsyncStatus.Success &&
+            (distribution.data.data.aggregatesAlongProfile.length > 0 ||
+                distribution.data.data.pointCountAtDeviation.length > 0)
+        ) {
+            setHasDistributionData(true);
+        }
+    }, [distribution]);
+
+    if (!hasDistributionData) {
+        return null;
+    }
 
     return (
         <Accordion expanded={distrExpanded} onChange={(_e, expand) => setDistrExpanded(expand)}>
@@ -82,5 +97,5 @@ const BetaAccordionSummary = styled(AccordionSummary)(
         & .${accordionSummaryClasses.content} {
             padding-top: 12px;
         }
-    `
+    `,
 );

@@ -1,4 +1,4 @@
-import { Box, css, styled } from "@mui/material";
+import { Box } from "@mui/material";
 import { LineSubject } from "@visx/annotation";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { curveMonotoneX } from "@visx/curve";
@@ -28,11 +28,12 @@ import {
     selectSelectedProfile,
     selectSelectedSubprofile,
 } from "../selectors";
+import { ChartHeaderButton } from "./chartHeaderButton";
 import { getColorKnots } from "./utils";
 
 export function CenterlineMinimap() {
     return (
-        <div style={{ width: "100%", height: "80px" }}>
+        <div style={{ width: "100%", height: "140px" }}>
             <ParentSize>{({ width, height }) => <CenterlineMinimapInner width={width} height={height} />}</ParentSize>
         </div>
     );
@@ -265,37 +266,26 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                     </div>
                 )}
                 <Box position="absolute" top="0" right="0">
-                    <HeaderButton
+                    <ChartHeaderButton
                         onClick={() => dispatch(deviationsActions.setCenterlineMinimapAttr("minDistance"))}
                         active={attr === "minDistance"}
                     >
                         min
-                    </HeaderButton>
-                    <HeaderButton
+                    </ChartHeaderButton>
+                    <ChartHeaderButton
                         onClick={() => dispatch(deviationsActions.setCenterlineMinimapAttr("avgDistance"))}
                         active={attr === "avgDistance"}
                     >
                         avg
-                    </HeaderButton>
-                    <HeaderButton
+                    </ChartHeaderButton>
+                    <ChartHeaderButton
                         onClick={() => dispatch(deviationsActions.setCenterlineMinimapAttr("maxDistance"))}
                         active={attr === "maxDistance"}
                     >
                         max
-                    </HeaderButton>
+                    </ChartHeaderButton>
                 </Box>
             </Box>
         );
     }
-);
-
-const HeaderButton = styled("button", {
-    shouldForwardProp: (prop) => prop !== "active",
-})<React.DetailedHTMLProps<React.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement> & { active: boolean }>(
-    ({ active }) => css`
-        border: 0;
-        opacity: 0.7;
-        background: ${active ? "grey" : "transparent"};
-        cursor: pointer;
-    `
 );

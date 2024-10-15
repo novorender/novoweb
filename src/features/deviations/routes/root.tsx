@@ -114,8 +114,8 @@ export function Root() {
                         )}
 
                         {selectedProfile && (
-                            <Box pb={2}>
-                                <Box px={2}>
+                            <Box>
+                                <Box px={2} pb={2}>
                                     <ColorStopList
                                         colorStops={selectedProfile.colors!.colorStops}
                                         absoluteValues={selectedProfile.colors!.absoluteValues}
