@@ -148,7 +148,12 @@ export default function FileItem({
                         color: isPdf ? "primary" : "default",
                         sx: { fontWeight: 600, mb: 1, textDecoration: isPdf ? "underline" : "none" },
                     }}
-                    secondary={formatLastModified(file.lastModified)}
+                    secondary={
+                        <Tooltip disableInteractive title={formatLastModified(file.lastModified)}>
+                            <span>{formatLastModified(file.lastModified)}</span>
+                        </Tooltip>
+                    }
+                    secondaryTypographyProps={{ noWrap: true }}
                 />
             </Box>
             <IconButton
