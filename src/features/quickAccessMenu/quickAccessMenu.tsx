@@ -1,12 +1,24 @@
-import { AccountTree, ContentCut, Gradient, Star, Straighten } from "@mui/icons-material";
-import { Box, ClickAwayListener, Fade, Popper, Stack, Tooltip } from "@mui/material";
+import { AccountTree, Clear, ContentCut, Gradient, Star, Straighten } from "@mui/icons-material";
+import {
+    Box,
+    ClickAwayListener,
+    css,
+    Fade,
+    IconButton,
+    IconButtonProps,
+    Popper,
+    Stack,
+    styled,
+    Tooltip,
+} from "@mui/material";
 import { MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { useAppSelector } from "app/redux-store-interactions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { HudPanel } from "components/hudPanel";
 import IconButtonExt from "components/iconButtonExt";
-import { selectSubtrees, SubtreeStatus } from "features/render";
+import { featuresConfig } from "config/features";
+import { Picker, renderActions, selectPicker, selectSubtrees, SubtreeStatus } from "features/render";
 
 import { ClippingMenu } from "./clippingMenu";
 import { FavoritesMenu } from "./favoritesMenu";
@@ -82,26 +94,16 @@ export function QuickAccessMenu() {
                     }}
                 >
                     <Stack gap={1}>
-                        <Tooltip title={activeSection !== Section.Measure ? t("measurements") : ""} placement="right">
-                            <Box>
-                                <IconButtonExt
-                                    onClick={(e) => selectSection(e, Section.Measure)}
-                                    active={activeSection === Section.Measure}
-                                >
-                                    <Straighten />
-                                </IconButtonExt>
-                            </Box>
-                        </Tooltip>
-                        <Tooltip title={activeSection !== Section.Clipping ? t("clipping") : ""} placement="right">
-                            <Box>
-                                <IconButtonExt
-                                    onClick={(e) => selectSection(e, Section.Clipping)}
-                                    active={activeSection === Section.Clipping}
-                                >
-                                    <ContentCut />
-                                </IconButtonExt>
-                            </Box>
-                        </Tooltip>
+                        <MeasureMenuRoot
+                            activeSection={activeSection}
+                            closeMenu={closeMenu}
+                            selectSection={selectSection}
+                        />
+                        <ClippingMenuRoot
+                            activeSection={activeSection}
+                            closeMenu={closeMenu}
+                            selectSection={selectSection}
+                        />
                         <Tooltip
                             title={activeSection !== Section.FilesAndAttrs ? t("filesAndAttributes") : ""}
                             placement="right"
@@ -176,3 +178,147 @@ export function QuickAccessMenu() {
         </ClickAwayListener>
     );
 }
+
+function MeasureMenuRoot({
+    activeSection,
+    selectSection,
+    closeMenu,
+}: {
+    activeSection: Section | null;
+    selectSection: (e: MouseEvent<HTMLElement>, section: Section) => void;
+    closeMenu: () => void;
+}) {
+    const { t } = useTranslation();
+    const picker = useAppSelector(selectPicker);
+    const dispatch = useAppDispatch();
+
+    let Icon: typeof featuresConfig.measure.Icon | undefined = undefined;
+    switch (picker) {
+        case Picker.Measurement:
+            Icon = featuresConfig.measure.Icon;
+            break;
+        case Picker.Area:
+            Icon = featuresConfig.area.Icon;
+            break;
+        case Picker.OutlineLaser:
+            Icon = featuresConfig.outlineLaser.Icon;
+            break;
+        case Picker.Manhole:
+            Icon = featuresConfig.manhole.Icon;
+            break;
+        case Picker.PointLine:
+            Icon = featuresConfig.pointLine.Icon;
+            break;
+    }
+    const isSectionPicker = Icon !== undefined;
+
+    return (
+        <Tooltip title={activeSection !== Section.Measure ? t("measurements") : ""} placement="right">
+            <Box position="relative">
+                <StyledIconButton
+                    onClick={(e) => {
+                        if (isSectionPicker) {
+                            dispatch(renderActions.stopPicker(picker));
+                            closeMenu();
+                        } else {
+                            selectSection(e, Section.Measure);
+                        }
+                    }}
+                    isCurrentSection={activeSection === Section.Measure}
+                    isCurrentPicker={isSectionPicker}
+                >
+                    {Icon ? <Icon /> : <Straighten />}
+                    <Box className="corner-icon">
+                        <Clear />
+                    </Box>
+                </StyledIconButton>
+            </Box>
+        </Tooltip>
+    );
+}
+
+function ClippingMenuRoot({
+    activeSection,
+    selectSection,
+    closeMenu,
+}: {
+    activeSection: Section | null;
+    selectSection: (e: MouseEvent<HTMLElement>, section: Section) => void;
+    closeMenu: () => void;
+}) {
+    const { t } = useTranslation();
+    const picker = useAppSelector(selectPicker);
+    const dispatch = useAppDispatch();
+
+    let Icon: typeof featuresConfig.measure.Icon | undefined = undefined;
+    switch (picker) {
+        case Picker.ClippingPlane:
+            Icon = featuresConfig.clippingPlanes.Icon;
+            break;
+    }
+    const isSectionPicker = Icon !== undefined;
+
+    return (
+        <Tooltip title={activeSection !== Section.Clipping ? t("clipping") : ""} placement="right">
+            <Box position="relative">
+                <StyledIconButton
+                    onClick={(e) => {
+                        if (isSectionPicker) {
+                            dispatch(renderActions.stopPicker(picker));
+                            closeMenu();
+                        } else {
+                            selectSection(e, Section.Clipping);
+                        }
+                    }}
+                    isCurrentSection={activeSection === Section.Clipping}
+                    isCurrentPicker={isSectionPicker}
+                >
+                    {Icon ? <Icon /> : <ContentCut />}
+                    <Box className="corner-icon">
+                        <Clear />
+                    </Box>
+                </StyledIconButton>
+            </Box>
+        </Tooltip>
+    );
+}
+
+const StyledIconButton = styled(IconButton, {
+    shouldForwardProp: (prop) => prop !== "isCurrentSection" && prop !== "isCurrentPicker",
+})<IconButtonProps & { isCurrentSection: boolean; isCurrentPicker: boolean }>(
+    ({ theme, isCurrentSection, isCurrentPicker }) => css`
+        &,
+        &:hover {
+            background-color: ${isCurrentSection || isCurrentPicker ? theme.palette.primary.main : "transparent"};
+            color: ${isCurrentSection || isCurrentPicker ? theme.palette.primary.contrastText : "default"};
+        }
+
+        & .corner-icon {
+            position: absolute;
+            display: grid;
+            opacity: ${isCurrentPicker ? 1 : 0};
+            place-items: center;
+            top: 0;
+            right: 0;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: ${theme.palette.grey[700]};
+            color: ${theme.palette.primary.contrastText};
+            transition: all 0.2s;
+        }
+        &:hover .corner-icon {
+            width: 40px;
+            height: 40px;
+            background: ${theme.palette.grey[800]};
+        }
+
+        & .corner-icon svg {
+            font-size: 16px;
+            transition: font-size 0.2s;
+        }
+        &:hover .corner-icon svg {
+            font-size: 1.5rem;
+        }
+    `,
+);
