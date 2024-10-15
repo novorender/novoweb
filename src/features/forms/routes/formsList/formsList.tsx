@@ -205,7 +205,7 @@ export function FormsList() {
             return;
         }
 
-        const forms = items.filter(filterItems);
+        const forms = items.filter(filterItems).filter((form) => Number.isInteger(form.id));
 
         const newGroup = formFilters.new ? forms.filter((form) => form.state === "new").map((form) => form.id!) : [];
         const ongoingGroup = formFilters.ongoing
