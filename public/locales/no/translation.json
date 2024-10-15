@@ -699,5 +699,6 @@
     "invalidUrl": "Ugyldig URL",
     "hidden": "Skjult",
     "noClippingPlanes": "Ingen klippeplaner",
-    "capturePhoto": "Ta bilde"
+    "capturePhoto": "Ta bilde",
+    "optional": "Valgfritt"
 }

@@ -27,7 +27,7 @@ import { type FormsFile } from "features/forms/types";
 export interface FileItemProps {
     style: CSSProperties;
     file: FormsFile;
-    isReadonly: boolean;
+    readonly: boolean;
     activeImage: string;
     isModalOpen: boolean;
     removeFile: () => void;
@@ -46,7 +46,7 @@ const Img = styled("img")(
 export default function FileItem({
     style,
     file,
-    isReadonly,
+    readonly,
     activeImage,
     isModalOpen,
     removeFile,
@@ -171,7 +171,7 @@ export default function FileItem({
                     <Download fontSize="small" />
                     <ListItemText primary={t("download")} />
                 </MenuItem>
-                {!isReadonly && (
+                {!readonly && (
                     <MenuItem onClick={removeFile}>
                         <Delete fontSize="small" />
                         <ListItemText primary={t("remove")} />

@@ -699,5 +699,6 @@
     "noClippingPlanes": "Aucun plan de découpe",
     "invalidUrl": "URL invalide",
     "hidden": "Caché",
-    "capturePhoto": "Prendre une photo"
+    "capturePhoto": "Prendre une photo",
+    "optional": "Facultatif"
 }

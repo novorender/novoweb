@@ -345,6 +345,7 @@ function toFormItem(field: FormField): FormItem {
             type: FormItemType.Input,
             title: field.label ?? "",
             required: field.required ?? false,
+            readonly: field.readonly ?? false,
             ...(field.id ? { id: field.id } : {}),
             ...(field.value ? { value: [field.value] } : {}),
         };
@@ -354,6 +355,7 @@ function toFormItem(field: FormField): FormItem {
             type: FormItemType.TrafficLight,
             title: field.label ?? "",
             required: field.required ?? false,
+            readonly: field.readonly ?? false,
             ...(field.id ? { id: field.id } : {}),
             ...(field.value ? { value: [field.value] } : {}),
         };
@@ -363,6 +365,7 @@ function toFormItem(field: FormField): FormItem {
             type: FormItemType.YesNo,
             title: field.label ?? "",
             required: field.required ?? false,
+            readonly: field.readonly ?? false,
             ...(field.id ? { id: field.id } : {}),
             ...(typeof field.value === "boolean" ? { value: [field.value ? "yes" : "no"] } : {}),
         };
@@ -372,6 +375,7 @@ function toFormItem(field: FormField): FormItem {
             type: field.multiple ? FormItemType.Checkbox : FormItemType.Dropdown,
             title: field.label ?? "",
             required: field.required ?? false,
+            readonly: field.readonly ?? false,
             options: field.options.map((option) => option.value),
             ...(field.id ? { id: field.id } : {}),
             ...(field.value ? { value: field.value } : field.value === null ? { value: [] } : {}),
@@ -383,6 +387,7 @@ function toFormItem(field: FormField): FormItem {
             title: field.label ?? "",
             value: field.value ? [field.value] : [],
             required: true,
+            readonly: true,
             ...(field.id ? { id: field.id } : {}),
         };
     }

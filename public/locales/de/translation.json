@@ -699,5 +699,6 @@
     "invalidUrl": "Ungültige URL",
     "hidden": "Versteckt",
     "noClippingPlanes": "Keine Schnittebenen",
-    "capturePhoto": "Foto aufnehmen"
+    "capturePhoto": "Foto aufnehmen",
+    "optional": "Optional"
 }
