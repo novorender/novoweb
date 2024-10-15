@@ -195,6 +195,9 @@ declare module "@novorender/data-js-api" {
                 }[];
             }[];
         };
+        forms?: {
+            currentFormsList: string | null;
+        };
     };
 
     interface Bookmark {

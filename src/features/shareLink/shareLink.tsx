@@ -1,5 +1,6 @@
 import { Close } from "@mui/icons-material";
-import { Box, IconButton, Snackbar, Tooltip, Typography } from "@mui/material";
+import { Box, IconButton, ListItemIcon, ListItemText, MenuItem, Snackbar, Tooltip, Typography } from "@mui/material";
+import { type ExplorerBookmarkState } from "@novorender/data-js-api";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -21,13 +22,17 @@ enum Status {
 
 export function ShareLink({
     variant = "default",
+    nameKey = featuresConfig.shareLink.nameKey,
+    explorerStateOverwrite,
     onClick,
 }: {
-    variant?: "default" | "primaryMenu";
+    variant?: "default" | "primaryMenu" | "menuItem";
+    nameKey?: string;
+    explorerStateOverwrite?: Partial<ExplorerBookmarkState>;
     onClick?: () => void;
 }) {
     const { t } = useTranslation();
-    const { Icon, nameKey, offline } = featuresConfig.shareLink;
+    const { Icon, offline } = featuresConfig.shareLink;
 
     const createBookmark = useCreateBookmark();
     const viewMode = useAppSelector(selectViewMode);
@@ -46,7 +51,7 @@ export function ShareLink({
         }
 
         const id = window.crypto.randomUUID();
-        const bm = createBookmark();
+        const bm = createBookmark(undefined, explorerStateOverwrite);
 
         setStatus(Status.Loading);
         const blob = new Blob([`${window.location.origin}${window.location.pathname}?bookmarkId=${id}`], {
@@ -85,7 +90,7 @@ export function ShareLink({
             ]);
         }
 
-        if (variant === "primaryMenu") {
+        if (variant === "primaryMenu" || variant === "menuItem") {
             dispatch(explorerActions.setSnackbarMessage({ msg: t("copiedToClipboard") }));
         } else {
             setStatus(Status.Success);
@@ -102,6 +107,17 @@ export function ShareLink({
                     </IconButton>
                 </Box>
             </Tooltip>
+        );
+    }
+
+    if (variant === "menuItem") {
+        return (
+            <MenuItem disabled={disabled} onClick={createLink}>
+                <ListItemIcon>
+                    <Icon />
+                </ListItemIcon>
+                <ListItemText>{t(nameKey)}</ListItemText>
+            </MenuItem>
         );
     }
 
