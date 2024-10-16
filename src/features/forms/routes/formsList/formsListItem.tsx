@@ -40,13 +40,13 @@ export function FormsListItem({
     };
 
     const handleMouseEnter = () => {
-        if (searchForm) {
+        if (searchForm && Number.isInteger(item.id)) {
             dispatchHighlighted(highlightActions.set({ color: HIGHLIGHT_COLOR, ids: [item.id!] }));
         }
     };
 
     const handleMouseLeave = () => {
-        if (searchForm) {
+        if (searchForm && Number.isInteger(item.id)) {
             dispatchHighlighted(highlightActions.remove([item.id!]));
         }
     };

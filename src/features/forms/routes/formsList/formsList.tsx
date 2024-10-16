@@ -198,8 +198,14 @@ export function FormsList() {
                 items.length > 0 ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral,
             ),
         );
+    }, [dispatch, items]);
 
-        const forms = items.filter(filterItems);
+    useEffect(() => {
+        if (template?.type !== TemplateType.Search) {
+            return;
+        }
+
+        const forms = items.filter(filterItems).filter((form) => Number.isInteger(form.id));
 
         const newGroup = formFilters.new ? forms.filter((form) => form.state === "new").map((form) => form.id!) : [];
         const ongoingGroup = formFilters.ongoing
@@ -216,7 +222,7 @@ export function FormsList() {
         dispatchHighlightCollections(
             highlightCollectionsActions.setIds(HighlightCollection.FormsCompleted, finishedGroup),
         );
-    }, [items, formFilters, dispatch, dispatchHighlightCollections, filterItems, template]);
+    }, [items, formFilters, dispatch, filterItems, template, dispatchHighlightCollections]);
 
     const handleBackClick = () => {
         if (isPickingLocation) {

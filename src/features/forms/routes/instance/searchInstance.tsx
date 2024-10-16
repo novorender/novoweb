@@ -84,10 +84,10 @@ export function SearchInstance() {
     const [title, setTitle] = useState(form?.title ?? "");
 
     useEffect(() => {
-        if (!objectId || highlighted.includes(objectId)) {
+        if (!Number.isInteger(objectId) || highlighted.includes(objectId!)) {
             return;
         }
-        dispatchHighlighted(highlightActions.setIds([objectId]));
+        dispatchHighlighted(highlightActions.setIds([objectId!]));
         didHighlightId.current = true;
     }, [dispatchHighlighted, highlighted, objectId]);
 
