@@ -99,6 +99,7 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                 </Typography>
                 <Divider sx={{ my: 1, mb: 2 }} />
                 <Autocomplete
+                    id="project-tm-zone"
                     selectOnFocus
                     clearOnBlur
                     handleHomeEndKeys
@@ -115,7 +116,7 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                     renderInput={(params) => (
                         <TextField
                             {...params}
-                            label="TM Zone"
+                            label={t("tmZone")}
                             helperText={
                                 isV2 ? (
                                     <>

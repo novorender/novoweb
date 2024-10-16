@@ -84,6 +84,14 @@ export type State = {
         msg: string;
         closeAfter?: number;
     } | null;
+    highlightSetting: null | {
+        route: string;
+        accordion?: string;
+        field: string;
+    };
+    globalSearch: {
+        open: boolean;
+    };
 };
 
 export type PrimaryMenuConfigType = State["primaryMenu"];

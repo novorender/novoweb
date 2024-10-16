@@ -18,15 +18,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    Divider,
-    LinearProgress,
-    Switch,
-    WidgetBottomScrollBox,
-} from "components";
+import { AccordionDetails, AccordionSummary, Divider, LinearProgress, Switch, WidgetBottomScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectDefaultTopDownElevation, selectTopDownSnapToAxis } from "features/orthoCam";
 import {
@@ -41,6 +33,7 @@ import {
 } from "features/render";
 import { ViewMode } from "types/misc";
 
+import { AdvSettingsAccordion as Accordion } from "../../components/advSettingsAccordion";
 import { Clipping } from "./clipping";
 
 const controls = [
@@ -190,7 +183,7 @@ export function CameraSettings({
                 </Typography>
                 <Divider sx={{ my: 1 }} />
                 <Clipping />
-                <Accordion>
+                <Accordion id="camera-movement-speed">
                     <AccordionSummary>{t("movementSpeed")}</AccordionSummary>
                     <AccordionDetails>
                         <Box
@@ -255,7 +248,7 @@ export function CameraSettings({
                     </AccordionDetails>
                 </Accordion>
 
-                <Accordion>
+                <Accordion id="camera-proportional-movement-speed">
                     <AccordionSummary>{t("proportionalMovementSpeed")}</AccordionSummary>
                     <AccordionDetails>
                         <Box px={1} mt={1}>
@@ -343,7 +336,7 @@ export function CameraSettings({
                     </AccordionDetails>
                 </Accordion>
 
-                <Accordion>
+                <Accordion id="camera-controls">
                     <AccordionSummary>{t("controls")}</AccordionSummary>
                     <AccordionDetails>
                         <Box p={1} display="flex" flexDirection="column">
@@ -353,6 +346,7 @@ export function CameraSettings({
                                     {t("controls")}
                                 </InputLabel>
                                 <Select
+                                    id="camera-controls-controls"
                                     labelId="controls-label"
                                     sx={{ width: 150 }}
                                     size="small"
@@ -384,11 +378,12 @@ export function CameraSettings({
                     </AccordionDetails>
                 </Accordion>
 
-                <Accordion>
+                <Accordion id="camera-2d">
                     <AccordionSummary>{t("2d")}</AccordionSummary>
                     <AccordionDetails>
                         <Box px={1} mt={1} display={"flex"} flexDirection={"column"}>
                             <FormControlLabel
+                                id="camera-2d-ortho-pointer-lock"
                                 sx={{ ml: 0, mb: 1 }}
                                 control={
                                     <Switch
@@ -410,6 +405,7 @@ export function CameraSettings({
                                 }
                             />
                             <FormControlLabel
+                                id="camera-2d-ortho-de-acceleration"
                                 sx={{ ml: 0, mb: 1 }}
                                 control={
                                     <Switch
@@ -431,6 +427,7 @@ export function CameraSettings({
                                 }
                             />
                             <FormControlLabel
+                                id="camera-2d-ortho-touch-rotate"
                                 sx={{ ml: 0, mb: 1 }}
                                 control={
                                     <Switch
@@ -452,6 +449,7 @@ export function CameraSettings({
                                 }
                             />
                             <FormControlLabel
+                                id="camera-2d-top-down-snap-to-axis"
                                 sx={{ ml: 0, mb: 1 }}
                                 control={
                                     <Switch
@@ -479,7 +477,12 @@ export function CameraSettings({
                         </Box>
                         <BaseDivider sx={{ my: 1, color: theme.palette.grey[500] }} />
                         <Box px={1} component="form" onSubmit={handleDefaultTopDownElevationSubmit}>
-                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                            <Box
+                                id="camera-2d-topdown-elevation"
+                                display="flex"
+                                justifyContent="space-between"
+                                alignItems="center"
+                            >
                                 <InputLabel sx={{ color: "text.primary" }} htmlFor="topdown-elevation">
                                     {t("topDownElevation")}
                                 </InputLabel>

@@ -16,15 +16,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    Divider,
-    LinearProgress,
-    Switch,
-    WidgetBottomScrollBox,
-} from "components";
+import { AccordionDetails, AccordionSummary, Divider, LinearProgress, Switch, WidgetBottomScrollBox } from "components";
 import { CanvasContextMenuFeatureKey, canvasContextMenuFeatures } from "config/canvasContextMenu";
 import {
     betaViewerWidgets,
@@ -46,6 +38,8 @@ import {
     selectNewDesign,
     selectPrimaryMenu,
 } from "slices/explorer";
+
+import { AdvSettingsAccordion as Accordion } from "../components/advSettingsAccordion";
 
 export function FeatureSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();
@@ -121,6 +115,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                 <Divider sx={{ my: 1 }} />
                 <Box p={1} mt={1} display="flex" flexDirection="column">
                     <FormControlLabel
+                        id="features-navigation-cube"
                         sx={{ ml: 0, mb: 1 }}
                         control={
                             <Switch
@@ -139,7 +134,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                     />
                     <Divider />
                 </Box>
-                <Accordion>
+                <Accordion id="features-widgets">
                     <AccordionSummary>{t("widgets")}</AccordionSummary>
                     <AccordionDetails>
                         <Grid container p={1}>
@@ -180,11 +175,17 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         </Grid>
                     </AccordionDetails>
                 </Accordion>
-                <Accordion>
+                <Accordion id="features-primary-menu">
                     <AccordionSummary>{t("primaryMenu")}</AccordionSummary>
                     <AccordionDetails>
                         <Box px={1}>
-                            <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 1 }}>
+                            <FormControl
+                                id="features-primary-menu"
+                                component="fieldset"
+                                fullWidth
+                                size="small"
+                                sx={{ mb: 1 }}
+                            >
                                 <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
                                     <FormLabel
                                         sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
@@ -315,7 +316,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         </Box>
                     </AccordionDetails>
                 </Accordion>
-                <Accordion>
+                <Accordion id="features-context-menu">
                     <AccordionSummary>{t("contextMenu")}</AccordionSummary>
                     <AccordionDetails>
                         <Grid container p={1}>
@@ -348,11 +349,12 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         </Grid>
                     </AccordionDetails>
                 </Accordion>
-                <Accordion>
+                <Accordion id="features-beta">
                     <AccordionSummary>Beta</AccordionSummary>
                     <AccordionDetails>
                         <Box p={1} mt={1} display="flex" flexDirection="column">
                             <FormControlLabel
+                                id="features-beta-generated-parametric-data"
                                 sx={{ ml: 0, mb: 1 }}
                                 control={
                                     <Switch
@@ -370,6 +372,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                 }
                             />
                             <FormControlLabel
+                                id="features-beta-performance-stats"
                                 sx={{ ml: 0, mb: 1 }}
                                 control={
                                     <Switch
@@ -409,6 +412,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                             ))}
                             {canUseNewDesign && (
                                 <FormControlLabel
+                                    id="features-beta-new-design"
                                     sx={{ ml: 0, mb: 1 }}
                                     control={<Switch checked={newDesign} onChange={toggleNewDesign} />}
                                     label={

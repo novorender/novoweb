@@ -38,6 +38,7 @@ import {
     Star,
     Straighten,
     Timeline,
+    TravelExplore,
     Undo,
     Visibility,
     VisibilityOff,
@@ -574,6 +575,17 @@ export const featuresConfig = {
         tags: [featureTags.review.key],
         groups: [featureGroups.measure.key],
         newUx: true,
+    },
+    globalSearch: {
+        key: "globalSearch",
+        nameKey: "globalSearch",
+        Icon: TravelExplore,
+        type: FeatureType.Widget,
+        defaultLocked: false,
+        offline: true,
+        groups: [featureGroups.search.key],
+        newUx: true,
+        keyboardShortcut: { mac: "⌘K", default: "Ctrl+K" },
     },
 } as const;
 

@@ -260,3 +260,5 @@ export function hasMouseSupport() {
 export function capitalizeFirst(s: string) {
     return s ? s[0].toUpperCase() + s.slice(1) : s;
 }
+
+export const isMacintosh = /\bMacintosh\b/.test(navigator.userAgent);

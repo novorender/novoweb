@@ -1,6 +1,7 @@
 import { Box, useTheme } from "@mui/material";
 
 import { useAppSelector } from "app/redux-store-interactions";
+import { GlobalSearch } from "features/globalSearch/globalSearch";
 import LocationHud from "features/locationHud/locationHud";
 import { NavigationCube } from "features/navigationCube";
 import { PickerEscSnackbar } from "features/pickerEscSnackbar/pickerEscSnackbar";
@@ -50,6 +51,7 @@ function HudNew() {
                 <GlobalSnackbar />
                 <PickerEscSnackbar />
             </Box>
+            <GlobalSearch />
         </>
     );
 }

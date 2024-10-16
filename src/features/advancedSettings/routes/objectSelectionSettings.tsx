@@ -78,7 +78,12 @@ export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<
                 <Typography fontWeight={600} mb={1}>
                     {t("primary")}
                 </Typography>
-                <Button variant="outlined" color="grey" onClick={toggleColorPicker("primary")}>
+                <Button
+                    id="object-selection-primary-highlight-color"
+                    variant="outlined"
+                    color="grey"
+                    onClick={toggleColorPicker("primary")}
+                >
                     <ColorLens
                         sx={{
                             mr: 1,
@@ -112,7 +117,13 @@ export function ObjectSelectionSettings({ save, saving }: { save: () => Promise<
                     }
                 />
 
-                <Button sx={{ mb: 2 }} variant="outlined" color="grey" onClick={toggleColorPicker("secondary")}>
+                <Button
+                    id="object-selection-secondary-highlight-color"
+                    sx={{ mb: 2 }}
+                    variant="outlined"
+                    color="grey"
+                    onClick={toggleColorPicker("secondary")}
+                >
                     <ColorLens
                         sx={{
                             mr: 1,
