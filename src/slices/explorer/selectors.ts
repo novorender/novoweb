@@ -35,6 +35,7 @@ export const selectNewDesignRaw = (state: RootState) => state.explorer.newDesign
 export const selectCanUseNewDesign = (state: RootState) => state.explorer.canUseNewDesign;
 export const selectSnackbarMessage = (state: RootState) => state.explorer.snackbarMessage;
 export const selectHighlightSetting = (state: RootState) => state.explorer.highlightSetting;
+export const selectGlobalSearchOpen = (state: RootState) => state.explorer.globalSearch.open;
 
 export const selectNewDesign = createSelector([selectWidgetLayout, selectNewDesignRaw], (layout, newDesign) =>
     layout.sideBySide ? newDesign : false,
@@ -59,7 +60,7 @@ export const selectEnabledWidgets = createSelector(
                     return true;
                 }
 
-                // Temp permission for Cross section component
+                // Temp permission for new UX components
                 // TODO redo when new UX is released
                 if ("newUx" in w && w.newUx) {
                     return newDesign;

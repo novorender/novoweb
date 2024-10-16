@@ -89,6 +89,9 @@ export type State = {
         accordion?: string;
         field: string;
     };
+    globalSearch: {
+        open: boolean;
+    };
 };
 
 export type PrimaryMenuConfigType = State["primaryMenu"];

@@ -2,7 +2,7 @@ import { t } from "i18next";
 import { useCallback } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { WidgetKey } from "config/features";
+import { featuresConfig, WidgetKey } from "config/features";
 import {
     explorerActions,
     selectCanAddWidget,
@@ -26,19 +26,19 @@ export function useOpenWidget() {
 
     return useCallback(
         (widgetKey: WidgetKey, params: { replace?: WidgetKey } | { force?: boolean } = {}) => {
+            // Some items that appear in widget list are not really widgets and have different opening logic
+            if (widgetKey === featuresConfig.globalSearch.key) {
+                trackOpened(widgetKey);
+                dispatch(explorerActions.setGlobalSearchOpen(true));
+                return;
+            }
+
             if (widgets.includes(widgetKey)) {
                 return;
             }
 
             const replace = "replace" in params ? params.replace : false;
             const force = "force" in params ? params.force : false;
-
-            const trackOpened = (key: WidgetKey) => {
-                mixpanel?.track("Opened Widget", { "Widget Key": key });
-            };
-            const trackClosed = (key: WidgetKey) => {
-                mixpanel?.track("Closed Widget", { "Widget Key": key });
-            };
 
             if (replace && widgets.includes(replace)) {
                 trackClosed(replace);
@@ -73,4 +73,12 @@ export function useOpenWidget() {
         },
         [canAddWidget, widgetSlot, widgetLayout, widgets, dispatch, maximized, maximizedHorizontal],
     );
+}
+
+function trackOpened(key: WidgetKey) {
+    mixpanel?.track("Opened Widget", { "Widget Key": key });
+}
+
+function trackClosed(key: WidgetKey) {
+    mixpanel?.track("Closed Widget", { "Widget Key": key });
 }
