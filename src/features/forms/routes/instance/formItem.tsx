@@ -129,12 +129,18 @@ const FormItemMessage = ({ open, message, onClose }: { open: boolean; message: s
 const FormItemHeader = ({ title, required, id }: { title: string; required?: boolean; id?: string }) => {
     const { t } = useTranslation();
     const forms = useAppSelector(selectForms);
+    const currentFormsList = forms.currentFormsList || forms.selectedFormId;
     return (
         <Stack direction="row" spacing={0.5} alignItems="center">
             <FormLabel component="legend" sx={{ fontWeight: 600, color: "text.primary" }}>
                 {`${title} ${!required ? `(${t("optional")})` : ""}`}
             </FormLabel>
-            {id && <ShareLink variant="primaryMenu" explorerStateOverwrite={{ forms: { ...forms, formItemId: id } }} />}
+            {id && (
+                <ShareLink
+                    variant="primaryMenu"
+                    explorerStateOverwrite={{ forms: { ...forms, currentFormsList, formItemId: id } }}
+                />
+            )}
         </Stack>
     );
 };

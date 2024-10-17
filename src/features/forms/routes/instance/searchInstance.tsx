@@ -147,12 +147,15 @@ export function SearchInstance() {
     }, []);
 
     useEffect(() => {
+        if (currentFormsList !== formId) {
+            dispatch(formsActions.setSelectedFormId(formId));
+        }
         dispatch(formsActions.setSelectedFormObjectGuid(objectGuid));
         dispatch(formsActions.setSelectedFormObjectId(objectId));
         if (objectId) {
             dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
         }
-    }, [dispatch, formId, objectGuid, objectId]);
+    }, [currentFormsList, dispatch, formId, objectGuid, objectId]);
 
     const maybeUpdateForm = useCallback(() => {
         if (!isUpdated) {
@@ -397,6 +400,7 @@ export function SearchInstance() {
                                     explorerStateOverwrite={{
                                         forms: {
                                             ...forms,
+                                            currentFormsList: formId,
                                             selectedFormObjectGuid: objectGuid,
                                         },
                                     }}
