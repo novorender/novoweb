@@ -64,7 +64,7 @@ export function SearchInstance() {
     const checkPermission = useCheckProjectPermission();
     const canEdit = checkPermission(Permission.FormsFill);
     const canSign = checkPermission(Permission.FormsSign);
-    const [abortController] = useAbortController();
+    const [abortController, abort] = useAbortController();
 
     const location = useLocation();
     const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -94,19 +94,33 @@ export function SearchInstance() {
     const [title, setTitle] = useState(form?.title ?? "");
 
     useEffect(() => {
+        let isGuidCurrent = true;
+
         async function fetchObjectId() {
-            const map = await mapGuidsToIds({
-                guids: [objectGuid],
-                db,
-                abortSignal: abortController.current.signal,
-            });
-            dispatch(formsActions.setSelectedFormObjectId(map[objectGuid]));
+            try {
+                const map = await mapGuidsToIds({
+                    guids: [objectGuid],
+                    db,
+                    abortSignal: abortController.current.signal,
+                });
+
+                if (isGuidCurrent && objectGuid === forms.selectedFormObjectGuid) {
+                    dispatch(formsActions.setSelectedFormObjectId(map[objectGuid]));
+                }
+            } catch {
+                // nada
+            }
         }
 
         if (!Number.isInteger(objectId) && objectGuid) {
             fetchObjectId();
         }
-    }, [objectGuid, db, abortController, dispatch, objectId]);
+
+        return () => {
+            isGuidCurrent = false;
+            abort();
+        };
+    }, [objectGuid, db, abortController, dispatch, objectId, queryParams, abort, forms.selectedFormObjectGuid]);
 
     useEffect(() => {
         if (!Number.isInteger(objectId) || didHighlightId.current) {

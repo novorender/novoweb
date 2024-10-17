@@ -28,7 +28,7 @@ export function useGoToSelectedForm() {
     );
 
     useEffect(() => {
-        if (template?.id && template?.type === TemplateType.Location) {
+        if (template?.id && template.type === TemplateType.Location) {
             goIfNotCurrent(
                 selectedFormId
                     ? `/location-instance?templateId=${template.id}&formId=${selectedFormId}`
