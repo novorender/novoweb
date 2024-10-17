@@ -71,10 +71,28 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
         const dispatch = useAppDispatch();
         const distribution = useAppSelector(selectCurrentSubprofileDeviationDistributions);
         const attr = useAppSelector(selectCenterlineMinimapAttr);
-        const fullData =
-            distribution?.data.status === AsyncStatus.Success
-                ? distribution?.data.data.aggregatesAlongProfile
-                : undefined;
+        const fullData = useMemo(() => {
+            if (distribution?.data.status !== AsyncStatus.Success) {
+                return;
+            }
+            const data = distribution.data.data.aggregatesAlongProfile;
+            const result: DeviationAggregateDistribution[] = [];
+            for (let i = 0; i < data.length; i++) {
+                if (result.length > 0) {
+                    const last = result.at(-1)!;
+                    for (let j = last.profile + 1; j < data[i].profile; j++) {
+                        result.push({
+                            profile: j,
+                            minDistance: Number.NaN,
+                            avgDistance: Number.NaN,
+                            maxDistance: Number.NaN,
+                        });
+                    }
+                }
+                result.push(data[i]);
+            }
+            return result;
+        }, [distribution]);
 
         const distributions = useAppSelector(selectCurrentSubprofileDeviationDistributions);
 
@@ -145,7 +163,7 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                     tooltipTop: scaleY(d[attr]),
                 });
             },
-            [showTooltip, scaleY, scaleX, data, attr]
+            [showTooltip, scaleY, scaleX, data, attr],
         );
 
         if (!data) {
@@ -207,6 +225,7 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                         stroke="url(#area-gradient)"
                         fill="url(#area-gradient)"
                         curve={curveMonotoneX}
+                        defined={(datum) => Number.isFinite(datum.avgDistance)}
                     />
                     {profilePos !== undefined ? (
                         <LineSubject
@@ -250,7 +269,12 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                         </g>
                     )}
 
-                    <AxisBottom top={height - margin.bottom} scale={scaleX} numTicks={4} />
+                    <AxisBottom
+                        top={height - margin.bottom}
+                        scale={scaleX}
+                        numTicks={4}
+                        tickFormat={(v) => v.toString()}
+                    />
                     <AxisLeft left={margin.left} scale={scaleY} numTicks={2} />
                 </svg>
                 {tooltipData && (
@@ -261,7 +285,7 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                             left={tooltipLeft + 12}
                             style={tooltipStyles}
                         >
-                            {tooltipData[attr].toFixed(3)} @ {tooltipData.profile.toFixed(2)}m
+                            {tooltipData[attr].toFixed(3)} @ {tooltipData.profile.toFixed(0)}m
                         </TooltipWithBounds>
                     </div>
                 )}
@@ -287,5 +311,5 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                 </Box>
             </Box>
         );
-    }
+    },
 );

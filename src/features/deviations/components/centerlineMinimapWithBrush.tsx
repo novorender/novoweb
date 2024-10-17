@@ -61,7 +61,7 @@ function CenterlineMinimapWithBrushInner({ width, height }: { width: number; hei
                   start: fullParameterBounds[0],
                   end: fullParameterBounds[1],
               }
-            : skipToken
+            : skipToken,
     );
 
     const data = resp?.aggregatesAlongProfile;
@@ -109,7 +109,7 @@ function CenterlineMinimapWithBrushInner({ width, height }: { width: number; hei
     }, [fullParameterBounds, width]);
 
     const [initialBrushPosition, setInitialBrushPosition] = useState(
-        getInitialBrushPosition(brushScaleX, fullParameterBounds, distributions?.parameterBounds)
+        getInitialBrushPosition(brushScaleX, fullParameterBounds, distributions?.parameterBounds),
     );
 
     useEffect(() => {
@@ -147,7 +147,7 @@ function CenterlineMinimapWithBrushInner({ width, height }: { width: number; hei
                     deviationsActions.setSubprofileDeviationDistributions({
                         parameterBounds: fullParameterBounds,
                         data: { status: AsyncStatus.Initial },
-                    })
+                    }),
                 );
             } else {
                 let { x0, x1 } = domain;
@@ -168,11 +168,11 @@ function CenterlineMinimapWithBrushInner({ width, height }: { width: number; hei
                     deviationsActions.setSubprofileDeviationDistributions({
                         parameterBounds: [Math.round(x0), Math.round(x1)],
                         data: { status: AsyncStatus.Initial },
-                    })
+                    }),
                 );
             }
         },
-        [fullParameterBounds, dispatch, brushScaleX]
+        [fullParameterBounds, dispatch, brushScaleX],
     );
 
     if (!data) {
@@ -182,15 +182,15 @@ function CenterlineMinimapWithBrushInner({ width, height }: { width: number; hei
     return (
         <Box position="relative">
             <svg width={width} height={height}>
-                <LinearGradient id="area-gradient">{knots}</LinearGradient>
+                <LinearGradient id="area-gradient-with-brush">{knots}</LinearGradient>
                 <AreaClosed
                     data={data}
                     x={(d) => scaleX(d.profile) ?? 0}
                     y={(d) => scaleY(d[attr]) ?? 0}
                     yScale={scaleY}
                     strokeWidth={1}
-                    stroke="url(#area-gradient)"
-                    fill="url(#area-gradient)"
+                    stroke="url(#area-gradient-with-brush)"
+                    fill="url(#area-gradient-with-brush)"
                     curve={curveMonotoneX}
                 />
                 <Group left={margin.left} top={margin.top}>
@@ -247,7 +247,7 @@ function BrushHandle({ x, height, isBrushActive }: BrushHandleRenderProps) {
 function getInitialBrushPosition(
     scale: ReturnType<typeof scaleLinear<number>>,
     fullBounds: [number, number] | undefined,
-    bounds: [number, number] | undefined
+    bounds: [number, number] | undefined,
 ) {
     if (
         bounds &&

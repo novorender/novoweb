@@ -1,4 +1,5 @@
 import { Box } from "@mui/material";
+import { View } from "@novorender/api";
 import { LineSubject } from "@visx/annotation";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { Brush } from "@visx/brush";
@@ -23,12 +24,12 @@ import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectProfile } from "features/followPath";
 import { AsyncStatus } from "types/misc";
-import { vecRgbaToRgbaString } from "utils/color";
+import { clampColorGradientKnots, vecRgbaToRgbaString } from "utils/color";
 
+import { UiDeviationProfile } from "../deviationTypes";
 import {
     selectCurrentSubprofileDeviationDistributions,
     selectSelectedProfile,
-    selectSelectedProfileId,
     selectSelectedSubprofileIndex,
 } from "../selectors";
 import { accountForAbsValues } from "../utils";
@@ -72,7 +73,6 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
         const {
             state: { view },
         } = useExplorerGlobals(true);
-        const profileId = useAppSelector(selectSelectedProfileId);
         const subprofileIndex = useAppSelector(selectSelectedSubprofileIndex);
         const profile = useAppSelector(selectSelectedProfile);
         const profilePos = useAppSelector(selectProfile);
@@ -127,10 +127,11 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
 
         useEffect(() => {
             setInitialBrushPosition(defaultBrushPosition);
-            view.modifyRenderState({
-                points: { deviation: { visibleRangeStart: undefined, visibleRangeEnd: undefined } },
-            });
-        }, [profileId, subprofileIndex, view]);
+
+            if (profile) {
+                updateDeviationRange(view, profile, null);
+            }
+        }, [profile, subprofileIndex, view]);
 
         const scaleX = useMemo(() => {
             return scaleLinear({
@@ -208,15 +209,15 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                     tooltipTop: scaleY(d.count),
                 });
             },
-            [showTooltip, scaleY, scaleX, data]
+            [showTooltip, scaleY, scaleX, data],
         );
 
         const reset = useCallback(() => {
             setInitialBrushPosition(defaultBrushPosition);
-            view.modifyRenderState({
-                points: { deviation: { visibleRangeStart: undefined, visibleRangeEnd: undefined } },
-            });
-        }, [view]);
+            if (profile) {
+                updateDeviationRange(view, profile, null);
+            }
+        }, [profile, view]);
 
         const onBrushChange = useCallback(
             (domain: Bounds | null) => {
@@ -229,19 +230,21 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                 } else {
                     let { x0, x1 } = domain;
                     if (x0 <= data[0].deviation + 0.001) {
-                        x0 = -100;
+                        x0 = data[0].deviation;
                     }
                     if (x1 >= data.at(-1)!.deviation - 0.001) {
-                        x1 = 100;
+                        x1 = data.at(-1)!.deviation;
                     }
                     setInitialBrushPosition({
                         start: { x: brushScaleX(x0) },
                         end: { x: brushScaleX(x1) },
                     });
-                    view.modifyRenderState({ points: { deviation: { visibleRangeStart: x0, visibleRangeEnd: x1 } } });
+                    if (profile) {
+                        updateDeviationRange(view, profile, { start: x0, end: x1 });
+                    }
                 }
             },
-            [view, reset, data, brushScaleX]
+            [view, reset, data, brushScaleX, profile],
         );
 
         useEffect(() => reset, [reset]);
@@ -263,7 +266,7 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                     <rect
                         x={gradientMargin.left}
                         y={height - gradientMargin.bottom - gradientHeight}
-                        width={width - gradientMargin.left - gradientMargin.right}
+                        width={Math.max(0, width - gradientMargin.left - gradientMargin.right)}
                         height={gradientHeight}
                         fill="url(#deviation-color-gradient)"
                     ></rect>
@@ -326,6 +329,7 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                         tickLabelProps={{
                             stroke: "#fff",
                         }}
+                        tickFormat={(v) => v.toString()}
                     />
                     <AxisLeft left={margin.left} scale={scaleY} numTicks={2} tickFormat={(v) => `${v}%`} />
                     {tooltipData && (
@@ -385,7 +389,7 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                 </Box>
             </Box>
         );
-    }
+    },
 );
 
 // We need to manually offset the handles for them to be rendered at the right position
@@ -406,4 +410,14 @@ function BrushHandle({ x, height, isBrushActive }: BrushHandleRenderProps) {
             />
         </Group>
     );
+}
+
+function updateDeviationRange(view: View, profile: UiDeviationProfile, pos: { start: number; end: number } | null) {
+    const baseKnots = profile.colors.absoluteValues
+        ? accountForAbsValues(profile.colors.colorStops)
+        : profile.colors.colorStops.toSorted((a, b) => a.position - b.position);
+    const knots = pos ? clampColorGradientKnots(baseKnots, pos.start, pos.end) : baseKnots;
+    const colorGradients = view.renderState.points.deviation.colorGradients.slice();
+    colorGradients[profile.index] = { knots };
+    view.modifyRenderState({ points: { deviation: { colorGradients } } });
 }

@@ -124,22 +124,20 @@ export function uiConfigToServerConfig(config: UiDeviationConfig): DeviationProj
     };
 }
 
-export function colorStopSortFn(a: ColorStop, b: ColorStop) {
-    return b.position - a.position;
-}
-
 export const DELETED_DEVIATION_LABEL = "[deleted]";
 
 export function formatColorStopPos(pos: number, absoluteValues: boolean) {
     return pos === 0 ? "0" : absoluteValues ? `±${Math.abs(pos)}` : pos > 0 ? `+${pos}` : pos;
 }
 
-export function sortColorStops(colorStops: ColorStop[], absoluteValues: boolean) {
-    return colorStops.sort(absoluteValues ? (a, b) => Math.abs(b.position) - Math.abs(a.position) : colorStopSortFn);
+export function sortColorStopsForUi(colorStops: ColorStop[], absoluteValues: boolean) {
+    return colorStops.sort(
+        absoluteValues ? (a, b) => Math.abs(b.position) - Math.abs(a.position) : (a, b) => b.position - a.position,
+    );
 }
 
 export function accountForAbsValues(colorStops: ColorStop[]) {
     const absolute = colorStops.map((cs) => ({ ...cs, position: Math.abs(cs.position) }));
     const negatives = absolute.filter((cs) => cs.position > 0).map((cs) => ({ ...cs, position: -cs.position }));
-    return [...absolute, ...negatives].sort(colorStopSortFn);
+    return [...absolute, ...negatives].sort((a, b) => a.position - b.position);
 }

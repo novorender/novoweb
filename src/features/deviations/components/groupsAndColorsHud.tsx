@@ -12,7 +12,7 @@ import { vecToRgb } from "utils/color";
 
 import { deviationsActions } from "../deviationsSlice";
 import { selectDeviationLegendGroups, selectSelectedProfile } from "../selectors";
-import { formatColorStopPos, sortColorStops } from "../utils";
+import { formatColorStopPos, sortColorStopsForUi } from "../utils";
 
 export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({
     widgetMode = false,
@@ -43,7 +43,7 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({
                         : undefined;
                 })
                 .filter((g) => g) as ObjectGroup[],
-        [legendGroups, objectGroups]
+        [legendGroups, objectGroups],
     );
 
     const otherGroups = useMemo(
@@ -57,12 +57,12 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({
                     }
                 })
                 .filter((g) => g) as ObjectGroup[],
-        [objectGroups, isCrossSection, legendGroups]
+        [objectGroups, isCrossSection, legendGroups],
     );
 
     const colorStops = useMemo(
-        () => (profile ? sortColorStops(profile.colors.colorStops.slice(), profile.colors.absoluteValues) : []),
-        [profile]
+        () => (profile ? sortColorStopsForUi(profile.colors.colorStops.slice(), profile.colors.absoluteValues) : []),
+        [profile],
     );
 
     const handleGroupClick = (group: ObjectGroup) => {
@@ -75,7 +75,7 @@ export const GroupsAndColorsHud = memo(function GroupsAndColorsHud({
             deviationsActions.toggleHiddenLegendGroup({
                 groupId: group.id,
                 hidden: group.status !== GroupStatus.Hidden,
-            })
+            }),
         );
     };
 

@@ -23,7 +23,7 @@ import { ColorPicker } from "features/colorPicker";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
 
 import { ColorStopGroup } from "../deviationTypes";
-import { formatColorStopPos, sortColorStops } from "../utils";
+import { formatColorStopPos, sortColorStopsForUi } from "../utils";
 import { DeviationFormErrors } from "../validation";
 
 export function ColorStopList({
@@ -43,7 +43,7 @@ export function ColorStopList({
     const theme = useTheme();
     const history = useHistory();
     const colorStops = useMemo(
-        () => sortColorStops(colorStopsUnsorted.slice(), absoluteValues),
+        () => sortColorStopsForUi(colorStopsUnsorted.slice(), absoluteValues),
         [colorStopsUnsorted, absoluteValues],
     );
 
