@@ -113,4 +113,6 @@ export type ObjectGroupExt = { id: string; name: string; deleted?: boolean };
 export type SubprofileDeviationDistribution = {
     parameterBounds: [number, number];
     data: AsyncState<DeviationDistributionResponse>;
+    fullEffectiveParameterBounds?: [number, number];
+    fullData?: DeviationDistributionResponse;
 };

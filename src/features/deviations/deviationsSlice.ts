@@ -84,7 +84,7 @@ export const deviationsSlice = createSlice({
         },
         setProfile: (
             state,
-            action: PayloadAction<{ id: string; profile: UiDeviationProfile; setColorsForAll?: boolean }>
+            action: PayloadAction<{ id: string; profile: UiDeviationProfile; setColorsForAll?: boolean }>,
         ) => {
             if (state.config.status !== AsyncStatus.Success) {
                 return;
@@ -195,6 +195,26 @@ export const deviationsSlice = createSlice({
 
             state.subprofileDeviationDistributions[state.selectedProfileId][state.selectedSubprofileIndex] =
                 action.payload;
+        },
+        updateSubprofileDeviationDistributions: (
+            state,
+            action: PayloadAction<Partial<SubprofileDeviationDistribution>>,
+        ) => {
+            if (!state.selectedProfileId || state.selectedSubprofileIndex === undefined) {
+                return;
+            }
+
+            if (!state.subprofileDeviationDistributions[state.selectedProfileId]) {
+                state.subprofileDeviationDistributions[state.selectedProfileId] = {};
+            }
+
+            const profile = state.subprofileDeviationDistributions[state.selectedProfileId];
+            if (profile[state.selectedSubprofileIndex]) {
+                profile[state.selectedSubprofileIndex] = {
+                    ...profile[state.selectedSubprofileIndex],
+                    ...action.payload,
+                };
+            }
         },
         resetSubprofileDeviationDistributions: (state, action: PayloadAction<{ profileId: string }>) => {
             const { profileId } = action.payload;

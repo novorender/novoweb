@@ -4,6 +4,7 @@ import { useLazyGetDeviationDistributionQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useSceneId } from "hooks/useSceneId";
 import { AsyncStatus } from "types/misc";
+import { getMinMax } from "utils/math";
 
 import { deviationsActions } from "../deviationsSlice";
 import {
@@ -45,11 +46,14 @@ export function useCalcSubprofileDevDistr({ skip = false }: { skip?: boolean } =
                 return;
             }
 
+            const isFirstRequest = !distrs;
+
             dispatch(
                 deviationsActions.setSubprofileDeviationDistributions({
+                    ...distrs,
                     parameterBounds,
                     data: { status: AsyncStatus.Loading },
-                })
+                }),
             );
 
             try {
@@ -61,22 +65,35 @@ export function useCalcSubprofileDevDistr({ skip = false }: { skip?: boolean } =
                         start: parameterBounds[0],
                         end: parameterBounds[1],
                     },
-                    true
+                    true,
                 ).unwrap();
 
+                let newParameterBounds = parameterBounds;
+                if (isFirstRequest && result.aggregatesAlongProfile.length > 0) {
+                    // When doing a first request (with full parameter bounds) - set initial parameter bounds
+                    // based on effective profile
+                    newParameterBounds = getMinMax(result.aggregatesAlongProfile, (p) => p.profile);
+                }
+
                 dispatch(
-                    deviationsActions.setSubprofileDeviationDistributions({
-                        parameterBounds,
+                    deviationsActions.updateSubprofileDeviationDistributions({
+                        parameterBounds: newParameterBounds,
                         data: { status: AsyncStatus.Success, data: result },
-                    })
+                        ...(isFirstRequest
+                            ? {
+                                  fullEffectiveParameterBounds: newParameterBounds,
+                                  fullData: result,
+                              }
+                            : {}),
+                    }),
                 );
             } catch (ex) {
                 console.warn("Error calculationg deviation distributions", ex);
                 dispatch(
-                    deviationsActions.setSubprofileDeviationDistributions({
+                    deviationsActions.updateSubprofileDeviationDistributions({
                         parameterBounds,
                         data: { status: AsyncStatus.Error, msg: "Error calculation distributions" },
-                    })
+                    }),
                 );
             }
         }

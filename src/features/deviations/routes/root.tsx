@@ -150,7 +150,7 @@ export function Root() {
                                     ) : undefined}
                                 </Box>
 
-                                {selectedSubprofile?.centerLine ? <DistributionSection /> : undefined}
+                                <DistributionSection />
                             </Box>
                         )}
                     </ScrollBox>

@@ -65,10 +65,10 @@ export function RootParamBounds() {
         newValue[index] = parsed;
         newValue.sort((a, b) => a - b);
         dispatch(
-            deviationsActions.setSubprofileDeviationDistributions({
+            deviationsActions.updateSubprofileDeviationDistributions({
                 parameterBounds: newValue,
                 data: { status: AsyncStatus.Initial },
-            })
+            }),
         );
     };
 

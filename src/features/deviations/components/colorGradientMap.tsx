@@ -275,7 +275,7 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                     <GridRows
                         scale={scaleY}
                         left={margin.left}
-                        width={width - margin.left - margin.right}
+                        width={Math.max(0, width - margin.left - margin.right)}
                         strokeOpacity={0.5}
                         numTicks={2}
                         stroke="#e0e0e0"
@@ -292,15 +292,16 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                         <Brush
                             xScale={brushScaleX}
                             yScale={scaleY}
-                            width={width - margin.left - margin.right}
-                            height={
+                            width={Math.max(0, width - margin.left - margin.right)}
+                            height={Math.max(
+                                0,
                                 height -
-                                gradientHeight -
-                                margin.top -
-                                margin.bottom -
-                                gradientMargin.top -
-                                gradientMargin.bottom
-                            }
+                                    gradientHeight -
+                                    margin.top -
+                                    margin.bottom -
+                                    gradientMargin.top -
+                                    gradientMargin.bottom,
+                            )}
                             initialBrushPosition={initialBrushPosition}
                             margin={margin}
                             handleSize={8}

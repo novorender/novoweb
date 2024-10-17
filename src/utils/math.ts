@@ -102,3 +102,18 @@ export function getPerpendicular(normal: ReadonlyVec3) {
     // Normalize the perpendicular vector
     return vec3.normalize(perpendicularVector, perpendicularVector);
 }
+
+export function getMinMax<T>(a: Iterable<T>, getValue: (item: T) => number) {
+    let min = Number.MAX_SAFE_INTEGER;
+    let max = Number.MIN_SAFE_INTEGER;
+    for (const item of a) {
+        const value = getValue(item);
+        if (value < min) {
+            min = value;
+        }
+        if (value > max) {
+            max = value;
+        }
+    }
+    return [min, max] as [number, number];
+}

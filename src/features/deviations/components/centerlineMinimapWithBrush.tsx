@@ -1,5 +1,4 @@
 import { Box } from "@mui/material";
-import { skipToken } from "@reduxjs/toolkit/query";
 import { LineSubject } from "@visx/annotation";
 import { Brush } from "@visx/brush";
 import BaseBrush, { BaseBrushState } from "@visx/brush/lib/BaseBrush";
@@ -13,18 +12,16 @@ import { scaleLinear } from "@visx/scale";
 import { AreaClosed } from "@visx/shape";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useGetDeviationDistributionQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { selectProfile } from "features/followPath";
-import { useSceneId } from "hooks/useSceneId";
 import { AsyncStatus } from "types/misc";
+import { getMinMax } from "utils/math";
 
 import { deviationsActions } from "../deviationsSlice";
 import {
     selectCenterlineMinimapAttr,
     selectCurrentSubprofileDeviationDistributions,
     selectSelectedProfile,
-    selectSelectedProfileId,
     selectSelectedSubprofile,
 } from "../selectors";
 import { getColorKnots } from "./utils";
@@ -42,8 +39,6 @@ export function CenterlineMinimapWithBrush() {
 const margin = { left: 8, top: 12, bottom: 12, right: 8 };
 
 function CenterlineMinimapWithBrushInner({ width, height }: { width: number; height: number }) {
-    const projectId = useSceneId();
-    const profileId = useAppSelector(selectSelectedProfileId);
     const profile = useAppSelector(selectSelectedProfile);
     const subprofile = useAppSelector(selectSelectedSubprofile);
     const centerLine = subprofile?.centerLine;
@@ -51,20 +46,9 @@ function CenterlineMinimapWithBrushInner({ width, height }: { width: number; hei
     const profilePos = useAppSelector(selectProfile);
     const dispatch = useAppDispatch();
     const attr = useAppSelector(selectCenterlineMinimapAttr);
-
-    const { data: resp } = useGetDeviationDistributionQuery(
-        projectId && profileId && subprofile?.centerLine?.brepId && fullParameterBounds
-            ? {
-                  projectId,
-                  profileId,
-                  centerLineId: subprofile.centerLine.brepId,
-                  start: fullParameterBounds[0],
-                  end: fullParameterBounds[1],
-              }
-            : skipToken,
-    );
-
-    const data = resp?.aggregatesAlongProfile;
+    const distrs = useAppSelector(selectCurrentSubprofileDeviationDistributions);
+    const data = distrs?.fullData?.aggregatesAlongProfile;
+    const effectiveParameterBounds = distrs?.fullEffectiveParameterBounds ?? fullParameterBounds;
 
     const distributions = useAppSelector(selectCurrentSubprofileDeviationDistributions);
 
@@ -73,27 +57,12 @@ function CenterlineMinimapWithBrushInner({ width, height }: { width: number; hei
     const scaleX = useMemo(() => {
         return scaleLinear({
             range: [margin.left, width - margin.right],
-            domain: fullParameterBounds ?? [0, 100],
+            domain: effectiveParameterBounds ?? [0, 100],
         });
-    }, [fullParameterBounds, width]);
+    }, [effectiveParameterBounds, width]);
 
     const scaleY = useMemo(() => {
-        let min = Number.MAX_SAFE_INTEGER;
-        let max = Number.MIN_SAFE_INTEGER;
-        if (data && data.length > 0) {
-            for (const point of data) {
-                const value = point[attr];
-                if (value < min) {
-                    min = value;
-                }
-                if (value > max) {
-                    max = value;
-                }
-            }
-        } else {
-            min = 0;
-            max = 1;
-        }
+        const [min, max] = data && data.length > 0 ? getMinMax(data, (e) => e[attr]) : [0, 1];
 
         return scaleLinear({
             range: [height - margin.bottom, margin.top],
@@ -104,16 +73,16 @@ function CenterlineMinimapWithBrushInner({ width, height }: { width: number; hei
     const brushScaleX = useMemo(() => {
         return scaleLinear({
             range: [0, width - margin.right - margin.left],
-            domain: fullParameterBounds ?? [0, 100],
+            domain: effectiveParameterBounds ?? [0, 100],
         });
-    }, [fullParameterBounds, width]);
+    }, [effectiveParameterBounds, width]);
 
     const [initialBrushPosition, setInitialBrushPosition] = useState(
-        getInitialBrushPosition(brushScaleX, fullParameterBounds, distributions?.parameterBounds),
+        getInitialBrushPosition(brushScaleX, effectiveParameterBounds, distributions?.parameterBounds),
     );
 
     useEffect(() => {
-        const brushPos = getInitialBrushPosition(brushScaleX, fullParameterBounds, distributions?.parameterBounds);
+        const brushPos = getInitialBrushPosition(brushScaleX, effectiveParameterBounds, distributions?.parameterBounds);
         setInitialBrushPosition(brushPos);
         if (typeof brushPos.start.x === "number") {
             brushRef.current?.updateBrush((prevBrush) => {
@@ -131,21 +100,21 @@ function CenterlineMinimapWithBrushInner({ width, height }: { width: number; hei
         } else {
             brushRef.current?.reset();
         }
-    }, [fullParameterBounds, distributions?.parameterBounds, brushScaleX]);
+    }, [effectiveParameterBounds, distributions?.parameterBounds, brushScaleX]);
 
     const knots = useMemo(() => getColorKnots(profile, scaleY), [profile, scaleY]);
 
     const onBrushEnd = useCallback(
         (domain: Bounds | null) => {
-            if (!fullParameterBounds) {
+            if (!effectiveParameterBounds) {
                 return;
             }
-            const [min, max] = fullParameterBounds;
+            const [min, max] = effectiveParameterBounds;
 
             if (!domain) {
                 dispatch(
-                    deviationsActions.setSubprofileDeviationDistributions({
-                        parameterBounds: fullParameterBounds,
+                    deviationsActions.updateSubprofileDeviationDistributions({
+                        parameterBounds: effectiveParameterBounds,
                         data: { status: AsyncStatus.Initial },
                     }),
                 );
@@ -167,14 +136,14 @@ function CenterlineMinimapWithBrushInner({ width, height }: { width: number; hei
                 x0 = Math.floor(x0);
                 x1 = Math.ceil(x1);
                 dispatch(
-                    deviationsActions.setSubprofileDeviationDistributions({
-                        parameterBounds: x0 >= x1 ? fullParameterBounds : [x0, x1],
+                    deviationsActions.updateSubprofileDeviationDistributions({
+                        parameterBounds: x0 >= x1 ? effectiveParameterBounds : [x0, x1],
                         data: { status: AsyncStatus.Initial },
                     }),
                 );
             }
         },
-        [fullParameterBounds, dispatch, brushScaleX],
+        [effectiveParameterBounds, dispatch, brushScaleX],
     );
 
     if (!data) {
@@ -199,8 +168,8 @@ function CenterlineMinimapWithBrushInner({ width, height }: { width: number; hei
                     <Brush
                         xScale={brushScaleX}
                         yScale={scaleY}
-                        width={width - margin.left - margin.right}
-                        height={height - margin.top - margin.bottom}
+                        width={Math.max(0, width - margin.left - margin.right)}
+                        height={Math.max(0, height - margin.top - margin.bottom)}
                         initialBrushPosition={initialBrushPosition}
                         margin={margin}
                         handleSize={8}

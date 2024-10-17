@@ -9,7 +9,11 @@ import { AsyncStatus } from "types/misc";
 import { deviationsActions } from "../deviationsSlice";
 import { useCalcSubprofileDevDistr } from "../hooks/useCalcSubprofileDevDistr";
 import { useIsTopDownOrthoCamera } from "../hooks/useIsTopDownOrthoCamera";
-import { selectCurrentSubprofileDeviationDistributions, selectRangeFollowsCamera } from "../selectors";
+import {
+    selectCurrentSubprofileDeviationDistributions,
+    selectRangeFollowsCamera,
+    selectSelectedSubprofile,
+} from "../selectors";
 import { CenterlineMinimap } from "./centerlineMinimap";
 import { ColorGradientMap } from "./colorGradientMap";
 import { RootParamBounds } from "./rootParamBounds";
@@ -22,6 +26,7 @@ function DistributionSectionInner() {
     const [hasDistributionData, setHasDistributionData] = useState(false);
     const rangeFollowsCamera = useAppSelector(selectRangeFollowsCamera);
     const distribution = useAppSelector(selectCurrentSubprofileDeviationDistributions);
+    const selectedSubprofile = useAppSelector(selectSelectedSubprofile);
 
     const dispatch = useAppDispatch();
 
@@ -37,7 +42,7 @@ function DistributionSectionInner() {
         }
     }, [distribution]);
 
-    if (!hasDistributionData) {
+    if (!hasDistributionData || !selectedSubprofile?.centerLine) {
         return null;
     }
 

@@ -19,6 +19,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { followPathActions, selectProfile } from "features/followPath";
 import { useGoToProfile } from "features/followPath/useGoToProfile";
 import { AsyncStatus } from "types/misc";
+import { getMinMax } from "utils/math";
 
 import { deviationsActions } from "../deviationsSlice";
 import {
@@ -115,22 +116,7 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
         }, [parameterBounds, width]);
 
         const scaleY = useMemo(() => {
-            let min = Number.MAX_SAFE_INTEGER;
-            let max = Number.MIN_SAFE_INTEGER;
-            if (data && data.length > 0) {
-                for (const point of data) {
-                    const value = point[attr];
-                    if (value < min) {
-                        min = value;
-                    }
-                    if (value > max) {
-                        max = value;
-                    }
-                }
-            } else {
-                min = 0;
-                max = 1;
-            }
+            const [min, max] = data && data.length > 0 ? getMinMax(data, (p) => p[attr]) : [0, 1];
 
             return scaleLinear({
                 range: [height - margin.bottom, margin.top],
@@ -210,7 +196,7 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                     <GridRows
                         scale={scaleY}
                         left={margin.left}
-                        width={width - margin.left - margin.right}
+                        width={Math.max(0, width - margin.left - margin.right)}
                         strokeOpacity={0.5}
                         numTicks={2}
                         stroke="#e0e0e0"
@@ -237,8 +223,8 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                         <rect
                             x={scaleX(Number(profilePos))}
                             y={margin.top}
-                            width={scaleX(Number(profilePos) + 1) - scaleX(Number(profilePos))}
-                            height={height - margin.bottom - margin.top}
+                            width={Math.max(1, scaleX(Number(profilePos) + 1) - scaleX(Number(profilePos)))}
+                            height={Math.max(0, height - margin.bottom - margin.top)}
                             fill="#D61E5C55"
                         />
                     ) : undefined}

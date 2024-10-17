@@ -31,13 +31,13 @@ export function useTrackVisibleTopDownProfile() {
                 }
 
                 dispatch(
-                    deviationsActions.setSubprofileDeviationDistributions({
+                    deviationsActions.updateSubprofileDeviationDistributions({
                         parameterBounds: [min, max],
                         data: { status: AsyncStatus.Initial },
-                    })
+                    }),
                 );
             }, 500),
-        [dispatch, parameterBounds]
+        [dispatch, parameterBounds],
     );
 
     useEffect(() => {
