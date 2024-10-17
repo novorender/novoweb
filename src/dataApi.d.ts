@@ -196,7 +196,10 @@ declare module "@novorender/data-js-api" {
             }[];
         };
         forms?: {
-            currentFormsList: string | null;
+            currentFormsList?: string | null;
+            selectedFormId?: string;
+            selectedFormObjectGuid?: string;
+            selectedFormObjectId?: number;
         };
     };
 

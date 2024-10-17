@@ -17,7 +17,7 @@ import {
     selectSelectedSubprofileIndex,
 } from "features/deviations/selectors";
 import { selectFollowPath } from "features/followPath/followPathSlice";
-import { selectCurrentFormsList } from "features/forms/slice";
+import { selectCurrentFormsList, selectSelectedFormId, selectSelectedFormObjectId } from "features/forms/slice";
 import {
     selectManholeCollisionSettings,
     selectManholeCollisionTarget,
@@ -75,6 +75,9 @@ export function useCreateBookmark() {
     const deviationLegendGroups = useAppSelector(selectDeviationLegendGroups);
     const arcgisFeatureServers = useAppSelector(selectArcgisFeatureServers);
     const currentFormsList = useAppSelector(selectCurrentFormsList);
+    const selectedFormId = useAppSelector(selectSelectedFormId);
+    const selectedFormObjectGuid = useAppSelector(selectSelectedFormId);
+    const selectedFormObjectId = useAppSelector(selectSelectedFormObjectId);
 
     const {
         state: { view },
@@ -272,6 +275,9 @@ export function useCreateBookmark() {
                     : undefined,
             forms: {
                 currentFormsList,
+                selectedFormId,
+                selectedFormObjectGuid,
+                selectedFormObjectId,
             },
             ...explorerStateOverwrite,
         },

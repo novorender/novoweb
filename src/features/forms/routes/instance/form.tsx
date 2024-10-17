@@ -46,6 +46,14 @@ export function Form({
 
     const isGeoForm = useMemo(() => Boolean(form?.location), [form]);
 
+    if (items?.length === 0) {
+        return noItemsMsg ? (
+            <Typography my={1} px={1}>
+                {noItemsMsg}
+            </Typography>
+        ) : null;
+    }
+
     return (
         <ScrollBox my={1} px={1}>
             <Box mt={2} mb={isFinal ? 0 : 2}>
@@ -62,7 +70,6 @@ export function Form({
                     <Signature signature={finalSignature!} />
                 </List>
             )}
-            {items?.length === 0 && noItemsMsg && <Typography px={0}>{noItemsMsg}</Typography>}
             {items?.map((item, idx, array) => (
                 <Fragment key={item.id}>
                     <FormItem item={item} setItems={setItems} disabled={disabled || !canEdit || isFinal} />

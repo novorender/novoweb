@@ -58,6 +58,7 @@ enum ActionTypes {
     SetColor,
     Set,
     ClearAll,
+    ClearForms,
 }
 
 function add(collection: Key, ids: ObjectId[]) {
@@ -115,7 +116,13 @@ function clearAll() {
     };
 }
 
-export const actions = { add, move, remove, setIds, setColor, set, clearAll };
+function clearForms() {
+    return {
+        type: ActionTypes.ClearForms as const,
+    };
+}
+
+export const actions = { add, move, remove, setIds, setColor, set, clearAll, clearForms };
 
 type Actions = ReturnType<(typeof actions)[keyof typeof actions]>;
 export type DispatchHighlightCollection = Dispatch<Actions>;
@@ -221,6 +228,26 @@ export function reducer(state: State, action: Actions): State {
                     idArr: [],
                     ids: {},
                 },
+                [HighlightCollection.FormsNew]: {
+                    color: state.formsNew.color,
+                    idArr: [],
+                    ids: {},
+                },
+                [HighlightCollection.FormsOngoing]: {
+                    color: state.formsOngoing.color,
+                    idArr: [],
+                    ids: {},
+                },
+                [HighlightCollection.FormsCompleted]: {
+                    color: state.formsCompleted.color,
+                    idArr: [],
+                    ids: {},
+                },
+            };
+        }
+        case ActionTypes.ClearForms: {
+            return {
+                ...state,
                 [HighlightCollection.FormsNew]: {
                     color: state.formsNew.color,
                     idArr: [],

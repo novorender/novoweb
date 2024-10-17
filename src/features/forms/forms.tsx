@@ -120,7 +120,7 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
                 dispatch(formsActions.setLastViewedPath(history.location.pathname));
 
                 dispatchHighlighted(highlightActions.setIds([]));
-                dispatchHighlightCollections(highlightCollectionsActions.clearAll());
+                dispatchHighlightCollections(highlightCollectionsActions.clearForms());
                 dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Neutral));
                 dispatchHighlighted(highlightActions.resetColor());
             }

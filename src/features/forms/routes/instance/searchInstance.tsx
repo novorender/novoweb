@@ -17,25 +17,37 @@ import { Route, Switch, useHistory, useLocation, useRouteMatch } from "react-rou
 import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider } from "components";
+import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
-import { highlightActions, useDispatchHighlighted, useHighlighted } from "contexts/highlighted";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
-import { selectCurrentFormsList } from "features/forms/slice";
-import { renderActions } from "features/render";
+import { formsActions, selectCurrentFormsList, selectSelectedFormObjectId } from "features/forms/slice";
+import {
+    type Form as FormType,
+    type FormId,
+    type FormItem,
+    FormItemType,
+    type FormObjectGuid,
+} from "features/forms/types";
+import { determineHighlightCollection, mapGuidsToIds, toFormFields, toFormItems } from "features/forms/utils";
+import { ObjectVisibility, renderActions } from "features/render";
+import { ShareLink } from "features/shareLink";
+import { useAbortController } from "hooks/useAbortController";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectAccessToken, selectConfig } from "slices/explorer";
 
 import { useGetSearchFormQuery, useUpdateSearchFormMutation } from "../../api";
-import { type Form as FormType, type FormId, type FormItem, FormItemType, type FormObjectGuid } from "../../types";
-import { determineHighlightCollection, toFormFields, toFormItems } from "../../utils";
-import { CLEAR_ROUTE, HISTORY_ROUTE, SIGN_ROUTE } from "./constants";
+import { CLEAR_ROUTE, HIGHLIGHT_COLOR, HISTORY_ROUTE, SIGN_ROUTE } from "./constants";
 import { ClearConfirmation, SignConfirmation } from "./dialogs";
 import { Form } from "./form";
 import { FormHistory } from "./formHistory";
 
 export function SearchInstance() {
     const { t } = useTranslation();
+    const {
+        state: { db },
+    } = useExplorerGlobals(true);
     const theme = useTheme();
     const history = useHistory();
     const match = useRouteMatch();
@@ -43,23 +55,20 @@ export function SearchInstance() {
     const currentFormsList = useAppSelector(selectCurrentFormsList);
     const formsBaseUrl = useAppSelector(selectConfig).dataV2ServerUrl + "/forms/";
     const accessToken = useAppSelector(selectAccessToken);
+    const objectId = useAppSelector(selectSelectedFormObjectId);
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
-    const { idArr: highlighted } = useHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
     const flyToForm = useFlyToForm();
     const checkPermission = useCheckProjectPermission();
     const canEdit = checkPermission(Permission.FormsFill);
     const canSign = checkPermission(Permission.FormsSign);
+    const [abortController] = useAbortController();
 
     const location = useLocation();
     const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
     const objectGuid = queryParams.get("objectGuid") as FormObjectGuid;
     const formId = queryParams.get("formId") as FormId;
-    const objectId = useMemo(
-        () => (queryParams.get("objectId") ? Number.parseInt(queryParams.get("objectId")!) : undefined),
-        [queryParams],
-    );
 
     const signRoute = useMemo(() => `${match.path}${SIGN_ROUTE}`, [match.path]);
     const historyRoute = useMemo(() => `${match.path}${HISTORY_ROUTE}`, [match.path]);
@@ -84,12 +93,27 @@ export function SearchInstance() {
     const [title, setTitle] = useState(form?.title ?? "");
 
     useEffect(() => {
-        if (!Number.isInteger(objectId) || highlighted.includes(objectId!)) {
+        async function fetchObjectId() {
+            const map = await mapGuidsToIds({
+                guids: [objectGuid],
+                db,
+                abortSignal: abortController.current.signal,
+            });
+            dispatch(formsActions.setSelectedFormObjectId(map[objectGuid]));
+        }
+
+        if (!Number.isInteger(objectId) && objectGuid) {
+            fetchObjectId();
+        }
+    }, [objectGuid, db, abortController, dispatch, objectId]);
+
+    useEffect(() => {
+        if (!Number.isInteger(objectId) || didHighlightId.current) {
             return;
         }
-        dispatchHighlighted(highlightActions.setIds([objectId!]));
+        dispatchHighlighted(highlightActions.set({ ids: [objectId!], color: HIGHLIGHT_COLOR }));
         didHighlightId.current = true;
-    }, [dispatchHighlighted, highlighted, objectId]);
+    }, [dispatchHighlighted, objectId]);
 
     useEffect(() => {
         if (form?.fields) {
@@ -106,6 +130,14 @@ export function SearchInstance() {
             willUnmount.current = true;
         };
     }, []);
+
+    useEffect(() => {
+        dispatch(formsActions.setSelectedFormObjectGuid(objectGuid));
+        dispatch(formsActions.setSelectedFormObjectId(objectId));
+        if (objectId) {
+            dispatch(renderActions.setDefaultVisibility(ObjectVisibility.SemiTransparent));
+        }
+    }, [dispatch, formId, objectGuid, objectId]);
 
     const maybeUpdateForm = useCallback(() => {
         if (!isUpdated) {
@@ -163,22 +195,10 @@ export function SearchInstance() {
                     dispatchHighlighted(highlightActions.setIds([]));
                     didHighlightId.current = false;
                 }
+                dispatch(formsActions.setSelectedFormObjectId(undefined));
             }
         };
-    }, [
-        history.location.pathname,
-        dispatchHighlighted,
-        isUpdated,
-        items,
-        updateForm,
-        projectId,
-        objectGuid,
-        formId,
-        form,
-        objectId,
-        dispatchHighlightCollections,
-        maybeUpdateForm,
-    ]);
+    }, [dispatch, dispatchHighlighted, history.location.pathname, maybeUpdateForm]);
 
     const openMenu = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -231,6 +251,8 @@ export function SearchInstance() {
     const handleBackClick = useCallback(() => {
         dispatchHighlighted(highlightActions.setIds([]));
         dispatch(renderActions.setMainObject(undefined));
+        dispatch(formsActions.setSelectedFormObjectGuid(undefined));
+        dispatch(formsActions.setSelectedFormObjectId(undefined));
         if (currentFormsList) {
             history.push(`/forms/${currentFormsList}`);
         } else {
@@ -338,7 +360,13 @@ export function SearchInstance() {
                             {t("flyTo")}
                         </Button>
                         <>
-                            <IconButton edge="start" size="small" onClick={openMenu} sx={{ mr: 1 }}>
+                            <IconButton
+                                edge="start"
+                                size="small"
+                                onClick={openMenu}
+                                sx={{ mr: 1 }}
+                                disabled={isFormLoading || isFormUpdating || items.length === 0}
+                            >
                                 <MoreVert fontSize="small" />
                             </IconButton>
                             <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
@@ -348,6 +376,19 @@ export function SearchInstance() {
                                     </ListItemIcon>
                                     <ListItemText>{t("sign")}</ListItemText>
                                 </MenuItem>
+                                <ShareLink
+                                    variant="menuItem"
+                                    nameKey="share"
+                                    explorerStateOverwrite={{
+                                        forms: {
+                                            currentFormsList: formId,
+                                            selectedFormId: formId,
+                                            selectedFormObjectGuid: objectGuid,
+                                            selectedFormObjectId: objectId,
+                                        },
+                                    }}
+                                    onClick={closeMenu}
+                                />
                                 <MenuItem onClick={handleHistoryClick}>
                                     <ListItemIcon>
                                         <History fontSize="small" />

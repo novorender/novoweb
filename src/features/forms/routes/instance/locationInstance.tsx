@@ -31,6 +31,7 @@ import {
 } from "features/forms/types";
 import { toFormFields, toFormItems } from "features/forms/utils";
 import { ObjectVisibility, renderActions } from "features/render";
+import { ShareLink } from "features/shareLink";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectAccessToken, selectConfig } from "slices/explorer";
@@ -347,7 +348,13 @@ export function LocationInstance() {
                             {t("flyTo")}
                         </Button>
                         <>
-                            <IconButton edge="start" size="small" onClick={openMenu} sx={{ mr: 1 }}>
+                            <IconButton
+                                edge="start"
+                                size="small"
+                                onClick={openMenu}
+                                sx={{ mr: 1 }}
+                                disabled={isFormLoading || isFormUpdating || items.length === 0}
+                            >
                                 <MoreVert fontSize="small" />
                             </IconButton>
                             <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
@@ -357,6 +364,7 @@ export function LocationInstance() {
                                     </ListItemIcon>
                                     <ListItemText>{t("sign")}</ListItemText>
                                 </MenuItem>
+                                <ShareLink variant="menuItem" nameKey="share" onClick={closeMenu} />
                                 <MenuItem onClick={handleHistoryClick}>
                                     <ListItemIcon>
                                         <History fontSize="small" />

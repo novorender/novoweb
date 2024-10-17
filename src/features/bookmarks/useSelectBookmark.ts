@@ -135,8 +135,19 @@ export function useSelectBookmark() {
                 dispatchHighlightCollections(highlightCollectionsActions.clearAll());
             }
 
-            if (bookmark.forms?.currentFormsList) {
-                dispatch(formsActions.setCurrentFormsList(bookmark.forms.currentFormsList));
+            if (bookmark.forms) {
+                if (bookmark.forms.currentFormsList) {
+                    dispatch(formsActions.setCurrentFormsList(bookmark.forms.currentFormsList));
+                }
+                if (bookmark.forms.selectedFormId) {
+                    dispatch(formsActions.setSelectedFormId(bookmark.forms.selectedFormId));
+                }
+                if (bookmark.forms.selectedFormObjectGuid) {
+                    dispatch(formsActions.setSelectedFormObjectGuid(bookmark.forms.selectedFormObjectGuid));
+                }
+                if (bookmark.forms.selectedFormObjectId) {
+                    dispatch(formsActions.setSelectedFormObjectId(bookmark.forms.selectedFormObjectId));
+                }
                 openWidget(featuresConfig.forms.key, { force: true });
             }
         },
