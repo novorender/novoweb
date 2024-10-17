@@ -1,6 +1,5 @@
 import { Box } from "@mui/material";
 import { View } from "@novorender/api";
-import { LineSubject } from "@visx/annotation";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { Brush } from "@visx/brush";
 import type BaseBrush from "@visx/brush/lib/BaseBrush";
@@ -22,7 +21,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PointCountAtDeviation } from "apis/dataV2/deviationTypes";
 import { useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectProfile } from "features/followPath";
 import { AsyncStatus } from "types/misc";
 import { clampColorGradientKnots, vecRgbaToRgbaString } from "utils/color";
 
@@ -75,7 +73,6 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
         } = useExplorerGlobals(true);
         const subprofileIndex = useAppSelector(selectSelectedSubprofileIndex);
         const profile = useAppSelector(selectSelectedProfile);
-        const profilePos = useAppSelector(selectProfile);
         const distribution = useAppSelector(selectCurrentSubprofileDeviationDistributions);
         const fullData =
             distribution?.data.status === AsyncStatus.Success
@@ -315,15 +312,6 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                             onMouseLeave={handleHideTooltip}
                         />
                     </Group>
-                    {profilePos !== undefined ? (
-                        <LineSubject
-                            orientation={"vertical"}
-                            stroke="#D61E5C"
-                            x={scaleX(Number(profilePos))}
-                            min={margin.top}
-                            max={height - margin.bottom}
-                        />
-                    ) : undefined}
                     <AxisBottom
                         top={scaleY.range()[0]}
                         scale={scaleX}
@@ -392,6 +380,7 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                             reset();
                             brushRef.current?.reset();
                         }}
+                        disabled={!initialBrushPosition}
                     >
                         Reset
                     </ChartHeaderButton>
