@@ -14,6 +14,7 @@ import {
     RadioGroup,
     Select,
     Snackbar,
+    Stack,
     Typography,
     useTheme,
 } from "@mui/material";
@@ -30,10 +31,13 @@ import {
 import { useTranslation } from "react-i18next";
 import { FixedSizeList } from "react-window";
 
+import { useAppSelector } from "app/redux-store-interactions";
 import { Confirmation, ImgModal, withCustomScrollbar } from "components";
 import AddFilesButton from "features/forms/addFilesButton";
 import { useUploadFilesMutation } from "features/forms/api";
 import { FILE_SIZE_LIMIT } from "features/forms/constants";
+import { selectForms } from "features/forms/slice";
+import { ShareLink } from "features/shareLink";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 
@@ -122,12 +126,16 @@ const FormItemMessage = ({ open, message, onClose }: { open: boolean; message: s
     />
 );
 
-const FormItemHeader = ({ title, required }: { title: string; required?: boolean }) => {
+const FormItemHeader = ({ title, required, id }: { title: string; required?: boolean; id?: string }) => {
     const { t } = useTranslation();
+    const forms = useAppSelector(selectForms);
     return (
-        <FormLabel component="legend" sx={{ fontWeight: 600, color: "text.primary" }}>
-            {`${title} ${!required ? `(${t("optional")})` : ""}`}
-        </FormLabel>
+        <Stack direction="row" spacing={0.5} alignItems="center">
+            <FormLabel component="legend" sx={{ fontWeight: 600, color: "text.primary" }}>
+                {`${title} ${!required ? `(${t("optional")})` : ""}`}
+            </FormLabel>
+            {id && <ShareLink variant="primaryMenu" explorerStateOverwrite={{ forms: { ...forms, formItemId: id } }} />}
+        </Stack>
     );
 };
 
@@ -282,7 +290,7 @@ export function FormItem({
         case FormItemType.Checkbox:
             return (
                 <FormControl disabled={disabled || item.readonly} component="fieldset" fullWidth>
-                    <FormItemHeader title={item.title} required={item.required} />
+                    <FormItemHeader title={item.title} required={item.required} id={item.id} />
                     <FormGroup row>
                         {item.options.map((option) => (
                             <FormControlLabel
@@ -317,7 +325,7 @@ export function FormItem({
         case FormItemType.YesNo:
             return (
                 <FormControl disabled={disabled || item.readonly} component="fieldset" fullWidth>
-                    <FormItemHeader title={item.title} required={item.required} />
+                    <FormItemHeader title={item.title} required={item.required} id={item.id} />
                     <RadioGroup
                         value={item.value ? item.value[0] : ""}
                         onChange={(_e, value) => handleChange(value)}
@@ -334,7 +342,7 @@ export function FormItem({
         case FormItemType.TrafficLight:
             return (
                 <FormControl disabled={disabled || item.readonly} component="fieldset" fullWidth>
-                    <FormItemHeader title={item.title} required={item.required} />
+                    <FormItemHeader title={item.title} required={item.required} id={item.id} />
                     <RadioGroup
                         value={item.value ? item.value[0] : ""}
                         onChange={(_e, value) => handleChange(value)}
@@ -358,7 +366,7 @@ export function FormItem({
                     size="small"
                     sx={{ pb: 1 }}
                 >
-                    <FormItemHeader title={item.title} required={item.required} />
+                    <FormItemHeader title={item.title} required={item.required} id={item.id} />
                     <Select
                         value={item.value ? item.value[0] : ""}
                         onChange={(evt) => handleChange(evt.target.value)}
@@ -382,7 +390,7 @@ export function FormItem({
                     size="small"
                     sx={{ pb: 1 }}
                 >
-                    <FormItemHeader title={item.title} required={item.required} />
+                    <FormItemHeader title={item.title} required={item.required} id={item.id} />
                     <Box onClick={handleTextFieldClick}>
                         {!editing && Boolean(item.value) ? (
                             <Box>
@@ -421,7 +429,7 @@ export function FormItem({
         case FormItemType.Text:
             return (
                 <FormControl component="fieldset" fullWidth size="small" sx={{ pb: 1 }}>
-                    <FormItemHeader title={item.title} required={item.required} />
+                    <FormItemHeader title={item.title} required={item.required} id={item.id} />
                     <Box>
                         {item.value?.[0].split("\n").map((line, idx) => (
                             <Box key={item.id! + idx} sx={{ wordWrap: "break-word", overflowWrap: "anywhere" }}>
@@ -435,7 +443,7 @@ export function FormItem({
         case FormItemType.Date:
             return (
                 <FormControl disabled={disabled || item.readonly} component="fieldset" fullWidth>
-                    <FormItemHeader title={item.title} required={item.required} />
+                    <FormItemHeader title={item.title} required={item.required} id={item.id} />
                     <DatePicker
                         value={item.value}
                         onChange={handleChange}
@@ -448,7 +456,7 @@ export function FormItem({
         case FormItemType.Time:
             return (
                 <FormControl disabled={disabled || item.readonly} component="fieldset" fullWidth>
-                    <FormItemHeader title={item.title} required={item.required} />
+                    <FormItemHeader title={item.title} required={item.required} id={item.id} />
                     <TimePicker
                         value={item.value}
                         onChange={handleChange}
@@ -461,7 +469,7 @@ export function FormItem({
         case FormItemType.DateTime:
             return (
                 <FormControl disabled={disabled || item.readonly} component="fieldset" fullWidth>
-                    <FormItemHeader title={item.title} required={item.required} />
+                    <FormItemHeader title={item.title} required={item.required} id={item.id} />
                     <DateTimePicker
                         value={item.value}
                         onChange={handleChange}
@@ -474,7 +482,7 @@ export function FormItem({
         case FormItemType.File:
             return (
                 <FormControl fullWidth>
-                    <FormItemHeader title={item.title} required={item.required} />
+                    <FormItemHeader title={item.title} required={item.required} id={item.id} />
                     {Number.isInteger(fileIndexToDelete) ? (
                         <Confirmation
                             title={t("deleteFile", {

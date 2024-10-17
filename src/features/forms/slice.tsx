@@ -49,6 +49,7 @@ const initialState = {
     selectedFormId?: string;
     selectedFormObjectGuid?: string;
     selectedFormObjectId?: number;
+    formItemId?: string;
     alwaysShowMarkers: boolean;
 };
 
@@ -86,6 +87,9 @@ export const formsSlice = createSlice({
         },
         setSelectedFormObjectId: (state, action: PayloadAction<State["selectedFormObjectId"]>) => {
             state.selectedFormObjectId = action.payload;
+        },
+        setFormItemId: (state, action: PayloadAction<State["formItemId"]>) => {
+            state.formItemId = action.payload;
         },
         templateLoaded: (state, action: PayloadAction<Partial<Template>>) => {
             if (state.templates.status !== AsyncStatus.Success) {
@@ -177,6 +181,25 @@ export const selectSelectedFormId = (state: RootState) => state.forms.selectedFo
 export const selectSelectedFormObjectGuid = (state: RootState) => state.forms.selectedFormObjectGuid;
 
 export const selectSelectedFormObjectId = (state: RootState) => state.forms.selectedFormObjectId;
+
+export const selectFormItemId = (state: RootState) => state.forms.formItemId;
+
+export const selectForms = createSelector(
+    [
+        selectCurrentFormsList,
+        selectSelectedFormId,
+        selectSelectedFormObjectGuid,
+        selectSelectedFormObjectId,
+        selectFormItemId,
+    ],
+    (currentFormsList, selectedFormId, selectedFormObjectGuid, selectedFormObjectId, formItemId) => ({
+        currentFormsList,
+        selectedFormId,
+        selectedFormObjectGuid,
+        selectedFormObjectId,
+        formItemId,
+    }),
+);
 
 export const selectAlwaysShowMarkers = (state: RootState) => state.forms.alwaysShowMarkers;
 

@@ -20,7 +20,7 @@ export function useGoToSelectedForm() {
 
     const goIfNotCurrent = useCallback(
         (newPath: string) => {
-            if (newPath !== history.location.pathname) {
+            if (!history.location.pathname.startsWith(newPath)) {
                 history.push(newPath);
             }
         },
@@ -29,20 +29,16 @@ export function useGoToSelectedForm() {
 
     useEffect(() => {
         if (template?.id && template?.type === TemplateType.Location) {
-            return goIfNotCurrent(
+            goIfNotCurrent(
                 selectedFormId
                     ? `/location-instance?templateId=${template.id}&formId=${selectedFormId}`
                     : `/forms/${template.id}`,
             );
-        }
-
-        if (currentFormsList) {
+        } else if (currentFormsList) {
             if (selectedFormObjectGuid) {
-                return goIfNotCurrent(
-                    `/search-instance?objectGuid=${selectedFormObjectGuid}&formId=${currentFormsList}`,
-                );
+                goIfNotCurrent(`/search-instance?objectGuid=${selectedFormObjectGuid}&formId=${currentFormsList}`);
             } else {
-                return goIfNotCurrent(`/forms/${currentFormsList}`);
+                goIfNotCurrent(`/forms/${currentFormsList}`);
             }
         }
     }, [currentFormsList, goIfNotCurrent, selectedFormId, selectedFormObjectGuid, template]);

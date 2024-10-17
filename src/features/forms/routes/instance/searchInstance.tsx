@@ -21,7 +21,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
-import { formsActions, selectCurrentFormsList, selectSelectedFormObjectId } from "features/forms/slice";
+import { formsActions, selectCurrentFormsList, selectForms, selectSelectedFormObjectId } from "features/forms/slice";
 import {
     type Form as FormType,
     type FormId,
@@ -56,6 +56,7 @@ export function SearchInstance() {
     const formsBaseUrl = useAppSelector(selectConfig).dataV2ServerUrl + "/forms/";
     const accessToken = useAppSelector(selectAccessToken);
     const objectId = useAppSelector(selectSelectedFormObjectId);
+    const forms = useAppSelector(selectForms);
     const dispatch = useAppDispatch();
     const dispatchHighlighted = useDispatchHighlighted();
     const dispatchHighlightCollections = useDispatchHighlightCollections();
@@ -381,10 +382,8 @@ export function SearchInstance() {
                                     nameKey="share"
                                     explorerStateOverwrite={{
                                         forms: {
-                                            currentFormsList: formId,
-                                            selectedFormId: formId,
+                                            ...forms,
                                             selectedFormObjectGuid: objectGuid,
-                                            selectedFormObjectId: objectId,
                                         },
                                     }}
                                     onClick={closeMenu}

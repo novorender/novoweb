@@ -148,6 +148,9 @@ export function useSelectBookmark() {
                 if (bookmark.forms.selectedFormObjectId) {
                     dispatch(formsActions.setSelectedFormObjectId(bookmark.forms.selectedFormObjectId));
                 }
+                if (bookmark.forms.formItemId) {
+                    dispatch(formsActions.setFormItemId(bookmark.forms.formItemId));
+                }
                 openWidget(featuresConfig.forms.key, { force: true });
             }
         },

@@ -17,7 +17,12 @@ import {
     selectSelectedSubprofileIndex,
 } from "features/deviations/selectors";
 import { selectFollowPath } from "features/followPath/followPathSlice";
-import { selectCurrentFormsList, selectSelectedFormId, selectSelectedFormObjectId } from "features/forms/slice";
+import {
+    selectCurrentFormsList,
+    selectFormItemId,
+    selectSelectedFormId,
+    selectSelectedFormObjectId,
+} from "features/forms/slice";
 import {
     selectManholeCollisionSettings,
     selectManholeCollisionTarget,
@@ -78,6 +83,7 @@ export function useCreateBookmark() {
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const selectedFormObjectGuid = useAppSelector(selectSelectedFormId);
     const selectedFormObjectId = useAppSelector(selectSelectedFormObjectId);
+    const formItemId = useAppSelector(selectFormItemId);
 
     const {
         state: { view },
@@ -278,6 +284,7 @@ export function useCreateBookmark() {
                 selectedFormId,
                 selectedFormObjectGuid,
                 selectedFormObjectId,
+                formItemId,
             },
             ...explorerStateOverwrite,
         },

@@ -200,6 +200,7 @@ declare module "@novorender/data-js-api" {
             selectedFormId?: string;
             selectedFormObjectGuid?: string;
             selectedFormObjectId?: number;
+            formItemId?: string;
         };
     };
 
