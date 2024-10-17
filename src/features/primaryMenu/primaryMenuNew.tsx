@@ -87,7 +87,7 @@ export function PrimaryMenuNew() {
                 <StepForwards newDesign />
                 <FlyToSelected newDesign />
                 <OrthoShortcut newDesign />
-                <ShareLink variant="primaryMenu" />
+                <ShareLink variant="primaryMenu" explorerStateOverwrite={{ forms: undefined }} />
                 <Divider orientation="vertical" variant="middle" flexItem sx={{ mx: 1 }} />
                 <ViewOnlySelected newDesign />
                 <HideSelected newDesign />

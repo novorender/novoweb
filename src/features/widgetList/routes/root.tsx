@@ -72,7 +72,7 @@ export function Root({
                             return (
                                 <Grid sx={{ mb: 1 }} xs={4} item key={type + key}>
                                     {key === featuresConfig.shareLink.key ? (
-                                        <ShareLink />
+                                        <ShareLink explorerStateOverwrite={{ forms: undefined }} />
                                     ) : (
                                         <WidgetMenuButtonWrapper
                                             activeCurrent={activeCurrent}
