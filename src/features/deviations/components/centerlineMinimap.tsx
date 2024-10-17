@@ -1,7 +1,6 @@
 import { Box } from "@mui/material";
-import { LineSubject } from "@visx/annotation";
 import { AxisBottom, AxisLeft } from "@visx/axis";
-import { curveMonotoneX } from "@visx/curve";
+import { curveStepAfter } from "@visx/curve";
 import { localPoint } from "@visx/event";
 import { LinearGradient } from "@visx/gradient";
 import { GridRows } from "@visx/grid";
@@ -187,7 +186,7 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                         const svg = (e.target as SVGElement).closest("svg") as SVGElement;
                         const bbox = svg.getBoundingClientRect();
                         const x = e.clientX - bbox.left;
-                        const pos = Math.round(scaleX.invert(x));
+                        const pos = Math.floor(scaleX.invert(x));
 
                         const fpObj = await view.measure?.followPath.followParametricObjects([centerLine.objectId], {
                             cylinderMeasure: "center",
@@ -224,16 +223,23 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                         strokeWidth={1}
                         stroke="url(#area-gradient)"
                         fill="url(#area-gradient)"
-                        curve={curveMonotoneX}
+                        curve={curveStepAfter}
                         defined={(datum) => Number.isFinite(datum.avgDistance)}
                     />
                     {profilePos !== undefined ? (
-                        <LineSubject
-                            orientation={"vertical"}
-                            stroke="#D61E5C"
+                        // <LineSubject
+                        //     orientation={"vertical"}
+                        //     stroke="#D61E5C"
+                        //     x={scaleX(Number(profilePos))}
+                        //     min={margin.top}
+                        //     max={height - margin.bottom}
+                        // />
+                        <rect
                             x={scaleX(Number(profilePos))}
-                            min={margin.top}
-                            max={height - margin.bottom}
+                            y={margin.top}
+                            width={scaleX(Number(profilePos) + 1) - scaleX(Number(profilePos))}
+                            height={height - margin.bottom - margin.top}
+                            fill="#D61E5C55"
                         />
                     ) : undefined}
                     {tooltipData && (
@@ -285,7 +291,7 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                             left={tooltipLeft + 12}
                             style={tooltipStyles}
                         >
-                            {tooltipData[attr].toFixed(3)} @ {tooltipData.profile.toFixed(0)}m
+                            {tooltipData[attr].toFixed(3)}m @ {tooltipData.profile.toFixed(0)}m
                         </TooltipWithBounds>
                     </div>
                 )}

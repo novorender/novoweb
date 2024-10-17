@@ -373,7 +373,7 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                             left={tooltipLeft + 12}
                             style={tooltipStyles}
                         >
-                            {`${tooltipData.count.toFixed(3)}%`} @ {tooltipData.deviation.toFixed(2)}
+                            {`${tooltipData.count.toFixed(3)}%`} @ {tooltipData.deviation.toFixed(3)}m
                         </TooltipWithBounds>
                     </div>
                 )}
