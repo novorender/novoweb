@@ -43,8 +43,8 @@ export function ColorGradientMap() {
     );
 }
 
-const margin = { left: 32, top: 10, bottom: 0, right: 0 };
-const gradientMargin = { left: 32, top: 0, bottom: 4, right: 0 };
+const margin = { left: 44, top: 10, bottom: 0, right: 0 };
+const gradientMargin = { left: 44, top: 0, bottom: 4, right: 0 };
 const gradientHeight = 24;
 const bisectRange = bisector<PointCountAtDeviation, number>((d) => d.deviation).left;
 const tooltipStyles = {
@@ -85,20 +85,26 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
 
         const brushRef = useRef<BaseBrush | null>(null);
 
-        const colorStops = profile?.colors.colorStops;
+        const expandedColorStops = useMemo(() => {
+            if (!profile?.colors) {
+                return [];
+            }
+
+            return profile.colors.absoluteValues
+                ? accountForAbsValues(profile.colors.colorStops)
+                : profile.colors.colorStops;
+        }, [profile?.colors]);
 
         const data = useMemo(() => {
-            if (!fullData || !profile) {
+            if (!fullData || fullData.length === 0) {
                 return;
             }
 
-            const colorStops = profile.colors.absoluteValues
-                ? accountForAbsValues(profile.colors.colorStops)
-                : profile.colors.colorStops;
+            const colorStops = expandedColorStops;
 
-            const minDeviation = Math.min(...colorStops.map((cs) => cs.position));
-            const maxDeviation = Math.max(...colorStops.map((cs) => cs.position));
-            const offset = Math.max(0.1, (maxDeviation - minDeviation) * 0.1);
+            const minDeviation = Math.min(fullData[0].deviation, ...colorStops.map((cs) => cs.position));
+            const maxDeviation = Math.max(fullData.at(-1)!.deviation, ...colorStops.map((cs) => cs.position));
+            const offset = Math.max(0.1, (maxDeviation - minDeviation) * 0.01);
             const absMin = Number((minDeviation - offset).toFixed(1));
             const absMax = Number((maxDeviation + offset).toFixed(1));
 
@@ -123,7 +129,7 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                 deviation: p.deviation,
                 count: (p.count / total) * 100 || 0,
             }));
-        }, [fullData, profile]);
+        }, [fullData, expandedColorStops]);
 
         useEffect(() => {
             setInitialBrushPosition(defaultBrushPosition);
@@ -170,22 +176,18 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
         }, [data, width]);
 
         const gradientColorStops = useMemo(() => {
-            if (!colorStops) {
-                return [];
-            }
-
             const domain = scaleX.domain();
             const extent = Math.abs(domain[1] - domain[0]);
             const opacity = 0.8;
 
-            const stops = colorStops.toReversed().map((cs, i) => {
+            const stops = expandedColorStops.toReversed().map((cs, i) => {
                 const color = vecRgbaToRgbaString(cs.color);
                 const offset = ((cs.position - domain[0]) / extent) * 100;
                 return <stop key={i} offset={`${offset}%`} stopColor={color} stopOpacity={opacity}></stop>;
             });
 
             return stops;
-        }, [colorStops, scaleX]);
+        }, [expandedColorStops, scaleX]);
 
         const handleHideTooltip = useCallback(() => {
             hideTooltip();
@@ -325,13 +327,19 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                         top={scaleY.range()[0]}
                         scale={scaleX}
                         numTicks={4}
-                        tickValues={profile?.colors.colorStops.map((cs) => cs.position)}
+                        tickValues={expandedColorStops.map((cs) => cs.position)}
                         tickLabelProps={{
                             stroke: "#fff",
                         }}
                         tickFormat={(v) => v.toString()}
                     />
+                    <text x={width - margin.right - 38} y={scaleY.range()[0] - 4} fontSize={10}>
+                        Dev [m]
+                    </text>
                     <AxisLeft left={margin.left} scale={scaleY} numTicks={2} tickFormat={(v) => `${v}%`} />
+                    <text transform={`translate(10, ${margin.top + 40}) rotate(-90)`} fontSize={10}>
+                        Distr [%]
+                    </text>
                     {tooltipData && (
                         <g>
                             <Line

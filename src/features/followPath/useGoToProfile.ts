@@ -37,6 +37,7 @@ export function useGoToProfile() {
             keepCamera,
             clipVertical,
             fpObj,
+            lookAtP,
         }: {
             p: number;
             newView2d?: boolean;
@@ -44,6 +45,8 @@ export function useGoToProfile() {
             keepCamera?: boolean;
             clipVertical?: boolean;
             fpObj: FollowParametricObject;
+            // instead of setting position to `p` - set camera slight behind and above and look at `p`
+            lookAtP?: boolean;
         }) => {
             const measureView = view?.measure;
             if (!measureView) {
@@ -71,6 +74,9 @@ export function useGoToProfile() {
                 } else {
                     vec3.sub(offset, currentCenter, view.renderState.camera.position);
                 }
+            } else if (!useKeepOffset && lookAtP && !(newView2d || view2d)) {
+                vec3.scaleAndAdd(offset, offset, dir, -20);
+                vec3.add(offset, offset, vec3.fromValues(0, 0, -10));
             }
             const offsetPt = vec3.sub(vec3.create(), pt, offset);
             let rotation = quat.create();
@@ -94,6 +100,10 @@ export function useGoToProfile() {
                     quat.create(),
                     mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
                 );
+            } else if (!useKeepOffset && lookAtP && !(newView2d || view2d)) {
+                const lookAtProfileDir = vec3.sub(vec3.create(), offsetPt, pt);
+                vec3.normalize(lookAtProfileDir, lookAtProfileDir);
+                rotation = rotationFromDirection(lookAtProfileDir);
             } else {
                 rotation = rotationFromDirection(dir);
             }

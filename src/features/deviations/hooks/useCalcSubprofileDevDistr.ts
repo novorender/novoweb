@@ -53,13 +53,16 @@ export function useCalcSubprofileDevDistr({ skip = false }: { skip?: boolean } =
             );
 
             try {
-                const result = await calc({
-                    projectId,
-                    profileId: profileId,
-                    centerLineId: subprofile.centerLine.brepId,
-                    start: parameterBounds[0],
-                    end: parameterBounds[1],
-                }).unwrap();
+                const result = await calc(
+                    {
+                        projectId,
+                        profileId: profileId,
+                        centerLineId: subprofile.centerLine.brepId,
+                        start: parameterBounds[0],
+                        end: parameterBounds[1],
+                    },
+                    true
+                ).unwrap();
 
                 dispatch(
                     deviationsActions.setSubprofileDeviationDistributions({

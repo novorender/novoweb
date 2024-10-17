@@ -44,7 +44,7 @@ const tooltipStyles = {
     border: "1px solid white",
 };
 
-const margin = { left: 32, top: 10, bottom: 26, right: 0 };
+const margin = { left: 44, top: 10, bottom: 26, right: 0 };
 
 type Props = { width: number; height: number };
 
@@ -281,7 +281,13 @@ const CenterlineMinimapInner = withTooltip<Props, DeviationAggregateDistribution
                         numTicks={4}
                         tickFormat={(v) => v.toString()}
                     />
+                    <text x={width - margin.right - 50} y={height - margin.bottom - 4} fontSize={10}>
+                        Profile [m]
+                    </text>
                     <AxisLeft left={margin.left} scale={scaleY} numTicks={2} />
+                    <text transform={`translate(10, ${margin.top + 36}) rotate(-90)`} fontSize={10}>
+                        Dev [m]
+                    </text>
                 </svg>
                 {tooltipData && (
                     <div>
