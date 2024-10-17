@@ -13,12 +13,14 @@ export function getColorKnots(profile: UiDeviationProfile | undefined, scaleY: R
     const height = Math.abs(range[1] - range[0]);
     const opacity = 0.8;
 
-    const stops = profile.colors.colorStops.map((cs, i) => {
-        const color = vecRgbaToRgbaString(cs.color);
-        const y = scaleY(cs.position);
-        const offset = 100 - ((height - y) / height) * 100;
-        return <stop key={i} offset={`${offset}%`} stopColor={color} stopOpacity={opacity}></stop>;
-    });
+    const stops = profile.colors.colorStops
+        .toSorted((a, b) => b.position - a.position)
+        .map((cs, i) => {
+            const color = vecRgbaToRgbaString(cs.color);
+            const y = scaleY(cs.position);
+            const offset = 100 - ((height - y) / height) * 100;
+            return <stop key={i} offset={`${offset}%`} stopColor={color} stopOpacity={opacity}></stop>;
+        });
 
     stops.push(
         <stop
@@ -26,7 +28,7 @@ export function getColorKnots(profile: UiDeviationProfile | undefined, scaleY: R
             offset="100%"
             stopColor={vecRgbaToRgbaString(profile.colors.colorStops.at(-1)!.color)}
             stopOpacity={opacity}
-        ></stop>
+        ></stop>,
     );
 
     return stops;

@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, ListItemText, Menu, MenuItem } from "@mui/material";
 import { View } from "@novorender/api";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { Brush } from "@visx/brush";
@@ -74,6 +74,7 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
         const subprofileIndex = useAppSelector(selectSelectedSubprofileIndex);
         const profile = useAppSelector(selectSelectedProfile);
         const distribution = useAppSelector(selectCurrentSubprofileDeviationDistributions);
+        const [percentile, setPercentile] = useState(0.99);
         const fullData =
             distribution?.data.status === AsyncStatus.Success
                 ? distribution?.data.data.pointCountAtDeviation
@@ -89,7 +90,7 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
 
             return profile.colors.absoluteValues
                 ? accountForAbsValues(profile.colors.colorStops)
-                : profile.colors.colorStops;
+                : profile.colors.colorStops.toSorted((a, b) => a.position - b.position);
         }, [profile?.colors]);
 
         const data = useMemo(() => {
@@ -97,36 +98,48 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                 return;
             }
 
-            const colorStops = expandedColorStops;
-
-            const minDeviation = Math.min(fullData[0].deviation, ...colorStops.map((cs) => cs.position));
-            const maxDeviation = Math.max(fullData.at(-1)!.deviation, ...colorStops.map((cs) => cs.position));
-            const offset = Math.max(0.1, (maxDeviation - minDeviation) * 0.01);
-            const absMin = Number((minDeviation - offset).toFixed(1));
-            const absMax = Number((maxDeviation + offset).toFixed(1));
-
-            const newData: typeof fullData = [];
-            let absMinCount = 0;
-            let absMaxCount = 0;
-            for (const p of fullData) {
-                if (p.deviation <= absMin) {
-                    absMinCount += p.count;
-                } else if (p.deviation >= absMax) {
-                    absMaxCount += p.count;
-                } else {
-                    newData.push(p);
+            let totalCount = 0;
+            let maxCountAtIndex = 0;
+            let maxCount = 0;
+            fullData.forEach((p, i) => {
+                totalCount += p.count;
+                if (p.count > maxCount) {
+                    maxCountAtIndex = i;
+                    maxCount = p.count;
                 }
+            });
+
+            let newData = fullData;
+
+            if (percentile < 1) {
+                const percentileTargetCount = Math.floor(totalCount * percentile);
+                let percentileCount = fullData[maxCountAtIndex].count;
+                // TODO start at maxCountAtIndex or at closest to deviation=0?
+                // const pStartIndex = findItemIndexClosestTo(fullData, 0, (p) => p.deviation);
+                const pStartIndex = maxCountAtIndex;
+
+                let l = pStartIndex - 1;
+                let r = pStartIndex + 1;
+                while ((l >= 0 || r < fullData.length) && percentileCount <= percentileTargetCount) {
+                    if (r >= fullData.length || (l >= 0 && fullData[l].count > fullData[r].count)) {
+                        percentileCount += fullData[l].count;
+                        l -= 1;
+                    } else {
+                        percentileCount += fullData[r].count;
+                        r += 1;
+                    }
+                }
+
+                newData = fullData.slice(l + 1, r);
             }
 
-            newData.unshift({ count: absMinCount, deviation: absMin });
-            newData.push({ count: absMaxCount, deviation: absMax });
-
-            const total = newData.reduce((acc, n) => acc + n.count, 0);
-            return newData.map((p) => ({
+            const data = newData.map((p) => ({
                 deviation: p.deviation,
-                count: (p.count / total) * 100 || 0,
+                count: (p.count / totalCount) * 100 || 0,
             }));
-        }, [fullData, expandedColorStops]);
+
+            return data;
+        }, [fullData, percentile]);
 
         useEffect(() => {
             setInitialBrushPosition(defaultBrushPosition);
@@ -177,7 +190,7 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
             const extent = Math.abs(domain[1] - domain[0]);
             const opacity = 0.8;
 
-            const stops = expandedColorStops.toReversed().map((cs, i) => {
+            const stops = expandedColorStops.map((cs, i) => {
                 const color = vecRgbaToRgbaString(cs.color);
                 const offset = ((cs.position - domain[0]) / extent) * 100;
                 return <stop key={i} offset={`${offset}%`} stopColor={color} stopOpacity={opacity}></stop>;
@@ -316,17 +329,31 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                         top={scaleY.range()[0]}
                         scale={scaleX}
                         numTicks={4}
-                        tickValues={expandedColorStops.map((cs) => cs.position)}
+                        tickValues={expandedColorStops
+                            .filter((cs) => {
+                                const [l, r] = scaleX.domain();
+                                return cs.position >= l && cs.position <= r;
+                            })
+                            .map((cs) => cs.position)}
                         tickLabelProps={{
                             stroke: "#fff",
                         }}
                         tickFormat={(v) => v.toString()}
                     />
-                    <text x={width - margin.right - 38} y={scaleY.range()[0] - 4} fontSize={10}>
+                    <text
+                        x={width - margin.right - 38}
+                        y={scaleY.range()[0] - 4}
+                        fontSize={10}
+                        style={{ pointerEvents: "none" }}
+                    >
                         Dev [m]
                     </text>
                     <AxisLeft left={margin.left} scale={scaleY} numTicks={2} tickFormat={(v) => `${v}%`} />
-                    <text transform={`translate(10, ${margin.top + 40}) rotate(-90)`} fontSize={10}>
+                    <text
+                        transform={`translate(10, ${margin.top + 40}) rotate(-90)`}
+                        fontSize={10}
+                        style={{ pointerEvents: "none" }}
+                    >
                         Distr [%]
                     </text>
                     {tooltipData && (
@@ -385,10 +412,74 @@ export const ColorGradientMapInner = withTooltip<Props, PointCountAtDeviation>(
                         Reset
                     </ChartHeaderButton>
                 </Box>
+                <Box position="absolute" top="20px" right="0">
+                    <PercentileSelect
+                        percentile={percentile}
+                        setPercentile={(p) => {
+                            setPercentile(p);
+                            reset();
+                            brushRef.current?.reset();
+                        }}
+                    />
+                </Box>
             </Box>
         );
     },
 );
+
+function PercentileSelect({ percentile, setPercentile }: { percentile: number; setPercentile: (v: number) => void }) {
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+
+    const openMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        setMenuAnchor(e.currentTarget);
+    };
+
+    const closeMenu = () => {
+        setMenuAnchor(null);
+    };
+
+    const handleSelect = (p: number) => {
+        closeMenu();
+        setPercentile(p);
+    };
+
+    const getLabel = (p: number) => {
+        switch (p) {
+            case 1:
+                return "show all";
+            case 0.99:
+                return "p99";
+            case 0.95:
+                return "p95";
+        }
+    };
+
+    return (
+        <>
+            <ChartHeaderButton onClick={openMenu}>{getLabel(percentile)}</ChartHeaderButton>
+            <Menu
+                anchorEl={menuAnchor}
+                open={Boolean(menuAnchor)}
+                onClose={closeMenu}
+                anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "right",
+                }}
+                transformOrigin={{
+                    vertical: "top",
+                    horizontal: "right",
+                }}
+            >
+                {[1, 0.99, 0.95].map((p) => (
+                    <MenuItem key={p} selected={percentile === p} onClick={() => handleSelect(p)}>
+                        <ListItemText>{getLabel(p)}</ListItemText>
+                    </MenuItem>
+                ))}
+            </Menu>
+        </>
+    );
+}
 
 // We need to manually offset the handles for them to be rendered at the right position
 function BrushHandle({ x, height, isBrushActive }: BrushHandleRenderProps) {
