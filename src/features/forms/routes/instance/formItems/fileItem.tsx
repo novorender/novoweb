@@ -27,7 +27,7 @@ import { type FormsFile } from "features/forms/types";
 export interface FileItemProps {
     style: CSSProperties;
     file: FormsFile;
-    isReadonly: boolean;
+    readonly: boolean;
     activeImage: string;
     isModalOpen: boolean;
     removeFile: () => void;
@@ -46,7 +46,7 @@ const Img = styled("img")(
 export default function FileItem({
     style,
     file,
-    isReadonly,
+    readonly,
     activeImage,
     isModalOpen,
     removeFile,
@@ -148,7 +148,12 @@ export default function FileItem({
                         color: isPdf ? "primary" : "default",
                         sx: { fontWeight: 600, mb: 1, textDecoration: isPdf ? "underline" : "none" },
                     }}
-                    secondary={formatLastModified(file.lastModified)}
+                    secondary={
+                        <Tooltip disableInteractive title={formatLastModified(file.lastModified)}>
+                            <span>{formatLastModified(file.lastModified)}</span>
+                        </Tooltip>
+                    }
+                    secondaryTypographyProps={{ noWrap: true }}
                 />
             </Box>
             <IconButton
@@ -171,7 +176,7 @@ export default function FileItem({
                     <Download fontSize="small" />
                     <ListItemText primary={t("download")} />
                 </MenuItem>
-                {!isReadonly && (
+                {!readonly && (
                     <MenuItem onClick={removeFile}>
                         <Delete fontSize="small" />
                         <ListItemText primary={t("remove")} />

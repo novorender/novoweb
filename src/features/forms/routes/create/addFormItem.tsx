@@ -61,7 +61,7 @@ export function AddFormItem({ onSave, item }: { onSave: (item: FormItem) => void
     const [title, setTitle] = useState(item?.title ?? "");
     const [type, setType] = useState(item?.type || FormItemType.Checkbox);
     const [value, setValue] = useState(item?.type === FormItemType.Text ? (item.value as string[])[0] : "");
-    const [relevant, toggleRelevant] = useToggle(item?.required ?? true);
+    const [required, toggleRequired] = useToggle(item?.required ?? true);
     const [options, setOptions] = useState<string[]>((item as ItemWithOptions)?.options ?? []);
     const [files, setFiles] = useState<FormsFile[]>(item?.type === FormItemType.File ? (item.value ?? []) : []);
     const [fileTypes, setFileTypes] = useState<string[]>(
@@ -148,7 +148,7 @@ export function AddFormItem({ onSave, item }: { onSave: (item: FormItem) => void
                           : [FormItemType.Date, FormItemType.Time, FormItemType.DateTime].includes(type) && dateTime
                             ? dateTime
                             : undefined,
-                required: type !== FormItemType.Text && relevant,
+                required: type !== FormItemType.Text && required,
                 ...(type === FormItemType.Checkbox || type === FormItemType.Dropdown ? { options } : {}),
                 ...(type === FormItemType.File && { accept, multiple, readonly }),
             } as FormItem;
@@ -164,7 +164,7 @@ export function AddFormItem({ onSave, item }: { onSave: (item: FormItem) => void
             type,
             value,
             dateTime,
-            relevant,
+            required,
             options,
             accept,
             multiple,
@@ -177,9 +177,9 @@ export function AddFormItem({ onSave, item }: { onSave: (item: FormItem) => void
     );
 
     const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value), []);
-    const handleToggleRelevant = useCallback(
-        (_: React.ChangeEvent<HTMLInputElement>) => toggleRelevant(),
-        [toggleRelevant],
+    const handleToggleRequired = useCallback(
+        (_: React.ChangeEvent<HTMLInputElement>) => toggleRequired(),
+        [toggleRequired],
     );
     const handleOptionsChange = useCallback((_: React.SyntheticEvent, value: string[]) => setOptions(value), []);
     const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value), []);
@@ -236,9 +236,9 @@ export function AddFormItem({ onSave, item }: { onSave: (item: FormItem) => void
                     control={
                         <Checkbox
                             size="small"
-                            checked={type !== FormItemType.Text && relevant}
+                            checked={type !== FormItemType.Text && required}
                             disabled={type === FormItemType.Text}
-                            onChange={handleToggleRelevant}
+                            onChange={handleToggleRequired}
                         />
                     }
                     label={t("alwaysRelevant")}

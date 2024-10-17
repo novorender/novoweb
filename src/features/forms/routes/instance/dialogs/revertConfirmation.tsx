@@ -95,7 +95,7 @@ export function RevertConfirmation({
             if (objectGuid) {
                 history.push({
                     pathname: "/search-instance",
-                    search: `?objectId=${objectId}&objectGuid=${objectGuid}&formId=${formId}`,
+                    search: `?objectGuid=${objectGuid}&formId=${formId}`,
                 });
             } else {
                 history.push({

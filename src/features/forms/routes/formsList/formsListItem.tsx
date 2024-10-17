@@ -4,9 +4,8 @@ import { useHistory } from "react-router-dom";
 
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { type FormId, type FormRecord } from "features/forms/types";
-import { VecRGBA } from "utils/color";
 
-const HIGHLIGHT_COLOR = [1, 0.4, 0.7, 1] as VecRGBA;
+import { HIGHLIGHT_COLOR } from "../instance/constants";
 
 export function FormsListItem({
     item,

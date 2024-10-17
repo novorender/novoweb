@@ -26,6 +26,8 @@ const initialState = {
     templates: { status: AsyncStatus.Success, data: [] },
     assets: { status: AsyncStatus.Initial },
     selectedFormId: undefined,
+    selectedFormObjectGuid: undefined,
+    selectedFormObjectId: undefined,
     alwaysShowMarkers: false,
 } as {
     currentFormsList: string | null;
@@ -44,7 +46,10 @@ const initialState = {
     };
     templates: AsyncState<Partial<Template>[]>;
     assets: AsyncState<FormGLtfAsset[]>;
-    selectedFormId: string | undefined;
+    selectedFormId?: string;
+    selectedFormObjectGuid?: string;
+    selectedFormObjectId?: number;
+    formItemId?: string;
     alwaysShowMarkers: boolean;
 };
 
@@ -76,6 +81,15 @@ export const formsSlice = createSlice({
         },
         setSelectedFormId: (state, action: PayloadAction<State["selectedFormId"]>) => {
             state.selectedFormId = action.payload;
+        },
+        setSelectedFormObjectGuid: (state, action: PayloadAction<State["selectedFormObjectGuid"]>) => {
+            state.selectedFormObjectGuid = action.payload;
+        },
+        setSelectedFormObjectId: (state, action: PayloadAction<State["selectedFormObjectId"]>) => {
+            state.selectedFormObjectId = action.payload;
+        },
+        setFormItemId: (state, action: PayloadAction<State["formItemId"]>) => {
+            state.formItemId = action.payload;
         },
         templateLoaded: (state, action: PayloadAction<Partial<Template>>) => {
             if (state.templates.status !== AsyncStatus.Success) {
@@ -163,6 +177,29 @@ export const selectLocationForms = (state: RootState) => state.forms.locationFor
 export const selectAssets = (state: RootState) => state.forms.assets;
 
 export const selectSelectedFormId = (state: RootState) => state.forms.selectedFormId;
+
+export const selectSelectedFormObjectGuid = (state: RootState) => state.forms.selectedFormObjectGuid;
+
+export const selectSelectedFormObjectId = (state: RootState) => state.forms.selectedFormObjectId;
+
+export const selectFormItemId = (state: RootState) => state.forms.formItemId;
+
+export const selectForms = createSelector(
+    [
+        selectCurrentFormsList,
+        selectSelectedFormId,
+        selectSelectedFormObjectGuid,
+        selectSelectedFormObjectId,
+        selectFormItemId,
+    ],
+    (currentFormsList, selectedFormId, selectedFormObjectGuid, selectedFormObjectId, formItemId) => ({
+        currentFormsList,
+        selectedFormId,
+        selectedFormObjectGuid,
+        selectedFormObjectId,
+        formItemId,
+    }),
+);
 
 export const selectAlwaysShowMarkers = (state: RootState) => state.forms.alwaysShowMarkers;
 
