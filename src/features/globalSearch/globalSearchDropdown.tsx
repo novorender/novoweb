@@ -66,21 +66,14 @@ export default function GlobalSearchDropdown({ onSelect }: { onSelect?: () => vo
     const [term, setTerm] = useState("");
     const checkPermission = useCheckProjectPermission();
     const availableCategories = useMemo(() => {
-        const categories = [Category.Widget];
-        if (checkPermission(Permission.GroupRead)) {
-            categories.push(Category.Group);
-        }
-        if (checkPermission(Permission.BookmarkRead)) {
-            categories.push(Category.Bookmark);
-        }
-        categories.push(Category.Object);
-        if (checkPermission(Permission.DeviationRead)) {
-            categories.push(Category.Deviation);
-        }
-        if (checkPermission(Permission.SceneManage)) {
-            categories.push(Category.Setting);
-        }
-        return categories;
+        return [
+            Category.Widget,
+            checkPermission(Permission.GroupRead) && Category.Group,
+            checkPermission(Permission.BookmarkRead) && Category.Bookmark,
+            Category.Object,
+            checkPermission(Permission.DeviationRead) && Category.Deviation,
+            checkPermission(Permission.SceneManage) && Category.Setting,
+        ].filter(Boolean) as Category[];
     }, [checkPermission]);
     const [categories, setCategories] = useState(() => {
         const s = localStorage.getItem(CATEGORIES_LOCAL_STORAGE_KEY);
