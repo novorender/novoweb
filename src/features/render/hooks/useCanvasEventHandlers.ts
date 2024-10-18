@@ -304,6 +304,18 @@ export function useCanvasEventHandlers({
                 pickCameraPlane: planePicking,
             });
 
+            if (result) {
+                const xDir = vec3.cross(vec3.create(), result.normal, vec3.fromValues(0, 0, 1));
+                vec3.normalize(xDir, xDir);
+                const yDir = vec3.cross(vec3.create(), result.normal, xDir);
+                const start = Date.now();
+                const laser = view.screenSpaceLaser(result.position, xDir, yDir, result.normal);
+                console.log(laser);
+                const end = Date.now();
+                const timeDifference = end - start;
+                console.log(`Time taken by the function: ${timeDifference} milliseconds`);
+            }
+
             moveSvgCursor({
                 svg,
                 view,

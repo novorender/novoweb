@@ -1,5 +1,5 @@
 import { View } from "@novorender/api";
-import { quat, vec2, vec3 } from "gl-matrix";
+import { glMatrix, quat, vec2, vec3 } from "gl-matrix";
 
 import { isRealVec } from "utils/misc";
 
@@ -58,7 +58,12 @@ export function moveSvgCursor({
         const pos = pickResult.position;
         const z0 = pos;
         const z1 = vec3.add(vec3.create(), pos, pickResult.normal);
-        const xDir = vec3.cross(vec3.create(), pickResult.normal, vec3.fromValues(0, 0, 1));
+
+        const up = glMatrix.equals(Math.abs(vec3.dot(vec3.fromValues(0, 0, 1), pickResult.normal)), 1)
+            ? vec3.fromValues(0, 1, 0)
+            : vec3.fromValues(0, 0, 1);
+
+        const xDir = vec3.cross(vec3.create(), pickResult.normal, up);
         vec3.normalize(xDir, xDir);
         const x0 = vec3.add(vec3.create(), pos, xDir);
         const x1 = vec3.scaleAndAdd(vec3.create(), pos, xDir, -1);
