@@ -112,7 +112,7 @@ export function useCreateBookmark() {
 
     const create = (
         img?: string,
-        explorerStateOverwrite?: Partial<ExplorerBookmarkState>,
+        explorerStateOverwrite: Partial<ExplorerBookmarkState> = { forms: undefined },
     ): Omit<Bookmark, "name" | "description" | "img"> & { img?: string; explorerState: ExplorerBookmarkState } => ({
         img,
         selectedOnly: false, // legacy

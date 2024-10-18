@@ -20,7 +20,7 @@ import { Divider } from "components";
 import { useGetLocationFormQuery, useUpdateLocationFormMutation } from "features/forms/api";
 import { formsGlobalsActions, useDispatchFormsGlobals, useLazyFormsGlobals } from "features/forms/formsGlobals";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
-import { formsActions, selectCurrentFormsList } from "features/forms/slice";
+import { formsActions, selectCurrentFormsList, selectForms } from "features/forms/slice";
 import {
     type Form as FormType,
     type FormId,
@@ -50,6 +50,7 @@ export function LocationInstance() {
     const currentFormsList = useAppSelector(selectCurrentFormsList);
     const formsBaseUrl = useAppSelector(selectConfig).dataV2ServerUrl + "/forms/";
     const accessToken = useAppSelector(selectAccessToken);
+    const forms = useAppSelector(selectForms);
     const dispatch = useAppDispatch();
     const flyToForm = useFlyToForm();
     const dispatchFormsGlobals = useDispatchFormsGlobals();
@@ -364,7 +365,12 @@ export function LocationInstance() {
                                     </ListItemIcon>
                                     <ListItemText>{t("sign")}</ListItemText>
                                 </MenuItem>
-                                <ShareLink variant="menuItem" nameKey="share" onClick={closeMenu} />
+                                <ShareLink
+                                    variant="menuItem"
+                                    nameKey="share"
+                                    explorerStateOverwrite={{ forms }}
+                                    onClick={closeMenu}
+                                />
                                 <MenuItem onClick={handleHistoryClick}>
                                     <ListItemIcon>
                                         <History fontSize="small" />
