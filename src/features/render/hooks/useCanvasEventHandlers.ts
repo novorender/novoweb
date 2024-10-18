@@ -21,6 +21,7 @@ import { myLocationActions, selectMyLocationAutocenter } from "features/myLocati
 import { orthoCamActions, selectCrossSectionPoint } from "features/orthoCam";
 import { selectPointVisualizationStamp } from "features/pointVisualization/selectors";
 import { ViewMode } from "types/misc";
+import { isIpad, isIphone } from "utils/misc";
 
 import {
     renderActions,
@@ -37,11 +38,6 @@ import { moveSvgCursor } from "../svgUtils";
 import { CameraType, Picker, StampKind, SubtreeStatus } from "../types";
 import { applyCameraDistanceToMeasureTolerance } from "../utils";
 import { useCanvasContextMenuHandler } from "./useCanvasContextMenuHandler";
-
-export const isIpad =
-    /\biPad/.test(navigator.userAgent) ||
-    (/\bMobile\b/.test(navigator.userAgent) && /\bMacintosh\b/.test(navigator.userAgent));
-export const isIphone = /\biPhone/.test(navigator.userAgent);
 
 export function useCanvasEventHandlers({
     pointerPosRef,

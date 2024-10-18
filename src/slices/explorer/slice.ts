@@ -90,6 +90,10 @@ const initialState: State = {
     newDesign: false,
     canUseNewDesign: false,
     snackbarMessage: null,
+    highlightSetting: null,
+    globalSearch: {
+        open: false,
+    },
 };
 
 export const explorerSlice = createSlice({
@@ -411,6 +415,12 @@ export const explorerSlice = createSlice({
         },
         setNewDesign: (state, action: PayloadAction<State["newDesign"]>) => {
             state.newDesign = action.payload;
+        },
+        setHighlightSetting: (state, action: PayloadAction<State["highlightSetting"]>) => {
+            state.highlightSetting = action.payload;
+        },
+        setGlobalSearchOpen: (state, action: PayloadAction<boolean>) => {
+            state.globalSearch.open = action.payload;
         },
     },
     extraReducers(builder) {

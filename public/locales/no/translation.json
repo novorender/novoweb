@@ -700,5 +700,15 @@
     "hidden": "Skjult",
     "noClippingPlanes": "Ingen klippeplaner",
     "capturePhoto": "Ta bilde",
+    "loading": "Laster...",
+    "what": "hva",
+    "objectLowercase": "objekt",
+    "widget": "widget",
+    "deviationLowercase": "avvik",
+    "setting": "innstilling",
+    "collection": "Samling",
+    "tmZone": "TM-sone",
+    "beta": "Beta",
+    "globalSearch": "Globalt søk",
     "optional": "Valgfritt"
 }

@@ -700,5 +700,15 @@
     "invalidUrl": "URL invalide",
     "hidden": "Caché",
     "capturePhoto": "Prendre une photo",
+    "loading": "Chargement...",
+    "what": "quoi",
+    "objectLowercase": "objet",
+    "widget": "widget",
+    "deviationLowercase": "écart",
+    "setting": "paramètre",
+    "collection": "Collection",
+    "tmZone": "Zone TM",
+    "beta": "Bêta",
+    "globalSearch": "Recherche globale",
     "optional": "Facultatif"
 }

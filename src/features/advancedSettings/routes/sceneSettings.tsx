@@ -7,7 +7,6 @@ import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
-    Accordion,
     AccordionDetails,
     AccordionSummary,
     Divider,
@@ -29,6 +28,8 @@ import {
 } from "features/render";
 import { getAsyncStateData, ViewMode } from "types/misc";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
+
+import { AdvSettingsAccordion as Accordion } from "../components/advSettingsAccordion";
 
 export function SceneSettings({
     save,
@@ -110,7 +111,7 @@ export function SceneSettings({
                     {t("sceneSettings")}
                 </Typography>
                 <Divider sx={{ my: 1 }} />
-                <Accordion>
+                <Accordion id="settings-scene-environment">
                     <AccordionSummary>{t("environment")}</AccordionSummary>
                     <AccordionDetails>
                         <Box p={1} pr={3} display="flex" flexDirection="column">
@@ -141,7 +142,7 @@ export function SceneSettings({
                                 renderInput={(params) => <TextField {...params} label="Environment" />}
                             />
                         </Box>
-                        <Box display="flex" alignItems="center" sx={{ p: 1, mb: 2 }}>
+                        <Box id="scene-blur" display="flex" alignItems="center" sx={{ p: 1, mb: 2 }}>
                             <Typography
                                 sx={{
                                     minWidth: 50,
@@ -164,7 +165,7 @@ export function SceneSettings({
                     </AccordionDetails>
                 </Accordion>
                 {showTerrainSettings ? (
-                    <Accordion>
+                    <Accordion id="settings-scene-object-picking">
                         <AccordionSummary>{t("terrain")}</AccordionSummary>
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
@@ -189,11 +190,12 @@ export function SceneSettings({
                         </AccordionDetails>
                     </Accordion>
                 ) : null}
-                <Accordion>
+                <Accordion id="settings-scene-object-picking">
                     <AccordionSummary>{t("objectPicking")}</AccordionSummary>
                     <AccordionDetails>
                         <Box p={1} display="flex" flexDirection="column">
                             <FormControlLabel
+                                id="scene-pick-semi-transparent-objects"
                                 sx={{ ml: 0, mb: 1 }}
                                 control={
                                     <Switch
@@ -219,12 +221,19 @@ export function SceneSettings({
                 </Accordion>
                 <Box p={1} mt={1}>
                     <Box>
-                        <Button sx={{ mb: 2 }} variant="outlined" color="grey" onClick={toggleColorPicker}>
+                        <Button
+                            id="scene-2d-background-color"
+                            sx={{ mb: 2 }}
+                            variant="outlined"
+                            color="grey"
+                            onClick={toggleColorPicker}
+                        >
                             <ColorLens sx={{ mr: 1, color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
                             {t("2dBackgroundColor")}
                         </Button>
                     </Box>
                     <Button
+                        id="scene-save-default-camera-position"
                         disabled={saving || viewMode === ViewMode.Panorama}
                         variant="outlined"
                         color="grey"

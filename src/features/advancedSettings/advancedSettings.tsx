@@ -1,12 +1,12 @@
 import { Close, Save } from "@mui/icons-material";
-import { Box, Button, IconButton, List, ListItemButton, Snackbar, useTheme } from "@mui/material";
+import { Box, BoxProps, Button, IconButton, List, ListItemButton, Snackbar, useTheme } from "@mui/material";
 import { quat, vec3 } from "gl-matrix";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, MemoryRouter, Route, Switch } from "react-router-dom";
+import { Link, MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
 
 import { useSaveCustomPropertiesMutation } from "apis/dataV2/dataV2Api";
-import { useAppSelector } from "app/redux-store-interactions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
     Divider,
     LinearProgress,
@@ -41,8 +41,10 @@ import WidgetList from "features/widgetList/widgetList";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 import {
+    explorerActions,
     selectCanvasContextMenuFeatures,
     selectEnabledWidgetsWithoutPermissionCheck,
+    selectHighlightSetting,
     selectIsAdminScene,
     selectMaximized,
     selectMinimized,
@@ -50,6 +52,7 @@ import {
 } from "slices/explorer";
 import { CustomProperties } from "types/project";
 import { mergeRecursive } from "utils/misc";
+import { sleep } from "utils/time";
 
 import { CameraSettings } from "./routes/cameraSettings";
 import { ClippingSettings } from "./routes/clipSettings";
@@ -239,13 +242,13 @@ export default function AdvancedSettings() {
                     />
                 ) : null}
 
-                <Box
-                    display={menuOpen || minimized ? "none" : "flex"}
-                    flexGrow={1}
-                    overflow="hidden"
-                    flexDirection="column"
-                >
-                    <MemoryRouter>
+                <MemoryRouter>
+                    <SwitchWrapper
+                        display={menuOpen || minimized ? "none" : "flex"}
+                        flexGrow={1}
+                        overflow="hidden"
+                        flexDirection="column"
+                    >
                         <Switch>
                             <Route path="/" exact>
                                 <Root save={save} saving={saving} />
@@ -275,8 +278,8 @@ export default function AdvancedSettings() {
                                 <PerformanceSettings />
                             </Route>
                         </Switch>
-                    </MemoryRouter>
-                </Box>
+                    </SwitchWrapper>
+                </MemoryRouter>
                 {menuOpen && <WidgetList widgetKey={featuresConfig.advancedSettings.key} onSelect={toggleMenu} />}
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} ariaLabel="toggle widget menu" />
@@ -353,4 +356,46 @@ function subtreesToHide(
         documents: subtrees.documents === SubtreeStatus.Hidden,
         lines: subtrees.lines === SubtreeStatus.Hidden,
     };
+}
+
+function SwitchWrapper(props: BoxProps) {
+    const theme = useTheme();
+    const highlightSetting = useAppSelector(selectHighlightSetting);
+    const history = useHistory();
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        highlight();
+
+        async function highlight() {
+            if (!highlightSetting) {
+                return;
+            }
+
+            if (history.location.pathname !== highlightSetting.route) {
+                history.push(highlightSetting.route);
+            }
+
+            if (!highlightSetting.accordion) {
+                await sleep(100);
+
+                const field = containerRef.current?.querySelector(highlightSetting.field) as HTMLElement;
+                if (!field) {
+                    return;
+                }
+
+                dispatch(explorerActions.setHighlightSetting(null));
+                field.animate([{ background: theme.palette.primary.main }], {
+                    duration: 250,
+                    delay: 200,
+                    direction: "alternate",
+                    iterations: 2,
+                });
+                field.scrollIntoView();
+            }
+        }
+    }, [history, highlightSetting, dispatch, theme]);
+
+    return <Box {...props} ref={containerRef} />;
 }

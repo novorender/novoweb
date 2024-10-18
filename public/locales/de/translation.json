@@ -700,5 +700,15 @@
     "hidden": "Versteckt",
     "noClippingPlanes": "Keine Schnittebenen",
     "capturePhoto": "Foto aufnehmen",
+    "loading": "Wird geladen...",
+    "what": "was",
+    "objectLowercase": "objekt",
+    "widget": "widget",
+    "deviationLowercase": "abweichung",
+    "setting": "einstellung",
+    "collection": "Sammlung",
+    "tmZone": "TM-Zone",
+    "beta": "Beta",
+    "globalSearch": "Globale Suche",
     "optional": "Optional"
 }

@@ -40,6 +40,7 @@ import {
     selectWidgetLayout,
     selectWidgets,
 } from "slices/explorer";
+import { isAppleDevice } from "utils/misc";
 
 const sortedFeatureGroups = Object.values(featureGroups).sort((a, b) => {
     const idxA = groupSorting.indexOf(a.key);
@@ -336,6 +337,13 @@ function SectionWidgets({ onSelect, widgets }: { onSelect: (widgetKey: WidgetKey
                             <Icon />
                         </ListItemIcon>
                         <ListItemText>{t(widget.nameKey)}</ListItemText>
+                        {"keyboardShortcut" in widget && (
+                            <Typography color="grey" ml={2}>
+                                {isAppleDevice && "mac" in widget.keyboardShortcut
+                                    ? widget.keyboardShortcut.mac
+                                    : widget.keyboardShortcut.default}
+                            </Typography>
+                        )}
                     </MenuItem>
                 );
             })}

@@ -260,3 +260,11 @@ export function hasMouseSupport() {
 export function capitalizeFirst(s: string) {
     return s ? s[0].toUpperCase() + s.slice(1) : s;
 }
+
+export const isIpad =
+    /\biPad/.test(navigator.userAgent) ||
+    (/\bMobile\b/.test(navigator.userAgent) && /\bMacintosh\b/.test(navigator.userAgent));
+export const isIphone = /\biPhone/.test(navigator.userAgent);
+export const isMacintosh = /\bMacintosh\b/.test(navigator.userAgent);
+
+export const isAppleDevice = isMacintosh || isIpad || isIphone;

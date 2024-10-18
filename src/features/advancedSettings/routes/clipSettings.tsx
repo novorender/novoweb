@@ -43,6 +43,7 @@ export function ClippingSettings({ save, saving }: { save: () => Promise<void>; 
                 </Typography>
                 <Divider sx={{ my: 1, mb: 2 }} />
                 <TextField
+                    id="clipping-breaking-point-threshold"
                     sx={{ mb: 2 }}
                     fullWidth
                     size="small"
