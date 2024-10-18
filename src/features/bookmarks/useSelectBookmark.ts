@@ -136,9 +136,6 @@ export function useSelectBookmark() {
             }
 
             if (bookmark.forms) {
-                if (bookmark.forms.currentFormsList) {
-                    dispatch(formsActions.setCurrentFormsList(bookmark.forms.currentFormsList));
-                }
                 if (bookmark.forms.selectedFormId) {
                     dispatch(formsActions.setSelectedFormId(bookmark.forms.selectedFormId));
                 }
@@ -151,7 +148,10 @@ export function useSelectBookmark() {
                 if (bookmark.forms.formItemId) {
                     dispatch(formsActions.setFormItemId(bookmark.forms.formItemId));
                 }
-                openWidget(featuresConfig.forms.key, { force: true });
+                if (bookmark.forms.currentFormsList) {
+                    dispatch(formsActions.setCurrentFormsList(bookmark.forms.currentFormsList));
+                    openWidget(featuresConfig.forms.key, { force: true });
+                }
             }
         },
         [
