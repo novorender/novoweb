@@ -23,7 +23,7 @@ enum Status {
 export function ShareLink({
     variant = "default",
     nameKey = featuresConfig.shareLink.nameKey,
-    explorerStateOverwrite,
+    explorerStateOverwrite = { forms: undefined },
     onClick,
 }: {
     variant?: "default" | "primaryMenu" | "menuItem";

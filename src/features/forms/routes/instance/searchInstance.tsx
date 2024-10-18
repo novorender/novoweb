@@ -440,6 +440,7 @@ export function SearchInstance() {
                     title={title}
                     handleTitleChange={handleTitleChange}
                     noItemsMsg={t("objectHasNoForms")}
+                    isLoading={isFormLoading}
                 />
             </Route>
             <Route path={signRoute}>
