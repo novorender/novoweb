@@ -2,7 +2,7 @@ import { ExplorerBookmarkState } from "@novorender/data-js-api";
 import { useCallback } from "react";
 
 import { useSaveBookmarksMutation } from "apis/dataV2/dataV2Api";
-import { useCreateBookmark } from "features/bookmarks";
+import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
 import { useSceneId } from "hooks/useSceneId";
 
 export function useShareLink() {
