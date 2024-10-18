@@ -28,13 +28,19 @@ export function useGoToSelectedForm() {
     );
 
     useEffect(() => {
+        // navigate to the selected geo form
         if (template?.id && template.type === TemplateType.Location) {
-            goIfNotCurrent(
-                selectedFormId
-                    ? `/location-instance?templateId=${template.id}&formId=${selectedFormId}`
-                    : `/forms/${template.id}`,
-            );
-        } else if (currentFormsList) {
+            if (selectedFormId) {
+                if (!Number.isInteger(+selectedFormId)) {
+                    return;
+                }
+                return goIfNotCurrent(`/location-instance?templateId=${template.id}&formId=${selectedFormId}`);
+            }
+            return goIfNotCurrent(`/forms/${template.id}`);
+        }
+
+        // navigate to the selected object form
+        if (currentFormsList) {
             if (selectedFormObjectGuid) {
                 goIfNotCurrent(`/search-instance?objectGuid=${selectedFormObjectGuid}&formId=${currentFormsList}`);
             } else {
