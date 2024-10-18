@@ -20,7 +20,7 @@ import { Divider } from "components";
 import { useGetLocationFormQuery, useUpdateLocationFormMutation } from "features/forms/api";
 import { formsGlobalsActions, useDispatchFormsGlobals, useLazyFormsGlobals } from "features/forms/formsGlobals";
 import { useFlyToForm } from "features/forms/hooks/useFlyToForm";
-import { formsActions, selectCurrentFormsList } from "features/forms/slice";
+import { formsActions, selectCurrentFormsList, selectForms } from "features/forms/slice";
 import {
     type Form as FormType,
     type FormId,
@@ -31,6 +31,7 @@ import {
 } from "features/forms/types";
 import { toFormFields, toFormItems } from "features/forms/utils";
 import { ObjectVisibility, renderActions } from "features/render";
+import { ShareLink } from "features/shareLink";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { selectAccessToken, selectConfig } from "slices/explorer";
@@ -49,6 +50,7 @@ export function LocationInstance() {
     const currentFormsList = useAppSelector(selectCurrentFormsList);
     const formsBaseUrl = useAppSelector(selectConfig).dataV2ServerUrl + "/forms/";
     const accessToken = useAppSelector(selectAccessToken);
+    const forms = useAppSelector(selectForms);
     const dispatch = useAppDispatch();
     const flyToForm = useFlyToForm();
     const dispatchFormsGlobals = useDispatchFormsGlobals();
@@ -347,7 +349,13 @@ export function LocationInstance() {
                             {t("flyTo")}
                         </Button>
                         <>
-                            <IconButton edge="start" size="small" onClick={openMenu} sx={{ mr: 1 }}>
+                            <IconButton
+                                edge="start"
+                                size="small"
+                                onClick={openMenu}
+                                sx={{ mr: 1 }}
+                                disabled={isFormLoading || isFormUpdating || items.length === 0}
+                            >
                                 <MoreVert fontSize="small" />
                             </IconButton>
                             <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
@@ -357,6 +365,12 @@ export function LocationInstance() {
                                     </ListItemIcon>
                                     <ListItemText>{t("sign")}</ListItemText>
                                 </MenuItem>
+                                <ShareLink
+                                    variant="menuItem"
+                                    nameKey="share"
+                                    explorerStateOverwrite={{ forms }}
+                                    onClick={closeMenu}
+                                />
                                 <MenuItem onClick={handleHistoryClick}>
                                     <ListItemIcon>
                                         <History fontSize="small" />

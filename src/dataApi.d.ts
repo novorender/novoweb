@@ -195,6 +195,13 @@ declare module "@novorender/data-js-api" {
                 }[];
             }[];
         };
+        forms?: {
+            currentFormsList?: string | null;
+            selectedFormId?: string;
+            selectedFormObjectGuid?: string;
+            selectedFormObjectId?: number;
+            formItemId?: string;
+        };
     };
 
     interface Bookmark {

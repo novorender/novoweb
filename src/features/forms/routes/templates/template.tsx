@@ -5,7 +5,10 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { Permission } from "apis/dataV2/permissions";
+import { useAppSelector } from "app/redux-store-interactions";
+import { selectForms } from "features/forms/slice";
 import { type MinimalTemplate, TemplateType } from "features/forms/types";
+import { ShareLink } from "features/shareLink";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 
 import { DELETE_TEMPLATE_ROUTE } from "../constants";
@@ -13,7 +16,9 @@ import { DELETE_TEMPLATE_ROUTE } from "../constants";
 export function Template({ template }: { template: MinimalTemplate }) {
     const { t } = useTranslation();
     const history = useHistory();
+    const forms = useAppSelector(selectForms);
     const checkPermission = useCheckProjectPermission();
+    const canView = checkPermission(Permission.FormsView);
     const canEdit = checkPermission(Permission.FormsManage);
     const canDelete = checkPermission(Permission.FormsDelete);
 
@@ -100,6 +105,14 @@ export function Template({ template }: { template: MinimalTemplate }) {
                         onClose={closeMenu}
                         id={`${template.id}-menu`}
                     >
+                        {canView && (
+                            <ShareLink
+                                variant="menuItem"
+                                nameKey="share"
+                                explorerStateOverwrite={{ forms: { ...forms, currentFormsList: template.id } }}
+                                onClick={closeMenu}
+                            />
+                        )}
                         {canEdit && (
                             <MenuItem onClick={handleEditClick} disabled={!canEdit}>
                                 <ListItemIcon>

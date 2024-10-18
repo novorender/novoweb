@@ -105,7 +105,7 @@ export function Object() {
                 push={false}
                 to={{
                     pathname: "/search-instance",
-                    search: `?objectId=${object.id}&objectGuid=${object.guid}&formId=${currentFormsList || forms[0].id}`,
+                    search: `?objectGuid=${object.guid}&formId=${currentFormsList || forms[0].id}`,
                 }}
             />
         );
@@ -164,7 +164,7 @@ export function Object() {
                                             if (object?.guid) {
                                                 history.push({
                                                     pathname: "/search-instance",
-                                                    search: `?objectId=${object.id}&objectGuid=${object.guid}&formId=${form.id}`,
+                                                    search: `?objectGuid=${object.guid}&formId=${form.id}`,
                                                 });
                                             }
                                         }}

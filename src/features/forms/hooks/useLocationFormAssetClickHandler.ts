@@ -3,6 +3,9 @@ import { useCallback } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
+import { highlightCollectionsActions, useDispatchHighlightCollections } from "contexts/highlightCollections";
+import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
+import { renderActions } from "features/render";
 import { useOpenWidget } from "hooks/useOpenWidget";
 
 import { useLazyFormsGlobals } from "../formsGlobals/hooks";
@@ -14,6 +17,8 @@ export function useLocationFormAssetClickHandler() {
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const openWidget = useOpenWidget();
     const dispatch = useAppDispatch();
+    const dispatchHighlighted = useDispatchHighlighted();
+    const dispatchHighlightCollections = useDispatchHighlightCollections();
 
     return useCallback(
         (result: PickSampleExt) => {
@@ -27,6 +32,10 @@ export function useLocationFormAssetClickHandler() {
             const isSelected = templateId && formId && selectedTemplateId === templateId && selectedFormId === formId;
 
             if (!isSelected) {
+                dispatch(renderActions.setMainObject(undefined));
+                dispatch(formsActions.setSelectedFormObjectGuid(undefined));
+                dispatchHighlighted(highlightActions.setIds([]));
+                dispatchHighlightCollections(highlightCollectionsActions.clearForms());
                 dispatch(formsActions.setCurrentFormsList(templateId));
                 dispatch(formsActions.setSelectedFormId(formId));
                 openWidget(featuresConfig.forms.key, { force: true });
@@ -36,6 +45,14 @@ export function useLocationFormAssetClickHandler() {
 
             return true;
         },
-        [dispatch, lazyFormsGlobals, selectedTemplateId, selectedFormId, openWidget],
+        [
+            lazyFormsGlobals,
+            selectedTemplateId,
+            selectedFormId,
+            dispatch,
+            openWidget,
+            dispatchHighlighted,
+            dispatchHighlightCollections,
+        ],
     );
 }

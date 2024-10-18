@@ -24,7 +24,7 @@ type BaseItem<T extends Date | string[] | FormsFile[] | null> = {
     title: string;
     required: boolean;
     value?: T;
-    relevant?: boolean;
+    readonly: boolean;
 };
 
 type SimpleItem = BaseItem<string[] | null> & {
@@ -57,13 +57,11 @@ export interface FileItem extends BaseItem<FormsFile[]> {
     defaultValue?: FormsFile[];
     accept: string;
     multiple: boolean;
-    readonly: boolean;
     directory?: boolean;
 }
 
 export interface DateTimeItem extends BaseItem<Date> {
     type: FormItemType.Date | FormItemType.Time | FormItemType.DateTime;
-    readonly?: boolean;
     defaultValue?: Date;
     min?: Date;
     max?: Date;
@@ -113,6 +111,7 @@ export type FormField =
           id?: string;
           label?: string;
           required?: boolean;
+          readonly?: boolean;
           value?: string;
           options: { label: string; value: string; checked?: boolean }[];
       }
@@ -135,6 +134,7 @@ export type FormField =
           id?: string;
           label?: string;
           required?: boolean;
+          readonly?: boolean;
           value?: string[];
           multiple?: boolean;
           options: { label: string; value: string; checked?: boolean }[];

@@ -1,5 +1,6 @@
 import { Close } from "@mui/icons-material";
-import { Box, IconButton, Snackbar, Tooltip, Typography } from "@mui/material";
+import { Box, IconButton, ListItemIcon, ListItemText, MenuItem, Snackbar, Tooltip, Typography } from "@mui/material";
+import { type ExplorerBookmarkState } from "@novorender/data-js-api";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -20,13 +21,17 @@ enum Status {
 
 export function ShareLink({
     variant = "default",
+    nameKey = featuresConfig.shareLink.nameKey,
+    explorerStateOverwrite = { forms: undefined },
     onClick,
 }: {
-    variant?: "default" | "primaryMenu";
+    variant?: "default" | "primaryMenu" | "menuItem";
+    nameKey?: string;
+    explorerStateOverwrite?: Partial<ExplorerBookmarkState>;
     onClick?: () => void;
 }) {
     const { t } = useTranslation();
-    const { Icon, nameKey, offline } = featuresConfig.shareLink;
+    const { Icon, offline } = featuresConfig.shareLink;
 
     const viewMode = useAppSelector(selectViewMode);
     const isOnline = useAppSelector(selectIsOnline);
@@ -44,13 +49,13 @@ export function ShareLink({
 
         setStatus(Status.Loading);
 
-        const saved = await shareLink();
+        const saved = await shareLink(explorerStateOverwrite);
         if (!saved) {
             setStatus(Status.Initial);
             return;
         }
 
-        if (variant === "primaryMenu") {
+        if (variant === "primaryMenu" || variant === "menuItem") {
             dispatch(explorerActions.setSnackbarMessage({ msg: t("copiedToClipboard") }));
         } else {
             setStatus(Status.Success);
@@ -67,6 +72,17 @@ export function ShareLink({
                     </IconButton>
                 </Box>
             </Tooltip>
+        );
+    }
+
+    if (variant === "menuItem") {
+        return (
+            <MenuItem disabled={disabled} onClick={createLink}>
+                <ListItemIcon>
+                    <Icon />
+                </ListItemIcon>
+                <ListItemText>{t(nameKey)}</ListItemText>
+            </MenuItem>
         );
     }
 

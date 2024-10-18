@@ -709,5 +709,6 @@
     "collection": "Collection",
     "tmZone": "TM Zone",
     "beta": "Beta",
-    "globalSearch": "Global search"
+    "globalSearch": "Global search",
+    "optional": "Optional"
 }

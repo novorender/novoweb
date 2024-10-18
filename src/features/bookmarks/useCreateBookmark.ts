@@ -18,6 +18,12 @@ import {
 } from "features/deviations/selectors";
 import { selectFollowPath } from "features/followPath/followPathSlice";
 import {
+    selectCurrentFormsList,
+    selectFormItemId,
+    selectSelectedFormId,
+    selectSelectedFormObjectId,
+} from "features/forms/slice";
+import {
     selectManholeCollisionSettings,
     selectManholeCollisionTarget,
     selectManholeMeasureValues,
@@ -73,6 +79,11 @@ export function useCreateBookmark() {
     const deviationLegendFloating = useAppSelector(selectIsLegendFloating);
     const deviationLegendGroups = useAppSelector(selectDeviationLegendGroups);
     const arcgisFeatureServers = useAppSelector(selectArcgisFeatureServers);
+    const currentFormsList = useAppSelector(selectCurrentFormsList);
+    const selectedFormId = useAppSelector(selectSelectedFormId);
+    const selectedFormObjectGuid = useAppSelector(selectSelectedFormId);
+    const selectedFormObjectId = useAppSelector(selectSelectedFormObjectId);
+    const formItemId = useAppSelector(selectFormItemId);
 
     const {
         state: { view },
@@ -101,178 +112,183 @@ export function useCreateBookmark() {
 
     const create = (
         img?: string,
-    ): Omit<Bookmark, "name" | "description" | "img"> & { img?: string; explorerState: ExplorerBookmarkState } => {
-        return {
-            img,
-            selectedOnly: false, // legacy
-            explorerState: {
-                viewMode,
-                grid,
-                clipping: {
-                    ...clipping,
-                    planes: clipping.planes.map(({ baseW: _baseW, ...plane }) => plane),
-                },
-                camera: view.renderState.camera,
-                options: {
-                    addToSelectionBasket: false, // change on create() return value if needed
-                },
-                subtrees: {
-                    triangles: subtrees.triangles === SubtreeStatus.Shown,
-                    points: subtrees.points === SubtreeStatus.Shown,
-                    terrain: subtrees.terrain === SubtreeStatus.Shown,
-                    lines: subtrees.lines === SubtreeStatus.Shown,
-                    documents: subtrees.documents === SubtreeStatus.Shown,
-                },
-                background: {
-                    color: backgroundColor,
-                },
-                terrain: {
-                    asBackground: terrain.asBackground,
-                    elevationGradient: terrain.elevationGradient,
-                },
-                pointVisualization: {
-                    defaultPointVisualization: points.defaultPointVisualization,
-                    classificationColorGradient: points.classificationColorGradient,
-                },
-                deviations:
-                    viewMode === ViewMode.Deviations && deviationProfileId
-                        ? {
-                              index: deviations.index,
-                              mixFactor: deviations.mixFactor,
-                              profileId: deviationProfileId,
-                              subprofileIndex: deviationSubprofileIndex,
-                              isLegendFloating: deviationLegendFloating,
-                              hiddenGroupIds: deviationLegendGroups
-                                  ?.filter((g) => g.status === GroupStatus.Hidden)
-                                  .map((g) => g.id),
-                          }
-                        : undefined,
-                groups: groups.current
-                    .filter((group) => !isInternalGroup(group))
-                    .filter((group) => group.status !== GroupStatus.None)
-                    .map(({ id, status }) => ({ id, status })),
-                objects: {
-                    defaultVisibility,
-                    mainObject: {
-                        id: mainObject,
-                    },
-                    hidden: { ids: hidden.current.idArr },
-                    highlighted: { ids: highlighted.current.idArr },
-                    highlightCollections: {
-                        secondaryHighlight: {
-                            ids: highlightCollections.current[HighlightCollection.SecondaryHighlight].idArr,
-                        },
-                    },
-                    selectionBasket: { ids: selectionBasket.current.idArr, mode: selectionBasketMode },
-                },
-                measurements: {
-                    area: {
-                        areas: areas.map((a) => {
-                            return { points: a.points };
-                        }),
-                    },
-                    pointLine: {
-                        pointLines: pointLines.map((p) => p.points),
-                    },
-                    measure: {
-                        entities: measurement.selectedEntities,
-                        activeAxis: measurement.activeAxis,
-                    },
-                    manhole: {
-                        id: manhole?.ObjectId,
-                        collisionTarget: manholeCollisionTarget,
-                        collisionSettings: manholeCollisionSettings,
-                    },
-                },
-                followPath:
-                    (viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations) &&
-                    followPath.currentCenter &&
-                    (followPath.selectedIds.length || followPath.selectedPositions.length)
-                        ? {
-                              selected: {
-                                  positions: followPath.selectedPositions.length
-                                      ? followPath.selectedPositions
-                                      : undefined,
-                                  ids: followPath.selectedIds,
-                                  landXmlPathId: followPath.selectedPath,
-                              },
-                              drawLayers: {
-                                  roadIds: followPath.drawRoadIds ?? [],
-                              },
-                              profileNumber: Number(followPath.profile),
-                              currentCenter: followPath.currentCenter,
-                              deviations: {
-                                  prioritization: followPath.deviations.prioritization,
-                                  line: followPath.deviations.line,
-                                  lineColor: followPath.deviations.lineColor,
-                              },
-                              verticalClipping: followPath.verticalClipping,
-                              followObject: followPath.followObject,
-                              profileRange: followPath.profileRange,
-                          }
-                        : undefined,
-                outlineMeasure:
-                    outlineLasers.length > 0 && laserPlane
-                        ? {
-                              laserPlane,
-                              lasers: outlineLasers
-                                  .map((t) => {
-                                      const measurementX = copyTraceMeasurement(
-                                          t.measurementX,
-                                          t.laserPosition,
-                                          t.left,
-                                          t.right,
-                                      );
-                                      const measurementY = copyTraceMeasurement(
-                                          t.measurementY,
-                                          t.laserPosition,
-                                          t.down,
-                                          t.up,
-                                      );
-                                      const measurementZ = copyTraceMeasurement(
-                                          t.measurementZ,
-                                          t.laserPosition,
-                                          t.zDown,
-                                          t.zUp,
-                                      );
-                                      if (
-                                          measurementX === undefined &&
-                                          measurementY === undefined &&
-                                          measurementZ === undefined
-                                      ) {
-                                          return undefined;
-                                      }
-                                      return {
-                                          laserPosition: t.laserPosition,
-                                          measurementX,
-                                          measurementY,
-                                          measurementZ,
-                                          laserPlanes: t.laserPlanes,
-                                      };
-                                  })
-                                  .filter((f) => f !== undefined) as {
-                                  laserPosition: ReadonlyVec3;
-                                  measurementX?: { start: ReadonlyVec3; end: ReadonlyVec3 };
-                                  measurementY?: { start: ReadonlyVec3; end: ReadonlyVec3 };
-                              }[],
-                          }
-                        : undefined,
-                ...(propertyTree ? { propertyTree } : {}),
-                arcgis:
-                    arcgisFeatureServers.status === AsyncStatus.Success
-                        ? {
-                              featureServers: arcgisFeatureServers.data.map((fs) => ({
-                                  id: fs.id,
-                                  layers: fs.layers.map((layer) => ({
-                                      id: layer.id,
-                                      checked: layer.checked,
-                                  })),
-                              })),
-                          }
-                        : undefined,
+        explorerStateOverwrite: Partial<ExplorerBookmarkState> = { forms: undefined },
+    ): Omit<Bookmark, "name" | "description" | "img"> & { img?: string; explorerState: ExplorerBookmarkState } => ({
+        img,
+        selectedOnly: false, // legacy
+        explorerState: {
+            viewMode,
+            grid,
+            clipping: {
+                ...clipping,
+                planes: clipping.planes.map(({ baseW: _baseW, ...plane }) => plane),
             },
-        };
-    };
+            camera: view.renderState.camera,
+            options: {
+                addToSelectionBasket: false, // change on create() return value if needed
+            },
+            subtrees: {
+                triangles: subtrees.triangles === SubtreeStatus.Shown,
+                points: subtrees.points === SubtreeStatus.Shown,
+                terrain: subtrees.terrain === SubtreeStatus.Shown,
+                lines: subtrees.lines === SubtreeStatus.Shown,
+                documents: subtrees.documents === SubtreeStatus.Shown,
+            },
+            background: {
+                color: backgroundColor,
+            },
+            terrain: {
+                asBackground: terrain.asBackground,
+                elevationGradient: terrain.elevationGradient,
+            },
+            pointVisualization: {
+                defaultPointVisualization: points.defaultPointVisualization,
+                classificationColorGradient: points.classificationColorGradient,
+            },
+            deviations:
+                viewMode === ViewMode.Deviations && deviationProfileId
+                    ? {
+                          index: deviations.index,
+                          mixFactor: deviations.mixFactor,
+                          profileId: deviationProfileId,
+                          subprofileIndex: deviationSubprofileIndex,
+                          isLegendFloating: deviationLegendFloating,
+                          hiddenGroupIds: deviationLegendGroups
+                              ?.filter((g) => g.status === GroupStatus.Hidden)
+                              .map((g) => g.id),
+                      }
+                    : undefined,
+            groups: groups.current
+                .filter((group) => !isInternalGroup(group))
+                .filter((group) => group.status !== GroupStatus.None)
+                .map(({ id, status }) => ({ id, status })),
+            objects: {
+                defaultVisibility,
+                mainObject: {
+                    id: mainObject,
+                },
+                hidden: { ids: hidden.current.idArr },
+                highlighted: { ids: highlighted.current.idArr },
+                highlightCollections: {
+                    secondaryHighlight: {
+                        ids: highlightCollections.current[HighlightCollection.SecondaryHighlight].idArr,
+                    },
+                },
+                selectionBasket: { ids: selectionBasket.current.idArr, mode: selectionBasketMode },
+            },
+            measurements: {
+                area: {
+                    areas: areas.map((a) => {
+                        return { points: a.points };
+                    }),
+                },
+                pointLine: {
+                    pointLines: pointLines.map((p) => p.points),
+                },
+                measure: {
+                    entities: measurement.selectedEntities,
+                    activeAxis: measurement.activeAxis,
+                },
+                manhole: {
+                    id: manhole?.ObjectId,
+                    collisionTarget: manholeCollisionTarget,
+                    collisionSettings: manholeCollisionSettings,
+                },
+            },
+            followPath:
+                (viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations) &&
+                followPath.currentCenter &&
+                (followPath.selectedIds.length || followPath.selectedPositions.length)
+                    ? {
+                          selected: {
+                              positions: followPath.selectedPositions.length ? followPath.selectedPositions : undefined,
+                              ids: followPath.selectedIds,
+                              landXmlPathId: followPath.selectedPath,
+                          },
+                          drawLayers: {
+                              roadIds: followPath.drawRoadIds ?? [],
+                          },
+                          profileNumber: Number(followPath.profile),
+                          currentCenter: followPath.currentCenter,
+                          deviations: {
+                              prioritization: followPath.deviations.prioritization,
+                              line: followPath.deviations.line,
+                              lineColor: followPath.deviations.lineColor,
+                          },
+                          verticalClipping: followPath.verticalClipping,
+                          followObject: followPath.followObject,
+                          profileRange: followPath.profileRange,
+                      }
+                    : undefined,
+            outlineMeasure:
+                outlineLasers.length > 0 && laserPlane
+                    ? {
+                          laserPlane,
+                          lasers: outlineLasers
+                              .map((t) => {
+                                  const measurementX = copyTraceMeasurement(
+                                      t.measurementX,
+                                      t.laserPosition,
+                                      t.left,
+                                      t.right,
+                                  );
+                                  const measurementY = copyTraceMeasurement(
+                                      t.measurementY,
+                                      t.laserPosition,
+                                      t.down,
+                                      t.up,
+                                  );
+                                  const measurementZ = copyTraceMeasurement(
+                                      t.measurementZ,
+                                      t.laserPosition,
+                                      t.zDown,
+                                      t.zUp,
+                                  );
+                                  if (
+                                      measurementX === undefined &&
+                                      measurementY === undefined &&
+                                      measurementZ === undefined
+                                  ) {
+                                      return undefined;
+                                  }
+                                  return {
+                                      laserPosition: t.laserPosition,
+                                      measurementX,
+                                      measurementY,
+                                      measurementZ,
+                                      laserPlanes: t.laserPlanes,
+                                  };
+                              })
+                              .filter((f) => f !== undefined) as {
+                              laserPosition: ReadonlyVec3;
+                              measurementX?: { start: ReadonlyVec3; end: ReadonlyVec3 };
+                              measurementY?: { start: ReadonlyVec3; end: ReadonlyVec3 };
+                          }[],
+                      }
+                    : undefined,
+            ...(propertyTree ? { propertyTree } : {}),
+            arcgis:
+                arcgisFeatureServers.status === AsyncStatus.Success
+                    ? {
+                          featureServers: arcgisFeatureServers.data.map((fs) => ({
+                              id: fs.id,
+                              layers: fs.layers.map((layer) => ({
+                                  id: layer.id,
+                                  checked: layer.checked,
+                              })),
+                          })),
+                      }
+                    : undefined,
+            forms: {
+                currentFormsList,
+                selectedFormId,
+                selectedFormObjectGuid,
+                selectedFormObjectId,
+                formItemId,
+            },
+            ...explorerStateOverwrite,
+        },
+    });
 
     return create;
 }
