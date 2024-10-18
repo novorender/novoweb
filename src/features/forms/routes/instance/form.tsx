@@ -23,6 +23,7 @@ interface FormProperties {
     noItemsMsg?: string;
     disabled?: boolean;
     populateEditor?: boolean;
+    isLoading?: boolean;
 }
 
 export function Form({
@@ -34,6 +35,7 @@ export function Form({
     noItemsMsg,
     disabled,
     populateEditor,
+    isLoading,
 }: FormProperties) {
     const { t } = useTranslation();
     const theme = useTheme();
@@ -60,7 +62,7 @@ export function Form({
     }, [dispatch, formItemId]);
 
     if (items?.length === 0) {
-        return noItemsMsg ? (
+        return !isLoading && noItemsMsg ? (
             <Typography my={1} px={1}>
                 {noItemsMsg}
             </Typography>
