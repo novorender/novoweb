@@ -28,7 +28,6 @@ import { HudPanel } from "components/hudPanel";
 import IconButtonExt from "components/iconButtonExt";
 import { FeatureGroupKey, featureGroups, featuresConfig, FeatureType, Widget, WidgetKey } from "config/features";
 import { groupSorting } from "features/groupedWidgetList/sorting";
-import { isIpad, isIphone } from "features/render/hooks/useCanvasEventHandlers";
 import { sorting } from "features/widgetList/sorting";
 import { useOpenWidget } from "hooks/useOpenWidget";
 import NovorenderIcon from "media/icons/novorender-small.svg?react";
@@ -41,7 +40,7 @@ import {
     selectWidgetLayout,
     selectWidgets,
 } from "slices/explorer";
-import { isMacintosh } from "utils/misc";
+import { isAppleDevice } from "utils/misc";
 
 const sortedFeatureGroups = Object.values(featureGroups).sort((a, b) => {
     const idxA = groupSorting.indexOf(a.key);
@@ -340,7 +339,7 @@ function SectionWidgets({ onSelect, widgets }: { onSelect: (widgetKey: WidgetKey
                         <ListItemText>{t(widget.nameKey)}</ListItemText>
                         {"keyboardShortcut" in widget && (
                             <Typography color="grey" ml={2}>
-                                {(isMacintosh || isIpad || isIphone) && "mac" in widget.keyboardShortcut
+                                {isAppleDevice && "mac" in widget.keyboardShortcut
                                     ? widget.keyboardShortcut.mac
                                     : widget.keyboardShortcut.default}
                             </Typography>
