@@ -34,7 +34,7 @@ export function GlobalSearch() {
                 ) as HTMLElement;
 
                 if (overlay) {
-                    overlay?.click();
+                    overlay.click();
                     // Wait a bit before opening the widget so autofocus could kick in
                     setTimeout(() => {
                         openWidget(featuresConfig.globalSearch.key);
