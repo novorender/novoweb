@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
 import { lazy, Suspense, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -27,9 +28,21 @@ export function GlobalSearch() {
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             if (!show && (e.ctrlKey || e.metaKey) && e.code === "KeyK") {
-                openWidget(featuresConfig.globalSearch.key);
-            }
-            if (show && e.code === "Escape") {
+                // Close any open popup overlay, because it conflicts with search input focus
+                const overlay = document.querySelector(
+                    "body > .MuiPopover-root.MuiMenu-root.MuiModal-root .MuiBackdrop-root.MuiModal-backdrop",
+                ) as HTMLElement;
+
+                if (overlay) {
+                    overlay.click();
+                    // Wait a bit before opening the widget so autofocus could kick in
+                    setTimeout(() => {
+                        openWidget(featuresConfig.globalSearch.key);
+                    }, 200);
+                } else {
+                    openWidget(featuresConfig.globalSearch.key);
+                }
+            } else if (show && e.code === "Escape") {
                 hide("discarded");
             }
         };
@@ -44,7 +57,7 @@ export function GlobalSearch() {
         return null;
     }
 
-    return (
+    return createPortal(
         <Box
             sx={{
                 position: "absolute",
@@ -66,6 +79,7 @@ export function GlobalSearch() {
                     <GlobalSearchDropdown onSelect={() => hide("used")} />
                 </Suspense>
             </HudPanel>
-        </Box>
+        </Box>,
+        document.body,
     );
 }
