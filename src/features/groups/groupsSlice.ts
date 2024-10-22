@@ -54,10 +54,7 @@ export const groupsSlice = createSlice({
         },
         addGroupsSelectedForEdit: (state, action: PayloadAction<string[]>) => {
             const ids = action.payload;
-            state.groupsSelectedForEdit = [
-                ...state.groupsSelectedForEdit,
-                ...ids.filter((id) => !state.groupsSelectedForEdit.includes(id)),
-            ];
+            state.groupsSelectedForEdit = Array.from(new Set([...state.groupsSelectedForEdit, ...ids]));
         },
         removeGroupsSelectedForEdit: (state, action: PayloadAction<string[]>) => {
             const ids = action.payload;

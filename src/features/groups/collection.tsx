@@ -37,9 +37,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
     const isEditingGroups = useAppSelector(selectIsEditingGroups);
     const allChildGroups = useMemo(() => {
         const prefix = collection + "/";
-        return objectGroups.filter(
-            (group) => group.grouping === collection || (group.grouping && group.grouping.startsWith(prefix)),
-        );
+        return objectGroups.filter((group) => group.grouping === collection || group.grouping.startsWith(prefix));
     }, [objectGroups, collection]);
     const selectionState = useAppSelector((store) => {
         const ids = selectGroupsSelectedForEdit(store);
