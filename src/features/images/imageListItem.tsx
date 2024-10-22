@@ -1,5 +1,6 @@
-import { Box, css, ListItemButton, styled, Typography, useTheme } from "@mui/material";
+import { Box, Button, css, ListItemButton, styled, Typography, useTheme } from "@mui/material";
 import { CSSProperties, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -17,13 +18,14 @@ const Img = styled("img")(
         width: 100%;
         object-fit: cover;
         display: block;
-    `
+    `,
 );
 
 export function ImageListItem({ image, style }: { image: Image; style: CSSProperties }) {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const theme = useTheme();
     const dispatch = useAppDispatch();
 
@@ -37,8 +39,12 @@ export function ImageListItem({ image, style }: { image: Image; style: CSSProper
         fetch(url.current).then((res) => handleImageResponse(res).then((data) => setDataUrl(data)));
     }, [url]);
 
-    const viewImage = () => {
-        dispatch(imagesActions.setActiveImage({ image, mode: ImageType.Flat, status: AsyncStatus.Loading }));
+    const viewImage = (forceFlat = false) => {
+        if (isPanorama(image) && !forceFlat) {
+            dispatch(imagesActions.setActiveImage({ image, mode: ImageType.Panorama, status: AsyncStatus.Loading }));
+        } else {
+            dispatch(imagesActions.setActiveImage({ image, mode: ImageType.Flat, status: AsyncStatus.Loading }));
+        }
     };
 
     return (
@@ -48,7 +54,7 @@ export function ImageListItem({ image, style }: { image: Image; style: CSSProper
                 padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
                 background: loading ? theme.palette.grey[200] : isCurrent ? theme.palette.grey[300] : "",
             }}
-            onClick={viewImage}
+            onClick={() => viewImage(false)}
         >
             <Box width={1} maxHeight={70} height={70} display="flex" alignItems="flex-start" overflow="hidden">
                 <Box
@@ -85,6 +91,18 @@ export function ImageListItem({ image, style }: { image: Image; style: CSSProper
                         {image.guid}
                     </Typography>
                 </Box>
+                {isPanorama(image) && (
+                    <Button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            viewImage(true);
+                        }}
+                        color="grey"
+                        sx={{ alignSelf: "center" }}
+                    >
+                        {t("flat")}
+                    </Button>
+                )}
             </Box>
         </ListItemButton>
     );

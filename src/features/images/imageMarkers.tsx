@@ -9,7 +9,8 @@ import { useRedirectWheelEvents } from "hooks/useRedirectWheelEvents";
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import { imagesActions, selectActiveImage, selectImages, selectShowImageMarkers } from "./imagesSlice";
-import { ImageType } from "./types";
+import { Image, ImageType } from "./types";
+import { isPanorama } from "./utils";
 
 const Marker = styled(
     forwardRef<SVGGElement, SVGProps<SVGGElement>>((props, ref) => (
@@ -61,6 +62,26 @@ export const ImageMarkers = forwardRef<{ update: () => void }>(function ImageMar
         update();
     }, [update, showImageMarkers]);
 
+    const openImage = (image: Image) => {
+        if (isPanorama(image)) {
+            dispatch(
+                imagesActions.setActiveImage({
+                    image: image,
+                    mode: ImageType.Panorama,
+                    status: AsyncStatus.Loading,
+                }),
+            );
+        } else {
+            dispatch(
+                imagesActions.setActiveImage({
+                    image: image,
+                    mode: ImageType.Flat,
+                    status: AsyncStatus.Loading,
+                }),
+            );
+        }
+    };
+
     return (
         <>
             {images.status === AsyncStatus.Success && showImageMarkers
@@ -72,15 +93,7 @@ export const ImageMarkers = forwardRef<{ update: () => void }>(function ImageMar
                           return (
                               <Marker
                                   key={key}
-                                  onClick={() =>
-                                      dispatch(
-                                          imagesActions.setActiveImage({
-                                              image: image,
-                                              mode: ImageType.Flat,
-                                              status: AsyncStatus.Loading,
-                                          }),
-                                      )
-                                  }
+                                  onClick={() => openImage(image)}
                                   onWheel={onWheel}
                                   ref={(el) => (containerRef.current[idx] = el)}
                               />
@@ -93,15 +106,7 @@ export const ImageMarkers = forwardRef<{ update: () => void }>(function ImageMar
                           return (
                               <Marker
                                   key={key}
-                                  onClick={() =>
-                                      dispatch(
-                                          imagesActions.setActiveImage({
-                                              image: image,
-                                              mode: ImageType.Flat,
-                                              status: AsyncStatus.Loading,
-                                          }),
-                                      )
-                                  }
+                                  onClick={() => openImage(image)}
                                   onWheel={onWheel}
                                   ref={(el) => (containerRef.current[idx] = el)}
                               />

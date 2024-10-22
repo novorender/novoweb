@@ -42,9 +42,8 @@ export function useHandleImages() {
 
             abort();
             view.modifyRenderState({ dynamic: { objects: [] } });
-            currentPanorama.current = undefined;
 
-            if (!activeImage) {
+            if (!activeImage || (currentPanorama.current && activeImage.mode !== ImageType.Panorama)) {
                 if (viewMode === ViewMode.Panorama) {
                     dispatch(renderActions.setViewMode(ViewMode.Default));
                     dispatch(
@@ -55,11 +54,15 @@ export function useHandleImages() {
                                 rotation: view.renderState.camera.rotation,
                                 near: cameraDefaults.pinhole.clipping.near,
                             },
-                        })
+                        }),
                     );
                 }
-                return;
+                if (!activeImage) {
+                    return;
+                }
             }
+
+            currentPanorama.current = undefined;
 
             if (activeImage.mode === ImageType.Panorama) {
                 loadPanorama(activeImage.image, view);
@@ -90,7 +93,7 @@ export function useHandleImages() {
                         image: { ...image, src },
                         mode: ImageType.Flat,
                         status: AsyncStatus.Success,
-                    })
+                    }),
                 );
             }
 
@@ -103,7 +106,7 @@ export function useHandleImages() {
                     renderActions.setCamera({
                         type: CameraType.Pinhole,
                         goTo: { position: panorama.position, rotation, near: 0.1 },
-                    })
+                    }),
                 );
                 currentPanorama.current = { image: panorama };
 
@@ -140,10 +143,10 @@ export function useHandleImages() {
                         image: panorama,
                         status: AsyncStatus.Success,
                         mode: ImageType.Panorama,
-                    })
+                    }),
                 );
             }
         },
-        [activeImage, view, dispatch, abortController, abort, viewMode, cameraDefaults]
+        [activeImage, view, dispatch, abortController, abort, viewMode, cameraDefaults],
     );
 }
