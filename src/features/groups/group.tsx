@@ -25,7 +25,7 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { MouseEvent, useEffect, useRef, useState } from "react";
+import { memo, MouseEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
@@ -37,7 +37,12 @@ import { ColorPicker } from "features/colorPicker";
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { rgbToVec, vecToRgb } from "utils/color";
 
-import { groupsActions, selectHighlightGroupInWidget } from "./groupsSlice";
+import {
+    groupsActions,
+    selectGroupsSelectedForEdit,
+    selectHighlightGroupInWidget,
+    selectIsEditingGroups,
+} from "./groupsSlice";
 
 export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
     ({ theme }) => css`
@@ -48,11 +53,12 @@ export const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
 );
 
 export const StyledCheckbox = styled(Checkbox)`
-    padding-top: 0;
-    padding-bottom: 0;
+    padding: 0;
+    margin-left: 9px;
+    margin-right: 9px;
 `;
 
-export function Group({ group, disabled }: { group: ObjectGroup; disabled: boolean }) {
+function GroupRaw({ group, disabled }: { group: ObjectGroup; disabled: boolean }) {
     const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
@@ -62,6 +68,8 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
     const dispatchObjectGroups = useDispatchObjectGroups();
     const dispatch = useAppDispatch();
     const buttonRef = useRef<HTMLDivElement | null>(null);
+    const isEditingGroups = useAppSelector(selectIsEditingGroups);
+    const isSelectedForEdit = useAppSelector((store) => selectGroupsSelectedForEdit(store)?.has(group.id));
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
@@ -97,6 +105,14 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
         setMenuAnchor(null);
     };
 
+    const toggleSelectionForEdit = () => {
+        if (!isEditingGroups) {
+            return;
+        }
+
+        dispatch(groupsActions.toggleGroupSelectedForEdit(group.id));
+    };
+
     const { r, g, b, a } = vecToRgb(group.color);
 
     const hidden = group.status === GroupStatus.Hidden;
@@ -106,8 +122,12 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
         <>
             <StyledListItemButton
                 disableRipple
-                disabled={disabled}
+                disabled={disabled && !isEditingGroups}
                 onClick={() => {
+                    if (isEditingGroups) {
+                        toggleSelectionForEdit();
+                        return;
+                    }
                     if (group.status === GroupStatus.Frozen) {
                         return;
                     }
@@ -119,6 +139,18 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                 }}
                 ref={buttonRef}
             >
+                {isEditingGroups && (
+                    <Box flex="0 0 auto">
+                        <StyledCheckbox
+                            name="toggle group selection"
+                            aria-label="toggle group selection"
+                            size="small"
+                            checked={isSelectedForEdit}
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={toggleSelectionForEdit}
+                        />
+                    </Box>
+                )}
                 <Box display="flex" width={1} alignItems="center">
                     <Box flex="1 1 auto" overflow="hidden">
                         <Tooltip title={group.name}>
@@ -132,7 +164,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                 aria-label="toggle group highlighting"
                                 size="small"
                                 checked={selected}
-                                disabled={disabled}
+                                disabled={disabled || isEditingGroups}
                                 onClick={(event) => event.stopPropagation()}
                                 onChange={() =>
                                     dispatchObjectGroups(
@@ -160,7 +192,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                 !group.opacity ? <VisibilityOff color="disabled" /> : <Visibility color="disabled" />
                             }
                             checked={hidden}
-                            disabled={disabled || group.status === GroupStatus.Frozen}
+                            disabled={disabled || group.status === GroupStatus.Frozen || isEditingGroups}
                             onClick={(event) => event.stopPropagation()}
                             onChange={() =>
                                 dispatchObjectGroups(
@@ -177,7 +209,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                             size="small"
                             sx={{ py: 0 }}
                             aria-haspopup="true"
-                            disabled={disabled}
+                            disabled={disabled || isEditingGroups}
                             onClick={openMenu}
                         >
                             <MoreVert />
@@ -229,7 +261,7 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
                                       </ListItemIcon>
                                       <ListItemText>{t("duplicate")}</ListItemText>
                                   </MenuItem>,
-                                  <MenuItem key="delete" onClick={() => history.push("/delete/" + group.id)}>
+                                  <MenuItem key="delete" onClick={() => history.push("/delete", { ids: [group.id] })}>
                                       <ListItemIcon>
                                           <Delete fontSize="small" />
                                       </ListItemIcon>
@@ -295,3 +327,5 @@ export function Group({ group, disabled }: { group: ObjectGroup; disabled: boole
         </>
     );
 }
+
+export const Group = memo(GroupRaw);

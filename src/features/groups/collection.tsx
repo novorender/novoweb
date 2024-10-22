@@ -11,7 +11,18 @@ import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGro
 import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 
 import { Group, StyledCheckbox } from "./group";
-import { groupsActions, selectIsCollectionExpanded } from "./groupsSlice";
+import {
+    groupsActions,
+    selectGroupsSelectedForEdit,
+    selectIsCollectionExpanded,
+    selectIsEditingGroups,
+} from "./groupsSlice";
+
+enum SelectionState {
+    None,
+    Some,
+    All,
+}
 
 export function Collection({ collection, disabled }: { collection: string; disabled: boolean }) {
     const { t } = useTranslation();
@@ -23,6 +34,28 @@ export function Collection({ collection, disabled }: { collection: string; disab
     const canManage = checkPermission(Permission.GroupManage);
     const expanded = useAppSelector((state) => selectIsCollectionExpanded(state, collection));
     const dispatch = useAppDispatch();
+    const isEditingGroups = useAppSelector(selectIsEditingGroups);
+    const allChildGroups = useMemo(() => {
+        const prefix = collection + "/";
+        return objectGroups.filter(
+            (group) => group.grouping === collection || (group.grouping && group.grouping.startsWith(prefix)),
+        );
+    }, [objectGroups, collection]);
+    const selectionState = useAppSelector((store) => {
+        const ids = selectGroupsSelectedForEdit(store);
+        if (!ids || !isEditingGroups) {
+            return SelectionState.None;
+        }
+        const children = allChildGroups;
+        const selectedCount = children.reduce((acc, e) => acc + (ids.has(e.id) ? 1 : 0), 0);
+        if (selectedCount === 0) {
+            return SelectionState.None;
+        }
+        if (selectedCount === children.length) {
+            return SelectionState.All;
+        }
+        return SelectionState.Some;
+    });
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
@@ -105,6 +138,26 @@ export function Collection({ collection, disabled }: { collection: string; disab
             level={currentDepth}
         >
             <AccordionSummary level={currentDepth}>
+                {isEditingGroups && (
+                    <Box flex="0 0 auto">
+                        <StyledCheckbox
+                            name="toggle group selection"
+                            aria-label="toggle group selection"
+                            size="small"
+                            checked={selectionState === SelectionState.All}
+                            indeterminate={selectionState === SelectionState.Some}
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={() => {
+                                const ids = allChildGroups.map((g) => g.id);
+                                if (selectionState === SelectionState.All) {
+                                    dispatch(groupsActions.removeGroupsSelectedForEdit(ids));
+                                } else {
+                                    dispatch(groupsActions.addGroupsSelectedForEdit(ids));
+                                }
+                            }}
+                        />
+                    </Box>
+                )}
                 <Box width={0} flex="1 1 auto" overflow="hidden">
                     <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
                         {name}

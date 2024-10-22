@@ -710,5 +710,8 @@
     "tmZone": "TM Zone",
     "beta": "Beta",
     "globalSearch": "Global search",
-    "optional": "Optional"
+    "optional": "Optional",
+    "editGroups": "Edit groups",
+    "deleteGroupQuestion_one": "Delete group?",
+    "deleteGroupQuestion_other": "Delete groups?"
 }

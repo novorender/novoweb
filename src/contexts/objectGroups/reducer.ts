@@ -51,10 +51,10 @@ function update(groupId: string, updates: Partial<ObjectGroup>) {
     };
 }
 
-function deleteGroup(groupId: string) {
+function deleteGroups(groupIds: string[]) {
     return {
         type: ActionTypes.Delete as const,
-        groupId,
+        groupIds,
     };
 }
 
@@ -91,7 +91,7 @@ function groupSelected() {
     };
 }
 
-export const actions = { update, set, add, copy, reset, groupSelected, delete: deleteGroup };
+export const actions = { update, set, add, copy, reset, groupSelected, delete: deleteGroups };
 
 type Actions = ReturnType<(typeof actions)[keyof typeof actions]>;
 export type DispatchObjectGroups = Dispatch<Actions>;
@@ -107,11 +107,11 @@ export const DispatchContext = createContext<DispatchObjectGroups>(undefined as 
 export function reducer(state: State, action: Actions): ObjectGroup[] {
     switch (action.type) {
         case ActionTypes.Delete: {
-            return state.filter((group) => group.id !== action.groupId);
+            return state.filter((group) => !action.groupIds.includes(group.id));
         }
         case ActionTypes.Update: {
             const updated = state.map((group) =>
-                group.id === action.groupId ? { ...group, ...action.updates } : group
+                group.id === action.groupId ? { ...group, ...action.updates } : group,
             );
             const idx = updated.findIndex((group) => group.id === action.groupId);
 
