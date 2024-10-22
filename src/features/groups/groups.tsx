@@ -1,5 +1,6 @@
 import { Close, Code } from "@mui/icons-material";
 import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Snackbar } from "@mui/material";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { matchPath, MemoryRouter, Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
 
@@ -30,6 +31,13 @@ export default function Groups() {
     const dispatch = useAppDispatch();
 
     const showSnackbar = [AsyncStatus.Success, AsyncStatus.Error].includes(saveStatus);
+
+    useEffect(() => {
+        return () => {
+            dispatch(groupsActions.setEditingGroups(false));
+            dispatch(groupsActions.setGroupsSelectedForEdit([]));
+        };
+    }, [dispatch]);
 
     return (
         <MemoryRouter>
@@ -84,7 +92,7 @@ export default function Groups() {
                         <Route path="/save">
                             <Save sceneId={sceneId} />
                         </Route>
-                        <Route path="/delete/:id">
+                        <Route path="/delete">
                             <Delete />
                         </Route>
                         <Route path="/renameCollection">

@@ -710,5 +710,8 @@
     "tmZone": "TM-sone",
     "beta": "Beta",
     "globalSearch": "Globalt søk",
-    "optional": "Valgfritt"
+    "optional": "Valgfritt",
+    "editGroups": "Rediger grupper",
+    "deleteGroupQuestion_one": "Slette gruppe?",
+    "deleteGroupQuestion_other": "Slette grupper?"
 }

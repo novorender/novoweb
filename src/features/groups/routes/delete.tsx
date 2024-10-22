@@ -1,16 +1,21 @@
 import { Box, useTheme } from "@mui/material";
-import { useHistory, useParams } from "react-router-dom";
+import { t } from "i18next";
+import { useHistory, useLocation } from "react-router-dom";
 
+import { useAppDispatch } from "app/redux-store-interactions";
 import { Confirmation } from "components";
 import { objectGroupsActions, useDispatchObjectGroups } from "contexts/objectGroups";
+
+import { groupsActions } from "../groupsSlice";
 
 export function Delete() {
     const theme = useTheme();
     const history = useHistory();
-    const id = useParams<{ id?: string }>().id;
+    const ids = (useLocation().state as { ids: string[] })?.ids;
     const dispatchObjectGroups = useDispatchObjectGroups();
+    const dispatch = useAppDispatch();
 
-    if (!id) {
+    if (!ids || ids.length === 0) {
         history.goBack();
         return <></>;
     }
@@ -23,13 +28,15 @@ export function Delete() {
                 position="absolute"
             />
             <Confirmation
-                title="Delete group?"
+                title={t("deleteGroupQuestion", { count: ids.length })}
                 confirmBtnText="Delete"
                 onCancel={() => {
                     history.goBack();
                 }}
                 onConfirm={() => {
-                    dispatchObjectGroups(objectGroupsActions.delete(id));
+                    dispatchObjectGroups(objectGroupsActions.delete(ids));
+                    dispatch(groupsActions.setEditingGroups(false));
+                    dispatch(groupsActions.setGroupsSelectedForEdit([]));
                     history.goBack();
                 }}
             />
