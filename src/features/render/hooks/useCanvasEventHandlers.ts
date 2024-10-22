@@ -304,17 +304,13 @@ export function useCanvasEventHandlers({
                 pickCameraPlane: planePicking,
             });
 
-            if (result) {
-                const xDir = vec3.cross(vec3.create(), result.normal, vec3.fromValues(0, 0, 1));
-                vec3.normalize(xDir, xDir);
-                const yDir = vec3.cross(vec3.create(), result.normal, xDir);
-                const start = Date.now();
-                const laser = view.screenSpaceLaser(result.position, xDir, yDir, result.normal);
-                console.log(laser);
-                const end = Date.now();
-                const timeDifference = end - start;
-                console.log(`Time taken by the function: ${timeDifference} milliseconds`);
-            }
+            // let outlineIntersection: ScreenSpaceIntersection | undefined;
+            // if (result) {
+            //     const xDir = vec3.cross(vec3.create(), result.normal, vec3.fromValues(0, 0, 1));
+            //     vec3.normalize(xDir, xDir);
+            //     const yDir = vec3.cross(vec3.create(), result.normal, xDir);
+            //     outlineIntersection = view.screenSpaceLaser(result.position, xDir, yDir, result.normal);
+            // }
 
             moveSvgCursor({
                 svg,
@@ -323,8 +319,9 @@ export function useCanvasEventHandlers({
                 pickResult: result,
                 x: e.nativeEvent.offsetX,
                 y: e.nativeEvent.offsetY,
-                color: "none",
-                overrideKind: "gizmo",
+                color: result ? "none" : "white",
+                overrideKind: "cross",
+                // outlineIntersection,
             });
         } else if (e.buttons === 0 && cursor === "measure") {
             const result = await view.pick(e.nativeEvent.offsetX, e.nativeEvent.offsetY, {
