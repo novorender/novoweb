@@ -68,7 +68,7 @@ export function PointLineCanvas({
             }
 
             view.measure?.draw
-                .getDrawObjectFromPoints(pts, { closed: false, angles: true, generateLineLabels: true })
+                .getDrawObjectFromPoints(pts, { closed: false, angles: true, generateLengthLabels: true })
                 ?.objects.forEach((obj) =>
                     obj.parts.forEach((part) =>
                         drawPart(

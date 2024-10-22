@@ -42,7 +42,7 @@ export function OutlineLaserCanvas({
                 const drawProd = view.measure?.draw.getDrawObjectFromPoints(xPts, {
                     closed: false,
                     angles: false,
-                    generateLineLabels: true,
+                    generateLengthLabels: true,
                     decimals: 2,
                 });
                 if (drawProd) {
@@ -69,7 +69,7 @@ export function OutlineLaserCanvas({
                 const drawProd = view.measure?.draw.getDrawObjectFromPoints(yPts, {
                     closed: false,
                     angles: false,
-                    generateLineLabels: true,
+                    generateLengthLabels: true,
                     decimals: 2,
                 });
                 if (drawProd) {
@@ -95,7 +95,7 @@ export function OutlineLaserCanvas({
                 const drawProd = view.measure?.draw.getDrawObjectFromPoints(zPts, {
                     closed: false,
                     angles: false,
-                    generateLineLabels: true,
+                    generateLengthLabels: true,
                     decimals: 2,
                 });
                 if (drawProd) {

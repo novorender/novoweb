@@ -5,6 +5,7 @@ import { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } f
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Canvas2D } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useHidden } from "contexts/hidden";
 import { deviationsActions } from "features/deviations/deviationsSlice";
 import { useIsTopDownOrthoCamera } from "features/deviations/hooks/useIsTopDownOrthoCamera";
 import {
@@ -17,10 +18,11 @@ import {
     measurementFillColor,
     translateInteraction,
 } from "features/engine2D";
-import { CameraType, selectCameraType, selectViewMode } from "features/render";
+import { CameraType, selectCameraType, selectClippingPlanes, selectMainObject, selectViewMode } from "features/render";
 import { selectWidgets } from "slices/explorer";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { vecToHex } from "utils/color";
+import { sleep } from "utils/time";
 
 import {
     selectCurrentCenter,
@@ -30,7 +32,6 @@ import {
     selectFollowObject,
     selectProfile,
     selectShowTracer,
-    selectVerticalTracer,
 } from "./followPathSlice";
 import { useCrossSection } from "./useCrossSection";
 import { usePathMeasureObjects } from "./usePathMeasureObjects";
@@ -55,15 +56,19 @@ export function FollowPathCanvas({
     const [deviationsCtx, setDeviationsCtx] = useState<CanvasRenderingContext2D | null>(null);
     const dispatch = useAppDispatch();
 
+    const followProfile = useAppSelector(selectProfile);
+    const hidden = useHidden();
+    const mainObj = useAppSelector(selectMainObject);
     const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);
     const isTopDownOrtho = useIsTopDownOrthoCamera();
 
-    const roadCrossSection = useCrossSection();
-    const roadCrossSectionData = roadCrossSection.status === AsyncStatus.Success ? roadCrossSection.data : undefined;
+    const roadFilter = useCrossSection();
+    const drawObjectsRef = useRef<DrawProduct[] | null>(null);
+    const outlinesWereOn = useRef<boolean>(false);
+    const roadCrossSectionData = roadFilter.status === AsyncStatus.Success ? roadFilter.data : undefined;
 
     const showTracer = useAppSelector(selectShowTracer);
-    const traceVerical = useAppSelector(selectVerticalTracer);
     const prevPointerPosRef = useRef<Vec2>([0, 0]);
 
     const selectedEntities = usePathMeasureObjects();
@@ -77,8 +82,17 @@ export function FollowPathCanvas({
     const followDeviations = useAppSelector(selectFollowDeviations);
     const fpObj = useAppSelector(selectFollowObject);
     const widgets = useAppSelector(selectWidgets);
+    const clippingPlanes = useAppSelector(selectClippingPlanes);
+    const plane = clippingPlanes.planes?.[0];
 
     const isFollowPathVisible = useMemo(() => widgets.includes("followPath"), [widgets]);
+    useEffect(() => {
+        async function resetDraw() {
+            await sleep(0);
+            drawObjectsRef.current = null;
+        }
+        resetDraw();
+    }, [followProfile, hidden, mainObj, plane]);
 
     const drawCrossSection = useCallback(() => {
         if (!view?.measure || !ctx || !canvas) {
@@ -91,52 +105,33 @@ export function FollowPathCanvas({
             return;
         }
 
-        roadCrossSectionData.forEach((section) => {
-            const lineColor = section.codes
-                .map((c) => {
-                    switch (c) {
-                        case 10:
-                            return;
-                        case 0:
-                            return "green";
+        if (!drawObjectsRef.current) {
+            return;
+        }
+        for (const product of drawObjectsRef.current) {
+            view.measure.draw.updateProduct(product);
+        }
 
-                        case 1:
-                            return "#333232";
+        for (const product of drawObjectsRef.current) {
+            const pixelWidth = 2;
 
-                        case 2:
-                            return "black";
+            const textSettings = {
+                type: "default" as const,
+                unit: "m",
+            };
 
-                        case 3:
-                            return "blue";
-
-                        default:
-                            return "brown";
-                    }
-                })
-                .filter((col) => col !== undefined) as string[];
-
+            const colorSettings = {
+                lineColor: "#FFFFFF",
+                pointColor: "#FFFFFF",
+                fillColor: "#FFFFFF",
+            };
             const cameraState = getCameraState(view.renderState.camera);
-            view.measure?.draw
-                .getDrawObjectFromPoints(section.points, { closed: false, angles: false })
-                ?.objects.forEach((obj) =>
-                    obj.parts.forEach((part) =>
-                        drawPart(ctx, cameraState, part, { lineColor }, 2, { type: "default" }),
-                    ),
-                );
-
-            const slopeL = view.measure?.draw.getDrawText(
-                [section.slopes.left.start, section.slopes.left.end],
-                (section.slopes.left.slope * 100).toFixed(1) + "%",
-            );
-            const slopeR = view.measure?.draw.getDrawText(
-                [section.slopes.right.start, section.slopes.right.end],
-                (section.slopes.right.slope * 100).toFixed(1) + "%",
-            );
-            if (slopeL && slopeR) {
-                drawProduct(ctx, cameraState, slopeL, {}, 3, { type: "default" });
-                drawProduct(ctx, cameraState, slopeR, {}, 3, { type: "default" });
+            for (const object of product.objects) {
+                for (const part of object.parts) {
+                    drawPart(ctx, cameraState, part, colorSettings, pixelWidth, textSettings);
+                }
             }
-        });
+        }
     }, [view, ctx, canvas, roadCrossSectionData, viewMode]);
 
     const drawTracer = useCallback(() => {
@@ -146,52 +141,42 @@ export function FollowPathCanvas({
 
         tracerCtx.clearRect(0, 0, canvas.width, canvas.height);
 
-        if (!roadCrossSectionData || roadCrossSectionData.length <= 1) {
+        if (!drawObjectsRef.current || drawObjectsRef.current.length <= 1) {
             return;
         }
 
-        const prods = roadCrossSectionData
-            .map((road) => view.measure?.draw.getDrawObjectFromPoints(road.points, { closed: false, angles: false }))
-            .filter((prod) => prod) as DrawProduct[];
-
-        if (!prods.length) {
-            return;
-        }
-
-        let line = {
+        const line = {
             start: vec2.fromValues(pointerPosRef.current[0], size.height),
             end: vec2.fromValues(pointerPosRef.current[0], 0),
         };
 
-        if (!traceVerical) {
-            const normal = view.measure?.draw.get2dNormal(prods[0], line);
-            if (normal) {
-                line = {
-                    start: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, size.height),
-                    end: vec2.scaleAndAdd(vec2.create(), normal.position, normal.normal, -size.height),
-                };
-            }
-        }
-
         const cameraState = getCameraState(view.renderState.camera);
-        view.measure?.draw.getTraceDrawOject(prods, line)?.objects.forEach((obj) =>
-            obj.parts.forEach((part) =>
-                drawPart(
-                    tracerCtx,
-                    cameraState,
-                    part,
-                    {
-                        lineColor: "black",
-                        displayAllPoints: true,
-                    },
-                    2,
-                    {
-                        type: "default",
-                    },
-                ),
-            ),
-        );
-    }, [canvas, pointerPosRef, roadCrossSectionData, size, traceVerical, tracerCtx, view]);
+        let skipPoints = showTracer === "normal";
+        view.measure?.draw
+            .getTraceDrawOject(
+                drawObjectsRef.current,
+                line,
+                showTracer === "vertical" ? undefined : pointerPosRef.current,
+            )
+            ?.objects.forEach((obj) =>
+                obj.parts.forEach((part) => {
+                    drawPart(
+                        tracerCtx,
+                        cameraState,
+                        part,
+                        {
+                            lineColor: "black",
+                            displayAllPoints: !skipPoints,
+                        },
+                        2,
+                        {
+                            type: "default",
+                        },
+                    );
+                    skipPoints = false;
+                }),
+            );
+    }, [canvas, pointerPosRef, size, showTracer, tracerCtx, view]);
 
     const selectedEntityDrawId = useRef(0);
     const drawSelectedEntity = useCallback(async () => {
@@ -400,7 +385,21 @@ export function FollowPathCanvas({
                 return;
             }
 
-            if (moved) {
+            if (idleFrame && !drawObjectsRef.current) {
+                drawObjectsRef.current = view.getOutlineDrawObjects(
+                    "clipping",
+                    0,
+                    undefined,
+                    {
+                        generateLengthLabels: true,
+                        generateSlope: true,
+                        closed: false,
+                        angles: false,
+                    },
+                    roadCrossSectionData,
+                );
+                drawCrossSection();
+            } else if (moved) {
                 drawCrossSection();
                 drawSelectedEntity();
             }
@@ -417,6 +416,7 @@ export function FollowPathCanvas({
             if (moved || idleFrame) {
                 drawDeviations(idleFrame);
             }
+            outlinesWereOn.current = true;
         }
     }, [
         view,
@@ -428,6 +428,7 @@ export function FollowPathCanvas({
         showTracer,
         drawProfile,
         drawDeviations,
+        roadCrossSectionData,
     ]);
 
     const isFollowPathOrDeviations = viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations;
@@ -435,11 +436,11 @@ export function FollowPathCanvas({
     const canDrawRoad = roadCrossSectionData && isFollowPathOrDeviations;
     const canDrawSelectedEntity = drawSelectedEntities && Boolean(selectedEntitiesData?.length);
     const canDrawTracer =
-        showTracer &&
+        showTracer != "off" &&
         cameraType === CameraType.Orthographic &&
         isFollowPathOrDeviations &&
-        roadCrossSectionData &&
-        roadCrossSectionData.length >= 2;
+        drawObjectsRef.current &&
+        drawObjectsRef.current.length >= 2;
     const canDrawProfile = isFollowPathOrDeviations && currentProfileCenter && currentProfile;
     const canDrawDeviations =
         isFollowPathOrDeviations && cameraType == CameraType.Orthographic && !isTopDownOrtho && currentProfileCenter;
