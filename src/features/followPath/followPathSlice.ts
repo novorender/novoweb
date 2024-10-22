@@ -40,8 +40,7 @@ const initialState = {
     drawRoadIds: undefined as string[] | undefined,
     roadIds: undefined as string[] | undefined,
     selectedPath: undefined as undefined | LandXmlPath["id"],
-    showTracer: false,
-    traceVertical: false,
+    showTracer: "off" as "off" | "vertical" | "normal",
     followObject: undefined as undefined | FollowParametricObject,
 };
 
@@ -105,11 +104,8 @@ export const followPathSlice = createSlice({
         toggleDrawSelectedPositions: (state, action: PayloadAction<State["drawSelectedPositions"] | undefined>) => {
             state.drawSelectedPositions = action.payload !== undefined ? action.payload : !state.drawSelectedPositions;
         },
-        toggleShowTracer: (state, action: PayloadAction<State["showTracer"] | undefined>) => {
-            state.showTracer = action.payload !== undefined ? action.payload : !state.showTracer;
-        },
-        toggleTraceVerical: (state, action: PayloadAction<State["traceVertical"] | undefined>) => {
-            state.traceVertical = action.payload !== undefined ? action.payload : !state.traceVertical;
+        setShowTracer: (state, action: PayloadAction<State["showTracer"]>) => {
+            state.showTracer = action.payload;
         },
         setSelectedPositions: (state, action: PayloadAction<State["selectedPositions"]>) => {
             state.selectedPositions = action.payload;
@@ -215,7 +211,6 @@ export const selectSelectedPath = (state: RootState) => state.followPath.selecte
 export const selectDrawRoadIds = (state: RootState) => state.followPath.drawRoadIds;
 export const selectRoadIds = (state: RootState) => state.followPath.roadIds;
 export const selectShowTracer = (state: RootState) => state.followPath.showTracer;
-export const selectVerticalTracer = (state: RootState) => state.followPath.traceVertical;
 export const selectFollowObject = (state: RootState) => state.followPath.followObject;
 
 const { actions, reducer } = followPathSlice;

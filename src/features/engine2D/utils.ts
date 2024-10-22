@@ -46,7 +46,7 @@ export function drawProduct(
             let startCol = "red";
             let endCol = "lime";
             const cylinderLine = obj.parts[0];
-            if (cylinderLine.elevation && cylinderLine.vertices2D) {
+            if (cylinderLine.elevation && cylinderLine.vertices2D && !Array.isArray(cylinderLine.elevation)) {
                 if (cylinderLine.elevation.from > cylinderLine.elevation.to) {
                     const tmp = startCol;
                     startCol = endCol;
@@ -295,15 +295,28 @@ function drawLinesOrPolygon(
         ctx.moveTo(part.vertices2D[0][0], part.vertices2D[0][1]);
 
         for (let i = 1; i < part.vertices2D.length; ++i) {
-            ctx.lineTo(part.vertices2D[i][0], part.vertices2D[i][1]);
-            if (lineCap?.end === "arrow") {
+            const drawArrowAndReset = (vertices: [ReadonlyVec2, ReadonlyVec2], arrowIdx: number, resetIdx: number) => {
                 ctx.fillStyle = colorSettings.outlineColor ?? "black";
                 ctx.stroke();
-                const dir = vec2.sub(vec2.create(), part.vertices2D[i], part.vertices2D[i - 1]);
+                const startIdx = arrowIdx == 0 ? 1 : 0;
+                const endIdx = 1 - startIdx;
+                const dir = vec2.sub(vec2.create(), vertices[endIdx], vertices[startIdx]);
                 vec2.normalize(dir, dir);
-                drawArrow(ctx, part.vertices2D[i], dir, 20);
+                drawArrow(ctx, vertices[arrowIdx], dir, 20);
                 ctx.beginPath();
-                ctx.moveTo(part.vertices2D[i][0], part.vertices2D[i][1]);
+                ctx.moveTo(vertices[resetIdx][0], vertices[resetIdx][1]);
+            };
+
+            ctx.lineTo(part.vertices2D[i][0], part.vertices2D[i][1]);
+            if (lineCap?.end === "arrow") {
+                drawArrowAndReset([part.vertices2D[i], part.vertices2D[i - 1]], 0, 0);
+            }
+            if (Array.isArray(part.elevation)) {
+                const currentElevation = part.elevation[i - 1];
+                if (currentElevation && currentElevation.slope) {
+                    const arrowIdx = currentElevation.from < currentElevation.to ? 1 : 0;
+                    drawArrowAndReset([part.vertices2D[i], part.vertices2D[i - 1]], arrowIdx, 0);
+                }
             }
             if (lineColArray) {
                 ctx.strokeStyle = getLineColor(colorSettings.lineColor, i - 1);
@@ -371,7 +384,9 @@ function drawLinesOrPolygon(
                         continue;
                     }
                     textStr += `${text.unit ? text.unit : "m"}`;
-                    drawText(ctx, [points[i], points[i + 1]], textStr);
+                    {
+                        drawText(ctx, [points[i], points[i + 1]], textStr);
+                    }
                 }
             } else if (text.type === "center" && part.vertices2D.length > 2) {
                 const textStr = `${
@@ -379,27 +394,6 @@ function drawLinesOrPolygon(
                 } ${text.unit ? text.unit : "m"}`;
                 drawText(ctx, part.vertices2D, textStr);
             } else if (part.text && Array.isArray(part.text) && part.text.length > 0) {
-                // const drawTextsFromPart = (points: ReadonlyVec2[], indicesOnScreen: number[] | undefined, textList: string[]) => {
-                //     const indexer = (i: number) => indicesOnScreen ? indicesOnScreen[i] : i;
-                //     let pointOffset = indicesOnScreen ? -indicesOnScreen[0] : 0;
-                //     for (let i = 0; i < (indicesOnScreen ? indicesOnScreen?.length - 1 : points.length - 1); ++i) {
-                //         const currentIdx = indexer(i);
-                //         const nextIdx = indexer(i + 1);
-                //         if (nextIdx === currentIdx) {
-                //             pointOffset++;
-                //             continue;
-                //         }
-                //         if (nextIdx !== currentIdx + 1) {
-                //             pointOffset -= nextIdx - currentIdx - 1;
-                //             continue;
-                //         }
-                //         if (textList[currentIdx].length === 0) {
-                //             continue;
-                //         }
-                //         const textStr = textList[currentIdx] + `${text.unit ? text.unit : "m"}`;
-                //         drawText(ctx, [points[currentIdx + pointOffset], points[nextIdx + pointOffset]], textStr);
-                //     }
-                // }
                 const drawTextsFromPart = (
                     points: ReadonlyVec2[],
                     indicesOnScreen: number[] | undefined,
@@ -415,7 +409,14 @@ function drawLinesOrPolygon(
                         if (!textList[currentTxtIdx] || textList[currentTxtIdx].length === 0) {
                             continue;
                         }
-                        const textStr = textList[currentTxtIdx] + `${text.unit ? text.unit : "m"}`;
+                        let textStr = textList[currentTxtIdx] + `${text.unit ? text.unit : "m"}`;
+                        if (Array.isArray(part.elevation)) {
+                            const currentElevation = part.elevation[currentTxtIdx];
+                            if (currentElevation && currentElevation.slope) {
+                                textStr += ` ${currentElevation.slope.toFixed(1)}%`;
+                            }
+                        }
+
                         drawText(ctx, [points[i], points[i + 1]], textStr);
                     }
                 };

@@ -381,7 +381,7 @@ function drawPolygon(
 
     for (const ring of geometry.rings) {
         drawCtx.draw
-            .getDrawObjectFromPoints(ring, { closed: true, angles: false, generateLineLabels: false })
+            .getDrawObjectFromPoints(ring, { closed: true, angles: false, generateLengthLabels: false })
             ?.objects.forEach((obj) => {
                 obj.parts.forEach((part) => {
                     drawPart(drawCtx.ctx, drawCtx.cameraState, part, colorSettings, pixelWidth);
@@ -415,7 +415,7 @@ function drawPolyline(
 
     for (const path of geometry.paths) {
         drawCtx.draw
-            .getDrawObjectFromPoints(path, { closed: false, angles: false, generateLineLabels: false })
+            .getDrawObjectFromPoints(path, { closed: false, angles: false, generateLengthLabels: false })
             ?.objects.forEach((obj) => {
                 obj.parts.forEach((part) => {
                     drawPart(drawCtx.ctx, drawCtx.cameraState, part, colorSettings, pixelWidth);

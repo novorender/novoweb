@@ -140,7 +140,7 @@ export function Clipping2d({ width, height }: { width: number; height: number })
         };
         if (!drawObjectsRef.current) {
             drawObjectsRef.current = view.getOutlineDrawObjects("clipping", planeIndex, drawContextRef.current, {
-                generateLineLabels: displaySettings.showLabels,
+                generateLengthLabels: displaySettings.showLabels,
                 closed: false,
                 angles: false,
             });
@@ -453,7 +453,7 @@ function drawCamera(
         points,
         {
             angles: false,
-            generateLineLabels: false,
+            generateLengthLabels: false,
             closed: true,
         },
         drawContext,
