@@ -8,7 +8,7 @@ import { HeightProfileCanvas } from "features/heightProfile";
 import { ManholeCanvas } from "features/manhole";
 import { HoverCanvas, MeasureCanvas } from "features/measure";
 import { CrossSectionCanvas } from "features/orthoCam";
-import { OutlineLaserCanvas } from "features/outlineLaser";
+import { OutlineLaserCanvas, OutlineLaserGizmoCanvas } from "features/outlineLaser";
 import { PointLineCanvas } from "features/pointLine";
 
 type RenderFn = (moved: boolean, idleFrame?: boolean) => void;
@@ -24,6 +24,7 @@ export function Engine2D({
 }) {
     const measureRenderFn = useRef<RenderFn | undefined>();
     const outlineLaserRenderFn = useRef<RenderFn | undefined>();
+    const outlineLaserGizmoRenderFn = useRef<RenderFn | undefined>();
     const hoverRenderFn = useRef<RenderFn | undefined>();
     const areaRenderFn = useRef<RenderFn | undefined>();
     const plRenderFn = useRef<RenderFn | undefined>();
@@ -46,6 +47,7 @@ export function Engine2D({
             crossSectionRenderFn?.current?.(moved);
             heightProfileRenferFn?.current?.(moved);
             outlineLaserRenderFn?.current?.(moved);
+            outlineLaserGizmoRenderFn?.current?.(moved);
             measureRenderFn.current?.(moved);
             hoverRenderFn?.current?.(moved);
             arcgisRenderFn?.current?.(moved);
@@ -57,6 +59,7 @@ export function Engine2D({
         <>
             <MeasureCanvas renderFnRef={measureRenderFn} svg={svg} />
             <OutlineLaserCanvas renderFnRef={outlineLaserRenderFn} svg={svg} />
+            <OutlineLaserGizmoCanvas renderFnRef={outlineLaserGizmoRenderFn} />
             <AreaCanvas renderFnRef={areaRenderFn} svg={svg} />
             <PointLineCanvas renderFnRef={plRenderFn} svg={svg} />
             <FollowPathCanvas renderFnRef={followPathRenderFn} pointerPosRef={pointerPosRef} svg={svg} />
