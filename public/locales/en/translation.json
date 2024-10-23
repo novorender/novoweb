@@ -710,5 +710,7 @@
     "tmZone": "TM Zone",
     "beta": "Beta",
     "globalSearch": "Global search",
-    "optional": "Optional"
+    "optional": "Optional",
+    "vertical": "Vertical",
+    "normal": "Normal"
 }

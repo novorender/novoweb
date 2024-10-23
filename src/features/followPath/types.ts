@@ -3,3 +3,5 @@ export type LandXmlPath = {
     name: string;
     brepId?: string;
 };
+
+export type TracerType = "off" | "vertical" | "normal";

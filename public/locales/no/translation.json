@@ -710,5 +710,7 @@
     "tmZone": "TM-sone",
     "beta": "Beta",
     "globalSearch": "Globalt søk",
-    "optional": "Valgfritt"
+    "optional": "Valgfritt",
+    "vertical": "Vertikal",
+    "normal": "Normal"
 }

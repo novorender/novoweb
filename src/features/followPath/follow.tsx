@@ -43,6 +43,7 @@ import {
     selectVerticalClipping,
     selectView2d,
 } from "./followPathSlice";
+import { TracerType } from "./types";
 import { useGoToProfile } from "./useGoToProfile";
 
 const profileFractionDigits = 3;
@@ -79,7 +80,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
 
     const dispatch = useAppDispatch();
 
-    const setTracer = (val: "off" | "vertical" | "normal") => {
+    const setTracer = (val: TracerType) => {
         dispatch(followPathActions.setShowTracer(val));
     };
 
@@ -528,12 +529,12 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                 <RadioGroup
                     aria-label="Tracer 2d"
                     value={showTracer}
-                    onChange={(e) => setTracer(e.target.value as "off" | "vertical" | "normal")}
+                    onChange={(e) => setTracer(e.target.value as TracerType)}
                     name="radio-buttons-group"
                 >
-                    <FormControlLabel value={"off"} control={<Radio />} label="Off" />
-                    <FormControlLabel value={"vertical"} control={<Radio />} label="Vertical" />
-                    <FormControlLabel value={"normal"} control={<Radio />} label="Normal" />
+                    <FormControlLabel value="off" control={<Radio />} label={t("off")} />
+                    <FormControlLabel value="vertical" control={<Radio />} label={t("vertical")} />
+                    <FormControlLabel value="normal" control={<Radio />} label={t("normal")} />
                 </RadioGroup>
             </ScrollBox>
             <ColorPicker

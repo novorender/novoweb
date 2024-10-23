@@ -7,7 +7,7 @@ import { selectBookmark } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 import { VecRGBA } from "utils/color";
 
-import { LandXmlPath } from "./types";
+import { LandXmlPath, TracerType } from "./types";
 
 const initialState = {
     paths: { status: AsyncStatus.Initial } as AsyncState<LandXmlPath[]>,
@@ -40,7 +40,7 @@ const initialState = {
     drawRoadIds: undefined as string[] | undefined,
     roadIds: undefined as string[] | undefined,
     selectedPath: undefined as undefined | LandXmlPath["id"],
-    showTracer: "off" as "off" | "vertical" | "normal",
+    showTracer: "off" as TracerType,
     followObject: undefined as undefined | FollowParametricObject,
 };
 
