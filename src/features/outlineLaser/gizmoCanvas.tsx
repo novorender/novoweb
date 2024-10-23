@@ -93,7 +93,7 @@ export function OutlineLaserGizmoCanvas({
             const drawProduct = view.measure?.draw.getDrawObjectFromPoints([p1, p2], {
                 closed: false,
                 angles: false,
-                generateLineLabels: true,
+                generateLengthLabels: true,
                 decimals: 2,
             });
             for (const obj of drawProduct?.objects || []) {
