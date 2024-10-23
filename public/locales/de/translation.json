@@ -715,5 +715,9 @@
     "deleteGroupQuestion_one": "Gruppe löschen?",
     "deleteGroupQuestion_other": "Gruppen löschen?",
     "vertical": "Vertikal",
-    "normal": "Normal"
+    "normal": "Normal",
+    "syncWithProperty": "Mit eigenschaft synchronisieren",
+    "propertyName": "Eigenschaftsname",
+    "synced": "Synchronisiert",
+    "propertySyncStatus": "{{sync}} mit der Eigenschaft \"{{propertyName}}\""
 }

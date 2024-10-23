@@ -39,6 +39,7 @@ import {
     FormItemType,
     type FormsFile,
     ItemWithOptions,
+    TemplateType,
 } from "../../types";
 
 const DOC_TYPES = [
@@ -53,7 +54,15 @@ const DOC_TYPES = [
 
 const today = new Date();
 
-export function AddFormItem({ onSave, item }: { onSave: (item: FormItem) => void; item?: FormItem }) {
+export function AddFormItem({
+    onSave,
+    item,
+    templateType,
+}: {
+    templateType: TemplateType;
+    onSave: (item: FormItem) => void;
+    item?: FormItem;
+}) {
     const { t } = useTranslation();
     const sceneId = useSceneId();
     const history = useHistory();
@@ -91,6 +100,9 @@ export function AddFormItem({ onSave, item }: { onSave: (item: FormItem) => void
 
     const [fileSizeWarning, toggleFileSizeWarning] = useToggle(false);
 
+    const [syncWithProperty, toggleSyncWithProperty] = useToggle(false);
+    const [property, setProperty] = useState<string | undefined>();
+
     const [uploadFiles, { isLoading: uploading }] = useUploadFilesMutation();
 
     const accept = useMemo(() => {
@@ -114,8 +126,9 @@ export function AddFormItem({ onSave, item }: { onSave: (item: FormItem) => void
             ].includes(type) ||
                 ([FormItemType.Checkbox, FormItemType.Dropdown].includes(type) && options.length) ||
                 (type === FormItemType.Text && value.trim().length) ||
+                (syncWithProperty && property) ||
                 (type === FormItemType.File && (!readonly || files.length))),
-        [title, type, options.length, value, readonly, files.length],
+        [title, type, options.length, value, syncWithProperty, property, readonly, files.length],
     );
 
     const handleSubmit = useCallback<FormEventHandler>(
@@ -151,6 +164,7 @@ export function AddFormItem({ onSave, item }: { onSave: (item: FormItem) => void
                 required: type !== FormItemType.Text && required,
                 ...(type === FormItemType.Checkbox || type === FormItemType.Dropdown ? { options } : {}),
                 ...(type === FormItemType.File && { accept, multiple, readonly }),
+                ...(syncWithProperty && property ? { property: { name: property } } : {}),
             } as FormItem;
 
             onSave(newItem);
@@ -169,6 +183,8 @@ export function AddFormItem({ onSave, item }: { onSave: (item: FormItem) => void
             accept,
             multiple,
             readonly,
+            syncWithProperty,
+            property,
             onSave,
             history,
             uploadFiles,
@@ -225,7 +241,7 @@ export function AddFormItem({ onSave, item }: { onSave: (item: FormItem) => void
         );
 
     return (
-        <ScrollBox p={1} pt={2} pb={3} component="form" onSubmit={handleSubmit}>
+        <ScrollBox p={1} pt={2} pb={3} mb={1} component="form" onSubmit={handleSubmit}>
             <Typography fontWeight={600} mb={1}>
                 {t("formItem")}
             </Typography>
@@ -291,14 +307,43 @@ export function AddFormItem({ onSave, item }: { onSave: (item: FormItem) => void
             )}
             {type === FormItemType.Text && (
                 <>
-                    <Divider sx={{ mb: 2 }} />
-                    <TextArea
-                        minRows={3}
-                        placeholder={t("additionalInfoOrUrl")}
-                        style={{ width: "100%" }}
-                        value={value}
-                        onChange={handleTextChange}
-                    />
+                    <Divider />
+                    {templateType === TemplateType.Search && (
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={syncWithProperty}
+                                    onChange={(e) => {
+                                        setValue("");
+                                        if (!e.target.checked) {
+                                            setProperty("");
+                                        }
+                                        toggleSyncWithProperty();
+                                    }}
+                                />
+                            }
+                            label={t("syncWithProperty")}
+                        />
+                    )}
+                    {syncWithProperty ? (
+                        <TextField
+                            label={t("propertyName")}
+                            value={property}
+                            onChange={(e) => setProperty(e.target.value)}
+                            fullWidth
+                        />
+                    ) : (
+                        <>
+                            <Divider sx={{ mb: 2 }} />
+                            <TextArea
+                                minRows={3}
+                                placeholder={t("additionalInfoOrUrl")}
+                                style={{ width: "100%" }}
+                                value={value}
+                                onChange={handleTextChange}
+                            />
+                        </>
+                    )}
                 </>
             )}
             {type === FormItemType.File && (

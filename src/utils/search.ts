@@ -46,7 +46,7 @@ export async function iterateAsync<T = HierarcicalObjectReference>({
     @remarks
     Some searches may return thousands of objects and take several seconds to complete.
 */
-export async function searchByPatterns({
+export async function searchByPatterns<T = HierarcicalObjectReference>({
     db,
     searchPatterns,
     callback,
@@ -56,16 +56,16 @@ export async function searchByPatterns({
 }: {
     db: ObjectDB;
     searchPatterns: SearchPattern[] | string;
-    callback: (result: HierarcicalObjectReference[]) => void;
+    callback: (result: T[]) => void;
     callbackInterval?: number;
     abortSignal?: AbortSignal;
     full?: boolean;
 }): Promise<void> {
-    const iterator = db.search({ searchPattern: searchPatterns, full }, abortSignal);
+    const iterator = db.search({ searchPattern: searchPatterns, full }, abortSignal) as AsyncIterableIterator<T>;
     let done = false;
 
     while (!done && !abortSignal?.aborted) {
-        const [result, _done] = await iterateAsync({ iterator, abortSignal, count: callbackInterval });
+        const [result, _done] = await iterateAsync<T>({ iterator, abortSignal, count: callbackInterval });
         done = _done;
         callback(result);
     }

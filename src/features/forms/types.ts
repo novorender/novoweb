@@ -25,6 +25,7 @@ type BaseItem<T extends Date | string[] | FormsFile[] | null> = {
     required: boolean;
     value?: T;
     readonly: boolean;
+    property?: { name: string; value?: string };
 };
 
 type SimpleItem = BaseItem<string[] | null> & {
@@ -80,7 +81,14 @@ export type FormState = "new" | "ongoing" | "finished";
 
 // TODO: Make sure this one is actually matching `FormField` variants on the backend.
 export type FormField =
-    | { type: "label"; id?: string; label?: string; value: string; forId?: string }
+    | {
+          type: "label";
+          id?: string;
+          label?: string;
+          value: string;
+          forId?: string;
+          property?: { name: string; value?: string };
+      }
     | {
           type: "text";
           id?: string;
@@ -94,6 +102,10 @@ export type FormField =
           maxLength?: number;
           pattern?: string;
           size?: number;
+          property?: {
+              name: string;
+              value?: string;
+          };
       }
     | {
           type: "number";
@@ -105,6 +117,10 @@ export type FormField =
           min?: number;
           max?: number;
           step?: number;
+          property?: {
+              name: string;
+              value?: number;
+          };
       }
     | {
           type: "radioGroup";
@@ -114,6 +130,10 @@ export type FormField =
           readonly?: boolean;
           value?: string;
           options: { label: string; value: string; checked?: boolean }[];
+          property?: {
+              name: string;
+              value?: string;
+          };
       }
     | { type: "checkbox"; id?: string; label?: string; value?: boolean; required?: boolean; readonly?: boolean }
     | {
@@ -128,6 +148,10 @@ export type FormField =
           maxLength?: number;
           rows?: number;
           cols?: number;
+          property?: {
+              name: string;
+              value?: string;
+          };
       }
     | {
           type: "select";
@@ -138,6 +162,10 @@ export type FormField =
           value?: string[];
           multiple?: boolean;
           options: { label: string; value: string; checked?: boolean }[];
+          property?: {
+              name: string;
+              value?: string;
+          };
       }
     | {
           type: FormItemType.Date | FormItemType.Time | FormItemType.DateTime;
