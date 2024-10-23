@@ -34,8 +34,11 @@ export function useCrossSection() {
             if (data) {
                 const objectPath = data.path;
                 const filePath = getFilePathFromObjectPath(objectPath);
-                const fileName = filePath?.split("/").at(-1);
-                const iterator = db.search({ parentPath: fileName, descentDepth: 0 }, undefined);
+                if (!filePath) {
+                    setObjects({ status: AsyncStatus.Success, data: new Set() });
+                    return;
+                }
+                const iterator = db.search({ parentPath: filePath, descentDepth: 0 }, undefined);
                 const fileId = (await iterator.next()).value;
                 const filter = new Set(await db.descendants(fileId, undefined));
 

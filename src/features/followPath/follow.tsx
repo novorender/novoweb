@@ -31,6 +31,7 @@ import {
     selectAutoStepSize,
     selectClipping,
     selectFollowDeviations,
+    selectHasTracer2dDrawProducts,
     selectLandXmlPaths,
     selectProfile,
     selectProfileRange,
@@ -280,6 +281,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     }, [dispatch]);
 
     const isCameraAlignedWithClippingPlane = useIsCameraAlignedWithClippingPlane(0);
+    const hasTracer2dDrawProducts = useAppSelector(selectHasTracer2dDrawProducts);
 
     const { r, g, b } = vecToRgb(deviations.lineColor);
 
@@ -529,7 +531,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                     </Accordion>
                 )}
 
-                {view2d && isCameraAlignedWithClippingPlane && (
+                {view2d && isCameraAlignedWithClippingPlane && hasTracer2dDrawProducts && (
                     <Accordion>
                         <AccordionSummary>{t("tracer2d")}</AccordionSummary>
                         <AccordionDetails sx={{ p: 1, display: "flex", flexDirection: "column" }}>

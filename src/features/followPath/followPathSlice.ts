@@ -42,6 +42,7 @@ const initialState = {
     selectedPath: undefined as undefined | LandXmlPath["id"],
     showTracer: "off" as TracerType,
     followObject: undefined as undefined | FollowParametricObject,
+    hasTracer2dDrawProducts: false,
 };
 
 type State = typeof initialState;
@@ -139,6 +140,9 @@ export const followPathSlice = createSlice({
         setFollowObject: (state, action: PayloadAction<State["followObject"]>) => {
             state.followObject = action.payload;
         },
+        setHasTracer2dDrawProducts: (state, action: PayloadAction<State["hasTracer2dDrawProducts"]>) => {
+            state.hasTracer2dDrawProducts = action.payload;
+        },
     },
     extraReducers(builder) {
         builder.addCase(selectBookmark, (state, action) => {
@@ -212,6 +216,7 @@ export const selectDrawRoadIds = (state: RootState) => state.followPath.drawRoad
 export const selectRoadIds = (state: RootState) => state.followPath.roadIds;
 export const selectShowTracer = (state: RootState) => state.followPath.showTracer;
 export const selectFollowObject = (state: RootState) => state.followPath.followObject;
+export const selectHasTracer2dDrawProducts = (state: RootState) => state.followPath.hasTracer2dDrawProducts;
 
 const { actions, reducer } = followPathSlice;
 export { actions as followPathActions, reducer as followPathReducer };
