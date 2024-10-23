@@ -101,7 +101,7 @@ export function AddFormItem({
     const [fileSizeWarning, toggleFileSizeWarning] = useToggle(false);
 
     const [syncWithProperty, toggleSyncWithProperty] = useToggle(false);
-    const [property, setProperty] = useState<string | undefined>();
+    const [property, setProperty] = useState<string>("");
 
     const [uploadFiles, { isLoading: uploading }] = useUploadFilesMutation();
 
@@ -113,23 +113,36 @@ export function AddFormItem({
         return mimeTypes;
     }, [fileTypes, t]);
 
-    const canSave = useMemo(
-        () =>
-            title.trim() &&
-            ([
-                FormItemType.Input,
-                FormItemType.YesNo,
-                FormItemType.TrafficLight,
-                FormItemType.Date,
-                FormItemType.Time,
-                FormItemType.DateTime,
-            ].includes(type) ||
-                ([FormItemType.Checkbox, FormItemType.Dropdown].includes(type) && options.length) ||
-                (type === FormItemType.Text && value.trim().length) ||
-                (syncWithProperty && property) ||
-                (type === FormItemType.File && (!readonly || files.length))),
-        [title, type, options.length, value, syncWithProperty, property, readonly, files.length],
-    );
+    const canSave = useMemo(() => {
+        if (title.trim().length === 0) {
+            return false;
+        }
+
+        switch (type) {
+            case FormItemType.YesNo:
+            case FormItemType.TrafficLight:
+            case FormItemType.Date:
+            case FormItemType.Time:
+            case FormItemType.DateTime:
+                return true;
+
+            case FormItemType.Checkbox:
+            case FormItemType.Dropdown:
+                return options.length > 0;
+
+            case FormItemType.Input:
+                return syncWithProperty ? Boolean(property.trim()) : true;
+
+            case FormItemType.Text:
+                return syncWithProperty ? Boolean(property.trim()) : value.trim().length > 0;
+
+            case FormItemType.File:
+                return !readonly || files.length > 0;
+
+            default:
+                return false;
+        }
+    }, [title, type, options.length, value, syncWithProperty, property, readonly, files.length]);
 
     const handleSubmit = useCallback<FormEventHandler>(
         async (e) => {
@@ -303,6 +316,36 @@ export function AddFormItem({
                         }
                         renderInput={(params) => <TextField {...params} label="Options" />}
                     />
+                </>
+            )}
+            {type === FormItemType.Input && (
+                <>
+                    <Divider />
+                    {templateType === TemplateType.Search && (
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={syncWithProperty}
+                                    onChange={(e) => {
+                                        setValue("");
+                                        if (!e.target.checked) {
+                                            setProperty("");
+                                        }
+                                        toggleSyncWithProperty();
+                                    }}
+                                />
+                            }
+                            label={t("syncWithProperty")}
+                        />
+                    )}
+                    {syncWithProperty && (
+                        <TextField
+                            label={t("propertyName")}
+                            value={property}
+                            onChange={(e) => setProperty(e.target.value)}
+                            fullWidth
+                        />
+                    )}
                 </>
             )}
             {type === FormItemType.Text && (

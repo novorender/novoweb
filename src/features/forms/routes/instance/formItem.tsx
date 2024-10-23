@@ -15,6 +15,7 @@ import {
     Select,
     Snackbar,
     Stack,
+    Tooltip,
     Typography,
     useTheme,
 } from "@mui/material";
@@ -33,7 +34,7 @@ import { useTranslation } from "react-i18next";
 import { FixedSizeList } from "react-window";
 
 import { useAppSelector } from "app/redux-store-interactions";
-import { Confirmation, ImgModal, Tooltip, withCustomScrollbar } from "components";
+import { Confirmation, ImgModal, withCustomScrollbar } from "components";
 import AddFilesButton from "features/forms/addFilesButton";
 import { useUploadFilesMutation } from "features/forms/api";
 import { FILE_SIZE_LIMIT } from "features/forms/constants";
@@ -135,6 +136,7 @@ const FormItemHeader = ({
     disabled,
     propertyName,
     isSynced,
+    onClick,
 }: {
     title: string;
     required?: boolean;
@@ -142,6 +144,7 @@ const FormItemHeader = ({
     disabled?: boolean;
     propertyName?: string;
     isSynced?: boolean;
+    onClick?: () => void;
 }) => {
     const { t } = useTranslation();
     const forms = useAppSelector(selectForms);
@@ -152,9 +155,12 @@ const FormItemHeader = ({
                 {`${title} ${!required ? `(${t("optional")})` : ""}`}
             </FormLabel>
             {propertyName && (
-                <Tooltip title={t("propertySyncStatus", { propertyName, sync: t(isSynced ? "synced" : "sync") })}>
+                <Tooltip
+                    title={t("propertySyncStatus", { propertyName, sync: t(isSynced ? "synced" : "sync") })}
+                    placement="top"
+                >
                     <Box>
-                        <IconButton onClick={() => {}} disabled={disabled || isSynced}>
+                        <IconButton onClick={onClick} disabled={disabled || isSynced}>
                             <LinkIcon color={isSynced ? "success" : "warning"} />
                         </IconButton>
                     </Box>
@@ -197,7 +203,7 @@ export function FormItem({
             value: string | string[] | number | Date | null | FormsFile[],
             property?: { name: string; value: string | number },
         ) => {
-            if (!editing) {
+            if (!editing && !property) {
                 setEditing(true);
             }
             setItems?.((state) =>
@@ -232,7 +238,7 @@ export function FormItem({
     );
 
     useEffect(() => {
-        if (!property?.value || ![FormItemType.Text].includes(item.type)) {
+        if (!property?.value || ![FormItemType.Text, FormItemType.Input].includes(item.type) || editing) {
             return;
         }
 
@@ -248,7 +254,7 @@ export function FormItem({
         ) {
             handleChange(property.value, property);
         }
-    }, [handleChange, item, property, property?.value]);
+    }, [editing, handleChange, item?.property?.value, item.type, item.value, property]);
 
     const handleTextFieldClick = (event: MouseEvent<HTMLDivElement>) => {
         if (event.target instanceof HTMLAnchorElement || event.target instanceof SVGElement) {
@@ -449,7 +455,19 @@ export function FormItem({
                     size="small"
                     sx={{ pb: 1 }}
                 >
-                    <FormItemHeader title={item.title} required={item.required} id={item.id} disabled={disabled} />
+                    <FormItemHeader
+                        title={item.title}
+                        required={item.required}
+                        id={item.id}
+                        disabled={disabled}
+                        propertyName={property?.name}
+                        isSynced={isSynced}
+                        onClick={() => {
+                            if (property?.value) {
+                                handleChange(property.value, property);
+                            }
+                        }}
+                    />
                     <Box onClick={handleTextFieldClick}>
                         {!editing && Boolean(item.value) ? (
                             <Box>
