@@ -6,7 +6,7 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { selectSelectedFormObjectGuid } from "features/forms/slice";
 import { searchByPatterns } from "utils/search";
 
-export function useObjectProperty(property?: { name: string; value?: string }) {
+export function useObjectProperty(property?: { name: string }) {
     const {
         state: { db },
     } = useExplorerGlobals(false);
@@ -28,9 +28,9 @@ export function useObjectProperty(property?: { name: string; value?: string }) {
                 callback: (objects) => {
                     const propValue =
                         objects?.[0]?.[property.name.toLocaleLowerCase() as keyof ObjectData] ??
-                        objects?.[0]?.properties.find(([propName]) => propName === property?.name)?.[1];
-                    if (propValue && (typeof propValue === "string" || Number.isInteger(propValue))) {
-                        setValue(propValue as string | number);
+                        objects?.[0]?.properties.find(([propName]) => propName === property.name)?.[1];
+                    if (typeof propValue === "string" || typeof propValue === "number" || Array.isArray(propValue)) {
+                        setValue(Array.isArray(propValue) ? propValue.join(", ") : propValue);
                     }
                 },
             });

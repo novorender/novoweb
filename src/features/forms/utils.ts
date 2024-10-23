@@ -299,7 +299,6 @@ function toFormField(item: FormItem): FormField {
             label: item.title,
             value: item.value?.length ? item.value[0] : "",
             property: item.property,
-            ...item.property,
             ...(item.id ? { id: item.id } : {}),
         };
     }
