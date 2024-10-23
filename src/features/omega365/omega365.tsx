@@ -1,198 +1,163 @@
-import { Download, OpenInNew } from "@mui/icons-material";
-import { Box, Button, useTheme } from "@mui/material";
-import { Fragment, useMemo } from "react";
+import { Settings } from "@mui/icons-material";
+import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { MemoryRouter, Route, Switch, useHistory, useLocation } from "react-router-dom";
 
-import { useGetOmega365DocumentLinksQuery, useIsOmega365ConfiguredForProjectQuery } from "apis/dataV2/dataV2Api";
-import { Omega365Document } from "apis/dataV2/omega365Types";
-import { useAppSelector } from "app/redux-store-interactions";
-import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    Divider,
-    LinearProgress,
-    LogoSpeedDial,
-    ScrollBox,
-    WidgetContainer,
-    WidgetHeader,
-} from "components";
+import { useGetOmega365ProjectConfigQuery } from "apis/dataV2/dataV2Api";
+import { Permission } from "apis/dataV2/permissions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { LinearProgress, LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
+import SimpleSnackbar from "components/simpleSnackbar";
 import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
-import { selectMainObject } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useToggle } from "hooks/useToggle";
 import { selectMaximized, selectMinimized } from "slices/explorer";
 
+import { ViewHeader } from "./components/viewHeader";
+import ConfigEditor from "./routes/configEditor";
+import { CreateActivity } from "./routes/createActivity";
+import Delete from "./routes/delete";
+import OmegaRoot from "./routes/root";
+import Save from "./routes/save";
+import ViewEditor from "./routes/viewEditor";
+import { selectOmega365Config, selectSnackbarMessage } from "./selectors";
+import { omega365Actions } from "./slice";
+
 export default function Omega365() {
+    return (
+        <MemoryRouter>
+            <Omega365Inner />
+        </MemoryRouter>
+    );
+}
+
+function Omega365Inner() {
+    const { t } = useTranslation();
     const [menuOpen, toggleMenu] = useToggle();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.omega365.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.omega365.key);
     const projectId = useExplorerGlobals(true).state.scene.id;
+    const dispatch = useAppDispatch();
+    const location = useLocation();
 
-    const { data, isError, isFetching } = useIsOmega365ConfiguredForProjectQuery({ projectId });
+    const { data, isError, isLoading, isSuccess } = useGetOmega365ProjectConfigQuery({ projectId });
+
+    useEffect(() => {
+        if (isSuccess) {
+            dispatch(
+                omega365Actions.setConfig(
+                    data ?? {
+                        baseURL: "",
+                        views: [],
+                    },
+                ),
+            );
+            dispatch(omega365Actions.setSelectedViewId(data?.views?.[0]?.id ?? null));
+        }
+    }, [dispatch, data, isSuccess]);
+
+    // This feels a bit dirty, but probably the easiest way to check that header is present
+    // and shouldn't be that expensive
+    const viewHeader = ViewHeader();
+
+    const disableShadow =
+        location.pathname === "/config" ||
+        (location.pathname === "/" && viewHeader !== null) ||
+        location.pathname === "/newView" ||
+        location.pathname.startsWith("/editView");
 
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.omega365} disableShadow />
-                {minimized || menuOpen ? null : isFetching ? (
+                <WidgetHeader
+                    widget={featuresConfig.omega365}
+                    WidgetMenu={WidgetMenu}
+                    disableShadow={disableShadow}
+                    menuOpen={menuOpen}
+                />
+                {minimized || menuOpen ? null : isLoading ? (
                     <Box>
                         <LinearProgress />
                     </Box>
                 ) : isError ? (
                     <Box p={1} pt={2}>
-                        An error occured while loading Omega365 configuration for the project.
+                        {t("omega365ConfigError")}
                     </Box>
-                ) : data?.configured === false ? (
-                    <Box p={1} pt={2}>
-                        Omega365 integration is not configured for this project.
-                    </Box>
-                ) : data?.configured === true ? (
-                    <DcoumentLoader projectId={projectId} menuOpen={menuOpen} minimized={minimized} />
-                ) : null}
+                ) : (
+                    <Switch>
+                        <Route path="/config">
+                            <ConfigEditor />
+                        </Route>
+                        <Route path="/newView">
+                            <ViewEditor />
+                        </Route>
+                        <Route path="/editView/:id">
+                            <ViewEditor />
+                        </Route>
+                        <Route path="/save">
+                            <Save />
+                        </Route>
+                        <Route path="/delete/:id">
+                            <Delete />
+                        </Route>
+                        <Route path="/create-activity">
+                            <CreateActivity />
+                        </Route>
+                        <Route path="/">
+                            <OmegaRoot projectId={projectId} menuOpen={menuOpen} minimized={minimized} />
+                        </Route>
+                    </Switch>
+                )}
                 {menuOpen && <WidgetList widgetKey={featuresConfig.omega365.key} onSelect={toggleMenu} />}
+                <WidgetSnackbar />
             </WidgetContainer>
             <LogoSpeedDial open={menuOpen} toggle={toggleMenu} />
         </>
     );
 }
 
-function DcoumentLoader({
-    projectId,
-    menuOpen,
-    minimized,
-}: {
-    projectId: string;
-    menuOpen: boolean;
-    minimized: boolean;
-}) {
-    const theme = useTheme();
-    const mainObject = useAppSelector(selectMainObject);
-    const isObjectSelected = typeof mainObject === "number";
-
-    const {
-        data: documents,
-        isError,
-        isFetching,
-    } = useGetOmega365DocumentLinksQuery({ projectId, objectId: mainObject! }, { skip: !isObjectSelected });
-
-    const objectDetailsHref = useMemo(() => {
-        if (!documents || documents.length === 0) {
-            return;
-        }
-
-        const doc = documents[0];
-        return doc.object_ID && `https://nyeveier.omega365.com/nt/objects/objectdetails?ID=${doc.object_ID}`;
-    }, [documents]);
+function WidgetSnackbar() {
+    const message = useAppSelector(selectSnackbarMessage);
+    const dispatch = useAppDispatch();
 
     return (
-        <>
-            <Box boxShadow={theme.customShadows.widgetHeader}>
-                <Box px={1}>
-                    <Divider />
-                </Box>
-                <Box display="flex" justifyContent="flex-end" m={0.5}>
-                    {objectDetailsHref && mainObject && !isFetching ? (
-                        <Button color="grey" href={objectDetailsHref} target="_blank">
-                            Object details
-                        </Button>
-                    ) : (
-                        <Button color="grey" disabled>
-                            Object details
-                        </Button>
-                    )}
-                </Box>
-            </Box>
-
-            {!isObjectSelected ? (
-                <Box p={1} pt={2}>
-                    Select an object to see associated documents.
-                </Box>
-            ) : isFetching ? (
-                <Box>
-                    <LinearProgress />
-                </Box>
-            ) : (
-                <ScrollBox
-                    display={menuOpen || minimized ? "none" : "flex"}
-                    flexDirection={"column"}
-                    height={1}
-                    pt={1}
-                    pb={3}
-                >
-                    {isError ? (
-                        <Box p={1} pt={2}>
-                            An error occured while loading Omega365 configuration for the project.
-                        </Box>
-                    ) : documents?.length === 0 ? (
-                        <Box p={1} pt={2}>
-                            Found no documents attached to the selected object.
-                        </Box>
-                    ) : (
-                        <DocumentList documents={documents || []} />
-                    )}
-                </ScrollBox>
-            )}
-        </>
+        <SimpleSnackbar
+            message={message}
+            hideDuration={3000}
+            close={() => dispatch(omega365Actions.setSnackbarMessage(null))}
+        />
     );
 }
 
-function DocumentList({ documents }: { documents: Omega365Document[] }) {
-    const organisedDocs = useMemo(
-        () =>
-            Object.values(
-                documents.reduce((prev, doc) => {
-                    if (
-                        prev[doc.documentType] &&
-                        !prev[doc.documentType].find((_doc) => _doc.document_ID === doc.document_ID)
-                    ) {
-                        prev[doc.documentType].push(doc);
-                    } else {
-                        prev[doc.documentType] = [doc];
-                    }
+function WidgetMenu(props: MenuProps) {
+    const { t } = useTranslation();
+    const history = useHistory();
+    const config = useAppSelector(selectOmega365Config);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntOmegaPims365Manage);
+    const dispatch = useAppDispatch();
 
-                    return prev;
-                }, {} as { [k: string]: Omega365Document[] })
-            ),
-        [documents]
-    );
+    if (!canManage) {
+        return null;
+    }
 
     return (
-        <>
-            {organisedDocs.map((docs) => (
-                <Accordion defaultExpanded={organisedDocs.length === 1} key={docs[0].documentTitle}>
-                    <AccordionSummary>{docs[0].documentType}</AccordionSummary>
-                    <AccordionDetails>
-                        <Box p={1}>
-                            {docs.map((doc, idx, arr) => (
-                                <Fragment key={doc.document_ID}>
-                                    <Box>
-                                        <Box display="flex" mb={0.5}>
-                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>Title:</Box>
-                                            <Box>{doc.documentTitle}</Box>
-                                        </Box>
-                                        <Box display="flex" mb={1}>
-                                            <Box sx={{ fontWeight: 600, mr: 1, minWidth: 48 }}>ID:</Box>
-                                            <Box>{doc.document_ID}</Box>
-                                        </Box>
-                                        <Box display="flex" mx={-1}>
-                                            <Button color="grey" sx={{ mr: 2 }} href={doc.profileURL} target="_blank">
-                                                <OpenInNew sx={{ mr: 1 }} /> Omega365
-                                            </Button>
-                                            <Button sx={{ mr: 1 }} href={doc.fileURL} target="_blank">
-                                                <Download /> Download
-                                            </Button>
-                                        </Box>
-                                    </Box>
-                                    {arr.length > 1 && idx !== arr.length - 1 ? (
-                                        <Divider sx={{ my: 2, borderColor: "grey.300" }} />
-                                    ) : null}
-                                </Fragment>
-                            ))}
-                        </Box>
-                    </AccordionDetails>
-                </Accordion>
-            ))}
-        </>
+        <Menu {...props}>
+            <MenuItem
+                onClick={() => {
+                    props.onClose?.({}, "backdropClick");
+                    dispatch(omega365Actions.setConfigDraft(config));
+                    history.push("/config");
+                }}
+            >
+                <ListItemIcon>
+                    <Settings fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>{t("settings")}</ListItemText>
+            </MenuItem>
+        </Menu>
     );
 }

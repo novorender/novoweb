@@ -1,10 +1,21 @@
 import { type ObjectDB } from "@novorender/data-js-api";
 import { type HierarcicalObjectReference, type ObjectData, type ObjectId } from "@novorender/webgl-api";
 
+import { HighlightCollection } from "contexts/highlightCollections";
 import { searchByPatterns } from "utils/search";
-import { sleep } from "utils/time";
+import { sleep, toLocalISOString } from "utils/time";
 
-import { type FormField, type FormItem, FormItemType, type FormObject, type FormObjectGuid } from "./types";
+import {
+    DateTimeItem,
+    type Form,
+    type FormField,
+    type FormItem,
+    FormItemType,
+    type FormObject,
+    type FormObjectGuid,
+    type FormsFile,
+    type FormState,
+} from "./types";
 
 function uniqueByGuid(objects: FormObject[]): FormObject[] {
     const guidSet = new Set();
@@ -73,7 +84,7 @@ export async function idsToObjects({
 
             return acc;
         },
-        [[]] as string[][]
+        [[]] as string[][],
     );
 
     const concurrentRequests = 5;
@@ -89,9 +100,15 @@ export async function idsToObjects({
                     abortSignal,
                     callback,
                     full: true,
-                    searchPatterns: [{ property: "id", value: batch, exact: true }],
+                    searchPatterns: [
+                        {
+                            property: "id",
+                            value: batch,
+                            exact: true,
+                        },
+                    ],
                 }).catch(() => {});
-            })
+            }),
         );
 
         await sleep(1);
@@ -163,7 +180,7 @@ export async function mapGuidsToIds({
 
             return acc;
         },
-        [[]] as string[][]
+        [[]] as string[][],
     );
 
     const concurrentRequests = 5;
@@ -194,7 +211,7 @@ export async function mapGuidsToIds({
                     ],
                     full: true,
                 }).catch(() => {});
-            })
+            }),
         );
 
         await sleep(1);
@@ -251,7 +268,10 @@ function toFormField(item: FormItem): FormField {
             type: "select",
             label: item.title,
             required: item.required,
-            options: item.options.map((option) => ({ label: option, value: option })),
+            options: item.options.map((option) => ({
+                label: option,
+                value: option,
+            })),
             ...(item.id ? { id: item.id } : {}),
             ...(item.value?.length ? { value: item.value } : item.value === null ? { value: [] } : {}),
         };
@@ -262,7 +282,10 @@ function toFormField(item: FormItem): FormField {
             multiple: true,
             label: item.title,
             required: item.required,
-            options: item.options.map((option) => ({ label: option, value: option })),
+            options: item.options.map((option) => ({
+                label: option,
+                value: option,
+            })),
             ...(item.id ? { id: item.id } : {}),
             ...(item.value?.length ? { value: item.value } : { value: [] }),
         };
@@ -272,6 +295,40 @@ function toFormField(item: FormItem): FormField {
             type: "label",
             label: item.title,
             value: item.value?.length ? item.value[0] : "",
+            ...(item.id ? { id: item.id } : {}),
+        };
+    }
+    if ([FormItemType.Date, FormItemType.Time, FormItemType.DateTime].includes(item.type)) {
+        return {
+            type: item.type as FormItemType.Date | FormItemType.Time | FormItemType.DateTime,
+            label: item.title,
+            value: toLocalISOString(item.value as Date),
+            required: item.required,
+            readonly: (item as DateTimeItem).readonly,
+            defaultValue: toLocalISOString((item as DateTimeItem).defaultValue),
+            min: toLocalISOString((item as DateTimeItem).min),
+            max: toLocalISOString((item as DateTimeItem).max),
+            step: (item as DateTimeItem).step,
+            ...(item.id ? { id: item.id } : {}),
+        };
+    }
+    if (item.type === FormItemType.File) {
+        // NOTE: Mapping the value is required to serialize it later
+        return {
+            type: "file",
+            label: item.title,
+            accept: item.accept,
+            multiple: item.multiple,
+            required: item.required,
+            readonly: item.readonly,
+            value: item.value?.map((f) => ({
+                lastModified: f.lastModified,
+                name: f.name,
+                size: f.size,
+                type: f.type,
+                checksum: f.checksum,
+                url: f.url,
+            })) as FormsFile[],
             ...(item.id ? { id: item.id } : {}),
         };
     }
@@ -288,6 +345,7 @@ function toFormItem(field: FormField): FormItem {
             type: FormItemType.Input,
             title: field.label ?? "",
             required: field.required ?? false,
+            readonly: field.readonly ?? false,
             ...(field.id ? { id: field.id } : {}),
             ...(field.value ? { value: [field.value] } : {}),
         };
@@ -297,6 +355,7 @@ function toFormItem(field: FormField): FormItem {
             type: FormItemType.TrafficLight,
             title: field.label ?? "",
             required: field.required ?? false,
+            readonly: field.readonly ?? false,
             ...(field.id ? { id: field.id } : {}),
             ...(field.value ? { value: [field.value] } : {}),
         };
@@ -306,6 +365,7 @@ function toFormItem(field: FormField): FormItem {
             type: FormItemType.YesNo,
             title: field.label ?? "",
             required: field.required ?? false,
+            readonly: field.readonly ?? false,
             ...(field.id ? { id: field.id } : {}),
             ...(typeof field.value === "boolean" ? { value: [field.value ? "yes" : "no"] } : {}),
         };
@@ -315,6 +375,7 @@ function toFormItem(field: FormField): FormItem {
             type: field.multiple ? FormItemType.Checkbox : FormItemType.Dropdown,
             title: field.label ?? "",
             required: field.required ?? false,
+            readonly: field.readonly ?? false,
             options: field.options.map((option) => option.value),
             ...(field.id ? { id: field.id } : {}),
             ...(field.value ? { value: field.value } : field.value === null ? { value: [] } : {}),
@@ -326,6 +387,36 @@ function toFormItem(field: FormField): FormItem {
             title: field.label ?? "",
             value: field.value ? [field.value] : [],
             required: true,
+            readonly: true,
+            ...(field.id ? { id: field.id } : {}),
+        };
+    }
+    if (["date", "time", "dateTime"].includes(field.type)) {
+        type DateTime = Extract<FormField, { type: "dateTime" | "date" | "time" }>;
+        return {
+            type: field.type,
+            title: (field as DateTime).label ?? "",
+            value: field.value ? new Date(field.value as string) : undefined,
+            defaultValue: field.defaultValue ? new Date(field.defaultValue as string) : undefined,
+            required: field.required ?? false,
+            readonly: field.readonly ?? false,
+            min: (field as DateTime).min ? new Date((field as DateTime).min as string) : undefined,
+            max: (field as DateTime).max ? new Date((field as DateTime).max as string) : undefined,
+            step: (field as DateTime).step,
+            ...(field.id ? { id: field.id } : {}),
+        } as DateTimeItem;
+    }
+    if (field.type === "file") {
+        return {
+            type: FormItemType.File,
+            title: field.label ?? "",
+            value: field.value,
+            defaultValue: field.defaultValue,
+            required: field.required ?? false,
+            readonly: field.readonly ?? false,
+            accept: field.accept ?? "",
+            multiple: field.multiple ?? false,
+            directory: field.directory ?? false,
             ...(field.id ? { id: field.id } : {}),
         };
     }
@@ -342,10 +433,72 @@ export function getFormItemTypeDisplayName(type: FormItemType): string {
             return "Yes / No";
         case FormItemType.TrafficLight:
             return "Traffic light";
-        case FormItemType.Checkbox:
-        case FormItemType.Dropdown:
-        case FormItemType.Input:
-        case FormItemType.Text:
+        case FormItemType.DateTime:
+            return "Date and time";
+        default:
             return type[0].toUpperCase() + type.slice(1);
     }
+}
+
+export function calculateFormState(form: Partial<Form>): FormState {
+    let allRequiredFilled = true;
+    form.fields?.forEach((field) => {
+        const isFilled = isFormFieldFilled(field);
+        if (isFormFieldRequired(field)) {
+            allRequiredFilled &&= isFilled;
+        }
+    });
+
+    // We don't consider "new" state here, because
+    // in case the form was patched, it should be considered as "ongoing"
+    return allRequiredFilled ? "finished" : "ongoing";
+}
+
+function isFormFieldFilled(field: FormField): boolean {
+    switch (field.type) {
+        case "text":
+        case "radioGroup":
+        case "textArea":
+            return Boolean(field.value);
+        case "number":
+            return typeof field.value === "number";
+        case "checkbox":
+            return typeof field.value === "boolean";
+        case "select":
+        case "file":
+        case "date":
+        case "time":
+        case "dateTime":
+            return (field.value?.length ?? 0) > 0;
+        default:
+            return false;
+    }
+}
+
+function isFormFieldRequired(field: FormField): boolean {
+    switch (field.type) {
+        case "text":
+        case "radioGroup":
+        case "textArea":
+        case "number":
+        case "checkbox":
+        case "select":
+        case "file":
+        case "date":
+        case "time":
+        case "dateTime":
+            return field.required ?? false;
+        default:
+            return false;
+    }
+}
+
+export function determineHighlightCollection(form: Form): HighlightCollection {
+    if (form.state === "ongoing") {
+        return HighlightCollection.FormsOngoing;
+    }
+    if (form.state === "finished") {
+        return HighlightCollection.FormsCompleted;
+    }
+    return HighlightCollection.FormsNew;
 }

@@ -2,18 +2,18 @@ import { ArrowBack, ColorLens, Save } from "@mui/icons-material";
 import { Autocomplete, Box, Button, FormControlLabel, Slider, Typography, useTheme } from "@mui/material";
 import { quat, vec3 } from "gl-matrix";
 import { MouseEvent, SyntheticEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import {
-    Accordion,
     AccordionDetails,
     AccordionSummary,
     Divider,
     LinearProgress,
-    ScrollBox,
     Switch,
     TextField,
+    WidgetBottomScrollBox,
 } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ColorPicker } from "features/colorPicker";
@@ -28,6 +28,8 @@ import {
 } from "features/render";
 import { getAsyncStateData, ViewMode } from "types/misc";
 import { rgbToVec, VecRGBA, vecToRgb } from "utils/color";
+
+import { AdvSettingsAccordion as Accordion } from "../components/advSettingsAccordion";
 
 export function SceneSettings({
     save,
@@ -48,6 +50,7 @@ export function SceneSettings({
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const dispatch = useAppDispatch();
     const viewMode = useAppSelector(selectViewMode);
@@ -90,11 +93,11 @@ export function SceneSettings({
                 <Box display="flex" justifyContent="space-between">
                     <Button onClick={() => history.goBack()} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <Button sx={{ ml: "auto" }} onClick={save} color="grey" disabled={saving}>
                         <Save sx={{ mr: 1 }} />
-                        Save
+                        {t("save")}
                     </Button>
                 </Box>
             </Box>
@@ -103,13 +106,13 @@ export function SceneSettings({
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} mt={1} pb={3}>
+            <WidgetBottomScrollBox height={1} mt={1} pb={3}>
                 <Typography p={1} pb={0} variant="h6" fontWeight={600}>
-                    Scene settings
+                    {t("sceneSettings")}
                 </Typography>
                 <Divider sx={{ my: 1 }} />
-                <Accordion>
-                    <AccordionSummary>Environment</AccordionSummary>
+                <Accordion id="settings-scene-environment">
+                    <AccordionSummary>{t("environment")}</AccordionSummary>
                     <AccordionDetails>
                         <Box p={1} pr={3} display="flex" flexDirection="column">
                             <Autocomplete
@@ -139,14 +142,14 @@ export function SceneSettings({
                                 renderInput={(params) => <TextField {...params} label="Environment" />}
                             />
                         </Box>
-                        <Box display="flex" alignItems="center" sx={{ p: 1, mb: 2 }}>
+                        <Box id="scene-blur" display="flex" alignItems="center" sx={{ p: 1, mb: 2 }}>
                             <Typography
                                 sx={{
                                     minWidth: 50,
                                     flexShrink: 0,
                                 }}
                             >
-                                Blur
+                                {t("blur")}
                             </Typography>
                             <Slider
                                 sx={{ mx: 2, flex: "1 1 100%" }}
@@ -162,8 +165,8 @@ export function SceneSettings({
                     </AccordionDetails>
                 </Accordion>
                 {showTerrainSettings ? (
-                    <Accordion>
-                        <AccordionSummary>Terrain</AccordionSummary>
+                    <Accordion id="settings-scene-object-picking">
+                        <AccordionSummary>{t("terrain")}</AccordionSummary>
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
                                 <FormControlLabel
@@ -179,7 +182,7 @@ export function SceneSettings({
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Render terrain as background
+                                            {t("renderTerrainAsBackground")}
                                         </Box>
                                     }
                                 />
@@ -187,11 +190,12 @@ export function SceneSettings({
                         </AccordionDetails>
                     </Accordion>
                 ) : null}
-                <Accordion>
-                    <AccordionSummary>Object picking</AccordionSummary>
+                <Accordion id="settings-scene-object-picking">
+                    <AccordionSummary>{t("objectPicking")}</AccordionSummary>
                     <AccordionDetails>
                         <Box p={1} display="flex" flexDirection="column">
                             <FormControlLabel
+                                id="scene-pick-semi-transparent-objects"
                                 sx={{ ml: 0, mb: 1 }}
                                 control={
                                     <Switch
@@ -201,14 +205,14 @@ export function SceneSettings({
                                             dispatch(
                                                 renderActions.setAdvanced({
                                                     pick: { opacityThreshold: checked ? 0.1 : 1 },
-                                                })
+                                                }),
                                             )
                                         }
                                     />
                                 }
                                 label={
                                     <Box ml={1} fontSize={16}>
-                                        Pick semi-transparent objects
+                                        {t("pickSemiTransparentObjects")}
                                     </Box>
                                 }
                             />
@@ -217,12 +221,19 @@ export function SceneSettings({
                 </Accordion>
                 <Box p={1} mt={1}>
                     <Box>
-                        <Button sx={{ mb: 2 }} variant="outlined" color="grey" onClick={toggleColorPicker}>
+                        <Button
+                            id="scene-2d-background-color"
+                            sx={{ mb: 2 }}
+                            variant="outlined"
+                            color="grey"
+                            onClick={toggleColorPicker}
+                        >
                             <ColorLens sx={{ mr: 1, color: `rgb(${r}, ${g}, ${b})` }} fontSize="small" />
-                            2D background color
+                            {t("2dBackgroundColor")}
                         </Button>
                     </Box>
                     <Button
+                        id="scene-save-default-camera-position"
                         disabled={saving || viewMode === ViewMode.Panorama}
                         variant="outlined"
                         color="grey"
@@ -239,10 +250,10 @@ export function SceneSettings({
                             });
                         }}
                     >
-                        Save default camera position
+                        {t("saveDefaultCameraPosition")}
                     </Button>
                 </Box>
-            </ScrollBox>
+            </WidgetBottomScrollBox>
             <ColorPicker
                 open={Boolean(colorPickerAnchor)}
                 anchorEl={colorPickerAnchor}
@@ -253,7 +264,7 @@ export function SceneSettings({
                     dispatch(
                         renderActions.setBackground({
                             color,
-                        })
+                        }),
                     );
                 }}
                 disableAlpha

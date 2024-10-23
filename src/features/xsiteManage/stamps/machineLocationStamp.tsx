@@ -1,6 +1,7 @@
 import { Add, Close, FlightTakeoff } from "@mui/icons-material";
 import { Box, Button, IconButton, Typography } from "@mui/material";
 import { quat } from "gl-matrix";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider } from "components";
@@ -15,6 +16,7 @@ export function MachineLocationStamp() {
     const {
         state: { view },
     } = useExplorerGlobals();
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const stamp = useAppSelector(selectStamp);
     const site = useAppSelector(selectXsiteManageSite);
@@ -37,10 +39,14 @@ export function MachineLocationStamp() {
                 </IconButton>
             </Box>
             <Divider sx={{ mb: 0.5 }} />
-            DBSN: {toDBSN(stamp.data.location.machineId)} <br />
-            Latitude: {stamp.data.location.latitude} <br />
-            Longitude: {stamp.data.location.longitude} <br />
-            Time: {new Date(stamp.data.location.timestampMs).toLocaleString()}
+            {t("dbsn")}
+            {toDBSN(stamp.data.location.machineId)} <br />
+            {t("latitude")}
+            {stamp.data.location.latitude} <br />
+            {t("longitude")}
+            {stamp.data.location.longitude} <br />
+            {t("timeName")}
+            {new Date(stamp.data.location.timestampMs).toLocaleString()}
             <Box mt={1}>
                 <Button
                     variant="outlined"
@@ -58,12 +64,12 @@ export function MachineLocationStamp() {
                                     ],
                                     rotation: view ? quat.clone(view.renderState.camera.rotation) : [0, 0, 0, 1],
                                 },
-                            })
+                            }),
                         )
                     }
                 >
                     <FlightTakeoff sx={{ mr: 1 }} />
-                    Fly to machine
+                    {t("flyToMachine")}
                 </Button>
             </Box>
             <Box mt={1.5} mb={1}>
@@ -77,7 +83,7 @@ export function MachineLocationStamp() {
                             xsiteManageActions.activateLogPoints({
                                 machine,
                                 time: showLogPointsSince === LogPointTime.None ? LogPointTime.Day : showLogPointsSince,
-                            })
+                            }),
                         );
                         dispatch(xsiteManageActions.setClickedMarker(machine));
                         dispatch(xsiteManageActions.toggleShowLogPointMarkers(true));
@@ -85,7 +91,7 @@ export function MachineLocationStamp() {
                     }}
                 >
                     <Add sx={{ mr: 1 }} />
-                    Show log points
+                    {t("showLogPoints")}
                 </Button>
             </Box>
         </Box>

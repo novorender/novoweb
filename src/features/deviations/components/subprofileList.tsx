@@ -1,6 +1,7 @@
 import { Delete, Warning } from "@mui/icons-material";
 import { IconButton, List, ListItemButton, Typography } from "@mui/material";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import { ObjectGroup } from "contexts/objectGroups";
 
@@ -62,19 +63,21 @@ function Item({
     selected?: boolean;
     errors: SubprofileGroupErrors;
 }) {
+    const { t } = useTranslation();
+
     const groups1 = useMemo(
         () =>
             subprofile.groups1.value
                 .map((id) => objectGroups.find((g) => g.id === id)?.name ?? DELETED_DEVIATION_LABEL)
                 .join(", "),
-        [objectGroups, subprofile.groups1.value]
+        [objectGroups, subprofile.groups1.value],
     );
     const groups2 = useMemo(
         () =>
             subprofile.groups2.value
                 .map((id) => objectGroups.find((g) => g.id === id)?.name ?? DELETED_DEVIATION_LABEL)
                 .join(", "),
-        [objectGroups, subprofile.groups2.value]
+        [objectGroups, subprofile.groups2.value],
     );
 
     const hasErrors = Object.values(errors).some((e) => e.error && e.active);
@@ -84,7 +87,7 @@ function Item({
             <Typography flex="1 1 auto">
                 {groups1 || (
                     <Typography color="grey" component="span">
-                        [not set]
+                        {t("notSet")}
                     </Typography>
                 )}
                 <Typography fontWeight={600} component="span">
@@ -92,7 +95,7 @@ function Item({
                 </Typography>
                 {groups2 || (
                     <Typography color="grey" component="span">
-                        [not set]
+                        {t("notSet")}
                     </Typography>
                 )}
             </Typography>

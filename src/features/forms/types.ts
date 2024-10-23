@@ -1,4 +1,4 @@
-import { type vec3 } from "gl-matrix";
+import { type quat, type vec3 } from "gl-matrix";
 
 export enum FormItemType {
     Checkbox = "checkbox",
@@ -7,26 +7,66 @@ export enum FormItemType {
     Dropdown = "dropdown",
     Input = "input",
     Text = "text",
+    File = "file",
+    DateTime = "dateTime",
+    Date = "date",
+    Time = "time",
 }
 
-export type FormItem = SimpleItem | ItemWithOptions;
+export type FormItem = SimpleItem | ItemWithOptions | FileItem | DateTimeItem;
 
-type BaseItem = {
+export type FormFileUploadResponse = { checksum?: string; url?: string };
+
+export type FormsFile = File & FormFileUploadResponse;
+
+type BaseItem<T extends Date | string[] | FormsFile[] | null> = {
     id?: string;
     title: string;
     required: boolean;
-    value?: string[] | null;
-    relevant?: boolean;
+    value?: T;
+    readonly: boolean;
 };
 
-type SimpleItem = BaseItem & {
-    type: Exclude<FormItemType, FormItemType.Dropdown | FormItemType.Checkbox>;
+type SimpleItem = BaseItem<string[] | null> & {
+    type: Exclude<
+        FormItemType,
+        | FormItemType.Dropdown
+        | FormItemType.Checkbox
+        | FormItemType.File
+        | FormItemType.Date
+        | FormItemType.Time
+        | FormItemType.DateTime
+    >;
 };
 
-type ItemWithOptions = BaseItem & {
-    type: Exclude<FormItemType, SimpleItem["type"]>;
+export interface ItemWithOptions extends BaseItem<string[] | null> {
+    type: Exclude<
+        FormItemType,
+        | FormItemType.Input
+        | FormItemType.Text
+        | FormItemType.File
+        | FormItemType.Date
+        | FormItemType.Time
+        | FormItemType.DateTime
+    >;
     options: string[];
-};
+}
+
+export interface FileItem extends BaseItem<FormsFile[]> {
+    type: FormItemType.File;
+    defaultValue?: FormsFile[];
+    accept: string;
+    multiple: boolean;
+    directory?: boolean;
+}
+
+export interface DateTimeItem extends BaseItem<Date> {
+    type: FormItemType.Date | FormItemType.Time | FormItemType.DateTime;
+    defaultValue?: Date;
+    min?: Date;
+    max?: Date;
+    step?: number;
+}
 
 export type ProjectId = string;
 export type TemplateId = string;
@@ -71,6 +111,7 @@ export type FormField =
           id?: string;
           label?: string;
           required?: boolean;
+          readonly?: boolean;
           value?: string;
           options: { label: string; value: string; checked?: boolean }[];
       }
@@ -93,11 +134,35 @@ export type FormField =
           id?: string;
           label?: string;
           required?: boolean;
+          readonly?: boolean;
           value?: string[];
           multiple?: boolean;
           options: { label: string; value: string; checked?: boolean }[];
       }
-    | { type: "file"; id?: string; required?: boolean; readonly?: boolean; accept?: string[] };
+    | {
+          type: FormItemType.Date | FormItemType.Time | FormItemType.DateTime;
+          id?: string;
+          label?: string;
+          value?: string;
+          defaultValue?: string;
+          required?: boolean;
+          readonly?: boolean;
+          min?: string;
+          max?: string;
+          step?: number;
+      }
+    | {
+          type: "file";
+          id?: string;
+          value?: FormsFile[];
+          defaultValue?: FormsFile[];
+          label?: string;
+          required?: boolean;
+          readonly?: boolean;
+          accept?: string;
+          multiple?: boolean;
+          directory?: boolean;
+      };
 
 export type FormObjectGuid = string;
 
@@ -121,7 +186,6 @@ type BaseTemplateHeader = {
     state: TemplateState;
     id: TemplateId;
     createdBy?: ChangeStamp;
-    modifiedBy?: ChangeStamp[];
 };
 
 type SearchTemplateHeader = BaseTemplateHeader & { type: TemplateType.Search };
@@ -131,6 +195,8 @@ export type FormRecord = {
     title?: string;
     state: FormState;
     location?: vec3;
+    rotation?: quat;
+    scale?: number;
 };
 
 export type FormInstanceId = string;
@@ -140,8 +206,18 @@ type TemplateBase = {
 };
 
 export enum TemplateType {
+    /**
+     * @deprecated
+     */
     Search = "search",
+
+    /**
+     * @deprecated
+     */
     Location = "location",
+
+    Object = "object",
+    Geo = "geo",
 }
 
 export type SearchTemplate = TemplateBase & {
@@ -156,6 +232,23 @@ export type LocationTemplate = TemplateBase & {
 
 export type Template = SearchTemplate | LocationTemplate;
 
+export type MinimalTemplate = {
+    id: TemplateId;
+    type: TemplateType;
+    title: string;
+
+    // state-based counters for the form instances,
+    // computed from indexes on the backend
+    forms: {
+        finished: number;
+        total: number;
+    };
+};
+
+export type Signature = ChangeStamp & { isFinal?: boolean };
+
+export type FormHistory = Record<string, Partial<Form>>;
+
 export type Form = {
     id: FormId;
     title: string;
@@ -163,8 +256,12 @@ export type Form = {
     readonly: boolean;
     state: FormState;
     location?: vec3;
+    rotation?: quat;
+    scale?: number;
     createdBy?: ChangeStamp;
-    modifiedBy?: ChangeStamp[];
+    signatures?: Signature[];
+    isFinal?: boolean;
+    version: number;
 };
 
 export type FormGLtfAsset = {
@@ -173,4 +270,20 @@ export type FormGLtfAsset = {
     matIconName: string;
     icon: string;
     baseObjectId: number;
+};
+
+export type FormTransform = {
+    // Reason for having templateId/formId here:
+    // When we click another marker - selectedFormId changes straight away, but not transformDraft,
+    // because saving relies on it.
+    // Meanwhile new selected object is rendered with the previous object transform causing flicker.
+    // By attaching transformDraft to particular form we can avoid that flicker.
+    // Another alternative could be to make it a state in locationInstance, but I want to localize
+    // form transformDraft as much as possible because it might update quite rapidly.
+    templateId: TemplateId;
+    formId: FormId;
+    location: vec3;
+    rotation?: quat;
+    scale?: number;
+    updated: boolean;
 };

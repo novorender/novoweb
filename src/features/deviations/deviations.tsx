@@ -2,21 +2,18 @@ import { Add, Delete, Settings } from "@mui/icons-material";
 import { ListItemIcon, ListItemText, Menu, MenuItem, MenuProps, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { MemoryRouter, Route, Switch, useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, Tooltip, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { renderActions } from "features/render";
 import WidgetList from "features/widgetList/widgetList";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useToggle } from "hooks/useToggle";
-import {
-    selectIsAdminScene,
-    selectIsOnline,
-    selectMaximized,
-    selectMinimized,
-    selectProjectIsV2,
-} from "slices/explorer";
+import { selectIsOnline, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus, ViewMode } from "types/misc";
 
 import { deviationsActions } from "./deviationsSlice";
@@ -43,7 +40,13 @@ export default function Deviations() {
     return (
         <MemoryRouter>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.deviations} WidgetMenu={WidgetMenu} disableShadow />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.deviations}
+                    WidgetMenu={WidgetMenu}
+                    disableShadow
+                />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection="column"
@@ -83,7 +86,9 @@ export default function Deviations() {
 }
 
 function WidgetMenu(props: MenuProps) {
-    const isAdminScene = useAppSelector(selectIsAdminScene);
+    const { t } = useTranslation();
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.DeviationWrite);
     const history = useHistory();
     const isProjectV2 = useAppSelector(selectProjectIsV2);
     const calculationStatus = useAppSelector(selectDeviationCalculationStatus);
@@ -109,7 +114,7 @@ function WidgetMenu(props: MenuProps) {
         }
     };
 
-    if (!isAdminScene) {
+    if (!canManage) {
         return null;
     }
 
@@ -139,7 +144,7 @@ function WidgetMenu(props: MenuProps) {
                         <ListItemIcon>
                             <Settings fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Settings</ListItemText>
+                        <ListItemText>{t("settings")}</ListItemText>
                     </MenuItem>
                     <MenuItem
                         onClick={() => {
@@ -151,7 +156,7 @@ function WidgetMenu(props: MenuProps) {
                         <ListItemIcon>
                             <Delete fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Remove</ListItemText>
+                        <ListItemText>{t("remove")}</ListItemText>
                     </MenuItem>
                     <Tooltip
                         title={
@@ -179,7 +184,7 @@ function WidgetMenu(props: MenuProps) {
                                 <ListItemIcon>
                                     <Add fontSize="small" />
                                 </ListItemIcon>
-                                <ListItemText>New</ListItemText>
+                                <ListItemText>{t("new")}</ListItemText>
                             </MenuItem>
                         </span>
                     </Tooltip>

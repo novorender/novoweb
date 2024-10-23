@@ -24,12 +24,14 @@ import { rotationFromDirection } from "@novorender/api";
 import { BoundingSphere } from "@novorender/webgl-api";
 import { vec3 } from "gl-matrix";
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Accordion, AccordionDetails, AccordionSummary, ScrollBox } from "components";
+import { Accordion, AccordionDetails, AccordionSummary, WidgetBottomScrollBox } from "components";
 import { CameraType, renderActions } from "features/render";
-import { selectHasAdminCapabilities } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { AsyncStatus } from "types/misc";
 
 import { arcgisActions, selectArcgisFeatureServers } from "../arcgisSlice";
@@ -39,26 +41,28 @@ import { FeatureServer, Layer } from "../types";
 import { aabb2ToBoundingSphere, getTotalAabb2, makeWhereStatement } from "../utils";
 
 export function FeatureServerList() {
+    const { t } = useTranslation();
     const theme = useTheme();
     const featureServers = useAppSelector(selectArcgisFeatureServers);
     const dispatch = useAppDispatch();
     const history = useHistory();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
-    const epsg = useProjectEpsg({ skip: featureServers.status !== AsyncStatus.Success });
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntArcgisManage);
+    const epsg = useProjectEpsg();
     const isCameraSetCorrectly = useIsCameraSetCorrectly();
 
     const handleFeatureCheck = useCallback(
         (featureServerId: string, checked: boolean) => {
             dispatch(arcgisActions.checkFeature({ featureServerId, checked }));
         },
-        [dispatch]
+        [dispatch],
     );
 
     const handleLayerCheck = useCallback(
         (featureServerId: string, layerId: number, checked: boolean) => {
             dispatch(arcgisActions.checkFeatureLayer({ featureServerId, layerId, checked }));
         },
-        [dispatch]
+        [dispatch],
     );
 
     const handleFlyToFeatureServer = useCallback(
@@ -77,7 +81,7 @@ export function FeatureServerList() {
 
             setCamera(dispatch, boundingSphere);
         },
-        [dispatch]
+        [dispatch],
     );
 
     const handleFlyToLayer = useCallback(
@@ -89,7 +93,7 @@ export function FeatureServerList() {
             const boundingSphere = ensureBoundingSphereMinRadius(aabb2ToBoundingSphere(layer.aabb));
             setCamera(dispatch, boundingSphere);
         },
-        [dispatch]
+        [dispatch],
     );
 
     return (
@@ -100,7 +104,7 @@ export function FeatureServerList() {
                 position="absolute"
             />
 
-            {featureServers.status === AsyncStatus.Loading || epsg.isFetching ? (
+            {featureServers.status === AsyncStatus.Loading ? (
                 <Box>
                     <LinearProgress />
                 </Box>
@@ -108,17 +112,13 @@ export function FeatureServerList() {
                 <Box p={1} pt={2}>
                     {featureServers.msg}
                 </Box>
-            ) : epsg.error ? (
+            ) : !epsg ? (
                 <Box p={1} pt={2}>
-                    Error loading TM Zone info
-                </Box>
-            ) : !epsg.data ? (
-                <Box p={1} pt={2}>
-                    TM Zone is not defined for the project
+                    {t("tMZoneIsNotDefinedForTheProject")}
                 </Box>
             ) : featureServers.status === AsyncStatus.Success && featureServers.data.length === 0 ? (
                 <Box sx={{ m: 4, textAlign: "center" }}>
-                    <Box>No feature servers added</Box>
+                    <Box>{t("noFeatureServersAdded")}</Box>
                     <Button
                         type="button"
                         sx={{ mt: 2 }}
@@ -126,9 +126,9 @@ export function FeatureServerList() {
                         variant="outlined"
                         color="primary"
                         onClick={() => history.push("/edit")}
-                        disabled={!isAdmin}
+                        disabled={!canManage}
                     >
-                        Add
+                        {t("add")}
                     </Button>
                 </Box>
             ) : featureServers.status === AsyncStatus.Success ? (
@@ -137,13 +137,11 @@ export function FeatureServerList() {
                         featureServers.status === AsyncStatus.Success &&
                         featureServers.data.length > 0 && (
                             <Box p={1} pt={2} textAlign="center">
-                                <Typography variant="subtitle1">
-                                    Layers are only visible in top-down 2D view.
-                                </Typography>
+                                <Typography variant="subtitle1">{t("layersAreOnlyVisibleInTopDown2DView")}</Typography>
                             </Box>
                         )}
 
-                    <ScrollBox display="flex" flexDirection="column" height={1} pt={1} pb={2}>
+                    <WidgetBottomScrollBox display="flex" flexDirection="column" height={1} pt={1} pb={2}>
                         {featureServers.data.map((featureServer) => {
                             return (
                                 <FeatureServerItem
@@ -154,11 +152,11 @@ export function FeatureServerList() {
                                     onCheckLayer={handleLayerCheck}
                                     flyToFeatureServer={handleFlyToFeatureServer}
                                     flyToLayer={handleFlyToLayer}
-                                    isAdmin={isAdmin}
+                                    canManage={canManage}
                                 />
                             );
                         })}
-                    </ScrollBox>
+                    </WidgetBottomScrollBox>
                 </>
             ) : null}
         </>
@@ -172,7 +170,7 @@ function FeatureServerItem({
     onCheckLayer,
     flyToFeatureServer,
     flyToLayer,
-    isAdmin,
+    canManage,
 }: {
     defaultExpanded: boolean;
     featureServer: FeatureServer;
@@ -180,8 +178,9 @@ function FeatureServerItem({
     onCheckLayer: (featureServerId: string, layerId: number, checked: boolean) => void;
     flyToFeatureServer: (featureServer: FeatureServer) => void;
     flyToLayer: (layer: Layer) => void;
-    isAdmin: boolean;
+    canManage: boolean;
 }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const { definition, layers } = featureServer;
@@ -275,21 +274,21 @@ function FeatureServerItem({
                         </ListItemIcon>
                         <ListItemText>
                             <Link href={featureServer.url} target="_blank" underline="none" color="inherit">
-                                Open
+                                {t("open")}
                             </Link>
                         </ListItemText>
                     </MenuItem>
-                    <MenuItem onClick={() => history.push("/edit", { id: featureServer.id })} disabled={!isAdmin}>
+                    <MenuItem onClick={() => history.push("/edit", { id: featureServer.id })} disabled={!canManage}>
                         <ListItemIcon>
                             <Edit fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Edit</ListItemText>
+                        <ListItemText>{t("edit")}</ListItemText>
                     </MenuItem>
-                    <MenuItem onClick={() => history.push("/remove", { id: featureServer.id })} disabled={!isAdmin}>
+                    <MenuItem onClick={() => history.push("/remove", { id: featureServer.id })} disabled={!canManage}>
                         <ListItemIcon>
                             <Clear fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Remove</ListItemText>
+                        <ListItemText>{t("remove")}</ListItemText>
                     </MenuItem>
                 </Menu>
             </AccordionSummary>
@@ -304,7 +303,7 @@ function FeatureServerItem({
                                 layer={layer}
                                 onCheckLayer={onCheckLayer}
                                 flyToLayer={flyToLayer}
-                                isAdmin={isAdmin}
+                                canManage={canManage}
                             />
                         ))}
                     </List>
@@ -319,14 +318,15 @@ function LayerItem({
     layer,
     onCheckLayer,
     flyToLayer,
-    isAdmin,
+    canManage,
 }: {
     featureServer: FeatureServer;
     layer: Layer;
     onCheckLayer: (featureServerId: string, layerId: number, checked: boolean) => void;
     flyToLayer: (layer: Layer) => void;
-    isAdmin: boolean;
+    canManage: boolean;
 }) {
+    const { t } = useTranslation();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const history = useHistory();
 
@@ -345,8 +345,18 @@ function LayerItem({
     const tooltipTitle = (
         <>
             {layer.name}
-            {layer.where && <div>Own filter: {layer.where}</div>}
-            {fullWhere && <div>Full filter: {fullWhere}</div>}
+            {layer.where && (
+                <div>
+                    {t("ownFilter")}
+                    {layer.where}
+                </div>
+            )}
+            {fullWhere && (
+                <div>
+                    {t("fullFilter")}
+                    {fullWhere}
+                </div>
+            )}
         </>
     );
 
@@ -430,12 +440,12 @@ function LayerItem({
                             onClick={() =>
                                 history.push("/layerFilter", { featureServerId: featureServer.id, layerId: layer.id })
                             }
-                            disabled={!isAdmin}
+                            disabled={!canManage}
                         >
                             <ListItemIcon>
                                 <FilterList fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText>Filter</ListItemText>
+                            <ListItemText>{t("filter")}</ListItemText>
                         </MenuItem>
                     </Menu>
                 </Box>
@@ -449,7 +459,7 @@ const StyledListItemButton = styled(ListItemButton)<ListItemButtonProps>(
         margin: 0;
         flex-grow: 0;
         padding: ${theme.spacing(0.5)} ${theme.spacing(4)} ${theme.spacing(0.5)} ${theme.spacing(1)};
-    `
+    `,
 );
 
 const StyledCheckbox = styled(Checkbox)`
@@ -460,7 +470,7 @@ const StyledCheckbox = styled(Checkbox)`
 const StyledError = styled(Error)(
     ({ theme }) => css`
         fill: ${theme.palette.error.main};
-    `
+    `,
 );
 
 function ensureBoundingSphereMinRadius(sphere: BoundingSphere, radius = 20): BoundingSphere {
@@ -478,7 +488,7 @@ function setCamera(dispatch: ReturnType<typeof useAppDispatch>, boundingSphere: 
     const cameraPos = vec3.fromValues(
         boundingSphere.center[0],
         boundingSphere.center[1],
-        boundingSphere.center[2] + 300
+        boundingSphere.center[2] + 300,
     );
     const cameraRotation = rotationFromDirection([0, 0, 1]);
 
@@ -491,6 +501,6 @@ function setCamera(dispatch: ReturnType<typeof useAppDispatch>, boundingSphere: 
                 fov: boundingSphere.radius * 2,
                 flyTime: 0,
             },
-        })
+        }),
     );
 }

@@ -8,6 +8,9 @@ import { areaReducer } from "features/area";
 import { bimCollabApi, bimCollabReducer } from "features/bimCollab";
 import { bimTrackApi, bimTrackReducer } from "features/bimTrack";
 import { bookmarksReducer } from "features/bookmarks";
+import { clashReducer } from "features/clash";
+import { clashApi } from "features/clash/clashApi";
+import { crossSectionReducer } from "features/crossSection/slice";
 import { deviationsReducer } from "features/deviations";
 import { ditioApi } from "features/ditio";
 import { ditioReducer } from "features/ditio";
@@ -21,10 +24,12 @@ import { manholeReducer } from "features/manhole";
 import { measureReducer } from "features/measure";
 import { myLocationReducer } from "features/myLocation";
 import { offlineReducer } from "features/offline";
+import { omega365Reducer } from "features/omega365";
 import { orthoCamReducer } from "features/orthoCam";
 import { clippingOutlineLaserReducer } from "features/outlineLaser";
 import { pimsReducer } from "features/pims";
 import { pointLineReducer } from "features/pointLine";
+import { pointVisualizationReducer } from "features/pointVisualization";
 import { propertiesReducer } from "features/properties/slice";
 import { propertyTreeApi, propertyTreeReducer } from "features/propertyTree";
 import { renderReducer } from "features/render";
@@ -70,7 +75,12 @@ const rootReducer = combineReducers({
     [xsiteManageApi.reducerPath]: xsiteManageApi.reducer,
     [dataV2Api.reducerPath]: dataV2Api.reducer,
     arcgis: arcgisSlice.reducer,
+    omega365: omega365Reducer,
     [arcgisApi.reducerPath]: arcgisApi.reducer,
+    [clashApi.reducerPath]: clashApi.reducer,
+    clash: clashReducer,
+    pointVisualization: pointVisualizationReducer,
+    crossSection: crossSectionReducer,
 });
 
 export const store = configureStore({
@@ -90,7 +100,8 @@ export const store = configureStore({
             .concat(xsiteManageApi.middleware)
             .concat(dataV2Api.middleware)
             .concat(propertyTreeApi.middleware)
-            .concat(arcgisApi.middleware),
+            .concat(arcgisApi.middleware)
+            .concat(clashApi.middleware),
 });
 
 setupListeners(store.dispatch);

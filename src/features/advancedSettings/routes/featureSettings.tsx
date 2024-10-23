@@ -12,32 +12,52 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
+import { AccordionDetails, AccordionSummary, Divider, LinearProgress, Switch, WidgetBottomScrollBox } from "components";
 import { CanvasContextMenuFeatureKey, canvasContextMenuFeatures } from "config/canvasContextMenu";
-import { ButtonKey, defaultEnabledWidgets, featuresConfig, viewerWidgets, WidgetKey } from "config/features";
-import { renderActions, selectDebugStats, selectNavigationCube } from "features/render";
+import {
+    betaViewerWidgets,
+    ButtonKey,
+    defaultEnabledWidgets,
+    featuresConfig,
+    releasedViewerWidgets,
+    Widget,
+    WidgetKey,
+} from "config/features";
+import { useToggleNewDesign } from "features/newDesign/useToggleNewDesign";
+import { renderActions, selectDebugStats, selectGeneratedParametricData, selectNavigationCube } from "features/render";
 import {
     explorerActions,
+    selectCanUseNewDesign,
     selectCanvasContextMenuFeatures,
-    selectEnabledWidgets,
+    selectEnabledWidgetsWithoutPermissionCheck,
     selectLockedWidgets,
+    selectNewDesign,
     selectPrimaryMenu,
 } from "slices/explorer";
+
+import { AdvSettingsAccordion as Accordion } from "../components/advSettingsAccordion";
 
 export function FeatureSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();
     const theme = useTheme();
+    const { t, i18n } = useTranslation();
 
     const dispatch = useAppDispatch();
-    const enabledWidgets = useAppSelector(selectEnabledWidgets);
+    // admins should be able to enable widgets even if they don't have access to it
+    const enabledWidgets = useAppSelector(selectEnabledWidgetsWithoutPermissionCheck);
     const lockedWidgets = useAppSelector(selectLockedWidgets);
     const primaryMenu = useAppSelector(selectPrimaryMenu);
     const enabledCanvasContextMenuFeatures = useAppSelector(selectCanvasContextMenuFeatures);
     const navigationCube = useAppSelector(selectNavigationCube);
     const debugStats = useAppSelector(selectDebugStats);
+    const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
+    const newDesign = useAppSelector(selectNewDesign);
+    const canUseNewDesign = useAppSelector(selectCanUseNewDesign);
+    const toggleNewDesign = useToggleNewDesign();
 
     const toggleWidget = (key: WidgetKey, checked: boolean) => {
         const keys = enabledWidgets.map((w) => w.key);
@@ -50,9 +70,21 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
         dispatch(
             explorerActions.setCanvasContextMenu({
                 features: checked ? keys.concat(key) : keys.filter((k) => k !== key),
-            })
+            }),
         );
     };
+
+    const sortWidgets = (widgets: Widget[]) =>
+        widgets.sort(
+            (a, b) =>
+                t(b.nameKey).localeCompare(t(b.nameKey), i18n.language, { sensitivity: "accent" }) +
+                ((lockedWidgets.includes(a.key) && lockedWidgets.includes(b.key)) ||
+                (!lockedWidgets.includes(a.key) && !lockedWidgets.includes(b.key))
+                    ? 0
+                    : lockedWidgets.includes(a.key)
+                      ? 100
+                      : -100),
+        );
 
     return (
         <>
@@ -63,11 +95,11 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                 <Box display="flex" justifyContent="space-between">
                     <Button onClick={() => history.goBack()} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <Button sx={{ ml: "auto" }} onClick={() => save()} color="grey" disabled={saving}>
                         <Save sx={{ mr: 1 }} />
-                        Save
+                        {t("save")}
                     </Button>
                 </Box>
             </Box>
@@ -76,13 +108,14 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} mt={1} pb={3}>
+            <WidgetBottomScrollBox height={1} mt={1} pb={3}>
                 <Typography p={1} pb={0} variant="h6" fontWeight={600}>
-                    Feature settings
+                    {t("featureSettings")}
                 </Typography>
                 <Divider sx={{ my: 1 }} />
                 <Box p={1} mt={1} display="flex" flexDirection="column">
                     <FormControlLabel
+                        id="features-navigation-cube"
                         sx={{ ml: 0, mb: 1 }}
                         control={
                             <Switch
@@ -95,44 +128,23 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Navigation cube
-                            </Box>
-                        }
-                    />
-                    <FormControlLabel
-                        sx={{ ml: 0, mb: 1 }}
-                        control={
-                            <Switch
-                                checked={debugStats.enabled}
-                                name="debug-stats"
-                                onChange={(_evt, checked) =>
-                                    dispatch(renderActions.setDebugStats({ enabled: checked }))
-                                }
-                            />
-                        }
-                        label={
-                            <Box ml={1} fontSize={16}>
-                                Performance stats
+                                {t("navigationCube")}
                             </Box>
                         }
                     />
                     <Divider />
                 </Box>
-                <Accordion>
-                    <AccordionSummary>Widgets</AccordionSummary>
+                <Accordion id="features-widgets">
+                    <AccordionSummary>{t("widgets")}</AccordionSummary>
                     <AccordionDetails>
                         <Grid container p={1}>
-                            {[...viewerWidgets]
-                                .sort(
-                                    (a, b) =>
-                                        a.name.localeCompare(b.name, "en", { sensitivity: "accent" }) +
-                                        ((lockedWidgets.includes(a.key) && lockedWidgets.includes(b.key)) ||
-                                        (!lockedWidgets.includes(a.key) && !lockedWidgets.includes(b.key))
-                                            ? 0
-                                            : lockedWidgets.includes(a.key)
-                                            ? 100
-                                            : -100)
-                                )
+                            {sortWidgets([...releasedViewerWidgets])
+                                .filter((widget) => {
+                                    if ("newUx" in widget && widget.newUx && !newDesign) {
+                                        return false;
+                                    }
+                                    return true;
+                                })
                                 .map((widget) =>
                                     defaultEnabledWidgets.includes(widget.key) ? null : (
                                         <Grid item xs={6} key={widget.key}>
@@ -144,7 +156,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                                         name={widget.key}
                                                         checked={
                                                             enabledWidgets.some(
-                                                                (enabled) => enabled.key === widget.key
+                                                                (enabled) => enabled.key === widget.key,
                                                             ) && !lockedWidgets.includes(widget.key)
                                                         }
                                                         onChange={(_e, checked) => toggleWidget(widget.key, checked)}
@@ -153,27 +165,33 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                                 }
                                                 label={
                                                     <Box mr={0.5} sx={{ userSelect: "none" }}>
-                                                        {widget.name}
+                                                        {t(widget.nameKey)}
                                                     </Box>
                                                 }
                                             />
                                         </Grid>
-                                    )
+                                    ),
                                 )}
                         </Grid>
                     </AccordionDetails>
                 </Accordion>
-                <Accordion>
-                    <AccordionSummary>Primary menu</AccordionSummary>
+                <Accordion id="features-primary-menu">
+                    <AccordionSummary>{t("primaryMenu")}</AccordionSummary>
                     <AccordionDetails>
                         <Box px={1}>
-                            <FormControl component="fieldset" fullWidth size="small" sx={{ mb: 1 }}>
+                            <FormControl
+                                id="features-primary-menu"
+                                component="fieldset"
+                                fullWidth
+                                size="small"
+                                sx={{ mb: 1 }}
+                            >
                                 <Box width={1} display="flex" justifyContent="space-between" alignItems="center">
                                     <FormLabel
                                         sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
                                         htmlFor={"primary-menu-button-1"}
                                     >
-                                        Button 1:
+                                        {t("button1")}
                                     </FormLabel>
                                 </Box>
 
@@ -185,7 +203,9 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                         id: "primary-menu-button-1",
                                     }}
                                 >
-                                    <MenuItem value={featuresConfig.home.key}>{featuresConfig.home.name}</MenuItem>
+                                    <MenuItem value={featuresConfig.home.key}>
+                                        {t(featuresConfig.home.nameKey)}
+                                    </MenuItem>
                                 </Select>
                             </FormControl>
 
@@ -195,7 +215,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                         sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
                                         htmlFor={"primary-menu-button-2"}
                                     >
-                                        Button 2:
+                                        {t("button2")}
                                     </FormLabel>
                                 </Box>
 
@@ -208,7 +228,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     }}
                                 >
                                     <MenuItem value={featuresConfig.cameraSpeed.key}>
-                                        {featuresConfig.cameraSpeed.name}
+                                        {t(featuresConfig.cameraSpeed.nameKey)}
                                     </MenuItem>
                                 </Select>
                             </FormControl>
@@ -219,7 +239,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                         sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
                                         htmlFor={"primary-menu-button-3"}
                                     >
-                                        Button 3:
+                                        {t("button3")}
                                     </FormLabel>
                                 </Box>
 
@@ -232,7 +252,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     }}
                                 >
                                     <MenuItem value={featuresConfig.flyToSelected.key}>
-                                        {featuresConfig.flyToSelected.name}
+                                        {t(featuresConfig.flyToSelected.nameKey)}
                                     </MenuItem>
                                 </Select>
                             </FormControl>
@@ -243,7 +263,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                         sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
                                         htmlFor={"primary-menu-button-4"}
                                     >
-                                        Button 4:
+                                        {t("button4")}
                                     </FormLabel>
                                 </Box>
 
@@ -256,7 +276,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     }}
                                 >
                                     <MenuItem value={featuresConfig.stepBack.key}>
-                                        {featuresConfig.stepBack.name}
+                                        {t(featuresConfig.stepBack.nameKey)}
                                     </MenuItem>
                                 </Select>
                             </FormControl>
@@ -267,7 +287,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                         sx={{ fontWeight: 600, mb: 0.5, color: "text.secondary" }}
                                         id="primary-menu-button-5-label"
                                     >
-                                        Button 5:
+                                        {t("button5")}
                                     </FormLabel>
                                 </Box>
 
@@ -276,7 +296,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                         dispatch(
                                             explorerActions.setPrimaryMenu({
                                                 button5: e.target.value as ButtonKey,
-                                            })
+                                            }),
                                         );
                                     }}
                                     value={primaryMenu.button5}
@@ -286,18 +306,18 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                     }}
                                 >
                                     <MenuItem value={featuresConfig.orthoShortcut.key}>
-                                        {featuresConfig.orthoShortcut.name}
+                                        {t(featuresConfig.orthoShortcut.nameKey)}
                                     </MenuItem>
                                     <MenuItem value={featuresConfig.stepForwards.key}>
-                                        {featuresConfig.stepForwards.name}
+                                        {t(featuresConfig.stepForwards.nameKey)}
                                     </MenuItem>
                                 </Select>
                             </FormControl>
                         </Box>
                     </AccordionDetails>
                 </Accordion>
-                <Accordion>
-                    <AccordionSummary>Context menu</AccordionSummary>
+                <Accordion id="features-context-menu">
+                    <AccordionSummary>{t("contextMenu")}</AccordionSummary>
                     <AccordionDetails>
                         <Grid container p={1}>
                             {[...canvasContextMenuFeatures]
@@ -311,7 +331,7 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                                                     name={feature.key}
                                                     color="primary"
                                                     checked={enabledCanvasContextMenuFeatures.some(
-                                                        (enabled) => enabled === feature.key
+                                                        (enabled) => enabled === feature.key,
                                                     )}
                                                     onChange={(_e, checked) => {
                                                         toggleCanvasContextMenuFeature(feature.key, checked);
@@ -329,7 +349,83 @@ export function FeatureSettings({ save, saving }: { save: () => Promise<void>; s
                         </Grid>
                     </AccordionDetails>
                 </Accordion>
-            </ScrollBox>
+                <Accordion id="features-beta">
+                    <AccordionSummary>Beta</AccordionSummary>
+                    <AccordionDetails>
+                        <Box p={1} mt={1} display="flex" flexDirection="column">
+                            <FormControlLabel
+                                id="features-beta-generated-parametric-data"
+                                sx={{ ml: 0, mb: 1 }}
+                                control={
+                                    <Switch
+                                        checked={allowGeneratedParametric.enabled}
+                                        name="generated-parametric-data"
+                                        onChange={(_evt, checked) =>
+                                            dispatch(renderActions.setGeneratedParametricData({ enabled: checked }))
+                                        }
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        {t("generatedParametricData")}
+                                    </Box>
+                                }
+                            />
+                            <FormControlLabel
+                                id="features-beta-performance-stats"
+                                sx={{ ml: 0, mb: 1 }}
+                                control={
+                                    <Switch
+                                        checked={debugStats.enabled}
+                                        name="debug-stats"
+                                        onChange={(_evt, checked) =>
+                                            dispatch(renderActions.setDebugStats({ enabled: checked }))
+                                        }
+                                    />
+                                }
+                                label={
+                                    <Box ml={1} fontSize={16}>
+                                        {t("performanceStats")}
+                                    </Box>
+                                }
+                            />
+                            {sortWidgets([...betaViewerWidgets]).map((widget) => (
+                                <FormControlLabel
+                                    key={widget.key}
+                                    sx={{ ml: 0, mb: 1 }}
+                                    control={
+                                        <Switch
+                                            checked={
+                                                enabledWidgets.some((enabled) => enabled.key === widget.key) &&
+                                                !lockedWidgets.includes(widget.key)
+                                            }
+                                            onChange={(_e, checked) => toggleWidget(widget.key, checked)}
+                                            disabled={lockedWidgets.includes(widget.key)}
+                                        />
+                                    }
+                                    label={
+                                        <Box ml={1} fontSize={16}>
+                                            {t(widget.nameKey)}
+                                        </Box>
+                                    }
+                                />
+                            ))}
+                            {canUseNewDesign && (
+                                <FormControlLabel
+                                    id="features-beta-new-design"
+                                    sx={{ ml: 0, mb: 1 }}
+                                    control={<Switch checked={newDesign} onChange={toggleNewDesign} />}
+                                    label={
+                                        <Box ml={1} fontSize={16}>
+                                            {t("newDesign")}
+                                        </Box>
+                                    }
+                                />
+                            )}
+                        </Box>
+                    </AccordionDetails>
+                </Accordion>
+            </WidgetBottomScrollBox>
         </>
     );
 }

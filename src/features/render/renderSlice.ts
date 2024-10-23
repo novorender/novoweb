@@ -1,6 +1,7 @@
 import {
     ClippingMode,
     DeviceProfile,
+    PointVisualization,
     RecursivePartial,
     SceneConfig as OctreeSceneConfig,
     TonemappingMode,
@@ -9,8 +10,9 @@ import {
 import type { Bookmark } from "@novorender/data-js-api";
 import type { EnvironmentDescription } from "@novorender/webgl-api";
 import { createAction, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { quat, vec3, vec4 } from "gl-matrix";
+import { quat, ReadonlyVec3, vec3, vec4 } from "gl-matrix";
 
+import { ProjectInfo } from "apis/dataV2/projectTypes";
 import type { RootState } from "app";
 import type { ProjectType } from "slices/explorer";
 import { AsyncState, AsyncStatus, ViewMode } from "types/misc";
@@ -18,18 +20,20 @@ import { VecRGB, VecRGBA } from "utils/color";
 import { mergeRecursive } from "utils/misc";
 
 import {
+    type CadCamera,
     CameraSpeedLevel,
-    CameraState,
-    CameraStep,
+    type CameraState,
+    type CameraStep,
     CameraType,
+    LabeledKnot,
     ObjectVisibility,
     Picker,
-    SavedCameraPositions,
-    SceneConfig,
+    type SavedCameraPositions,
+    type SceneConfig,
     SelectionBasketMode,
-    Stamp,
-    Subtree,
-    Subtrees,
+    type Stamp,
+    type Subtree,
+    type Subtrees,
     SubtreeStatus,
 } from "./types";
 import { getLegacySubtrees, getSubtrees } from "./utils";
@@ -74,9 +78,13 @@ const initialState = {
             normalOffset: vec4;
             baseW: number;
             color: vec4;
+            showPlane: boolean;
             outline: {
                 enabled: boolean;
+                color: vec3;
             };
+            rotation?: number;
+            anchorPos?: ReadonlyVec3;
         }[],
     },
     grid: {
@@ -104,6 +112,11 @@ const initialState = {
                 knots: [] as { position: number; color: VecRGBA }[],
             },
         },
+        classificationColorGradient: {
+            knots: [] as LabeledKnot[],
+            undefinedColor: [0, 0, 0, 1] as VecRGBA,
+        },
+        defaultPointVisualization: { kind: "color" } as PointVisualization,
     },
     terrain: {
         asBackground: false,
@@ -201,6 +214,9 @@ const initialState = {
         renderResolution: 1,
         framerateTarget: 30,
     },
+    generatedParametricData: {
+        enabled: false,
+    },
     navigationCube: {
         enabled: false,
     },
@@ -215,26 +231,17 @@ type State = typeof initialState;
 export const initScene = createAction<{
     projectType: ProjectType;
     projectVersion: string;
+    projectV2Info: ProjectInfo;
     tmZoneForCalc: string | undefined;
     sceneData: Omit<SceneConfig, "db" | "url">;
     sceneConfig: OctreeSceneConfig;
-    initialCamera: {
-        kind: "pinhole" | "orthographic";
-        position: vec3;
-        rotation: quat;
-        fov: number;
-    };
+    initialCamera: CadCamera;
     deviceProfile: RecursivePartial<State["deviceProfile"]>;
 }>("initScene");
 
 export const resetView = createAction<{
     sceneData: Omit<SceneConfig, "db" | "url">;
-    initialCamera?: {
-        kind: "pinhole" | "orthographic";
-        position: vec3;
-        rotation: quat;
-        fov: number;
-    };
+    initialCamera?: CadCamera;
 }>("resetView");
 
 export const selectBookmark = createAction(
@@ -242,7 +249,7 @@ export const selectBookmark = createAction(
     (payload: NonNullable<Bookmark["explorerState"]>, view: View) => ({
         payload,
         meta: { view },
-    })
+    }),
 );
 
 export const renderSlice = createSlice({
@@ -344,7 +351,7 @@ export const renderSlice = createSlice({
             }
 
             state.subtrees[action.payload.subtree] =
-                action.payload.newState ?? state.subtrees[action.payload.subtree] === SubtreeStatus.Shown
+                (action.payload.newState ?? state.subtrees[action.payload.subtree] === SubtreeStatus.Shown)
                     ? SubtreeStatus.Hidden
                     : SubtreeStatus.Shown;
         },
@@ -361,14 +368,22 @@ export const renderSlice = createSlice({
             state.clipping = mergeRecursive(state.clipping, action.payload);
             state.clipping.planes = state.clipping.planes.map((plane, idx) => ({
                 ...plane,
+                color: clippingPlaneColors[idx],
                 outline: {
                     enabled: plane.outline ? plane.outline.enabled : idx === 0,
+                    color: clippingPlaneOutlineColors[idx],
                 },
             }));
         },
+        toggleClippingPlaneOutlines: (state, action: PayloadAction<number>) => {
+            const plane = state.clipping.planes[action.payload];
+            if (plane) {
+                plane.outline.enabled = !plane.outline.enabled;
+            }
+        },
         addClippingPlane: (
             state,
-            action: PayloadAction<Omit<State["clipping"]["planes"][number], "color" | "outline">>
+            action: PayloadAction<Omit<State["clipping"]["planes"][number], "color" | "outline">>,
         ) => {
             if (vec3.exactEquals(action.payload.normalOffset.slice(0, 3) as Vec3, [0, 0, 0])) {
                 return state;
@@ -379,8 +394,11 @@ export const renderSlice = createSlice({
             if (state.clipping.planes.length < 6) {
                 state.clipping.planes.push({
                     ...action.payload,
-                    color: [0, 1, 0, 0.2],
-                    outline: { enabled: !state.clipping.planes.length },
+                    color: clippingPlaneColors[state.clipping.planes.length],
+                    outline: {
+                        enabled: !state.clipping.planes.length,
+                        color: clippingPlaneOutlineColors[state.clipping.planes.length],
+                    },
                 });
             }
         },
@@ -434,6 +452,7 @@ export const renderSlice = createSlice({
         setPoints: (state, action: PayloadAction<RecursivePartial<State["points"]>>) => {
             state.points = mergeRecursive(state.points, action.payload);
             state.points.deviation.colorGradient.knots.sort((a, b) => a.position - b.position);
+            state.points.classificationColorGradient.knots.sort((a, b) => a.position - b.position);
         },
         setBackground: (state, action: PayloadAction<Partial<State["background"]>>) => {
             state.background = { ...state.background, ...action.payload };
@@ -471,6 +490,12 @@ export const renderSlice = createSlice({
         setClippingInEdit: (state, action: PayloadAction<RecursivePartial<State["clippingInEdit"]>>) => {
             state.clippingInEdit = action.payload;
         },
+        setGeneratedParametricData: (
+            state,
+            action: PayloadAction<RecursivePartial<State["generatedParametricData"]>>,
+        ) => {
+            state.generatedParametricData = mergeRecursive(state.generatedParametricData, action.payload);
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(initScene, (state, action) => {
@@ -492,18 +517,62 @@ export const renderSlice = createSlice({
             state.deviceProfile = mergeRecursive(state.deviceProfile, deviceProfile);
             state.debugStats.enabled = window.location.search.includes("debug=true");
 
-            if (props.explorerProjectState) {
-                const { points, background, terrain, hide, ...advanced } = props.explorerProjectState.renderSettings;
-                points.size.metric = 0; //Variable that cannot be set on novoweb and have had 2 different default. Forcing to 0;
-                const { debugStats, navigationCube } = props.explorerProjectState.features;
-                const { highlights } = props.explorerProjectState;
+            // camera
+            if (props.explorerProjectState?.camera) {
                 const camera = props.explorerProjectState.camera;
 
                 state.cameraDefaults.pinhole = camera.pinhole;
                 state.cameraDefaults.orthographic = mergeRecursive(
                     state.cameraDefaults.orthographic,
-                    camera.orthographic
+                    camera.orthographic,
                 );
+            } else {
+                state.cameraDefaults.pinhole.clipping.far = Math.max(
+                    (sceneData.camera as { far?: number })?.far ?? 0,
+                    1000,
+                );
+                state.cameraDefaults.pinhole.clipping.near = Math.max(
+                    (sceneData.camera as { near?: number })?.near ?? 0,
+                    0.1,
+                );
+                state.cameraDefaults.orthographic.topDownElevation = props.defaultTopDownElevation;
+                state.cameraDefaults.orthographic.usePointerLock =
+                    props.pointerLock !== undefined
+                        ? props.pointerLock.ortho
+                        : state.cameraDefaults.orthographic.usePointerLock;
+                state.cameraDefaults.pinhole.speedLevels = props.cameraSpeedLevels?.flight
+                    ? {
+                          slow: props.cameraSpeedLevels.flight.slow * 33,
+                          default: props.cameraSpeedLevels.flight.default * 33,
+                          fast: props.cameraSpeedLevels.flight.fast * 33,
+                      }
+                    : state.cameraDefaults.pinhole.speedLevels;
+            }
+
+            // corner features
+            state.debugStats.enabled = props.explorerProjectState?.features?.debugStats
+                ? props.explorerProjectState.features.debugStats.enabled || state.debugStats.enabled
+                : Boolean(props.showStats) || state.debugStats.enabled;
+            state.navigationCube.enabled =
+                !state.debugStats.enabled &&
+                (props.explorerProjectState?.features?.navigationCube?.enabled ?? Boolean(props.navigationCube));
+
+            // highlights
+            state.secondaryHighlight.property =
+                props.explorerProjectState?.highlights?.secondary.property ??
+                props.highlights?.secondary.property ??
+                "";
+
+            // generated parametric data
+            state.generatedParametricData.enabled = props.explorerProjectState?.features?.generatedParametricData
+                ? props.explorerProjectState.features.generatedParametricData.enabled ||
+                  state.generatedParametricData.enabled
+                : Boolean(props.generatedParametricData) || state.generatedParametricData.enabled;
+
+            // render settings
+            if (props.explorerProjectState?.renderSettings) {
+                const { points, background, terrain, hide, ...advanced } = props.explorerProjectState.renderSettings;
+                points.size.metric = 0; //Variable that cannot be set on novoweb and have had 2 different default. Forcing to 0;
 
                 state.background = mergeRecursive(state.background, {
                     ...background,
@@ -521,9 +590,6 @@ export const renderSlice = createSlice({
                       }
                     : state.terrain.elevationGradient;
                 state.advanced = mergeRecursive(state.advanced, advanced);
-                state.debugStats.enabled = debugStats.enabled || state.debugStats.enabled;
-                state.navigationCube.enabled = !state.debugStats.enabled && navigationCube.enabled;
-                state.secondaryHighlight.property = highlights.secondary.property;
             } else if (settings) {
                 // Legacy settings
 
@@ -534,40 +600,11 @@ export const renderSlice = createSlice({
                         rotate === 1
                             ? "flight"
                             : orbit === 1
-                            ? pan === 2
-                                ? "cadRightPan"
-                                : "cadMiddlePan"
-                            : "special";
+                              ? pan === 2
+                                  ? "cadRightPan"
+                                  : "cadMiddlePan"
+                              : "special";
                 }
-
-                // corner features
-                state.debugStats.enabled = Boolean(props.showStats) || state.debugStats.enabled;
-                state.navigationCube.enabled = !state.debugStats.enabled && Boolean(props.navigationCube);
-
-                // camera
-                state.cameraDefaults.pinhole.clipping.far = Math.max(
-                    (sceneData.camera as { far?: number })?.far ?? 0,
-                    1000
-                );
-                state.cameraDefaults.pinhole.clipping.near = Math.max(
-                    (sceneData.camera as { near?: number })?.near ?? 0,
-                    0.1
-                );
-                state.cameraDefaults.orthographic.topDownElevation = props.defaultTopDownElevation;
-                state.cameraDefaults.orthographic.usePointerLock =
-                    props.pointerLock !== undefined
-                        ? props.pointerLock.ortho
-                        : state.cameraDefaults.orthographic.usePointerLock;
-                state.cameraDefaults.pinhole.speedLevels = props.cameraSpeedLevels?.flight
-                    ? {
-                          slow: props.cameraSpeedLevels.flight.slow * 33,
-                          default: props.cameraSpeedLevels.flight.default * 33,
-                          fast: props.cameraSpeedLevels.flight.fast * 33,
-                      }
-                    : state.cameraDefaults.pinhole.speedLevels;
-
-                // highlight
-                state.secondaryHighlight.property = props.highlights?.secondary.property ?? "";
 
                 // background
                 state.background.color = settings.background.color ?? state.background.color;
@@ -604,7 +641,7 @@ export const renderSlice = createSlice({
             } else {
                 state.subtrees = getSubtrees(
                     { terrain: false, triangles: false, points: false, documents: false, lines: false },
-                    sceneConfig.subtrees ?? ["triangles"]
+                    sceneConfig.subtrees ?? ["triangles"],
                 );
             }
         });
@@ -634,11 +671,16 @@ export const renderSlice = createSlice({
                 };
             }
 
+            // Point visualization
+            state.points.defaultPointVisualization = initialState.points.defaultPointVisualization;
+            state.points.classificationColorGradient = initialState.points.classificationColorGradient;
+            state.terrain.elevationGradient = initialState.terrain.elevationGradient;
+
             const availableSubtrees = Object.keys(state.subtrees).filter(
-                (key) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable
+                (key) => state.subtrees[key as keyof State["subtrees"]] !== SubtreeStatus.Unavailable,
             );
 
-            if (props.explorerProjectState) {
+            if (props.explorerProjectState?.renderSettings) {
                 const { points, background, terrain, hide } = props.explorerProjectState.renderSettings;
 
                 // background
@@ -660,7 +702,15 @@ export const renderSlice = createSlice({
                               color: node.color,
                           })),
                       }
-                    : state.terrain.elevationGradient;
+                    : (terrain.elevationGradient ?? state.terrain.elevationGradient);
+
+                // Point visualization
+                if (points.defaultPointVisualization) {
+                    state.points.defaultPointVisualization = points.defaultPointVisualization;
+                }
+                if (points.classificationColorGradient) {
+                    state.points.classificationColorGradient = points.classificationColorGradient;
+                }
             } else if (settings) {
                 // background
                 state.background.color = settings.background.color ?? state.background.color;
@@ -684,8 +734,19 @@ export const renderSlice = createSlice({
             }
         });
         builder.addCase(selectBookmark, (state, action) => {
-            const { camera, subtrees, viewMode, objects, background, terrain, deviations, grid, clipping, options } =
-                action.payload;
+            const {
+                camera,
+                subtrees,
+                viewMode,
+                objects,
+                background,
+                terrain,
+                deviations,
+                grid,
+                clipping,
+                options,
+                pointVisualization,
+            } = action.payload;
 
             state.camera =
                 camera.kind === "orthographic"
@@ -718,6 +779,9 @@ export const renderSlice = createSlice({
                 : (objects.defaultVisibility as ObjectVisibility);
             state.background.color = background.color;
             state.terrain.asBackground = terrain.asBackground;
+            if (terrain.elevationGradient) {
+                state.terrain.elevationGradient = terrain.elevationGradient;
+            }
             if (deviations) {
                 state.points.deviation.index = deviations.index;
                 state.points.deviation.mixFactor = deviations.mixFactor;
@@ -727,22 +791,29 @@ export const renderSlice = createSlice({
                 ...clipping,
                 draw: false,
                 outlines: clipping.outlines !== undefined ? clipping.outlines : true,
-                planes: clipping.planes.map(({ normalOffset, color, outline }, idx) => ({
+                planes: clipping.planes.map(({ normalOffset, color, outline, anchorPos, showPlane }, idx) => ({
                     normalOffset,
-                    color,
+                    color: color ?? clippingPlaneColors[idx],
+                    showPlane: showPlane ?? false,
                     outline: {
                         enabled: outline ? outline.enabled : idx === 0,
+                        color: clippingPlaneOutlineColors[idx],
                     },
                     baseW: normalOffset[3],
+                    anchorPos,
                 })),
             };
+            if (pointVisualization) {
+                state.points.defaultPointVisualization = pointVisualization.defaultPointVisualization;
+                state.points.classificationColorGradient = pointVisualization.classificationColorGradient;
+            }
         });
     },
 });
 
 function subtreesFromBookmark(
     current: State["subtrees"],
-    bm: NonNullable<Bookmark["explorerState"]>["subtrees"]
+    bm: NonNullable<Bookmark["explorerState"]>["subtrees"],
 ): State["subtrees"] {
     const subtrees = { ...current };
 
@@ -784,6 +855,24 @@ function subtreesFromBookmark(
     return subtrees;
 }
 
+const clippingPlaneColors: vec4[] = [
+    [255, 255, 255],
+    [37, 55, 70],
+    [214, 30, 92],
+    [97, 94, 155],
+    [225, 224, 0],
+    [255, 88, 93],
+].map((v) => [...vec3.scale(v as vec3, v as vec3, 1 / 255), 0.5]);
+
+const clippingPlaneOutlineColors: vec3[] = [
+    [0, 0, 0],
+    [255, 88, 93],
+    [225, 224, 0],
+    [118, 134, 146],
+    [214, 30, 92],
+    [37, 55, 70],
+].map((v) => vec3.scale(v as vec3, v as vec3, 1 / 255));
+
 export const selectMainObject = (state: RootState) => state.render.mainObject;
 export const selectDefaultVisibility = (state: RootState) => state.render.defaultVisibility;
 export const selectSelectMultiple = (state: RootState) => state.render.selectMultiple;
@@ -791,8 +880,6 @@ export const selectCameraSpeedLevels = (state: RootState) => state.render.camera
 export const selectCurrentCameraSpeedLevel = (state: RootState) => state.render.currentCameraSpeedLevel;
 export const selectSavedCameraPositions = (state: RootState) =>
     state.render.savedCameraPositions as SavedCameraPositions;
-export const selectHomeCameraPosition = (state: RootState) =>
-    state.render.savedCameraPositions.positions[0] as CameraStep;
 export const selectSubtrees = (state: RootState) => state.render.subtrees;
 export const selectSelectionBasketMode = (state: RootState) => state.render.selectionBasketMode;
 export const selectSelectionBasketColor = (state: RootState) => state.render.selectionBasketColor;
@@ -823,6 +910,10 @@ export const selectNavigationCube = (state: RootState) => state.render.navigatio
 export const selectDebugStats = (state: RootState) => state.render.debugStats;
 export const selectClippingInEdit = (state: RootState) => state.render.clippingInEdit;
 export const selectSceneOrganization = (state: RootState) => state.render.sceneOrganization;
+export const selectGeneratedParametricData = (state: RootState) => state.render.generatedParametricData;
+export const selectClassificationColorGradient = (state: RootState) => state.render.points.classificationColorGradient;
+export const selectDefaultPointVisualization = (state: RootState) => state.render.points.defaultPointVisualization;
+export const selectIsMobile = (state: RootState) => state.render.deviceProfile.isMobile;
 
 const { reducer } = renderSlice;
 const actions = { ...renderSlice.actions, initScene, resetView, selectBookmark };

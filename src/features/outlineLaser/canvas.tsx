@@ -33,12 +33,18 @@ export function OutlineLaserCanvas({
 
         const camera = getCameraState(view.renderState.camera);
         outlineLasers.forEach((laser, i) => {
-            const { left, right, up, down, measurementX: x, measurementY: y } = laser;
+            const { left, right, up, down, zUp, zDown, measurementX: x, measurementY: y, measurementZ: z } = laser;
             const xPts = x && getMeasurePointsFromTracer(x, left, right);
             const yPts = y && getMeasurePointsFromTracer(y, down, up);
+            const zPts = z && getMeasurePointsFromTracer(z, zDown, zUp);
 
             if (xPts) {
-                const drawProd = view.measure?.draw.getDrawObjectFromPoints(xPts, false, false, true, 2);
+                const drawProd = view.measure?.draw.getDrawObjectFromPoints(xPts, {
+                    closed: false,
+                    angles: false,
+                    generateLineLabels: true,
+                    decimals: 2,
+                });
                 if (drawProd) {
                     renderTrace({ ctx, camera, drawProd, color: "blue" });
                 }
@@ -52,13 +58,20 @@ export function OutlineLaserCanvas({
                 translateInteraction(svg.children.namedItem(`leftMarker-${i}`), l, rot + 90);
                 translateInteraction(svg.children.namedItem(`rightMarker-${i}`), r, rot - 90);
 
-                laser.measurementX?.start
-                    ? translateInteraction(svg.children.namedItem(`updateXTracer-${i}`), getActionPos(l, r))
-                    : translateInteraction(svg.children.namedItem(`removeXTracer-${i}`), getActionPos(l, r));
+                if (laser.measurementX?.start) {
+                    translateInteraction(svg.children.namedItem(`updateXTracer-${i}`), getActionPos(l, r));
+                } else {
+                    translateInteraction(svg.children.namedItem(`removeXTracer-${i}`), getActionPos(l, r));
+                }
             }
 
             if (yPts) {
-                const drawProd = view.measure?.draw.getDrawObjectFromPoints(yPts, false, false, true, 2);
+                const drawProd = view.measure?.draw.getDrawObjectFromPoints(yPts, {
+                    closed: false,
+                    angles: false,
+                    generateLineLabels: true,
+                    decimals: 2,
+                });
                 if (drawProd) {
                     renderTrace({ ctx, camera, drawProd, color: "green" });
                 }
@@ -71,9 +84,37 @@ export function OutlineLaserCanvas({
                 }
                 translateInteraction(svg.children.namedItem(`downMarker-${i}`), d, rot + 90);
                 translateInteraction(svg.children.namedItem(`upMarker-${i}`), u, rot - 90);
-                laser.measurementY?.start
-                    ? translateInteraction(svg.children.namedItem(`updateYTracer-${i}`), getActionPos(d, u))
-                    : translateInteraction(svg.children.namedItem(`removeYTracer-${i}`), getActionPos(d, u));
+                if (laser.measurementY?.start) {
+                    translateInteraction(svg.children.namedItem(`updateYTracer-${i}`), getActionPos(d, u));
+                } else {
+                    translateInteraction(svg.children.namedItem(`removeYTracer-${i}`), getActionPos(d, u));
+                }
+            }
+
+            if (zPts) {
+                const drawProd = view.measure?.draw.getDrawObjectFromPoints(zPts, {
+                    closed: false,
+                    angles: false,
+                    generateLineLabels: true,
+                    decimals: 2,
+                });
+                if (drawProd) {
+                    renderTrace({ ctx, camera, drawProd, color: "yellow" });
+                }
+
+                const [d, u] = view.measure?.draw.toMarkerPoints(zPts) ?? [];
+                let rot = 0;
+                if (d && u) {
+                    const dir = vec2.sub(vec2.create(), u, d);
+                    rot += Math.atan2(dir[1], dir[0]) * 57.29578;
+                }
+                translateInteraction(svg.children.namedItem(`zDownMarker-${i}`), d, rot + 90);
+                translateInteraction(svg.children.namedItem(`zUpMarker-${i}`), u, rot - 90);
+                if (laser.measurementY?.start) {
+                    translateInteraction(svg.children.namedItem(`updateZTracer-${i}`), getActionPos(d, u));
+                } else {
+                    translateInteraction(svg.children.namedItem(`removeZTracer-${i}`), getActionPos(d, u));
+                }
             }
         });
     }, [ctx, canvas, view, outlineLasers, svg]);
@@ -146,8 +187,8 @@ const renderTrace = ({
                 2,
                 {
                     type: "default",
-                }
-            )
-        )
+                },
+            ),
+        ),
     );
 };

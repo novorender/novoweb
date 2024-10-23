@@ -1,0 +1,68 @@
+name: Test - feature slot 1
+
+on:
+    workflow_dispatch:
+
+env:
+    TEMPLATE_PATH: ./infrastructure/explorer.bicep
+    MODULE: web
+    APP: explorer
+    NODE_VERSION: "20.15.1" # set this to the node version to use
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Use Node.js ${{ env.NODE_VERSION }}
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+            - name: npm build
+              run: |
+                  npm ci
+                  npm run build --if-present
+
+            - name: Remove node modules
+              run: |
+                  rm -rf ./node_modules
+
+            - name: Install server dependencies
+              run: |
+                  (cd server && npm ci && mv ./node_modules ../node_modules)
+
+            - name: Upload artifact for deployment job
+              uses: actions/upload-artifact@v4
+              with:
+                  name: app
+                  path: .
+
+            - name: Display structure after build
+              if: always()
+              working-directory: ./${{ matrix.path }}
+              run: ls -R
+
+    deploy-software-test:
+        needs: [build]
+        environment: test
+        env:
+            environment: "test"
+        runs-on: windows-latest
+        steps:
+            - name: Download artifact from build job
+              uses: actions/download-artifact@v4
+              with:
+                  name: app
+
+            - name: Azure login
+              uses: azure/login@v1
+              with:
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+            - name: "Deploy to Azure WebApp"
+              uses: azure/webapps-deploy@v2
+              with:
+                  app-name: ${{ env.APP }}-wa-${{ env.environment }}
+                  package: .
+                  slot-name: feature1

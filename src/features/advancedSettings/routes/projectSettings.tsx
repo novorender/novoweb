@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { dataApi } from "apis/dataV1";
@@ -18,8 +19,7 @@ import { useGetProjectQuery, useSearchEpsgQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress, ScrollBox, TextField } from "components";
 import { renderActions, selectProjectSettings, selectSceneOrganization } from "features/render/renderSlice";
-import { useSceneId } from "hooks/useSceneId";
-import { selectConfig, selectProjectIsV2 } from "slices/explorer";
+import { selectConfig, selectProjectIsV2, selectProjectV2Info } from "slices/explorer";
 import { projectV1ZoneNameToEpsg } from "utils/misc";
 
 const filter = createFilterOptions<Option>();
@@ -30,6 +30,7 @@ type Option = {
 };
 
 export function ProjectSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const theme = useTheme();
     const isV2 = useAppSelector(selectProjectIsV2);
@@ -37,7 +38,7 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
 
     const settings = useAppSelector(selectProjectSettings);
     const dispatch = useAppDispatch();
-    const projectId = useSceneId();
+    const projectId = useAppSelector(selectProjectV2Info)?.id;
     const org = useAppSelector(selectSceneOrganization);
 
     const projectV2 = useGetProjectQuery(projectId && isV2 ? { projectId } : skipToken, {
@@ -53,9 +54,9 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                     ({
                         zone,
                         epsg: projectV1ZoneNameToEpsg(zone),
-                    } as Option)
+                    }) as Option,
             ),
-        []
+        [],
     );
 
     let options: Option[];
@@ -79,11 +80,11 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                 <Box display="flex" justifyContent="space-between">
                     <Button onClick={() => history.goBack()} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <Button sx={{ ml: "auto" }} onClick={() => save()} color="grey" disabled={saving || isV2}>
                         <Save sx={{ mr: 1 }} />
-                        Save
+                        {t("save")}
                     </Button>
                 </Box>
             </Box>
@@ -94,10 +95,11 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
             ) : null}
             <ScrollBox height={1} px={1} mt={1} pb={3}>
                 <Typography pt={1} variant="h6" fontWeight={600}>
-                    Project settings
+                    {t("projectSettings")}
                 </Typography>
                 <Divider sx={{ my: 1, mb: 2 }} />
                 <Autocomplete
+                    id="project-tm-zone"
                     selectOnFocus
                     clearOnBlur
                     handleHomeEndKeys
@@ -114,16 +116,16 @@ export function ProjectSettings({ save, saving }: { save: () => Promise<void>; s
                     renderInput={(params) => (
                         <TextField
                             {...params}
-                            label="TM Zone"
+                            label={t("tmZone")}
                             helperText={
                                 isV2 ? (
                                     <>
-                                        You can edit TM Zone in{" "}
+                                        {t("editTimezoneIn")}{" "}
                                         <Link
                                             href={`${projectsUrl}/org/${org}?modalContext=edit&projectId=${projectId}`}
                                             target="_blank"
                                         >
-                                            Projects
+                                            {t("projects")}
                                         </Link>
                                     </>
                                 ) : null

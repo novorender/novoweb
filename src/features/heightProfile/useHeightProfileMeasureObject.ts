@@ -30,7 +30,7 @@ export function useHeightProfileMeasureObject() {
                 dispatch(
                     heightProfileActions.setSelectedEntity({
                         status: AsyncStatus.Initial,
-                    })
+                    }),
                 );
                 setMeasureObjects(undefined);
                 return;
@@ -41,7 +41,7 @@ export function useHeightProfileMeasureObject() {
                     heightProfileActions.setSelectedEntity({
                         status: AsyncStatus.Success,
                         data: undefined,
-                    })
+                    }),
                 );
                 setMeasureObjects(undefined);
                 return;
@@ -61,15 +61,15 @@ export function useHeightProfileMeasureObject() {
                     heightProfileActions.setSelectedEntity({
                         status: AsyncStatus.Success,
                         data: mObject,
-                    })
+                    }),
                 );
                 setMeasureObjects(mObject);
-            } catch (e) {
+            } catch {
                 dispatch(
                     heightProfileActions.setSelectedEntity({
                         status: AsyncStatus.Error,
                         msg: "Failed to load the selected entity.",
-                    })
+                    }),
                 );
                 setMeasureObjects(undefined);
             }

@@ -1,3 +1,9 @@
+import { ObjectGroup } from "@novorender/data-js-api";
+
+import { CustomProperties } from "types/project";
+
+import { Permission } from "./permissions";
+
 export type ProjectInfo = {
     id: string;
     name: string;
@@ -5,7 +11,7 @@ export type ProjectInfo = {
     viewCount: number;
     epsg: string;
     bounds: [number, number, number, number];
-    permissions: string[];
+    permissions: Permission[];
     created: string;
     modified: string;
 };
@@ -29,4 +35,9 @@ export type ProjectVersion = {
     created: string;
     url?: string;
     size?: number;
+};
+
+export type SceneData = {
+    customProperties: CustomProperties;
+    objectGroups: ObjectGroup[];
 };

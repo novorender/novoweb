@@ -11,6 +11,7 @@ import {
     Typography,
 } from "@mui/material";
 import { FocusEvent, MouseEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { GroupStatus } from "contexts/objectGroups";
@@ -30,9 +31,10 @@ export function LeafNode({
     color?: VecRGBA;
     search: (
         value: string,
-        color?: VecRGBA
+        color?: VecRGBA,
     ) => Promise<(Omit<PropertyTreeGroup, "color"> & { color?: VecRGBA }) | undefined>;
 }) {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const group = useAppSelector((state) => selectGroup(state, property, value));
     const isLoading = useAppSelector(selectIsPropertyTreeLoading);
@@ -163,7 +165,7 @@ export function LeafNode({
                     <ListItemIcon>
                         <Palette fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText>Color</ListItemText>
+                    <ListItemText>{t("color")}</ListItemText>
                 </MenuItem>
             </Menu>
             <ColorPicker
@@ -180,7 +182,7 @@ export function LeafNode({
                     }
 
                     dispatch(
-                        propertyTreeActions.upsertGroup({ group: { ...group, color: rgbToVec(rgb) }, property, value })
+                        propertyTreeActions.upsertGroup({ group: { ...group, color: rgbToVec(rgb) }, property, value }),
                     );
                 }}
             />

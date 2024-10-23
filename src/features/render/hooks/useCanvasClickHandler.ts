@@ -1,5 +1,5 @@
 import { rotationFromDirection } from "@novorender/api";
-import { mat3, quat, ReadonlyVec3, vec2, vec3, vec4 } from "gl-matrix";
+import { mat3, quat, ReadonlyVec3, ReadonlyVec4, vec2, vec3, vec4 } from "gl-matrix";
 import { MouseEventHandler, MutableRefObject, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -14,28 +14,31 @@ import { highlightActions, useDispatchHighlighted, useHighlighted } from "contex
 import { useArcgisCanvasClickHandler } from "features/arcgis/hooks/useArcgisCanvasHandler";
 import { areaActions } from "features/area";
 import { followPathActions } from "features/followPath";
-import { useCreateLocationForm } from "features/forms/hooks/useCreateLocationForm";
 import { useLocationFormAssetClickHandler } from "features/forms/hooks/useLocationFormAssetClickHandler";
+import { usePlaceLocationForm } from "features/forms/hooks/usePlaceLocationForm";
 import { heightProfileActions } from "features/heightProfile";
 import { manholeActions } from "features/manhole";
 import { measureActions, selectMeasure, selectMeasurePickSettings } from "features/measure";
 import { orthoCamActions, selectCrossSectionClipping, selectCrossSectionPoint } from "features/orthoCam";
-import { clippingOutlineLaserActions } from "features/outlineLaser";
+import { clippingOutlineLaserActions, selectOutlineLaser3d } from "features/outlineLaser";
 import { getOutlineLaser } from "features/outlineLaser";
 import { pointLineActions } from "features/pointLine";
 import { selectShowPropertiesStamp } from "features/properties/slice";
 import { useAbortController } from "hooks/useAbortController";
+import { selectNewDesign } from "slices/explorer";
 import { ExtendedMeasureEntity, NodeType, ViewMode } from "types/misc";
+import { getPerpendicular } from "utils/math";
 import { isRealVec } from "utils/misc";
-import { extractObjectIds } from "utils/objectData";
+import { extractObjectIds, getObjectMetadataRotation } from "utils/objectData";
 import { searchByPatterns, searchDeepByPatterns } from "utils/search";
+import { sleep } from "utils/time";
 
 import {
     renderActions,
     selectCamera,
     selectCameraType,
     selectClippingPlanes,
-    selectDeviations,
+    selectGeneratedParametricData,
     selectMainObject,
     selectPicker,
     selectSecondaryHighlightProperty,
@@ -43,6 +46,7 @@ import {
     selectViewMode,
 } from "../renderSlice";
 import { CameraType, Picker, StampKind } from "../types";
+import { applyCameraDistanceToMeasureTolerance, getLocalRotationAroundNormal } from "../utils";
 
 export function useCanvasClickHandler({
     pointerDownStateRef,
@@ -70,7 +74,6 @@ export function useCanvasClickHandler({
     const selectMultiple = useAppSelector(selectSelectMultiple);
     const cameraState = useAppSelector(selectCamera);
     const measure = useAppSelector(selectMeasure);
-    const deviation = useAppSelector(selectDeviations);
     const picker = useAppSelector(selectPicker);
     const measurePickSettings = useAppSelector(selectMeasurePickSettings);
     const crossSectionPoint = useAppSelector(selectCrossSectionPoint);
@@ -78,13 +81,16 @@ export function useCanvasClickHandler({
     const viewMode = useAppSelector(selectViewMode);
     const showPropertiesStamp = useAppSelector(selectShowPropertiesStamp);
     const { planes } = useAppSelector(selectClippingPlanes);
+    const laser3d = useAppSelector(selectOutlineLaser3d);
+    const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
+    const newDesign = useAppSelector(selectNewDesign);
 
     const [secondaryHighlightAbortController, abortSecondaryHighlight] = useAbortController();
     const currentSecondaryHighlightQuery = useRef("");
     const secondaryHighlightProperty = useAppSelector(selectSecondaryHighlightProperty);
 
     const arcgisCanvasClickHandler = useArcgisCanvasClickHandler();
-    const createLocationForm = useCreateLocationForm();
+    const placeLocationForm = usePlaceLocationForm();
     const locationFormAssetClickHandler = useLocationFormAssetClickHandler();
 
     const handleCanvasPick: MouseEventHandler<HTMLCanvasElement> = async (evt) => {
@@ -135,19 +141,13 @@ export function useCanvasClickHandler({
                                       }
                                     : measure.hover) as ExtendedMeasureEntity,
                                 pin: evt.shiftKey,
-                            })
+                            }),
                         );
                     }
                     return;
                 case Picker.Area:
                     if (measure.hover?.drawKind === "vertex" && planes.length) {
-                        const plane = planes[0].normalOffset;
-                        dispatch(
-                            areaActions.addPt(
-                                [measure.hover.parameter, vec3.fromValues(-plane[0], -plane[1], -plane[2])],
-                                view
-                            )
-                        );
+                        dispatch(areaActions.addPt(measure.hover.parameter, view));
                     }
                     return;
                 case Picker.PointLine:
@@ -158,7 +158,9 @@ export function useCanvasClickHandler({
                 case Picker.CrossSection: {
                     const position =
                         result?.position ??
-                        view.worldPositionFromPixelPosition(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY);
+                        view.convert.screenSpaceToWorldSpace([
+                            vec2.fromValues(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY),
+                        ])[0];
 
                     if (!position) {
                         return;
@@ -202,29 +204,38 @@ export function useCanvasClickHandler({
                     vec3.cross(right, up, dir);
                     vec3.normalize(right, right);
 
-                    const rotation = quat.fromMat3(
-                        quat.create(),
-                        mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2])
-                    );
+                    if (!newDesign) {
+                        const rotation = quat.fromMat3(
+                            quat.create(),
+                            mat3.fromValues(right[0], right[1], right[2], up[0], up[1], up[2], dir[0], dir[1], dir[2]),
+                        );
 
-                    dispatch(
-                        renderActions.setCamera({
-                            type: CameraType.Orthographic,
-                            goTo: {
-                                position: p,
-                                rotation,
-                                fov: 45,
-                                far: crossSectionClipping,
-                            },
-                            gridOrigo: p as vec3,
-                        })
-                    );
+                        dispatch(
+                            renderActions.setCamera({
+                                type: CameraType.Orthographic,
+                                goTo: {
+                                    position: p,
+                                    rotation,
+                                    fov: 45,
+                                    far: crossSectionClipping,
+                                },
+                                gridOrigo: p as vec3,
+                            }),
+                        );
+                    }
                     const w = vec3.dot(dir, p);
                     dispatch(
                         renderActions.setClippingPlanes({
                             enabled: true,
-                            planes: [{ normalOffset: [dir[0], dir[1], dir[2], w], baseW: w, color: [0, 1, 0, 0.2] }],
-                        })
+                            planes: [
+                                {
+                                    normalOffset: [dir[0], dir[1], dir[2], w],
+                                    baseW: w,
+                                    color: [0, 1, 0, 0.2],
+                                    anchorPos: p,
+                                },
+                            ],
+                        }),
                     );
                     dispatch(renderActions.setPicker(Picker.Object));
                     dispatch(orthoCamActions.setCrossSectionPoint(undefined));
@@ -233,25 +244,69 @@ export function useCanvasClickHandler({
                 }
                 case Picker.OutlineLaser: {
                     if (!view.renderState.clipping.enabled || !view.renderState.clipping.planes.length) {
+                        if (!result) {
+                            return;
+                        }
+                        const { normal, position } = result;
+                        const offsetPos = vec3.scaleAndAdd(vec3.create(), position, normal, 0.001);
+                        const hiddenPlane = vec4.fromValues(
+                            normal[0],
+                            normal[1],
+                            normal[2],
+                            vec3.dot(offsetPos, normal),
+                        );
+                        const hiddenPlanes: ReadonlyVec4[] = [hiddenPlane];
+                        if (laser3d && cameraType !== CameraType.Orthographic) {
+                            const perpendicular = getPerpendicular(normal);
+                            hiddenPlanes.push(
+                                vec4.fromValues(
+                                    perpendicular[0],
+                                    perpendicular[1],
+                                    perpendicular[2],
+                                    vec3.dot(perpendicular, offsetPos),
+                                ),
+                            );
+                        }
+                        view.modifyRenderState({
+                            outlines: {
+                                enabled: true,
+                                hidden: true,
+                                planes: hiddenPlanes,
+                            },
+                        });
+                        await sleep(1000);
+
+                        const laser = await getOutlineLaser(
+                            offsetPos,
+                            view,
+                            "outline",
+                            0,
+                            hiddenPlanes,
+                            laser3d ? 1 : undefined,
+                        );
+                        view.modifyRenderState({ outlines: { enabled: false, planes: [] } });
+                        if (laser) {
+                            dispatch(clippingOutlineLaserActions.addLaser(laser));
+                        }
                         return;
                     }
 
                     let tracePosition: ReadonlyVec3 | undefined = undefined;
 
+                    const plane = planes[0];
                     if (cameraType === CameraType.Orthographic) {
-                        tracePosition = view.worldPositionFromPixelPosition(
-                            evt.nativeEvent.offsetX,
-                            evt.nativeEvent.offsetY
-                        );
+                        tracePosition = view.convert.screenSpaceToWorldSpace([
+                            vec2.fromValues(evt.nativeEvent.offsetX, evt.nativeEvent.offsetY),
+                        ])[0];
                     } else if (!result) {
                         return;
-                    } else {
-                        const plane = view.renderState.clipping.planes[0].normalOffset;
-                        const planeDir = vec3.fromValues(plane[0], plane[1], plane[2]);
+                    } else if (cameraType == CameraType.Pinhole) {
+                        const { normalOffset } = plane;
+                        const planeDir = vec3.fromValues(normalOffset[0], normalOffset[1], normalOffset[2]);
                         const camPos = view.renderState.camera.position;
                         const lineDir = vec3.sub(vec3.create(), result.position, camPos);
                         vec3.normalize(lineDir, lineDir);
-                        const t = (plane[3] - vec3.dot(planeDir, camPos)) / vec3.dot(planeDir, lineDir);
+                        const t = (normalOffset[3] - vec3.dot(planeDir, camPos)) / vec3.dot(planeDir, lineDir);
                         tracePosition = vec3.scaleAndAdd(vec3.create(), camPos, lineDir, t);
                     }
 
@@ -260,9 +315,14 @@ export function useCanvasClickHandler({
                     }
 
                     dispatch(
-                        clippingOutlineLaserActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset)
+                        clippingOutlineLaserActions.setLaserPlane({
+                            normalOffset: plane.normalOffset,
+                            rotation: plane.rotation ?? 0,
+                        }),
                     );
-                    const laser = await getOutlineLaser(tracePosition, view);
+                    const laser = await getOutlineLaser(tracePosition, view, "clipping", planes[0].rotation ?? 0, [
+                        planes[0].normalOffset,
+                    ]);
                     if (laser) {
                         dispatch(clippingOutlineLaserActions.addLaser(laser));
                     }
@@ -283,15 +343,15 @@ export function useCanvasClickHandler({
         switch (picker) {
             case Picker.FormLocation:
                 if (result) {
-                    createLocationForm({ location: position });
+                    placeLocationForm({ location: position });
                     dispatch(renderActions.stopPicker(Picker.FormLocation));
                 }
                 return;
             case Picker.Object: {
                 if (
-                    deviation.mixFactor !== 0 &&
                     cameraState.type === CameraType.Orthographic &&
-                    result.deviation !== undefined
+                    result.pointFactor !== undefined &&
+                    [ViewMode.CrossSection, ViewMode.FollowPath, ViewMode.Deviations].includes(viewMode)
                 ) {
                     dispatch(
                         renderActions.setStamp({
@@ -300,9 +360,9 @@ export function useCanvasClickHandler({
                             mouseY: evt.nativeEvent.offsetY,
                             pinned: false,
                             data: {
-                                deviation: result.deviation,
+                                deviation: result.pointFactor,
                             },
-                        })
+                        }),
                     );
                     return;
                 }
@@ -329,7 +389,7 @@ export function useCanvasClickHandler({
                         dispatchHighlighted(highlightActions.add([result.objectId]));
                     }
                 } else {
-                    if (alreadySelected) {
+                    if (alreadySelected && result.objectId === mainObject) {
                         dispatch(renderActions.setMainObject(undefined));
                         dispatch(renderActions.setStamp(null));
                         dispatchHighlighted(highlightActions.setIds([]));
@@ -340,12 +400,14 @@ export function useCanvasClickHandler({
 
                         abortSecondaryHighlight();
                         dispatchHighlightCollections(
-                            highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, [])
+                            highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, []),
                         );
                         currentSecondaryHighlightQuery.current = "";
                     } else {
                         dispatch(renderActions.setMainObject(result.objectId));
-                        dispatchHighlighted(highlightActions.setIds([result.objectId]));
+                        if (!alreadySelected) {
+                            dispatchHighlighted(highlightActions.setIds([result.objectId]));
+                        }
 
                         if ((!showPropertiesStamp && !secondaryHighlightProperty) || !db) {
                             return;
@@ -367,7 +429,7 @@ export function useCanvasClickHandler({
                                     mouseX: evt.nativeEvent.offsetX,
                                     mouseY: evt.nativeEvent.offsetY,
                                     pinned: true,
-                                })
+                                }),
                             );
                         }
 
@@ -388,7 +450,7 @@ export function useCanvasClickHandler({
 
                         abortSecondaryHighlight();
                         dispatchHighlightCollections(
-                            highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, [])
+                            highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, []),
                         );
 
                         if (!query) {
@@ -422,7 +484,7 @@ export function useCanvasClickHandler({
                             }
 
                             dispatchHighlightCollections(
-                                highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, res)
+                                highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, res),
                             );
                         } catch (e) {
                             if (!abortSignal.aborted) {
@@ -436,8 +498,20 @@ export function useCanvasClickHandler({
                 break;
             }
             case Picker.ClippingPlane: {
-                if (!normal || result.sampleType !== "surface") {
+                if (!normal || result.sampleType !== "surface" || !db) {
                     return;
+                }
+
+                let rotation = 0;
+                try {
+                    if (result.objectId) {
+                        const rotationQuat = await getObjectMetadataRotation(view, db, result.objectId);
+                        if (rotationQuat) {
+                            rotation = getLocalRotationAroundNormal(rotationQuat, normal);
+                        }
+                    }
+                } catch (ex) {
+                    console.warn("Error getting object rotation", ex);
                 }
 
                 const w = vec3.dot(normal, position);
@@ -447,7 +521,10 @@ export function useCanvasClickHandler({
                     renderActions.addClippingPlane({
                         normalOffset: vec4.fromValues(normal[0], normal[1], normal[2], w) as Vec4,
                         baseW: w,
-                    })
+                        rotation,
+                        anchorPos: result?.position,
+                        showPlane: false,
+                    }),
                 );
                 break;
             }
@@ -464,7 +541,7 @@ export function useCanvasClickHandler({
                             rotation: rotationFromDirection(normal),
                             fov: 50,
                         },
-                    })
+                    }),
                 );
                 dispatch(renderActions.setPicker(Picker.Object));
 
@@ -480,7 +557,7 @@ export function useCanvasClickHandler({
                                   }
                                 : measure.hover) as ExtendedMeasureEntity,
                             pin: evt.shiftKey,
-                        })
+                        }),
                     );
                 } else if (measure.snapKind === "clippingOutline") {
                     const pointEntity: ExtendedMeasureEntity = {
@@ -492,21 +569,27 @@ export function useCanvasClickHandler({
                         measureActions.selectEntity({
                             entity: pointEntity,
                             pin: evt.shiftKey,
-                        })
+                        }),
                     );
                 } else {
                     dispatch(measureActions.setLoadingBrep(true));
+                    const tolerance = applyCameraDistanceToMeasureTolerance(
+                        result.position,
+                        view.renderState.camera.position,
+                        measurePickSettings,
+                    );
                     const entity = await view.measure?.core.pickMeasureEntity(
                         result.objectId,
                         position,
-                        measurePickSettings
+                        tolerance,
+                        allowGeneratedParametric.enabled,
                     );
                     if (entity?.entity) {
                         dispatch(
                             measureActions.selectEntity({
                                 entity: entity.entity,
                                 pin: evt.shiftKey,
-                            })
+                            }),
                         );
                     }
                     dispatch(measureActions.setLoadingBrep(false));
@@ -528,17 +611,10 @@ export function useCanvasClickHandler({
                 break;
             }
             case Picker.Area: {
-                if (measure.hover && measure.hover.drawKind === "vertex" && planes.length > 0) {
-                    const plane = planes[0].normalOffset;
-                    const planeDir = vec3.fromValues(-plane[0], -plane[1], -plane[2]);
-                    dispatch(areaActions.addPt([measure.hover.parameter, planeDir], view));
+                if (measure.hover && measure.hover.drawKind === "vertex") {
+                    dispatch(areaActions.addPt(measure.hover.parameter, view));
                 } else {
-                    let useNormal = normal;
-                    if (normal === undefined && cameraType === CameraType.Orthographic) {
-                        useNormal = vec3.fromValues(0, 0, 1);
-                        vec3.transformQuat(useNormal, useNormal, view.renderState.camera.rotation);
-                    }
-                    dispatch(areaActions.addPt([position, useNormal ?? [0, 0, 0]], view));
+                    dispatch(areaActions.addPt(position, view));
                 }
                 break;
             }

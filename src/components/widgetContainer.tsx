@@ -1,7 +1,8 @@
-import { css, Paper, PaperProps, styled } from "@mui/material";
+import { css, Paper, PaperProps, styled, useTheme } from "@mui/material";
 
-import { useAppDispatch } from "app/redux-store-interactions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { renderActions } from "features/render";
+import { selectNewDesign } from "slices/explorer";
 
 type StyleProps = {
     minimized?: boolean;
@@ -9,9 +10,18 @@ type StyleProps = {
 };
 
 const ConnectedPaper = (props: PaperProps) => {
+    const theme = useTheme();
     const dispatch = useAppDispatch();
+    const newDesign = useAppSelector(selectNewDesign);
 
-    return <Paper elevation={4} {...props} onClick={() => dispatch(renderActions.setStamp(null))} />;
+    return (
+        <Paper
+            elevation={4}
+            sx={{ borderRadius: `${newDesign ? theme.customShape.hudPanelBorderRadius : theme.shape.borderRadius}px` }}
+            {...props}
+            onClick={() => dispatch(renderActions.setStamp(null))}
+        />
+    );
 };
 
 export const WidgetContainer = styled(ConnectedPaper, {
@@ -19,7 +29,6 @@ export const WidgetContainer = styled(ConnectedPaper, {
 })<StyleProps>(
     ({ theme, minimized, maximized }) => css`
         pointer-events: auto;
-        border-radius: ${theme.shape.borderRadius}px;
         height: ${minimized ? "auto" : "100%"};
         min-height: 0px;
         max-height: min(50vh, 400px);

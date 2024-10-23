@@ -1,6 +1,6 @@
 import { useHistory, useParams } from "react-router-dom";
 
-import { dataApi } from "apis/dataV1";
+import { useSaveBookmarksMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation } from "components";
 import { useSceneId } from "hooks/useSceneId";
@@ -14,6 +14,7 @@ export function Delete() {
 
     const bookmarks = useAppSelector(selectBookmarks);
     const dispatch = useAppDispatch();
+    const [saveBookmarks] = useSaveBookmarksMutation();
 
     const handleDelete = () => {
         const bookmarkToDelete = bookmarks.find((bm) => bm.id === id);
@@ -27,15 +28,15 @@ export function Delete() {
         const newBookmarks = bookmarks.filter((bm) => bm !== bookmarkToDelete);
 
         dispatch(bookmarksActions.setBookmarks(newBookmarks));
-        dataApi.saveBookmarks(
-            sceneId,
-            newBookmarks
+        saveBookmarks({
+            projectId: sceneId,
+            bookmarks: newBookmarks
                 .filter((bm) =>
                     personal ? bm.access === BookmarkAccess.Personal : bm.access === BookmarkAccess.Public
                 )
                 .map(({ access: _access, ...bm }) => bm),
-            { personal }
-        );
+            personal,
+        }).unwrap();
         history.goBack();
     };
 

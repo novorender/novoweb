@@ -2,6 +2,7 @@ import { AddCircle, Close, SearchOutlined } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, IconButton, Snackbar, Typography } from "@mui/material";
 import { ObjectId, SearchPattern } from "@novorender/webgl-api";
 import { FormEventHandler, useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { AdvancedSearchInputs, LinearProgress, ScrollBox, Switch, TextField } from "components";
@@ -13,7 +14,7 @@ import { AsyncState, AsyncStatus } from "types/misc";
 import { uniqueArray } from "utils/misc";
 import { searchDeepByPatterns } from "utils/search";
 
-const MAX_OBJECTS_COUNT = 2000;
+const MAX_OBJECTS_COUNT = 5000;
 
 export function AddObjects({
     onSave,
@@ -22,6 +23,7 @@ export function AddObjects({
     onSave: (objects: { searchPattern: string | SearchPattern[]; ids: ObjectId[] }) => void;
     objects?: { searchPattern: string | SearchPattern[]; ids: ObjectId[] };
 }) {
+    const { t } = useTranslation();
     const dispatchHighlighted = useDispatchHighlighted();
     const history = useHistory();
     const {
@@ -29,21 +31,21 @@ export function AddObjects({
     } = useExplorerGlobals(true);
 
     const [simpleInput, setSimpleInput] = useState(
-        typeof objects?.searchPattern === "string" ? objects.searchPattern : ""
+        typeof objects?.searchPattern === "string" ? objects.searchPattern : "",
     );
     const [advanced, toggleAdvanced] = useToggle(objects?.searchPattern ? Array.isArray(objects.searchPattern) : true);
 
     const [advancedInputs, setAdvancedInputs] = useState(
         objects && Array.isArray(objects.searchPattern)
             ? objects.searchPattern
-            : [{ property: "", value: "", exact: true }]
+            : [{ property: "", value: "", exact: true }],
     );
 
     const [focusedInputIdx, setFocusedInputIdx] = useState<number>(-1);
     const focusedInput = advancedInputs[focusedInputIdx];
 
     const [ids, setIds] = useState(objects?.ids ?? []);
-    const [limitSnackbarOpen, setLimitSnackbarOpen] = useState(ids.length > MAX_OBJECTS_COUNT);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [{ status }, setStatus] = useState<AsyncState<null>>({
         status: AsyncStatus.Initial,
@@ -54,11 +56,11 @@ export function AddObjects({
         if (objects?.ids) {
             dispatchHighlighted(highlightActions.setIds(objects.ids));
             if (objects.ids.length > MAX_OBJECTS_COUNT) {
-                setLimitSnackbarOpen(true);
-                setSnackbarMessage(`Your search is over the limit (${MAX_OBJECTS_COUNT}).`);
+                setSnackbarOpen(true);
+                setSnackbarMessage(t("searchIsOverLimit", { limit: MAX_OBJECTS_COUNT }));
             }
         }
-    }, [dispatchHighlighted, objects?.ids]);
+    }, [dispatchHighlighted, objects?.ids, t]);
 
     const getSearchPattern = useCallback(() => {
         if (!advanced && simpleInput.length < 3) {
@@ -73,10 +75,10 @@ export function AddObjects({
             return;
         }
 
-        return [...searchPattern, { property: "GUID", range: { min: "0", max: "z" } }];
+        return [...searchPattern, { property: "GUID", exact: true }];
     }, [advanced, advancedInputs, simpleInput]);
 
-    const handleSearch = async () => {
+    const handleSearch = useCallback(async () => {
         const abortSignal = abortController.current.signal;
 
         const searchPatterns = getSearchPattern();
@@ -98,8 +100,8 @@ export function AddObjects({
                 callback: (ids) => {
                     setIds((state) => {
                         if (state.length + ids.length > MAX_OBJECTS_COUNT) {
-                            setLimitSnackbarOpen(true);
-                            setSnackbarMessage(`Your search is over the limit (${MAX_OBJECTS_COUNT}).`);
+                            setSnackbarOpen(true);
+                            setSnackbarMessage(t("searchIsOverLimit", { limit: MAX_OBJECTS_COUNT }));
                             abort();
                             return state;
                         }
@@ -111,22 +113,20 @@ export function AddObjects({
                 },
             });
 
-            if (idCount === 0) {
-                setLimitSnackbarOpen(true);
-                setSnackbarMessage(
-                    `No objects found satisfying the search criteria. Ensure objects you're looking for have GUID property defined.`
-                );
+            if (!abortSignal.aborted && idCount === 0) {
+                setSnackbarOpen(true);
+                setSnackbarMessage(t("noObjectsFound"));
             }
         } catch {
             return setStatus({
                 status: AsyncStatus.Error,
-                msg: "An error occurred while searching in the DB.",
+                msg: t("errorSearchingInDb"),
             });
         }
 
         setIds((ids) => uniqueArray(ids));
         setStatus({ status: AsyncStatus.Success, data: null });
-    };
+    }, [abort, abortController, db, dispatchHighlighted, getSearchPattern, t]);
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -150,7 +150,7 @@ export function AddObjects({
     };
 
     const handleLimitSnackbarClose = () => {
-        setLimitSnackbarOpen(false);
+        setSnackbarOpen(false);
     };
 
     return (
@@ -162,7 +162,7 @@ export function AddObjects({
             )}
             <ScrollBox p={1} pt={2} pb={3}>
                 <Typography fontWeight={600} mb={1}>
-                    Assign objects
+                    {t("assignObjects")}
                 </Typography>
                 <Box component="form" sx={{ mt: 1 }} onSubmit={handleSubmit}>
                     {advanced ? (
@@ -190,7 +190,7 @@ export function AddObjects({
                             control={<Switch name="advanced" checked={advanced} onChange={handleAdvancedToggled} />}
                             label={
                                 <Box ml={0.5} fontSize={14}>
-                                    Advanced
+                                    {t("advanced")}
                                 </Box>
                             }
                         />
@@ -207,7 +207,7 @@ export function AddObjects({
                                     }
                                 >
                                     <AddCircle />
-                                    <Box ml={0.5}>AND</Box>
+                                    <Box ml={0.5}>{t("and")}</Box>
                                 </Button>
                                 <Button
                                     color="grey"
@@ -228,13 +228,13 @@ export function AddObjects({
                                                               ? input.value.concat("")
                                                               : [input.value ?? "", ""],
                                                       }
-                                                    : input
-                                            )
+                                                    : input,
+                                            ),
                                         )
                                     }
                                 >
                                     <AddCircle />
-                                    <Box ml={0.5}>OR</Box>
+                                    <Box ml={0.5}>{t("or")}</Box>
                                 </Button>
                             </>
                         )}
@@ -249,7 +249,7 @@ export function AddObjects({
                             onClick={handleSearch}
                         >
                             <SearchOutlined />
-                            <Box ml={0.5}>Search</Box>
+                            <Box ml={0.5}>{t("search")}</Box>
                         </Button>
                     </Box>
                     <Box display="flex" mb={1}>
@@ -264,7 +264,7 @@ export function AddObjects({
                                 abort();
                             }}
                         >
-                            Cancel
+                            {t("cancel")}
                         </Button>
                         <Button
                             variant="contained"
@@ -273,7 +273,7 @@ export function AddObjects({
                             disabled={!ids.length || status !== AsyncStatus.Success || ids.length > MAX_OBJECTS_COUNT}
                             type="submit"
                         >
-                            Assign ({ids.length})
+                            {t("assign", { length: ids.length })}
                         </Button>
                     </Box>
                 </Box>
@@ -285,7 +285,7 @@ export function AddObjects({
                         top: { xs: 24, sm: "auto" },
                     }}
                     autoHideDuration={10000}
-                    open={limitSnackbarOpen}
+                    open={snackbarOpen}
                     onClose={handleLimitSnackbarClose}
                     message={snackbarMessage}
                     action={

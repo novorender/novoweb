@@ -1,0 +1,30 @@
+<svg
+   width="24"
+   height="24"
+   viewBox="0 0 6.3499999 6.35"
+   xmlns="http://www.w3.org/2000/svg"
+   stroke="currentColor">
+   <path
+      style="fill:none;stroke-width:0.529167;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+      d="m 3.1750002,5.6797238 -10e-8,-2.9015989 M 5.8208333,1.7197916 3.1750001,2.7781249 1.8520835,2.2489582 M 4.4979167,1.190625 5.8208333,1.7197916 5.8208332,4.630208 3.1750001,5.6885414 1.8520835,5.1593747" />
+   <path
+      style="fill:none;stroke-width:0.529167;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0, 1.05833;stroke-dashoffset:0.3175;stroke-opacity:1"
+      d="M 4.4979165,1.190625 3.1750002,0.66896754"
+   />
+   <path
+      style="fill:none;stroke-width:0.529167;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0,0.95250058;stroke-dashoffset:0;stroke-opacity:1"
+      d="M 3.1750002,0.66145837 0.52916685,1.7197916"
+   />
+   <path
+      style="fill:none;stroke-width:0.529167;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0, 1.05833;stroke-dashoffset:0.370417;stroke-opacity:1"
+      d="M 1.8520834,2.2489582 0.52916685,1.7197916"
+   />
+   <path
+      style="fill:none;stroke-width:0.529167;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0, 1.05833;stroke-dashoffset:0.370417;stroke-opacity:1"
+      d="M 1.8520834,5.1593749 0.52916687,4.6302083"
+   />
+   <path
+      style="fill:none;stroke-width:0.529167;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0, 0.9525;stroke-dashoffset:0;stroke-opacity:1"
+      d="M 0.52916685,4.630208 V 1.7197916"
+   />
+</svg>

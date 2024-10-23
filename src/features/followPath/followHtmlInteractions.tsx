@@ -2,6 +2,7 @@ import { css } from "@emotion/react";
 import { Box, Button, Slider, styled } from "@mui/material";
 import { ReadonlyVec2 } from "gl-matrix";
 import { forwardRef, memo, SyntheticEvent, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
@@ -24,6 +25,7 @@ import {
     selectCurrentCenter,
     selectFollowObject,
     selectProfile,
+    selectSelectedPath,
     selectView2d,
 } from "./followPathSlice";
 import { useFollowPathFromIds } from "./useFollowPathFromIds";
@@ -47,6 +49,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
     const isBlackBg = bgColor && areArraysEqual(bgColor.color, [0, 0, 0, 1]);
     const legendOffset = useRef(160);
     const lastFov = useRef<number>();
+    const followPath = useAppSelector(selectSelectedPath);
     const isActive = viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations;
     const centerLinePt = useAppSelector(selectClosestToCenterFollowPathPoint);
 
@@ -69,7 +72,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                 }
             },
         }),
-        [view?.measure, currentProfileCenter]
+        [view?.measure, currentProfileCenter],
     );
 
     if (!isActive) {
@@ -129,7 +132,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                     <FollowPathControls />
                 </div>
 
-                {viewMode === ViewMode.Deviations && isLegendFloating && (
+                {viewMode === ViewMode.Deviations && followPath && isLegendFloating && (
                     <div
                         style={{
                             position: "absolute",
@@ -143,7 +146,7 @@ export const FollowHtmlInteractions = forwardRef(function FollowHtmlInteractions
                 )}
             </div>
         );
-    } else if (viewMode === ViewMode.Deviations && centerLinePt && isLegendFloating) {
+    } else if (viewMode === ViewMode.Deviations && followPath && centerLinePt && isLegendFloating) {
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
 
@@ -170,13 +173,14 @@ const LegendAlongCenterLine = styled("div")(
         margin: 1rem;
         border-radius: ${theme.shape.borderRadius}px;
         background: ${theme.palette.background.paper};
-    `
+    `,
 );
 
 const FollowPathControls = memo(function FollowPathControls() {
     const {
         state: { view },
     } = useExplorerGlobals();
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const autoStepSize = useAppSelector(selectAutoStepSize);
     const following = useFollowPathFromIds();
@@ -231,12 +235,12 @@ const FollowPathControls = memo(function FollowPathControls() {
                         }
                     }}
                 >
-                    Recenter
+                    {t("recenter")}
                 </Button>
             </Box>
 
             <Box position="absolute" bottom="36px" whiteSpace="nowrap" textAlign="center" sx={{ translate: "-50% 0" }}>
-                Clipping: {clipping} m
+                {`${t("clippingName")} ${clipping} m`}
             </Box>
             <Box position="absolute" bottom="0px" width="200px" sx={{ translate: "-50% 0" }}>
                 <Slider

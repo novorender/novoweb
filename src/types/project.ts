@@ -1,5 +1,9 @@
+import { PointVisualization } from "@novorender/api";
+
+import { VecRGBA } from "utils/color";
+
 export type ExplorerProjectState = {
-    camera: {
+    camera?: {
         pinhole: {
             controller: "flight" | "special" | "cadRightPan" | "cadMiddlePan";
             clipping: {
@@ -30,7 +34,7 @@ export type ExplorerProjectState = {
             touchRotate?: boolean;
         };
     };
-    renderSettings: {
+    renderSettings?: {
         dynamicResolutionScaling: boolean;
         msaa: {
             enabled: boolean;
@@ -73,6 +77,11 @@ export type ExplorerProjectState = {
                     }[];
                 };
             };
+            classificationColorGradient: {
+                knots: { position: number; label: string; color: VecRGBA }[];
+                undefinedColor: VecRGBA;
+            };
+            defaultPointVisualization: PointVisualization;
         };
         hide: {
             terrain: boolean;
@@ -97,33 +106,41 @@ export type ExplorerProjectState = {
         };
     };
     features: {
-        widgets: {
+        widgets?: {
             enabled: string[];
         };
-        properties: {
+        properties?: {
             stamp: {
                 enabled: boolean;
             };
             starred: string[];
         };
-        navigationCube: {
+        generatedParametricData?: {
             enabled: boolean;
         };
-        debugStats: {
+        navigationCube?: {
             enabled: boolean;
         };
-        primaryMenu: {
+        debugStats?: {
+            enabled: boolean;
+        };
+        primaryMenu?: {
             buttons: string[];
         };
-        contextMenus: {
+        contextMenus?: {
             canvas: {
                 primary: {
                     features: string[];
                 };
             };
         };
+        pointVisualization?: {
+            stamp: {
+                enabled: boolean;
+            };
+        };
     };
-    highlights: {
+    highlights?: {
         primary: {
             color: [number, number, number, number];
         };
@@ -193,7 +210,9 @@ export type CustomProperties = {
         ditio?: boolean;
         jira?: boolean;
         xsiteManage?: boolean;
+        newUx?: boolean;
     };
+    generatedParametricData?: boolean;
     // NOTE(OLA): Legacy properties below
     enabledFeatures?: Record<string, boolean>;
     showStats?: boolean;
@@ -264,5 +283,8 @@ export type CustomProperties = {
     };
     canvasContextMenu?: {
         features: string[];
+    };
+    forms?: {
+        alwaysShowMarkers?: boolean;
     };
 };

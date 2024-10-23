@@ -1,16 +1,19 @@
 import { Logout, SettingsRounded } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
 import { PropsWithChildren, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { MemoryRouter, Route, Switch, SwitchProps, useHistory, useLocation } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
 import WidgetList from "features/widgetList/widgetList";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { deleteFromStorage } from "utils/storage";
 
 import { jiraActions, selectJiraAccessTokenData, selectJiraClickedMarker, selectJiraLastViewedPath } from "./jiraSlice";
@@ -33,7 +36,13 @@ export default function Jira() {
     return (
         <MemoryRouter initialEntries={["/issues", lastViewedPath]} initialIndex={1}>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.jira} disableShadow />
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    WidgetMenu={WidgetMenu}
+                    widget={featuresConfig.jira}
+                    disableShadow
+                />
                 <Box
                     display={menuOpen || minimized ? "none" : "flex"}
                     flexDirection="column"
@@ -77,7 +86,8 @@ export default function Jira() {
 function WidgetMenu(props: MenuProps) {
     const settingsPaths = ["/*"];
     const accessToken = useAppSelector(selectJiraAccessTokenData);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntJiraManage);
 
     if (!accessToken) {
         return null;
@@ -87,7 +97,7 @@ function WidgetMenu(props: MenuProps) {
         <>
             <Menu {...props}>
                 <LogoutMenuItem onClose={props.onClose} />
-                {isAdmin && (
+                {canManage && (
                     <Route path={settingsPaths} exact>
                         <SettingsMenuItem onClose={props.onClose} />
                     </Route>
@@ -98,6 +108,7 @@ function WidgetMenu(props: MenuProps) {
 }
 
 function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const dispatch = useAppDispatch();
 
@@ -118,7 +129,7 @@ function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
                     <ListItemIcon>
                         <Logout />
                     </ListItemIcon>
-                    <ListItemText>Log out</ListItemText>
+                    <ListItemText>{t("logOut")}</ListItemText>
                 </>
             </MenuItem>
         </div>
@@ -126,6 +137,7 @@ function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
 }
 
 function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
+    const { t } = useTranslation();
     const history = useHistory();
 
     return (
@@ -143,7 +155,7 @@ function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
                     <ListItemIcon>
                         <SettingsRounded />
                     </ListItemIcon>
-                    <ListItemText>Settings</ListItemText>
+                    <ListItemText>{t("settings")}</ListItemText>
                 </>
             </MenuItem>
         </div>
@@ -174,7 +186,7 @@ function CustomSwitch(props: PropsWithChildren<SwitchProps>) {
         return () => {
             if (willUnmount.current) {
                 dispatch(
-                    jiraActions.setLastViewedPath(location.pathname.startsWith("/issue") ? location.pathname : "/")
+                    jiraActions.setLastViewedPath(location.pathname.startsWith("/issue") ? location.pathname : "/"),
                 );
             }
         };

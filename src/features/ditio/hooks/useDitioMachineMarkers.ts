@@ -45,37 +45,42 @@ export function useDitioMachineMarkers() {
         }
 
         const bounds = scene.boundingSphere;
-        const filteredMachines = [...(machines.dumperLiveDataList ?? []), ...(machines.loaderLiveDataList ?? [])]
-            .filter((machine) => projects.includes(machine.projectId))
-            .map((machine) => {
-                const scenePosition = latLon2Tm({
-                    coords: {
-                        longitude: machine.lastKnownLocation.coordinates[0],
-                        latitude: machine.lastKnownLocation.coordinates[1],
-                    },
-                    tmZone,
-                });
+        try {
+            const filteredMachines = [...(machines.dumperLiveDataList ?? []), ...(machines.loaderLiveDataList ?? [])]
+                .filter((machine) => projects.includes(machine.projectId))
+                .map((machine) => {
+                    const scenePosition = latLon2Tm({
+                        coords: {
+                            longitude: machine.lastKnownLocation.coordinates[0],
+                            latitude: machine.lastKnownLocation.coordinates[1],
+                        },
+                        tmZone,
+                    });
 
-                if ("dumperId" in machine) {
-                    return {
-                        ...machine,
-                        scenePosition,
-                        kind: "dumper",
-                        id: machine.dumperId,
-                    } as Dumper;
-                } else {
-                    return {
-                        ...machine,
-                        scenePosition,
-                        kind: "loader",
-                        id: machine.loaderId,
-                    } as Loader;
-                }
-            })
-            .filter((machine) => vec3.dist(machine.scenePosition, bounds.center) <= bounds.radius)
-            .sort((a, b) => new Date(a.lastSeen).getTime() - new Date(b.lastSeen).getTime());
+                    if ("dumperId" in machine) {
+                        return {
+                            ...machine,
+                            scenePosition,
+                            kind: "dumper",
+                            id: machine.dumperId,
+                        } as Dumper;
+                    } else {
+                        return {
+                            ...machine,
+                            scenePosition,
+                            kind: "loader",
+                            id: machine.loaderId,
+                        } as Loader;
+                    }
+                })
+                .filter((machine) => vec3.dist(machine.scenePosition, bounds.center) <= bounds.radius)
+                .sort((a, b) => new Date(a.lastSeen).getTime() - new Date(b.lastSeen).getTime());
 
-        setMarkers(filteredMachines);
+            setMarkers(filteredMachines);
+        } catch (ex) {
+            console.warn("Error reading Ditio machine markers", ex);
+            setMarkers([]);
+        }
     }, [machines, tmZone, projects, scene]);
 
     return skip ? empty : markers;

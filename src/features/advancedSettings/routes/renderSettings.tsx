@@ -1,10 +1,11 @@
 import { ArrowBack, Save } from "@mui/icons-material";
 import { Box, Button, FormControlLabel, Slider, Typography, useTheme } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Accordion, AccordionDetails, AccordionSummary, Divider, LinearProgress, ScrollBox, Switch } from "components";
+import { AccordionDetails, AccordionSummary, Divider, LinearProgress, Switch, WidgetBottomScrollBox } from "components";
 import {
     renderActions,
     selectAdvanced,
@@ -16,9 +17,12 @@ import {
 } from "features/render";
 import { selectUser } from "slices/authSlice";
 
+import { AdvSettingsAccordion as Accordion } from "../components/advSettingsAccordion";
+
 export function RenderSettings({ save, saving }: { save: () => Promise<void>; saving: boolean }) {
     const history = useHistory();
     const theme = useTheme();
+    const { t } = useTranslation();
 
     const dispatch = useAppDispatch();
     const user = useAppSelector(selectUser);
@@ -53,11 +57,11 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                 <Box display="flex" justifyContent="space-between">
                     <Button onClick={() => history.goBack()} color="grey">
                         <ArrowBack sx={{ mr: 1 }} />
-                        Back
+                        {t("back")}
                     </Button>
                     <Button sx={{ ml: "auto" }} onClick={save} color="grey" disabled={saving}>
                         <Save sx={{ mr: 1 }} />
-                        Save
+                        {t("save")}
                     </Button>
                 </Box>
             </Box>
@@ -66,13 +70,14 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                     <LinearProgress />
                 </Box>
             ) : null}
-            <ScrollBox height={1} mt={1} pb={3}>
+            <WidgetBottomScrollBox height={1} mt={1} pb={3}>
                 <Typography p={1} pb={0} variant="h6" fontWeight={600}>
-                    Render settings
+                    {t("renderSettings")}
                 </Typography>
                 <Divider sx={{ my: 1 }} />
                 <Box p={1} display="flex" flexDirection="column">
                     <FormControlLabel
+                        id="render-msaa"
                         sx={{ ml: 0, mb: 1 }}
                         control={
                             <Switch
@@ -85,11 +90,12 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Anti-aliasing (MSAA)
+                                {t("antiAliasing")}
                             </Box>
                         }
                     />
                     <FormControlLabel
+                        id="render-toon-outline"
                         sx={{ ml: 0, mb: 1 }}
                         control={
                             <Switch
@@ -102,11 +108,12 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Toon outlines
+                                {t("toonOutlines")}
                             </Box>
                         }
                     />
                     <FormControlLabel
+                        id="render-toon-outline-each-object"
                         sx={{ ml: 0, mb: 1 }}
                         control={
                             <Switch
@@ -120,7 +127,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         }
                         label={
                             <Box ml={1} fontSize={16}>
-                                Toon outline each object
+                                {t("toonOutlineEachObject")}
                             </Box>
                         }
                     />
@@ -135,14 +142,14 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         dispatch(
                                             renderActions.setAdvanced({
                                                 debug: { showNodeBounds: checked },
-                                            })
+                                            }),
                                         )
                                     }
                                 />
                             }
                             label={
                                 <Box ml={1} fontSize={16}>
-                                    Show node bounds
+                                    {t("showNodeBounds")}
                                 </Box>
                             }
                         />
@@ -151,11 +158,12 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
 
                 <Divider sx={{ borderColor: theme.palette.grey[300], mb: 2 }} />
                 {showMeshSettings ? (
-                    <Accordion>
-                        <AccordionSummary>Mesh</AccordionSummary>
+                    <Accordion id="render-mesh">
+                        <AccordionSummary>{t("mesh")}</AccordionSummary>
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
                                 <FormControlLabel
+                                    id="render-mesh-show"
                                     sx={{ ml: 0, mb: 2 }}
                                     control={
                                         <Switch
@@ -168,7 +176,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Show
+                                            {t("show")}
                                         </Box>
                                     }
                                 />
@@ -213,11 +221,12 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                     </Accordion>
                 ) : null}
                 {showPointSettings ? (
-                    <Accordion>
-                        <AccordionSummary>Points</AccordionSummary>
+                    <Accordion id="render-points">
+                        <AccordionSummary>{t("points")}</AccordionSummary>
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
                                 <FormControlLabel
+                                    id="render-points-show"
                                     sx={{ ml: 0, mb: 2 }}
                                     control={
                                         <Switch
@@ -228,7 +237,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Show
+                                            {t("show")}
                                         </Box>
                                     }
                                 />
@@ -242,9 +251,10 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                             flexShrink: 0,
                                         }}
                                     >
-                                        Point size (pixels)
+                                        {t("pointSize")}
                                     </Typography>
                                     <Slider
+                                        id="render-points-size"
                                         sx={{ mx: 2, flex: "1 1 100%" }}
                                         min={0}
                                         max={2}
@@ -266,9 +276,10 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                             flexShrink: 0,
                                         }}
                                     >
-                                        Max point size
+                                        {t("maxPointSize")}
                                     </Typography>
                                     <Slider
+                                        id="render-points-max-point-size"
                                         sx={{ mx: 2, flex: "1 1 100%" }}
                                         min={1}
                                         max={100}
@@ -292,9 +303,10 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                             flexShrink: 0,
                                         }}
                                     >
-                                        Tolerance factor
+                                        {t("toleranceFactor")}
                                     </Typography>
                                     <Slider
+                                        id="render-points-tolerance-factor"
                                         sx={{ mx: 2, flex: "1 1 100%" }}
                                         min={0}
                                         max={2}
@@ -307,7 +319,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                         onChangeCommitted={(_evt, value) =>
                                             !Array.isArray(value)
                                                 ? dispatch(
-                                                      renderActions.setPoints({ size: { toleranceFactor: value } })
+                                                      renderActions.setPoints({ size: { toleranceFactor: value } }),
                                                   )
                                                 : undefined
                                         }
@@ -318,11 +330,12 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                     </Accordion>
                 ) : null}
                 {showLineSettings ? (
-                    <Accordion>
-                        <AccordionSummary>Lines</AccordionSummary>
+                    <Accordion id="render-lines">
+                        <AccordionSummary>{t("lines")}</AccordionSummary>
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
                                 <FormControlLabel
+                                    id="render-lines-show"
                                     sx={{ ml: 0 }}
                                     control={
                                         <Switch
@@ -333,7 +346,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Show
+                                            {t("show")}
                                         </Box>
                                     }
                                 />
@@ -342,11 +355,12 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                     </Accordion>
                 ) : null}
                 {showTerrainSettings ? (
-                    <Accordion>
-                        <AccordionSummary>Terrain</AccordionSummary>
+                    <Accordion id="render-terrain">
+                        <AccordionSummary>{t("terrain")}</AccordionSummary>
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
                                 <FormControlLabel
+                                    id="render-terrain-show"
                                     sx={{ ml: 0, mb: 2 }}
                                     control={
                                         <Switch
@@ -357,11 +371,12 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Show
+                                            {t("show")}
                                         </Box>
                                     }
                                 />
                                 <FormControlLabel
+                                    id="render-terrain-as-background"
                                     sx={{ ml: 0, mb: 1 }}
                                     control={
                                         <Switch
@@ -374,7 +389,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Render as background
+                                            {t("renderAsBackground")}
                                         </Box>
                                     }
                                 />
@@ -383,11 +398,12 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                     </Accordion>
                 ) : null}
                 {showDocumentSettings ? (
-                    <Accordion>
-                        <AccordionSummary>PDF</AccordionSummary>
+                    <Accordion id="render-document">
+                        <AccordionSummary>{t("pdf")}</AccordionSummary>
                         <AccordionDetails>
                             <Box p={1} display="flex" flexDirection="column">
                                 <FormControlLabel
+                                    id="render-document-show"
                                     sx={{ ml: 0 }}
                                     control={
                                         <Switch
@@ -398,7 +414,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                                     }
                                     label={
                                         <Box ml={1} fontSize={16}>
-                                            Show
+                                            {t("show")}
                                         </Box>
                                     }
                                 />
@@ -406,18 +422,18 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         </AccordionDetails>
                     </Accordion>
                 ) : null}
-                <Accordion>
-                    <AccordionSummary>Light</AccordionSummary>
+                <Accordion id="render-light">
+                    <AccordionSummary>{t("light")}</AccordionSummary>
                     <AccordionDetails>
                         <Box p={1} display="flex" flexDirection="column">
-                            <Box display="flex" alignItems="center">
+                            <Box id="render-light-exposure" display="flex" alignItems="center">
                                 <Typography
                                     sx={{
                                         width: 160,
                                         flexShrink: 0,
                                     }}
                                 >
-                                    Light exposure
+                                    {t("lightExposure")}
                                 </Typography>
                                 <Slider
                                     sx={{ mx: 2, flex: "1 1 100%" }}
@@ -439,7 +455,7 @@ export function RenderSettings({ save, saving }: { save: () => Promise<void>; sa
                         </Box>
                     </AccordionDetails>
                 </Accordion>
-            </ScrollBox>
+            </WidgetBottomScrollBox>
         </>
     );
 }

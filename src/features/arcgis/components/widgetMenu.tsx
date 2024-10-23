@@ -1,15 +1,18 @@
 import { AddCircle, Save } from "@mui/icons-material";
 import { ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
-import { useAppSelector } from "app/redux-store-interactions";
-import { selectHasAdminCapabilities } from "slices/explorer";
+import { Permission } from "apis/dataV2/permissions";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 
 export function WidgetMenu(props: MenuProps) {
+    const { t } = useTranslation();
     const history = useHistory();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntArcgisManage);
 
-    if (!isAdmin) {
+    if (!canManage) {
         return null;
     }
 
@@ -27,13 +30,13 @@ export function WidgetMenu(props: MenuProps) {
                 <ListItemIcon>
                     <AddCircle fontSize="small" />
                 </ListItemIcon>
-                <ListItemText>Add feature server</ListItemText>
+                <ListItemText>{t("addFeatureServer")}</ListItemText>
             </MenuItem>
             <MenuItem onClick={() => goTo("/save")}>
                 <ListItemIcon>
                     <Save fontSize="small" />
                 </ListItemIcon>
-                <ListItemText>Save</ListItemText>
+                <ListItemText>{t("save")}</ListItemText>
             </MenuItem>
         </Menu>
     );

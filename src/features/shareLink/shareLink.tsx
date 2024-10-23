@@ -1,16 +1,17 @@
 import { Close } from "@mui/icons-material";
-import { IconButton, Snackbar, Typography } from "@mui/material";
+import { Box, IconButton, ListItemIcon, ListItemText, MenuItem, Snackbar, Tooltip, Typography } from "@mui/material";
+import { type ExplorerBookmarkState } from "@novorender/data-js-api";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
-import { dataApi } from "apis/dataV1";
-import { useAppSelector } from "app/redux-store-interactions";
+import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { WidgetMenuButtonWrapper } from "components/widgetMenuButtonWrapper";
 import { featuresConfig } from "config/features";
-import { useCreateBookmark } from "features/bookmarks/useCreateBookmark";
 import { selectViewMode } from "features/render";
-import { useSceneId } from "hooks/useSceneId";
-import { selectIsOnline } from "slices/explorer";
+import { explorerActions, selectIsOnline } from "slices/explorer";
 import { ViewMode } from "types/misc";
+
+import { useShareLink } from "./useShareLink";
 
 enum Status {
     Initial,
@@ -18,13 +19,24 @@ enum Status {
     Success,
 }
 
-export function ShareLink() {
-    const { Icon, name, offline } = featuresConfig.shareLink;
+export function ShareLink({
+    variant = "default",
+    nameKey = featuresConfig.shareLink.nameKey,
+    explorerStateOverwrite = { forms: undefined },
+    onClick,
+}: {
+    variant?: "default" | "primaryMenu" | "menuItem";
+    nameKey?: string;
+    explorerStateOverwrite?: Partial<ExplorerBookmarkState>;
+    onClick?: () => void;
+}) {
+    const { t } = useTranslation();
+    const { Icon, offline } = featuresConfig.shareLink;
 
-    const createBookmark = useCreateBookmark();
     const viewMode = useAppSelector(selectViewMode);
     const isOnline = useAppSelector(selectIsOnline);
-    const sceneId = useSceneId();
+    const dispatch = useAppDispatch();
+    const shareLink = useShareLink();
 
     const [status, setStatus] = useState(Status.Initial);
 
@@ -35,47 +47,44 @@ export function ShareLink() {
             return;
         }
 
-        const id = window.crypto.randomUUID();
-        const bm = createBookmark();
-
         setStatus(Status.Loading);
-        const blob = new Blob([`${window.location.origin}${window.location.pathname}?bookmarkId=${id}`], {
-            type: "text/plain",
-        });
-        let saved = false;
 
-        try {
-            // Safari treats user activation differently:
-            // https://bugs.webkit.org/show_bug.cgi?id=222262.
-            await navigator.clipboard.write([
-                new ClipboardItem({
-                    "text/plain": (async () => {
-                        saved = await dataApi.saveBookmarks(sceneId, [{ ...bm, id, name: id }], { group: id });
-
-                        if (!saved) {
-                            throw new Error("Failed to save bookmark");
-                        }
-
-                        return blob;
-                    })(),
-                }),
-            ]);
-        } catch (e) {
-            if (!saved) {
-                console.warn(e);
-                setStatus(Status.Initial);
-                return;
-            }
-
-            navigator.clipboard.write([
-                new ClipboardItem({
-                    [blob.type]: blob,
-                }),
-            ]);
+        const saved = await shareLink(explorerStateOverwrite);
+        if (!saved) {
+            setStatus(Status.Initial);
+            return;
         }
 
-        setStatus(Status.Success);
+        if (variant === "primaryMenu" || variant === "menuItem") {
+            dispatch(explorerActions.setSnackbarMessage({ msg: t("copiedToClipboard") }));
+        } else {
+            setStatus(Status.Success);
+        }
+        onClick?.();
     };
+
+    if (variant === "primaryMenu") {
+        return (
+            <Tooltip title={t(nameKey)} placement="top">
+                <Box>
+                    <IconButton onClick={createLink} disabled={disabled}>
+                        <Icon />
+                    </IconButton>
+                </Box>
+            </Tooltip>
+        );
+    }
+
+    if (variant === "menuItem") {
+        return (
+            <MenuItem disabled={disabled} onClick={createLink}>
+                <ListItemIcon>
+                    <Icon />
+                </ListItemIcon>
+                <ListItemText>{t(nameKey)}</ListItemText>
+            </MenuItem>
+        );
+    }
 
     return (
         <>
@@ -85,7 +94,7 @@ export function ShareLink() {
                 autoHideDuration={2500}
                 open={status === Status.Success}
                 onClose={() => setStatus(Status.Initial)}
-                message="Copied to clipboard"
+                message={t("copiedToClipboard")}
                 action={
                     <IconButton
                         size="small"
@@ -105,7 +114,7 @@ export function ShareLink() {
                 <IconButton disabled={disabled} size="large">
                     <Icon />
                 </IconButton>
-                <Typography>{name}</Typography>
+                <Typography>{t(nameKey)}</Typography>
             </WidgetMenuButtonWrapper>
         </>
     );

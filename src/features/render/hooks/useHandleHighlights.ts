@@ -6,17 +6,18 @@ import {
 } from "@novorender/api";
 import { useEffect, useRef } from "react";
 
-import { dataApi } from "apis/dataV1";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { useHidden } from "contexts/hidden";
 import { useHighlightCollections } from "contexts/highlightCollections";
 import { useHighlighted } from "contexts/highlighted";
 import { GroupStatus, ObjectGroup, useObjectGroups } from "contexts/objectGroups";
+import { ImmutableObjectIdSet } from "contexts/objectGroups/reducer";
 import { useSelectionBasket } from "contexts/selectionBasket";
+import { selectAllDeviationGroups, selectSelectedProfile } from "features/deviations";
 import { selectVisibleOutlineGroups } from "features/outlineLaser";
 import { selectPropertyTreeGroups } from "features/propertyTree/slice";
-import { useSceneId } from "hooks/useSceneId";
+import { useFillGroupIds } from "hooks/useFillGroupIds";
 import { ViewMode } from "types/misc";
 
 import {
@@ -34,10 +35,10 @@ export function useHandleHighlights() {
     const {
         state: { view },
     } = useExplorerGlobals();
-    const sceneId = useSceneId();
     const mainObject = useAppSelector(selectMainObject);
     const highlighted = useHighlighted();
-    const { secondaryHighlight, selectedDeviation, formsNew, formsOngoing, formsCompleted } = useHighlightCollections();
+    const { secondaryHighlight, formsNew, formsOngoing, formsCompleted, clashObjects1, clashObjects2 } =
+        useHighlightCollections();
     const hidden = useHidden().idArr;
     const groups = useObjectGroups();
     const defaultVisibility = useAppSelector(selectDefaultVisibility);
@@ -49,8 +50,13 @@ export function useHandleHighlights() {
     const { groups: propertyTreeGroups } = useAppSelector(selectPropertyTreeGroups);
     const cameraType = useAppSelector(selectCameraType);
     const viewMode = useAppSelector(selectViewMode);
+    const fillGroupIds = useFillGroupIds();
+    const deviationProfile = useAppSelector(selectSelectedProfile);
+    const deviationLegendGroups = useAppSelector(selectAllDeviationGroups);
 
     const id = useRef(0);
+    const prevFrozen = useRef<{ idSets: ObjectGroup["ids"][]; ids: Uint32Array }>();
+    const prevHidden = useRef<{ ids: number[]; idSets: ObjectGroup["ids"][]; allIds: Uint32Array }>();
 
     useEffect(() => {
         apply();
@@ -66,64 +72,83 @@ export function useHandleHighlights() {
                         defaultVisibility === ObjectVisibility.Neutral
                             ? createNeutralHighlight()
                             : defaultVisibility === ObjectVisibility.SemiTransparent
-                            ? createTransparentHighlight(0.2)
-                            : "hide",
+                              ? createTransparentHighlight(0.2)
+                              : "hide",
                 },
             });
 
             const currentId = ++id.current;
             const loading = performance.now();
             dispatch(renderActions.addLoadingHandle(loading));
-            await fillActiveGroupIds(sceneId, groups);
+            await fillGroupIds(groups.filter((group) => group.status !== GroupStatus.None));
             dispatch(renderActions.removeLoadingHandle(loading));
 
             if (currentId !== id.current) {
                 return;
             }
 
-            const { coloredGroups, hiddenGroups, semiTransparent } = groups.reduce(
-                (prev, group, idx) => {
-                    switch (group.status) {
-                        case GroupStatus.Selected: {
-                            const color = group.color.toString();
-
-                            if (prev.coloredGroups[color]) {
-                                group.ids.forEach((id) => {
-                                    prev.coloredGroups[color].ids.add(id);
-                                    prev.coloredGroups[color].idx = idx;
-                                });
-                            } else {
-                                prev.coloredGroups[color] = {
-                                    idx,
-                                    action: createColorSetHighlight(group.color),
-                                    ids: new Set(group.ids),
-                                };
+            const { coloredGroups, hiddenGroups, frozenGroups, semiTransparent, coloredDeviationGroups } =
+                groups.reduce(
+                    (prev, group, idx) => {
+                        if (viewMode === ViewMode.Deviations) {
+                            for (const g of deviationLegendGroups) {
+                                if (g.isDeviationColored && g.id === group.id && g.status !== GroupStatus.Hidden) {
+                                    prev.coloredDeviationGroups.push(group);
+                                    return prev;
+                                }
                             }
-                            break;
                         }
-                        case GroupStatus.Hidden: {
-                            if (!group.opacity) {
-                                prev.hiddenGroups.push(group);
-                            } else {
-                                prev.semiTransparent.push(group);
-                            }
-                            break;
-                        }
-                        default:
-                            break;
-                    }
 
-                    return prev;
-                },
-                {
-                    coloredGroups: {} as {
-                        [color: string]: { ids: Set<number>; action: RenderStateHighlightGroup["action"]; idx: number };
+                        switch (group.status) {
+                            case GroupStatus.Selected: {
+                                const color = group.color.toString();
+
+                                if (prev.coloredGroups[color]) {
+                                    group.ids.forEach((id) => {
+                                        prev.coloredGroups[color].ids.add(id);
+                                        prev.coloredGroups[color].idx = idx;
+                                    });
+                                } else {
+                                    prev.coloredGroups[color] = {
+                                        idx,
+                                        action: createColorSetHighlight(group.color),
+                                        ids: new Set(group.ids),
+                                    };
+                                }
+                                break;
+                            }
+                            case GroupStatus.Hidden: {
+                                if (!group.opacity) {
+                                    prev.hiddenGroups.push(group);
+                                } else {
+                                    prev.semiTransparent.push(group);
+                                }
+                                break;
+                            }
+                            case GroupStatus.Frozen: {
+                                prev.frozenGroups.push(group);
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+
+                        return prev;
                     },
-                    frozenGroups: [] as ObjectGroup[],
-                    hiddenGroups: [] as { ids: Set<number> }[],
-                    semiTransparent: [] as ObjectGroup[],
-                }
-            );
+                    {
+                        coloredGroups: {} as {
+                            [color: string]: {
+                                ids: Set<number>;
+                                action: RenderStateHighlightGroup["action"];
+                                idx: number;
+                            };
+                        },
+                        frozenGroups: [] as ObjectGroup[],
+                        hiddenGroups: [] as { ids: ImmutableObjectIdSet }[],
+                        semiTransparent: [] as ObjectGroup[],
+                        coloredDeviationGroups: [] as ObjectGroup[],
+                    },
+                );
 
             const { coloredPropertyTreeGroups } = propertyTreeGroups.reduce(
                 (prev, group) => {
@@ -158,10 +183,41 @@ export function useHandleHighlights() {
                         [color: string]: { ids: Set<number>; action: RenderStateHighlightGroup["action"] };
                     },
                     hiddenGroups: hiddenGroups as { ids: Set<number> }[],
-                }
+                },
             );
 
-            const allHidden = objectIdSet([hidden, ...hiddenGroups.map((g) => g.ids)]);
+            let allHiddenIds: Uint32Array;
+            if (
+                prevHidden.current &&
+                prevHidden.current.ids === hidden &&
+                areArraysEqual(prevHidden.current.idSets, hiddenGroups, (idSet, g) => idSet === g.ids)
+            ) {
+                allHiddenIds = prevHidden.current.allIds;
+            } else {
+                const idSets = hiddenGroups.map((g) => g.ids);
+                allHiddenIds = objectIdSet([hidden, ...idSets]).toArray();
+                prevHidden.current = {
+                    ids: hidden,
+                    idSets,
+                    allIds: allHiddenIds,
+                };
+            }
+
+            let allFrozenIds: Uint32Array;
+            if (
+                prevFrozen.current &&
+                areArraysEqual(prevFrozen.current.idSets, frozenGroups, (idSet, g) => idSet === g.ids)
+            ) {
+                allFrozenIds = prevFrozen.current.ids;
+            } else {
+                allFrozenIds = objectIdSet(frozenGroups.map((g) => g.ids)).toArray();
+                prevFrozen.current = {
+                    idSets: frozenGroups.map((g) => g.ids),
+                    ids: allFrozenIds,
+                };
+            }
+
+            const deviationIds = objectIdSet(coloredDeviationGroups.map((g) => g.ids)).toArray();
 
             view.modifyRenderState({
                 highlights: {
@@ -172,8 +228,20 @@ export function useHandleHighlights() {
                                   action: createTransparentHighlight(group.opacity),
                               }))
                             : []),
+                        ...(cameraType === CameraType.Orthographic &&
+                        viewMode !== ViewMode.FollowPath &&
+                        viewMode !== ViewMode.Deviations
+                            ? outlineGroups.map((group) => ({
+                                  objectIds: new Uint32Array(group.ids).sort(),
+                                  outlineColor: group.color,
+                              }))
+                            : []),
                         {
-                            objectIds: allHidden.toArray(),
+                            objectIds: allFrozenIds,
+                            action: "filter",
+                        },
+                        {
+                            objectIds: allHiddenIds,
                             action: "hide",
                         },
                         {
@@ -188,7 +256,7 @@ export function useHandleHighlights() {
                                 objectIds: new Uint32Array(
                                     basketMode === SelectionBasketMode.Loose
                                         ? group.ids
-                                        : basket.idArr.filter((id) => group.ids.has(id))
+                                        : basket.idArr.filter((id) => group.ids.has(id)),
                                 ).sort(),
                                 action: group.action,
                             })),
@@ -196,35 +264,35 @@ export function useHandleHighlights() {
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose
                                     ? group.ids
-                                    : basket.idArr.filter((id) => group.ids.has(id))
+                                    : basket.idArr.filter((id) => group.ids.has(id)),
                             ).sort(),
                             action: group.action,
                         })),
-                        ...(cameraType === CameraType.Orthographic &&
-                        viewMode !== ViewMode.FollowPath &&
-                        viewMode !== ViewMode.Deviations
-                            ? outlineGroups.map((group) => ({
-                                  objectIds: new Uint32Array(group.ids).sort().filter((f) => !allHidden.has(f)),
-                                  outlineColor: group.color,
-                              }))
+                        ...(deviationProfile && deviationIds.length
+                            ? [
+                                  {
+                                      objectIds: deviationIds,
+                                      action: createTransparentHighlight(1),
+                                      pointVisualization: {
+                                          kind: "deviation" as const,
+                                          index: deviationProfile.index,
+                                      },
+                                  },
+                              ]
                             : []),
                         {
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose
                                     ? secondaryHighlight.idArr
-                                    : basket.idArr.filter((id) => secondaryHighlight.ids[id])
+                                    : basket.idArr.filter((id) => secondaryHighlight.ids[id]),
                             ).sort(),
                             action: createColorSetHighlight(secondaryHighlight.color),
-                        },
-                        {
-                            objectIds: new Uint32Array(selectedDeviation.idArr).sort(),
-                            action: createNeutralHighlight(),
                         },
                         {
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose
                                     ? formsNew.idArr
-                                    : basket.idArr.filter((id) => formsNew.ids[id])
+                                    : basket.idArr.filter((id) => formsNew.ids[id]),
                             ).sort(),
                             action: createColorSetHighlight(formsNew.color),
                         },
@@ -232,7 +300,7 @@ export function useHandleHighlights() {
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose
                                     ? formsOngoing.idArr
-                                    : basket.idArr.filter((id) => formsOngoing.ids[id])
+                                    : basket.idArr.filter((id) => formsOngoing.ids[id]),
                             ).sort(),
                             action: createColorSetHighlight(formsOngoing.color),
                         },
@@ -240,9 +308,25 @@ export function useHandleHighlights() {
                             objectIds: new Uint32Array(
                                 basketMode === SelectionBasketMode.Loose
                                     ? formsCompleted.idArr
-                                    : basket.idArr.filter((id) => formsCompleted.ids[id])
+                                    : basket.idArr.filter((id) => formsCompleted.ids[id]),
                             ).sort(),
                             action: createColorSetHighlight(formsCompleted.color),
+                        },
+                        {
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
+                                    ? clashObjects1.idArr
+                                    : basket.idArr.filter((id) => clashObjects1.ids[id]),
+                            ).sort(),
+                            action: createColorSetHighlight(clashObjects1.color),
+                        },
+                        {
+                            objectIds: new Uint32Array(
+                                basketMode === SelectionBasketMode.Loose
+                                    ? clashObjects2.idArr
+                                    : basket.idArr.filter((id) => clashObjects2.ids[id]),
+                            ).sort(),
+                            action: createColorSetHighlight(clashObjects2.color),
                         },
                         {
                             objectIds: new Uint32Array(
@@ -250,7 +334,7 @@ export function useHandleHighlights() {
                                     ? mainObject !== undefined
                                         ? highlighted.idArr.concat(mainObject)
                                         : highlighted.idArr
-                                    : basket.idArr.filter((id) => id === mainObject || highlighted.ids[id])
+                                    : basket.idArr.filter((id) => id === mainObject || highlighted.ids[id]),
                             ).sort(),
                             action: createColorSetHighlight(highlighted.color),
                             outlineColor: [highlighted.color[0], highlighted.color[1], highlighted.color[3]],
@@ -262,12 +346,13 @@ export function useHandleHighlights() {
     }, [
         view,
         dispatch,
-        sceneId,
         highlighted,
         secondaryHighlight,
         formsNew,
         formsOngoing,
         formsCompleted,
+        clashObjects1,
+        clashObjects2,
         hidden,
         groups,
         propertyTreeGroups,
@@ -278,25 +363,11 @@ export function useHandleHighlights() {
         basketMode,
         outlineGroups,
         cameraType,
-        selectedDeviation,
         viewMode,
+        fillGroupIds,
+        deviationProfile,
+        deviationLegendGroups,
     ]);
-}
-
-async function fillActiveGroupIds(sceneId: string, groups: ObjectGroup[]): Promise<void> {
-    const proms: Promise<void>[] = groups.map(async (group) => {
-        if (group.status !== GroupStatus.None && !group.ids) {
-            group.ids = new Set(
-                await dataApi.getGroupIds(sceneId, group.id).catch(() => {
-                    console.warn("failed to load ids for group - ", group.id);
-                    return [] as number[];
-                })
-            );
-        }
-    });
-
-    await Promise.all(proms);
-    return;
 }
 
 /**
@@ -305,7 +376,7 @@ async function fillActiveGroupIds(sceneId: string, groups: ObjectGroup[]): Promi
  * @param idSets Array of object ID sets or arrays
  * @returns Sorted combined ID array
  */
-function objectIdSet(idSets: (Set<number> | number[])[]) {
+function objectIdSet(idSets: (ImmutableObjectIdSet | Set<number> | number[])[]) {
     // Find object ID range
     let minId = Number.MAX_SAFE_INTEGER;
     let maxId = 0;
@@ -339,7 +410,7 @@ function objectIdSet(idSets: (Set<number> | number[])[]) {
                     allIds[id - minId] = 1;
                     count++;
                 }
-            })
+            }),
         );
         return {
             has: (id: number) => allIds[id - minId] === 1,
@@ -364,4 +435,8 @@ function objectIdSet(idSets: (Set<number> | number[])[]) {
             toArray: () => new Uint32Array(allIds).sort(),
         };
     }
+}
+
+function areArraysEqual<A, B>(a: A[], b: B[], equal: (a: A, b: B) => boolean) {
+    return a.length === b.length && a.every((e, i) => equal(e, b[i]));
 }

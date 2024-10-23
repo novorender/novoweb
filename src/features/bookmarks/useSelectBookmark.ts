@@ -3,8 +3,9 @@ import { Bookmark } from "@novorender/data-js-api";
 import { mat3, quat, vec4 } from "gl-matrix";
 import { useCallback } from "react";
 
-import { dataApi } from "apis/dataV1";
+import { useLazyGetGroupIdsQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch } from "app/redux-store-interactions";
+import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import {
@@ -23,6 +24,7 @@ import {
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { areaActions } from "features/area";
 import { followPathActions } from "features/followPath";
+import { formsActions } from "features/forms/slice";
 import { groupsActions } from "features/groups";
 import { imagesActions } from "features/images";
 import { manholeActions } from "features/manhole";
@@ -30,6 +32,7 @@ import { measureActions } from "features/measure";
 import { pointLineActions } from "features/pointLine";
 import { CameraType, ObjectVisibility, renderActions, SelectionBasketMode } from "features/render";
 import { flip, flipGLtoCadQuat } from "features/render/utils";
+import { useOpenWidget } from "hooks/useOpenWidget";
 import { useSceneId } from "hooks/useSceneId";
 import { ExtendedMeasureEntity, ViewMode } from "types/misc";
 
@@ -41,6 +44,8 @@ export function useSelectBookmark() {
     const dispatchHidden = useDispatchHidden();
     const objectGroups = useLazyObjectGroups();
     const dispatchObjectGroups = useDispatchObjectGroups();
+    const [getGroupIds] = useLazyGetGroupIdsQuery();
+    const openWidget = useOpenWidget();
 
     const {
         state: { view },
@@ -65,16 +70,16 @@ export function useSelectBookmark() {
                 dispatchHighlightCollections(
                     highlightCollectionsActions.setIds(
                         HighlightCollection.SecondaryHighlight,
-                        objects.highlightCollections.secondaryHighlight.ids
-                    )
+                        objects.highlightCollections.secondaryHighlight.ids,
+                    ),
                 );
                 dispatchObjectGroups(
                     objectGroupsActions.set(
                         updatedGroups.sort(
                             (a, b) =>
-                                groups.findIndex((grp) => grp.id === a.id) - groups.findIndex((grp) => grp.id === b.id)
-                        )
-                    )
+                                groups.findIndex((grp) => grp.id === a.id) - groups.findIndex((grp) => grp.id === b.id),
+                        ),
+                    ),
                 );
             } else {
                 const [toAdd, toLoad] = updatedGroups.reduce(
@@ -91,13 +96,13 @@ export function useSelectBookmark() {
 
                         return prev;
                     },
-                    [[], []] as [ObjectGroup[], ObjectGroup[]]
+                    [[], []] as [ObjectGroup[], ObjectGroup[]],
                 );
 
                 dispatchSelectionBasket(selectionBasketActions.set(objects.selectionBasket.ids));
                 dispatchSelectionBasket(selectionBasketActions.add(objects.highlighted.ids));
                 dispatchSelectionBasket(
-                    selectionBasketActions.add(objects.highlightCollections.secondaryHighlight.ids)
+                    selectionBasketActions.add(objects.highlightCollections.secondaryHighlight.ids),
                 );
                 dispatchSelectionBasket(selectionBasketActions.add(toAdd.flatMap((group) => Array.from(group.ids))));
 
@@ -106,13 +111,15 @@ export function useSelectBookmark() {
                     toLoad
                         .filter((group) => !group.ids)
                         .map(async (group) => {
-                            const ids = await dataApi.getGroupIds(sceneId, group.id).catch(() => {
-                                console.warn("failed to load ids for group - ", group.id);
-                                return [] as number[];
-                            });
+                            const ids = await getGroupIds({ projectId: sceneId, groupId: group.id })
+                                .unwrap()
+                                .catch(() => {
+                                    console.warn("failed to load ids for group - ", group.id);
+                                    return [] as number[];
+                                });
 
                             group.ids = new Set(ids);
-                        })
+                        }),
                 );
                 dispatch(groupsActions.setLoadingIds(false));
 
@@ -120,25 +127,46 @@ export function useSelectBookmark() {
                 dispatchObjectGroups(
                     objectGroupsActions.set(
                         updatedGroups.map((group) =>
-                            group.status === GroupStatus.Selected ? { ...group, status: GroupStatus.None } : group
-                        )
-                    )
+                            group.status === GroupStatus.Selected ? { ...group, status: GroupStatus.None } : group,
+                        ),
+                    ),
                 );
                 dispatchHighlighted(highlightActions.setIds([]));
                 dispatchHighlightCollections(highlightCollectionsActions.clearAll());
             }
+
+            if (bookmark.forms) {
+                if (bookmark.forms.selectedFormId) {
+                    dispatch(formsActions.setSelectedFormId(bookmark.forms.selectedFormId));
+                }
+                if (bookmark.forms.selectedFormObjectGuid) {
+                    dispatch(formsActions.setSelectedFormObjectGuid(bookmark.forms.selectedFormObjectGuid));
+                }
+                if (bookmark.forms.selectedFormObjectId) {
+                    dispatch(formsActions.setSelectedFormObjectId(bookmark.forms.selectedFormObjectId));
+                }
+                if (bookmark.forms.formItemId) {
+                    dispatch(formsActions.setFormItemId(bookmark.forms.formItemId));
+                }
+                if (bookmark.forms.currentFormsList) {
+                    dispatch(formsActions.setCurrentFormsList(bookmark.forms.currentFormsList));
+                    openWidget(featuresConfig.forms.key, { force: true });
+                }
+            }
         },
         [
+            view,
             dispatch,
             dispatchHidden,
+            objectGroups,
             dispatchHighlighted,
+            dispatchSelectionBasket,
             dispatchHighlightCollections,
             dispatchObjectGroups,
-            dispatchSelectionBasket,
-            objectGroups,
+            getGroupIds,
             sceneId,
-            view,
-        ]
+            openWidget,
+        ],
     );
 
     const selectLegacy = useCallback(
@@ -160,8 +188,8 @@ export function useSelectBookmark() {
                     status: bookmarked?.selected
                         ? GroupStatus.Selected
                         : bookmarked?.hidden
-                        ? GroupStatus.Hidden
-                        : GroupStatus.None,
+                          ? GroupStatus.Hidden
+                          : GroupStatus.None,
                 };
             });
 
@@ -169,7 +197,7 @@ export function useSelectBookmark() {
             if (add) {
                 dispatchSelectionBasket(selectionBasketActions.set(bookmark.selectionBasket?.ids ?? []));
                 dispatch(
-                    renderActions.setSelectionBasketMode(bookmark.selectionBasket?.mode ?? SelectionBasketMode.Loose)
+                    renderActions.setSelectionBasketMode(bookmark.selectionBasket?.mode ?? SelectionBasketMode.Loose),
                 );
 
                 const highlighted = bmDefaultGroup?.ids ?? [];
@@ -187,11 +215,11 @@ export function useSelectBookmark() {
 
                         return prev;
                     },
-                    [[], []] as [ObjectGroup[], ObjectGroup[]]
+                    [[], []] as [ObjectGroup[], ObjectGroup[]],
                 );
 
                 dispatchSelectionBasket(
-                    selectionBasketActions.add([...highlighted, ...toAdd.flatMap((group) => Array.from(group.ids))])
+                    selectionBasketActions.add([...highlighted, ...toAdd.flatMap((group) => Array.from(group.ids))]),
                 );
 
                 dispatch(groupsActions.setLoadingIds(true));
@@ -199,13 +227,15 @@ export function useSelectBookmark() {
                     toLoad
                         .filter((group) => !group.ids)
                         .map(async (group) => {
-                            const ids = await dataApi.getGroupIds(sceneId, group.id).catch(() => {
-                                console.warn("failed to load ids for group - ", group.id);
-                                return [] as number[];
-                            });
+                            const ids = await getGroupIds({ projectId: sceneId, groupId: group.id })
+                                .unwrap()
+                                .catch(() => {
+                                    console.warn("failed to load ids for group - ", group.id);
+                                    return [] as number[];
+                                });
 
                             group.ids = new Set(ids);
-                        })
+                        }),
                 );
                 dispatch(groupsActions.setLoadingIds(false));
 
@@ -213,8 +243,8 @@ export function useSelectBookmark() {
                 dispatch(renderActions.setDefaultVisibility(ObjectVisibility.Transparent));
                 dispatchObjectGroups(
                     objectGroupsActions.set(
-                        updatedObjectGroups.map((group) => ({ ...group, status: GroupStatus.None }))
-                    )
+                        updatedObjectGroups.map((group) => ({ ...group, status: GroupStatus.None })),
+                    ),
                 );
                 dispatchHighlighted(highlightActions.setIds([]));
                 dispatchHighlightCollections(highlightCollectionsActions.clearAll());
@@ -223,7 +253,7 @@ export function useSelectBookmark() {
                     const groups = bookmark.objectGroups;
                     updatedObjectGroups.sort(
                         (a, b) =>
-                            groups.findIndex((grp) => grp.id === a.id) - groups.findIndex((grp) => grp.id === b.id)
+                            groups.findIndex((grp) => grp.id === a.id) - groups.findIndex((grp) => grp.id === b.id),
                     );
                 }
 
@@ -234,12 +264,12 @@ export function useSelectBookmark() {
                     dispatchHighlightCollections(
                         highlightCollectionsActions.setIds(
                             HighlightCollection.SecondaryHighlight,
-                            bookmark.highlightCollections.secondaryHighlight.ids
-                        )
+                            bookmark.highlightCollections.secondaryHighlight.ids,
+                        ),
                     );
                 } else {
                     dispatchHighlightCollections(
-                        highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, [])
+                        highlightCollectionsActions.setIds(HighlightCollection.SecondaryHighlight, []),
                     );
                 }
 
@@ -256,8 +286,8 @@ export function useSelectBookmark() {
                 } else if (bookmark.selectedOnly !== undefined) {
                     dispatch(
                         renderActions.setDefaultVisibility(
-                            bookmark.selectedOnly ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral
-                        )
+                            bookmark.selectedOnly ? ObjectVisibility.SemiTransparent : ObjectVisibility.Neutral,
+                        ),
                     );
                 }
             }
@@ -279,13 +309,13 @@ export function useSelectBookmark() {
                         const entity = await measureView.core.pickMeasureEntity(
                             obj.id,
                             flip(obj.pos),
-                            legacySnapTolerance
+                            legacySnapTolerance,
                         );
                         return {
                             ...entity.entity,
                             settings: obj.settings,
                         } as ExtendedMeasureEntity;
-                    })
+                    }),
                 );
 
                 dispatch(measureActions.setSelectedEntities(entities));
@@ -294,8 +324,8 @@ export function useSelectBookmark() {
                     measureActions.setSelectedEntities(
                         bookmark.measurement
                             .slice(0, 2)
-                            .map((pt) => ({ ObjectId: -1, drawKind: "vertex", parameter: flip(pt) }))
-                    )
+                            .map((pt) => ({ ObjectId: -1, drawKind: "vertex", parameter: flip(pt) })),
+                    ),
                 );
             } else {
                 dispatch(measureActions.setSelectedEntities([]));
@@ -303,8 +333,8 @@ export function useSelectBookmark() {
 
             dispatch(areaActions.clear());
             if (bookmark.area) {
-                bookmark.area.pts.forEach((pt) => {
-                    dispatch(areaActions.addPt(pt.map((p) => flip(p)) as typeof pt, view));
+                bookmark.area.pts.forEach(([pt]) => {
+                    dispatch(areaActions.addPt(flip(pt), view));
                 });
             }
 
@@ -355,7 +385,7 @@ export function useSelectBookmark() {
                         enabled: bookmark.clippingPlanes.enabled,
                         mode: bookmark.clippingPlanes.inside ? ClippingMode.intersection : ClippingMode.union,
                         draw: false,
-                    })
+                    }),
                 );
             } else if (bookmark.clippingVolume?.enabled) {
                 const { enabled, mode, planes } = bookmark.clippingVolume;
@@ -375,7 +405,7 @@ export function useSelectBookmark() {
                                 baseW: plane[3],
                                 color: [0, 1, 0, 0.2],
                             })),
-                    })
+                    }),
                 );
             } else {
                 dispatch(renderActions.setClippingPlanes({ planes: [], enabled: false, mode: ClippingMode.union }));
@@ -385,7 +415,7 @@ export function useSelectBookmark() {
                 const m = bookmark.ortho.referenceCoordSys;
                 const q = quat.fromMat3(
                     quat.create(),
-                    mat3.fromValues(m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10])
+                    mat3.fromValues(m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10]),
                 );
                 dispatch(
                     renderActions.setCamera({
@@ -401,7 +431,7 @@ export function useSelectBookmark() {
                             far: bookmark.ortho.far,
                         },
                         gridOrigo: bookmark.grid?.origo ? flip(bookmark.grid.origo) : undefined,
-                    })
+                    }),
                 );
             } else if (bookmark.camera) {
                 dispatch(
@@ -412,7 +442,7 @@ export function useSelectBookmark() {
                             rotation: flipGLtoCadQuat(bookmark.camera.rotation),
                             fov: bookmark.camera.fieldOfView,
                         },
-                    })
+                    }),
                 );
             }
 
@@ -435,8 +465,8 @@ export function useSelectBookmark() {
                 } else if (bookmark.ortho) {
                     dispatch(
                         followPathActions.setPtHeight(
-                            bookmark.ortho.referenceCoordSys ? bookmark.ortho.referenceCoordSys[13] : undefined
-                        )
+                            bookmark.ortho.referenceCoordSys ? bookmark.ortho.referenceCoordSys[13] : undefined,
+                        ),
                     );
                 } else {
                     dispatch(followPathActions.setPtHeight(bookmark.camera ? bookmark.camera.position[1] : undefined));
@@ -445,8 +475,8 @@ export function useSelectBookmark() {
                 if ("parametric" in bookmark.followPath) {
                     dispatch(
                         followPathActions.setSelectedPositions(
-                            bookmark.followPath.parametric.map((v) => ({ ...v, pos: flip(v.pos) }))
-                        )
+                            bookmark.followPath.parametric.map((v) => ({ ...v, pos: flip(v.pos) })),
+                        ),
                     );
                     dispatch(followPathActions.setGoToRouterPath(`/followPos`));
                 } else {
@@ -483,7 +513,7 @@ export function useSelectBookmark() {
                             index,
                             mixFactor: mode === "off" ? 0 : mode === "on" ? 1 : 0.5,
                         },
-                    })
+                    }),
                 );
             }
 
@@ -501,7 +531,8 @@ export function useSelectBookmark() {
             objectGroups,
             sceneId,
             view,
-        ]
+            getGroupIds,
+        ],
     );
 
     const select = useCallback(
@@ -512,7 +543,7 @@ export function useSelectBookmark() {
 
             return selectExplorerState(bookmark.explorerState);
         },
-        [selectExplorerState, selectLegacy]
+        [selectExplorerState, selectLegacy],
     );
 
     return select;
@@ -520,7 +551,7 @@ export function useSelectBookmark() {
 
 function getUpdatedGroups(
     current: ObjectGroup[],
-    bookmark: NonNullable<Bookmark["explorerState"]>["groups"]
+    bookmark: NonNullable<Bookmark["explorerState"]>["groups"],
 ): ObjectGroup[] {
     return current.map((group) => {
         const bookmarked = bookmark.find((bookmarked) => bookmarked.id === group.id);

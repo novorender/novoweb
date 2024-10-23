@@ -1,4 +1,6 @@
+import { Close, Delete } from "@mui/icons-material";
 import {
+    Alert,
     Autocomplete,
     Box,
     Button,
@@ -8,74 +10,224 @@ import {
     FormControlLabel,
     FormGroup,
     FormLabel,
-    Radio,
-    RadioGroup,
+    IconButton,
+    InputLabel,
+    List,
+    ListItem,
+    ListItemText,
+    MenuItem,
+    Select,
+    Snackbar,
     Typography,
 } from "@mui/material";
-import { FormEventHandler, useCallback, useMemo, useState } from "react";
+import { DatePicker, DateTimePicker, TimePicker } from "@mui/x-date-pickers";
+import { ChangeEvent, type FormEventHandler, useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { Divider, ScrollBox, TextArea, TextField } from "components";
+import AddFilesButton from "features/forms/addFilesButton";
+import { useUploadFilesMutation } from "features/forms/api";
+import { FILE_SIZE_LIMIT } from "features/forms/constants";
+import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
 
-import { FormItem, FormItemType } from "../../types";
+import {
+    DateTimeItem,
+    type FormFileUploadResponse,
+    type FormItem,
+    FormItemType,
+    type FormsFile,
+    ItemWithOptions,
+} from "../../types";
 
-export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
+const DOC_TYPES = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+];
+
+const today = new Date();
+
+export function AddFormItem({ onSave, item }: { onSave: (item: FormItem) => void; item?: FormItem }) {
+    const { t } = useTranslation();
+    const sceneId = useSceneId();
     const history = useHistory();
-    const [title, setTitle] = useState("");
-    const [value, setValue] = useState("");
-    const [type, setType] = useState(FormItemType.Checkbox);
-    const [relevant, toggleRelevant] = useToggle(true);
-    const [options, setOptions] = useState([] as string[]);
+
+    const [title, setTitle] = useState(item?.title ?? "");
+    const [type, setType] = useState(item?.type || FormItemType.Checkbox);
+    const [value, setValue] = useState(item?.type === FormItemType.Text ? (item.value as string[])[0] : "");
+    const [required, toggleRequired] = useToggle(item?.required ?? true);
+    const [options, setOptions] = useState<string[]>((item as ItemWithOptions)?.options ?? []);
+    const [files, setFiles] = useState<FormsFile[]>(item?.type === FormItemType.File ? (item.value ?? []) : []);
+    const [fileTypes, setFileTypes] = useState<string[]>(
+        item?.type === FormItemType.File
+            ? (item?.accept
+                  ?.split(",")
+                  .reduce(
+                      (types, type) =>
+                          type === "image/*"
+                              ? [...types, t("images")]
+                              : type === "application/pdf"
+                                ? [...types, t("documents")]
+                                : types,
+                      [] as string[],
+                  ) ?? [])
+            : [],
+    );
+    const [dateTime, setDateTime] = useState<Date | null>(
+        item?.type
+            ? [FormItemType.Date, FormItemType.Time, FormItemType.DateTime].includes(item.type)
+                ? ((item as DateTimeItem).value ?? null)
+                : null
+            : null,
+    );
+    const [multiple, toggleMultiple] = useToggle(item?.type === FormItemType.File ? (item?.multiple ?? true) : true);
+    const [readonly, toggleReadonly] = useToggle(item?.type === FormItemType.File ? (item?.readonly ?? false) : false);
+
+    const [fileSizeWarning, toggleFileSizeWarning] = useToggle(false);
+
+    const [uploadFiles, { isLoading: uploading }] = useUploadFilesMutation();
+
+    const accept = useMemo(() => {
+        let mimeTypes = fileTypes.includes(t("images")) ? "image/*," : "";
+        if (fileTypes.includes(t("documents"))) {
+            mimeTypes += DOC_TYPES.join(",");
+        }
+        return mimeTypes;
+    }, [fileTypes, t]);
 
     const canSave = useMemo(
         () =>
             title.trim() &&
-            ([FormItemType.Input, FormItemType.YesNo, FormItemType.TrafficLight].includes(type) ||
+            ([
+                FormItemType.Input,
+                FormItemType.YesNo,
+                FormItemType.TrafficLight,
+                FormItemType.Date,
+                FormItemType.Time,
+                FormItemType.DateTime,
+            ].includes(type) ||
                 ([FormItemType.Checkbox, FormItemType.Dropdown].includes(type) && options.length) ||
-                (type === FormItemType.Text && value.trim().length)),
-        [title, type, options, value]
+                (type === FormItemType.Text && value.trim().length) ||
+                (type === FormItemType.File && (!readonly || files.length))),
+        [title, type, options.length, value, readonly, files.length],
     );
 
     const handleSubmit = useCallback<FormEventHandler>(
-        (e) => {
+        async (e) => {
             e.preventDefault();
 
             if (!canSave) {
                 return;
             }
 
+            if (FormItemType.File && files.length) {
+                const result = await uploadFiles({ projectId: sceneId, files, template: true });
+                if ("data" in result) {
+                    files.forEach((file) => {
+                        file.checksum = (result.data[file.name] as FormFileUploadResponse)?.checksum;
+                        file.url = (result.data[file.name] as FormFileUploadResponse)?.url;
+                    });
+                }
+            }
+
             const newItem: FormItem = {
-                id: window.crypto.randomUUID(),
+                id: item?.id ?? window.crypto.randomUUID(),
                 title,
                 type,
-                value: type === FormItemType.Text ? [value] : undefined,
-                required: type !== FormItemType.Text && relevant,
+                value:
+                    type === FormItemType.Text
+                        ? [value]
+                        : type === FormItemType.File
+                          ? files
+                          : [FormItemType.Date, FormItemType.Time, FormItemType.DateTime].includes(type) && dateTime
+                            ? dateTime
+                            : undefined,
+                required: type !== FormItemType.Text && required,
                 ...(type === FormItemType.Checkbox || type === FormItemType.Dropdown ? { options } : {}),
+                ...(type === FormItemType.File && { accept, multiple, readonly }),
             } as FormItem;
 
             onSave(newItem);
             history.goBack();
         },
-        [canSave, title, type, relevant, options, onSave, history, value]
+        [
+            canSave,
+            files,
+            item?.id,
+            title,
+            type,
+            value,
+            dateTime,
+            required,
+            options,
+            accept,
+            multiple,
+            readonly,
+            onSave,
+            history,
+            uploadFiles,
+            sceneId,
+        ],
     );
 
     const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value), []);
-    const handleToggleRelevant = useCallback(
-        (_: React.ChangeEvent<HTMLInputElement>) => toggleRelevant(),
-        [toggleRelevant]
-    );
-    const handleTypeChange = useCallback(
-        (_: React.ChangeEvent<HTMLInputElement>, value: string) => setType(value as FormItemType),
-        []
+    const handleToggleRequired = useCallback(
+        (_: React.ChangeEvent<HTMLInputElement>) => toggleRequired(),
+        [toggleRequired],
     );
     const handleOptionsChange = useCallback((_: React.SyntheticEvent, value: string[]) => setOptions(value), []);
     const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value), []);
+    const handleToggleMultiple = useCallback(
+        (_: React.ChangeEvent<HTMLInputElement>) => toggleMultiple(),
+        [toggleMultiple],
+    );
+    const handleToggleReadonly = useCallback(
+        (_: React.ChangeEvent<HTMLInputElement>) => toggleReadonly(),
+        [toggleReadonly],
+    );
+
+    const handleFilesChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files) {
+            return;
+        }
+        let showFileSizeWarning = false;
+        setFiles((prevFiles) => {
+            const existingFiles = new Set(prevFiles.map((file) => file.name));
+            const newFiles = Array.from(files).filter((file) => {
+                if (file.size > FILE_SIZE_LIMIT * 1024 * 1024) {
+                    showFileSizeWarning = true;
+                    return false;
+                }
+                return !existingFiles.has(file.name);
+            });
+            return [...prevFiles, ...newFiles];
+        });
+
+        toggleFileSizeWarning(showFileSizeWarning);
+    };
+
+    const handleRemoveFile = (file: File) => {
+        setFiles((prevFiles) => prevFiles.filter((f) => f.name !== file.name));
+    };
+
+    const renderAlert = (type: FormItemType) =>
+        [FormItemType.Text, FormItemType.File].includes(type) && (
+            <Alert severity={type === FormItemType.File ? "warning" : "info"} sx={{ mt: 1 }}>
+                {t(type === FormItemType.File ? "betaItem" : "textItemIsImmutableMessage")}
+            </Alert>
+        );
 
     return (
         <ScrollBox p={1} pt={2} pb={3} component="form" onSubmit={handleSubmit}>
             <Typography fontWeight={600} mb={1}>
-                Form item
+                {t("formItem")}
             </Typography>
             <TextField label="Title" value={title} onChange={handleTitleChange} fullWidth />
             <Divider sx={{ my: 1 }} />
@@ -84,37 +236,38 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                     control={
                         <Checkbox
                             size="small"
-                            checked={type !== FormItemType.Text && relevant}
+                            checked={type !== FormItemType.Text && required}
                             disabled={type === FormItemType.Text}
-                            onChange={handleToggleRelevant}
+                            onChange={handleToggleRequired}
                         />
                     }
-                    label="Always relevant"
+                    label={t("alwaysRelevant")}
                 />
             </FormGroup>
             <Divider sx={{ my: 1 }} />
-            <FormControl>
-                <FormLabel sx={{ fontWeight: 600, color: "text.primary" }} id="form-item-type">
-                    Type
+            <FormControl fullWidth sx={{ mb: 1 }}>
+                <FormLabel sx={{ fontWeight: 600, color: "text.primary", mb: 1 }} id="form-item-type">
+                    {t("type")}
                 </FormLabel>
-                <RadioGroup
+                <Select
+                    id="form-item-type"
                     value={type}
-                    onChange={handleTypeChange}
-                    row
-                    aria-labelledby="form-item-type"
-                    name="form-item-types"
+                    onChange={(e) => setType(e.target.value as FormItemType)}
+                    size="small"
+                    fullWidth
                 >
-                    <FormControlLabel value={FormItemType.Checkbox} control={<Radio size="small" />} label="Checkbox" />
-                    <FormControlLabel value={FormItemType.YesNo} control={<Radio size="small" />} label="Yes/No" />
-                    <FormControlLabel
-                        value={FormItemType.TrafficLight}
-                        control={<Radio size="small" />}
-                        label="Traffic light"
-                    />
-                    <FormControlLabel value={FormItemType.Dropdown} control={<Radio size="small" />} label="Dropdown" />
-                    <FormControlLabel value={FormItemType.Input} control={<Radio size="small" />} label="Input" />
-                    <FormControlLabel value={FormItemType.Text} control={<Radio size="small" />} label="Text or URL" />
-                </RadioGroup>
+                    <MenuItem value={FormItemType.Checkbox}>{t("checkbox")}</MenuItem>
+                    <MenuItem value={FormItemType.Date}>{t("date")}</MenuItem>
+                    <MenuItem value={FormItemType.DateTime}>{t("dateAndTime")}</MenuItem>
+                    <MenuItem value={FormItemType.Dropdown}>{t("dropdown")}</MenuItem>
+                    <MenuItem value={FormItemType.File}>{t("file")}</MenuItem>
+                    <MenuItem value={FormItemType.Input}>{t("input")}</MenuItem>
+                    <MenuItem value={FormItemType.Text}>{t("textOrURL")}</MenuItem>
+                    <MenuItem value={FormItemType.Time}>{t("time")}</MenuItem>
+                    <MenuItem value={FormItemType.TrafficLight}>{t("trafficLight")}</MenuItem>
+                    <MenuItem value={FormItemType.YesNo}>{t("yesNo")}</MenuItem>
+                </Select>
+                {renderAlert(type)}
             </FormControl>
             {[FormItemType.Checkbox, FormItemType.Dropdown].includes(type) && (
                 <>
@@ -141,19 +294,167 @@ export function AddFormItem({ onSave }: { onSave: (item: FormItem) => void }) {
                     <Divider sx={{ mb: 2 }} />
                     <TextArea
                         minRows={3}
-                        placeholder="Additional information or URL"
+                        placeholder={t("additionalInfoOrUrl")}
                         style={{ width: "100%" }}
                         value={value}
                         onChange={handleTextChange}
                     />
                 </>
             )}
+            {type === FormItemType.File && (
+                <>
+                    <Divider sx={{ mb: 2 }} />
+                    <FormControl size="small" sx={{ width: 1, mb: 1 }}>
+                        <InputLabel id="forms-files-accept-label">{t("acceptFileTypes")}</InputLabel>
+                        <Select
+                            labelId="forms-files-accept-label"
+                            id="forms-files-accept"
+                            fullWidth
+                            multiple
+                            value={fileTypes}
+                            onChange={(e) => setFileTypes(e.target.value as string[])}
+                            name="accept"
+                            label={t("acceptFileTypes")}
+                        >
+                            {[t("documents"), t("images")].map((fileType) => (
+                                <MenuItem
+                                    key={fileType}
+                                    value={fileType}
+                                    sx={{
+                                        fontWeight: (fileTypes as string[]).includes(fileType) ? "bold" : "regular",
+                                    }}
+                                >
+                                    {fileType}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <FormGroup>
+                        <FormControlLabel
+                            control={<Checkbox size="small" checked={multiple} onChange={handleToggleMultiple} />}
+                            label={t("selectMultipleFiles")}
+                        />
+                        <FormControlLabel
+                            control={<Checkbox size="small" checked={!readonly} onChange={handleToggleReadonly} />}
+                            label={t("allowChangingFiles")}
+                            sx={{ mb: 1 }}
+                        />
+                        <AddFilesButton
+                            accept={accept}
+                            multiple={multiple}
+                            onChange={handleFilesChange}
+                            uploading={uploading}
+                        />
+                    </FormGroup>
+                    <List
+                        dense
+                        sx={{
+                            width: "100%",
+                            bgcolor: "background.paper",
+                            position: "relative",
+                            overflow: "auto",
+                            mb: 1,
+                        }}
+                    >
+                        {files.map((file) => (
+                            <ListItem
+                                key={file.name}
+                                secondaryAction={
+                                    <IconButton edge="end" aria-label="delete" onClick={() => handleRemoveFile(file)}>
+                                        <Delete />
+                                    </IconButton>
+                                }
+                            >
+                                <ListItemText primary={file.name} />
+                            </ListItem>
+                        ))}
+                    </List>
+                </>
+            )}
+            {[FormItemType.Date, FormItemType.Time, FormItemType.DateTime].includes(type) && (
+                <>
+                    <Divider />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={!!dateTime}
+                                onChange={(e) => setDateTime(e.target.checked ? today : null)}
+                            />
+                        }
+                        label={t("setDefaultValue")}
+                    />
+                    {dateTime && (
+                        <>
+                            {type === FormItemType.Date && (
+                                <DatePicker
+                                    value={dateTime}
+                                    minDate={today}
+                                    onChange={setDateTime}
+                                    slotProps={{
+                                        textField: {
+                                            size: "small",
+                                            fullWidth: true,
+                                        },
+                                    }}
+                                />
+                            )}
+                            {type === FormItemType.Time && (
+                                <TimePicker
+                                    value={dateTime}
+                                    onChange={setDateTime}
+                                    slotProps={{
+                                        textField: {
+                                            size: "small",
+                                            fullWidth: true,
+                                        },
+                                    }}
+                                />
+                            )}
+                            {type === FormItemType.DateTime && (
+                                <DateTimePicker
+                                    value={dateTime}
+                                    minDate={today}
+                                    onChange={setDateTime}
+                                    slotProps={{
+                                        textField: {
+                                            size: "small",
+                                            fullWidth: true,
+                                        },
+                                    }}
+                                />
+                            )}
+                        </>
+                    )}
+                </>
+            )}
+            <Snackbar
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                sx={{
+                    width: { xs: "auto", sm: 350 },
+                    bottom: { xs: "auto", sm: 24 },
+                    top: { xs: 24, sm: "auto" },
+                }}
+                autoHideDuration={2500}
+                open={fileSizeWarning}
+                onClose={() => toggleFileSizeWarning(false)}
+                message={t("filesNotAddedMessage", { limit: FILE_SIZE_LIMIT })}
+                action={
+                    <IconButton
+                        size="small"
+                        aria-label="close"
+                        color="inherit"
+                        onClick={() => toggleFileSizeWarning(false)}
+                    >
+                        <Close fontSize="small" />
+                    </IconButton>
+                }
+            />
             <Box display="flex" justifyContent="space-between" mt={2}>
                 <Button variant="outlined" color="grey" sx={{ mr: 2 }} fullWidth onClick={history.goBack}>
-                    Cancel
+                    {t("cancel")}
                 </Button>
                 <Button variant="contained" color="primary" fullWidth disabled={!canSave} type="submit">
-                    Save item
+                    {t("saveItem")}
                 </Button>
             </Box>
         </ScrollBox>

@@ -64,9 +64,11 @@ declare module "@novorender/data-js-api" {
             planes: {
                 normalOffset: [number, number, number, number];
                 color: [number, number, number, number];
+                showPlane: boolean;
                 outline?: {
                     enabled: boolean;
                 };
+                anchorPos?: [number, number, number];
             }[];
         };
         grid: {
@@ -82,15 +84,25 @@ declare module "@novorender/data-js-api" {
         };
         terrain: {
             asBackground: boolean;
+            elevationGradient: {
+                knots: { position: number; color: VecRGB }[];
+            };
+        };
+        pointVisualization: {
+            classificationColorGradient: {
+                knots: LabeledKnot[];
+                undefinedColor: VecRGBA;
+            };
+            defaultPointVisualization: PointVisualization;
         };
         measurements: {
             area:
                 | {
                       /** @deprecated  Use only to read legacy bookmarks */
-                      points: [point: [number, number, number], normal: [number, number, number]][];
+                      points: [point: [number, number, number]][];
                   }
                 | {
-                      areas: { points: [number, number, number][]; normals: [number, number, number][] }[];
+                      areas: { points: [number, number, number][] }[];
                   };
             pointLine:
                 | {
@@ -160,6 +172,8 @@ declare module "@novorender/data-js-api" {
                       laserPosition: ReadonlyVec3;
                       measurementX?: { start: ReadonlyVec3; end: ReadonlyVec3 };
                       measurementY?: { start: ReadonlyVec3; end: ReadonlyVec3 };
+                      measurementZ?: { start: ReadonlyVec3; end: ReadonlyVec3 };
+                      laserPlanes?: ReadonlyVec4[];
                   }[];
               }
             | undefined;
@@ -171,6 +185,22 @@ declare module "@novorender/data-js-api" {
                 color: [number, number, number, number];
                 status: "hidden" | "selected";
             }[];
+        };
+        arcgis?: {
+            featureServers: {
+                id: string;
+                layers: {
+                    id: number;
+                    checked: boolean;
+                }[];
+            }[];
+        };
+        forms?: {
+            currentFormsList?: string | null;
+            selectedFormId?: string;
+            selectedFormObjectGuid?: string;
+            selectedFormObjectId?: number;
+            formItemId?: string;
         };
     };
 
@@ -235,5 +265,9 @@ declare module "@novorender/data-js-api" {
         background?: {
             color: Vec4;
         };
+    }
+
+    interface ObjectGroup {
+        frozen: boolean;
     }
 }

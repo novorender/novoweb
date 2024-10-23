@@ -1,5 +1,6 @@
-import type { SpeedDialActionProps } from "@mui/material";
+import { Box, IconButton, type SpeedDialActionProps, Tooltip } from "@mui/material";
 import { vec3 } from "gl-matrix";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { SpeedDialAction } from "components";
@@ -8,13 +9,17 @@ import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { getTopDownParams, selectDefaultTopDownElevation, selectTopDownSnapToAxis } from "features/orthoCam";
 import { getSnapToPlaneParams } from "features/orthoCam/utils";
 import { CameraType, renderActions, selectCameraType, selectClippingPlanes } from "features/render";
+import TwoDIcon from "media/icons/2d.svg?react";
+import ThreeDIcon from "media/icons/3d.svg?react";
 
 type Props = SpeedDialActionProps & {
     position?: { top?: number; right?: number; bottom?: number; left?: number };
+    newDesign?: boolean;
 };
 
-export function OrthoShortcut({ position, ...speedDialProps }: Props) {
-    const { name, Icon } = featuresConfig["orthoShortcut"];
+export function OrthoShortcut({ position, newDesign, ...speedDialProps }: Props) {
+    const { t } = useTranslation();
+    const { nameKey, Icon } = featuresConfig["orthoShortcut"];
     const {
         state: { view },
     } = useExplorerGlobals(true);
@@ -27,19 +32,19 @@ export function OrthoShortcut({ position, ...speedDialProps }: Props) {
 
     const handleClick = () => {
         if (cameraType === CameraType.Pinhole) {
-            if (planes.length > 0) {
+            if (planes.length > 0 && !newDesign) {
                 dispatch(
                     renderActions.setCamera({
                         type: CameraType.Orthographic,
                         goTo: getSnapToPlaneParams({ planeIdx: 0, view }),
-                    })
+                    }),
                 );
             } else {
                 dispatch(
                     renderActions.setCamera({
                         type: CameraType.Orthographic,
                         goTo: getTopDownParams({ view, elevation, snapToNearestAxis }),
-                    })
+                    }),
                 );
                 dispatch(renderActions.setTerrain({ asBackground: true }));
             }
@@ -48,7 +53,7 @@ export function OrthoShortcut({ position, ...speedDialProps }: Props) {
                 const planeDir = vec3.fromValues(
                     planes[0].normalOffset[0],
                     planes[0].normalOffset[1],
-                    planes[0].normalOffset[2]
+                    planes[0].normalOffset[2],
                 );
                 dispatch(
                     renderActions.setCamera({
@@ -58,17 +63,29 @@ export function OrthoShortcut({ position, ...speedDialProps }: Props) {
                                 vec3.create(),
                                 view.renderState.camera.position,
                                 planeDir,
-                                view.renderState.camera.fov
+                                view.renderState.camera.fov,
                             ),
                             rotation: view.renderState.camera.rotation,
                         },
-                    })
+                    }),
                 );
             } else {
                 dispatch(renderActions.setCamera({ type: CameraType.Pinhole }));
             }
         }
     };
+
+    if (newDesign) {
+        return (
+            <Tooltip title={cameraType === CameraType.Orthographic ? t("switchTo3d") : t("switchTo2d")} placement="top">
+                <Box>
+                    <IconButton onClick={handleClick}>
+                        {cameraType === CameraType.Orthographic ? <ThreeDIcon /> : <TwoDIcon />}
+                    </IconButton>
+                </Box>
+            </Tooltip>
+        );
+    }
 
     return (
         <SpeedDialAction
@@ -79,7 +96,7 @@ export function OrthoShortcut({ position, ...speedDialProps }: Props) {
             }}
             active={cameraType === CameraType.Orthographic}
             onClick={handleClick}
-            title={name}
+            title={t(nameKey)}
             icon={<Icon />}
         />
     );

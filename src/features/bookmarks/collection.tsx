@@ -1,18 +1,22 @@
 import { Clear, Edit, MoreVert } from "@mui/icons-material";
 import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { MouseEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
-import { selectHasAdminCapabilities } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 
 import { Bookmark } from "./bookmark";
 import { bookmarksActions, ExtendedBookmark, selectIsCollectionExpanded } from "./bookmarksSlice";
 
 export function Collection({ collection, bookmarks }: { collection: string; bookmarks: ExtendedBookmark[] }) {
     const history = useHistory();
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const { t } = useTranslation();
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.BookmarkManage);
     const expanded = useAppSelector((state) => selectIsCollectionExpanded(state, collection));
     const dispatch = useAppDispatch();
 
@@ -39,7 +43,7 @@ export function Collection({ collection, bookmarks }: { collection: string; book
             }
 
             return set;
-        }, new Set<string>())
+        }, new Set<string>()),
     ).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
 
     const name = collection.split("/").pop() ?? "";
@@ -61,7 +65,7 @@ export function Collection({ collection, bookmarks }: { collection: string; book
                         {name}
                     </Box>
                 </Box>
-                <Box flex="0 0 auto" sx={{ visibility: isAdmin ? "visible" : "hidden" }}>
+                <Box flex="0 0 auto" sx={{ visibility: canManage ? "visible" : "hidden" }}>
                     <IconButton
                         size="small"
                         sx={{ py: 0 }}
@@ -88,7 +92,7 @@ export function Collection({ collection, bookmarks }: { collection: string; book
                         <ListItemIcon>
                             <Edit fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Rename</ListItemText>
+                        <ListItemText>{t("rename")}</ListItemText>
                     </MenuItem>
                     <MenuItem
                         onClick={() => {
@@ -104,9 +108,9 @@ export function Collection({ collection, bookmarks }: { collection: string; book
                                                   ...bookmark,
                                                   grouping: bookmark.grouping?.replace(regExp, "$1").replace(/\/$/, ""),
                                               }
-                                            : bookmark
-                                    )
-                                )
+                                            : bookmark,
+                                    ),
+                                ),
                             );
 
                             dispatch(bookmarksActions.closeCollection(collection));
@@ -115,7 +119,7 @@ export function Collection({ collection, bookmarks }: { collection: string; book
                         <ListItemIcon>
                             <Clear fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Ungroup</ListItemText>
+                        <ListItemText>{t("ungroup")}</ListItemText>
                     </MenuItem>
                 </Menu>
             </AccordionSummary>

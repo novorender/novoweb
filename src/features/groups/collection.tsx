@@ -1,24 +1,59 @@
-import { Clear, Edit, MoreVert, Visibility, VisibilityOff } from "@mui/icons-material";
+import { AcUnit, Clear, Edit, MoreVert, Visibility, VisibilityOff, WbSunny } from "@mui/icons-material";
 import { Box, IconButton, List, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
-import { MouseEvent, useState } from "react";
+import { MouseEvent, useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Accordion, AccordionDetails, AccordionSummary } from "components";
 import { GroupStatus, objectGroupsActions, useDispatchObjectGroups, useObjectGroups } from "contexts/objectGroups";
-import { selectHasAdminCapabilities } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 
 import { Group, StyledCheckbox } from "./group";
-import { groupsActions, selectIsCollectionExpanded } from "./groupsSlice";
+import {
+    groupsActions,
+    selectGroupsSelectedForEdit,
+    selectIsCollectionExpanded,
+    selectIsEditingGroups,
+} from "./groupsSlice";
+
+enum SelectionState {
+    None,
+    Some,
+    All,
+}
 
 export function Collection({ collection, disabled }: { collection: string; disabled: boolean }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const objectGroups = useObjectGroups();
     const dispatchObjectGroups = useDispatchObjectGroups();
 
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.GroupManage);
     const expanded = useAppSelector((state) => selectIsCollectionExpanded(state, collection));
     const dispatch = useAppDispatch();
+    const isEditingGroups = useAppSelector(selectIsEditingGroups);
+    const allChildGroups = useMemo(() => {
+        const prefix = collection + "/";
+        return objectGroups.filter((group) => group.grouping === collection || group.grouping.startsWith(prefix));
+    }, [objectGroups, collection]);
+    const selectionState = useAppSelector((store) => {
+        const ids = selectGroupsSelectedForEdit(store);
+        if (!ids || !isEditingGroups) {
+            return SelectionState.None;
+        }
+        const children = allChildGroups;
+        const selectedCount = children.reduce((acc, e) => acc + (ids.has(e.id) ? 1 : 0), 0);
+        if (selectedCount === 0) {
+            return SelectionState.None;
+        }
+        if (selectedCount === children.length) {
+            return SelectionState.All;
+        }
+        return SelectionState.Some;
+    });
 
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
@@ -43,17 +78,52 @@ export function Collection({ collection, disabled }: { collection: string; disab
             }
 
             return set;
-        }, new Set<string>())
+        }, new Set<string>()),
     ).sort((a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }));
 
     const name = collection.split("/").pop() ?? "";
     const collectionGroups = objectGroups.filter((group) => group.grouping === collection);
-    const nestedGroups = objectGroups.filter(
-        (group) => group.grouping === collection || group.grouping?.startsWith(`${collection}/`)
+    const nestedGroups = useMemo(
+        () =>
+            objectGroups.filter(
+                (group) => group.grouping === collection || group.grouping?.startsWith(`${collection}/`),
+            ),
+        [objectGroups, collection],
     );
-    const allSelected = nestedGroups.every((group) => group.status === GroupStatus.Selected);
-    const allHidden = nestedGroups.every((group) => group.status === GroupStatus.Hidden);
-    const allFullyHidden = nestedGroups.every((group) => group.opacity && group.opacity === 0);
+    const allSelectedOrFrozen = nestedGroups.every(
+        (group) => group.status === GroupStatus.Selected || group.status === GroupStatus.Frozen,
+    );
+    const allHiddenOrFrozen = nestedGroups.every(
+        (group) => group.status === GroupStatus.Hidden || group.status === GroupStatus.Frozen,
+    );
+    const allFullyHiddenOrFrozen = nestedGroups.every(
+        (group) => (group.opacity && group.opacity === 0) || group.status === GroupStatus.Frozen,
+    );
+    const anyFrozen = nestedGroups.some((g) => g.status === GroupStatus.Frozen);
+    const allFrozen = nestedGroups.every((g) => g.status === GroupStatus.Frozen);
+
+    const updateNonFrozenGroupsStatus = useCallback(
+        (status: GroupStatus) => {
+            nestedGroups
+                .filter((g) => g.status !== GroupStatus.Frozen)
+                .forEach((group) =>
+                    dispatchObjectGroups(
+                        objectGroupsActions.update(group.id, {
+                            status,
+                        }),
+                    ),
+                );
+        },
+        [dispatchObjectGroups, nestedGroups],
+    );
+
+    const handleToggleGroupSelection = useCallback(() => {
+        updateNonFrozenGroupsStatus(allSelectedOrFrozen ? GroupStatus.None : GroupStatus.Selected);
+    }, [updateNonFrozenGroupsStatus, allSelectedOrFrozen]);
+
+    const handleToggleGroupVisibility = useCallback(() => {
+        updateNonFrozenGroupsStatus(allHiddenOrFrozen ? GroupStatus.None : GroupStatus.Hidden);
+    }, [updateNonFrozenGroupsStatus, allHiddenOrFrozen]);
 
     return (
         <Accordion
@@ -66,57 +136,67 @@ export function Collection({ collection, disabled }: { collection: string; disab
             level={currentDepth}
         >
             <AccordionSummary level={currentDepth}>
+                {isEditingGroups && (
+                    <Box flex="0 0 auto">
+                        <StyledCheckbox
+                            name="toggle group selection"
+                            aria-label="toggle group selection"
+                            size="small"
+                            checked={selectionState === SelectionState.All}
+                            indeterminate={selectionState === SelectionState.Some}
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={() => {
+                                const ids = allChildGroups.map((g) => g.id);
+                                if (selectionState === SelectionState.All) {
+                                    dispatch(groupsActions.removeGroupsSelectedForEdit(ids));
+                                } else {
+                                    dispatch(groupsActions.addGroupsSelectedForEdit(ids));
+                                }
+                            }}
+                        />
+                    </Box>
+                )}
                 <Box width={0} flex="1 1 auto" overflow="hidden">
                     <Box fontWeight={600} overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
                         {name}
                     </Box>
                 </Box>
                 <Box flex="0 0 auto">
-                    <StyledCheckbox
-                        name="toggle group highlighting"
-                        aria-label="toggle group highlighting"
-                        sx={{ marginLeft: "auto" }}
-                        size="small"
-                        disabled={disabled}
-                        onChange={() =>
-                            nestedGroups.forEach((group) =>
-                                dispatchObjectGroups(
-                                    objectGroupsActions.update(group.id, {
-                                        status: allSelected ? GroupStatus.None : GroupStatus.Selected,
-                                    })
-                                )
-                            )
-                        }
-                        checked={allSelected}
-                        onClick={(event) => event.stopPropagation()}
-                        onFocus={(event) => event.stopPropagation()}
-                    />
+                    {allFrozen ? null : (
+                        <StyledCheckbox
+                            name="toggle group highlighting"
+                            aria-label="toggle group highlighting"
+                            sx={{ marginLeft: "auto" }}
+                            size="small"
+                            disabled={disabled}
+                            onChange={handleToggleGroupSelection}
+                            checked={!allFrozen && allSelectedOrFrozen}
+                            onClick={(event) => event.stopPropagation()}
+                            onFocus={(event) => event.stopPropagation()}
+                        />
+                    )}
                 </Box>
                 <Box flex="0 0 auto">
                     <StyledCheckbox
                         name="toggle group visibility"
                         aria-label="toggle group visibility"
                         size="small"
-                        icon={<Visibility />}
+                        icon={allFrozen ? <AcUnit color="disabled" /> : <Visibility />}
                         checkedIcon={
-                            allFullyHidden ? <VisibilityOff color="disabled" /> : <Visibility color="disabled" />
-                        }
-                        disabled={disabled}
-                        onChange={() =>
-                            nestedGroups.forEach((group) =>
-                                dispatchObjectGroups(
-                                    objectGroupsActions.update(group.id, {
-                                        status: allHidden ? GroupStatus.None : GroupStatus.Hidden,
-                                    })
-                                )
+                            allFullyHiddenOrFrozen ? (
+                                <VisibilityOff color="disabled" />
+                            ) : (
+                                <Visibility color="disabled" />
                             )
                         }
-                        checked={allHidden}
+                        disabled={disabled || allFrozen}
+                        onChange={handleToggleGroupVisibility}
+                        checked={!allFrozen && allHiddenOrFrozen}
                         onClick={(event) => event.stopPropagation()}
                         onFocus={(event) => event.stopPropagation()}
                     />
                 </Box>
-                <Box flex="0 0 auto" sx={{ visibility: isAdmin ? "visible" : "hidden" }}>
+                <Box flex="0 0 auto" sx={{ visibility: canManage ? "visible" : "hidden" }}>
                     <IconButton
                         size="small"
                         sx={{ py: 0 }}
@@ -144,7 +224,7 @@ export function Collection({ collection, disabled }: { collection: string; disab
                         <ListItemIcon>
                             <Edit fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Rename</ListItemText>
+                        <ListItemText>{t("rename")}</ListItemText>
                     </MenuItem>
                     <MenuItem
                         onClick={() => {
@@ -156,8 +236,8 @@ export function Collection({ collection, disabled }: { collection: string; disab
                                 dispatchObjectGroups(
                                     objectGroupsActions.update(group.id, {
                                         grouping: group.grouping?.replace(regExp, "$1").replace(/\/$/, ""),
-                                    })
-                                )
+                                    }),
+                                ),
                             );
 
                             dispatch(groupsActions.closeCollection(collection));
@@ -166,7 +246,47 @@ export function Collection({ collection, disabled }: { collection: string; disab
                         <ListItemIcon>
                             <Clear fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Ungroup</ListItemText>
+                        <ListItemText>{t("ungroup")}</ListItemText>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            nestedGroups
+                                .filter((g) => g.status !== GroupStatus.Frozen)
+                                .forEach((group) => {
+                                    dispatchObjectGroups(
+                                        objectGroupsActions.update(group.id, {
+                                            status: GroupStatus.Frozen,
+                                        }),
+                                    );
+                                });
+                            closeMenu();
+                        }}
+                        disabled={allFrozen}
+                    >
+                        <ListItemIcon>
+                            <AcUnit fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{t("freezeAll")}</ListItemText>
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            nestedGroups
+                                .filter((g) => g.status === GroupStatus.Frozen)
+                                .forEach((group) => {
+                                    dispatchObjectGroups(
+                                        objectGroupsActions.update(group.id, {
+                                            status: GroupStatus.None,
+                                        }),
+                                    );
+                                });
+                            closeMenu();
+                        }}
+                        disabled={!anyFrozen}
+                    >
+                        <ListItemIcon>
+                            <WbSunny fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{t("unfreezeAll")}</ListItemText>
                     </MenuItem>
                 </Menu>
             </AccordionSummary>

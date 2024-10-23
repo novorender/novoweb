@@ -1,11 +1,14 @@
 import { Box, Slider, Typography } from "@mui/material";
 import { SyntheticEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Accordion, AccordionDetails, AccordionSummary } from "components";
+import { AccordionDetails, AccordionSummary } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { CameraType, renderActions, selectCameraDefaults, selectCameraType, selectViewMode } from "features/render";
 import { ViewMode } from "types/misc";
+
+import { AdvSettingsAccordion as Accordion } from "../../components/advSettingsAccordion";
 
 enum SliderKind {
     PinholeFar,
@@ -17,6 +20,7 @@ export function Clipping() {
     const {
         state: { view },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const cameraDefaults = useAppSelector(selectCameraDefaults);
     const cameraType = useAppSelector(selectCameraType);
     const viewMode = useAppSelector(selectViewMode);
@@ -89,7 +93,7 @@ export function Clipping() {
                                     near: scaleNearClipping(value),
                                 },
                             },
-                        })
+                        }),
                     );
                     return;
                 case SliderKind.PinholeFar:
@@ -100,7 +104,7 @@ export function Clipping() {
                                     far: scaleFarClipping(value),
                                 },
                             },
-                        })
+                        }),
                     );
                     return;
                 case SliderKind.OrthoFar:
@@ -111,25 +115,25 @@ export function Clipping() {
                                     far: scaleFarClipping(value),
                                 },
                             },
-                        })
+                        }),
                     );
             }
         };
 
     return (
         <>
-            <Accordion>
-                <AccordionSummary>Clipping (3D)</AccordionSummary>
+            <Accordion id="clipping3d">
+                <AccordionSummary>{t("clipping3d")}</AccordionSummary>
                 <AccordionDetails>
                     <Box p={1} display="flex" flexDirection="column">
-                        <Box display="flex" sx={{ mb: 2 }} alignItems="center">
+                        <Box id="clipping3d-near" display="flex" sx={{ mb: 2 }} alignItems="center">
                             <Typography
                                 sx={{
                                     width: 160,
                                     flexShrink: 0,
                                 }}
                             >
-                                Near clipping
+                                {t("nearClipping")}
                             </Typography>
                             <Slider
                                 sx={{ mx: 2, flex: "1 1 100%" }}
@@ -145,14 +149,14 @@ export function Clipping() {
                                 onChangeCommitted={handleSliderCommit(SliderKind.PinholeNear)}
                             />
                         </Box>
-                        <Box display="flex" alignItems="center">
+                        <Box id="clipping3d-far" display="flex" alignItems="center">
                             <Typography
                                 sx={{
                                     width: 160,
                                     flexShrink: 0,
                                 }}
                             >
-                                Far clipping
+                                {t("farClipping")}
                             </Typography>
                             <Slider
                                 sx={{ mx: 2, flex: "1 1 100%" }}
@@ -171,17 +175,17 @@ export function Clipping() {
                     </Box>
                 </AccordionDetails>
             </Accordion>
-            <Accordion>
-                <AccordionSummary>Clipping (2D)</AccordionSummary>
+            <Accordion id="clipping2d">
+                <AccordionSummary>{t("clipping2d")}</AccordionSummary>
                 <AccordionDetails>
-                    <Box p={1} display="flex" alignItems="center">
+                    <Box p={1} id="clipping2d-far" display="flex" alignItems="center">
                         <Typography
                             sx={{
                                 width: 160,
                                 flexShrink: 0,
                             }}
                         >
-                            Far clipping
+                            {t("farClipping")}
                         </Typography>
                         <Slider
                             sx={{ mx: 2, flex: "1 1 100%" }}

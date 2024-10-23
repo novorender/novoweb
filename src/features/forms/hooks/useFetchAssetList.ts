@@ -1,15 +1,13 @@
 import { useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { useAbortController } from "hooks/useAbortController";
 import { selectConfig } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
 import { formsActions, selectAssets } from "../slice";
 import { FormGLtfAsset } from "../types";
 
-export function useFetchAssetList() {
-    const [abortController] = useAbortController();
+export function useFetchAssetList({ skip = false }: { skip?: boolean } = {}) {
     const assets = useAppSelector(selectAssets);
     const dispatch = useAppDispatch();
     const assetsUrl = useAppSelector(selectConfig).assetsUrl;
@@ -18,14 +16,12 @@ export function useFetchAssetList() {
         getAssets();
 
         async function getAssets() {
-            if (assets.status !== AsyncStatus.Initial) {
+            if (assets.status !== AsyncStatus.Initial || skip) {
                 return;
             }
 
             dispatch(formsActions.setAssets({ status: AsyncStatus.Loading }));
-            const response = await fetch(new URL(`${assetsUrl}/glbs/assets.json`), {
-                signal: abortController.current.signal,
-            });
+            const response = await fetch(new URL(`${assetsUrl}/glbs/assets.json`));
             const json = await response.json();
             const data: FormGLtfAsset[] = (json as FormGLtfAsset[]).map((item, i) => ({
                 ...item,
@@ -33,7 +29,7 @@ export function useFetchAssetList() {
             }));
             dispatch(formsActions.setAssets({ status: AsyncStatus.Success, data }));
         }
-    }, [dispatch, abortController, assets, assetsUrl]);
+    }, [dispatch, assets, assetsUrl, skip]);
 
     return assets;
 }

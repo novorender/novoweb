@@ -1,10 +1,8 @@
-import { dataApi } from "apis/dataV1";
 import { ColorStop, DeviationProjectConfig, PointToPointGroup, PointToTriangleGroup } from "apis/dataV2/deviationTypes";
-import { ObjectGroup } from "contexts/objectGroups";
 
 import { DeviationForm, DeviationType, SubprofileGroup, UiDeviationConfig, UiDeviationProfile } from "./deviationTypes";
 
-export const MAX_DEVIATION_PROFILE_COUNT = 4;
+export const MAX_DEVIATION_PROFILE_COUNT = 6;
 export const PARAM_BOUND_PRECISION = 0;
 export const NEW_DEVIATION_ID = "new";
 export const EMPTY_PARAMETER_BOUNDS = [0, 0] as [number, number];
@@ -144,19 +142,4 @@ export function accountForAbsValues(colorStops: ColorStop[]) {
     const absolute = colorStops.map((cs) => ({ ...cs, position: Math.abs(cs.position) }));
     const negatives = absolute.filter((cs) => cs.position > 0).map((cs) => ({ ...cs, position: -cs.position }));
     return [...absolute, ...negatives].sort(colorStopSortFn);
-}
-
-export async function fillGroupIds(sceneId: string, groups: ObjectGroup[]): Promise<void> {
-    await Promise.all(
-        groups.map(async (group) => {
-            if (!group.ids) {
-                group.ids = new Set(
-                    await dataApi.getGroupIds(sceneId, group.id).catch(() => {
-                        console.warn("failed to load ids for group - ", group.id);
-                        return [] as number[];
-                    })
-                );
-            }
-        })
-    );
 }

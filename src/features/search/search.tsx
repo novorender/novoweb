@@ -2,6 +2,7 @@ import { AddCircle } from "@mui/icons-material";
 import { Box, Button, FormControlLabel } from "@mui/material";
 import { HierarcicalObjectReference, SearchPattern } from "@novorender/webgl-api";
 import { CSSProperties, FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ListOnScrollProps } from "react-window";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -36,6 +37,7 @@ export default function Search() {
     const {
         state: { db },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
 
     const minimized = useAppSelector(selectMinimized) === featuresConfig.search.key;
     const maximized = useAppSelector(selectMaximized).includes(featuresConfig.search.key);
@@ -45,7 +47,7 @@ export default function Search() {
     const [advanced, toggleAdvanced] = useToggle(urlSearchQuery ? Array.isArray(urlSearchQuery) : false);
     const [simpleInput, setSimpleInput] = useState(typeof urlSearchQuery === "string" ? urlSearchQuery : "");
     const [advancedInputs, setAdvancedInputs] = useState(
-        Array.isArray(urlSearchQuery) ? urlSearchQuery : [{ property: "", value: "", exact: true }]
+        Array.isArray(urlSearchQuery) ? urlSearchQuery : [{ property: "", value: "", exact: true }],
     );
 
     const [allSelected, setAllSelected] = useState(false);
@@ -66,15 +68,22 @@ export default function Search() {
     const previousSearchPattern = useRef<SearchPattern[] | string>();
 
     const getSearchPattern = useCallback(() => {
-        const searchPattern = advanced
-            ? advancedInputs.filter(({ property, value }) => property || value)
-            : simpleInput;
+        let searchPattern = advanced ? advancedInputs.filter(({ property, value }) => property || value) : simpleInput;
 
         if (
             (Array.isArray(searchPattern) && !searchPattern.length) ||
             (typeof searchPattern === "string" && searchPattern.length < 3)
         ) {
             return;
+        }
+
+        if (typeof searchPattern !== "string") {
+            searchPattern = searchPattern.map((sp) => {
+                if (typeof sp.value === "string") {
+                    return { ...sp, value: [sp.value] };
+                }
+                return sp;
+            });
         }
 
         return searchPattern;
@@ -167,7 +176,12 @@ export default function Search() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.search} disableShadow={menuOpen}>
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.search}
+                    disableShadow={menuOpen}
+                >
                     {!menuOpen && !minimized ? (
                         <Box component="form" sx={{ mt: 1 }} onSubmit={handleSubmit}>
                             {advanced ? (
@@ -197,7 +211,7 @@ export default function Search() {
                                     }
                                     label={
                                         <Box ml={0.5} fontSize={14}>
-                                            Advanced
+                                            {t("advanced")}
                                         </Box>
                                     }
                                 />
@@ -214,7 +228,7 @@ export default function Search() {
                                             }
                                         >
                                             <AddCircle />
-                                            <Box ml={0.5}>AND</Box>
+                                            <Box ml={0.5}>{t("and")}</Box>
                                         </Button>
                                         <Button
                                             color="grey"
@@ -235,13 +249,13 @@ export default function Search() {
                                                                       ? input.value.concat("")
                                                                       : [input.value ?? "", ""],
                                                               }
-                                                            : input
-                                                    )
+                                                            : input,
+                                                    ),
                                                 )
                                             }
                                         >
                                             <AddCircle />
-                                            <Box ml={0.5}>OR</Box>
+                                            <Box ml={0.5}>{t("or")}</Box>
                                         </Button>
                                     </>
                                 ) : null}
@@ -256,7 +270,7 @@ export default function Search() {
                                     fullWidth
                                     sx={{ marginRight: 1 }}
                                 >
-                                    Cancel
+                                    {t("cancel")}
                                 </Button>
                                 <Button
                                     type="submit"
@@ -265,7 +279,7 @@ export default function Search() {
                                     color="primary"
                                     variant="contained"
                                 >
-                                    Search
+                                    {t("search")}
                                 </Button>
                             </Box>
                         </Box>
@@ -280,7 +294,7 @@ export default function Search() {
                     <ScrollBox flex={"1 1 100%"}>
                         {status === Status.Error ? (
                             <Box px={1} pt={1}>
-                                Something went wrong with the search.
+                                {t("searchError")}
                             </Box>
                         ) : searchResults ? (
                             <>

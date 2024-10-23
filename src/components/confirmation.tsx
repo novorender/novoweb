@@ -1,5 +1,6 @@
 import { LoadingButton } from "@mui/lab";
 import { Box, BoxProps, Button, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export function Confirmation({
     title,
@@ -8,6 +9,8 @@ export function Confirmation({
     onConfirm,
     loading,
     confirmBtnDisabled,
+    headerShadow = true,
+    paddingBottom = 10,
     ...boxProps
 }: BoxProps & {
     title: string;
@@ -16,16 +19,21 @@ export function Confirmation({
     onConfirm?: () => void;
     loading?: boolean;
     confirmBtnDisabled?: boolean;
+    headerShadow?: boolean;
+    paddingBottom?: number;
 }) {
     const theme = useTheme();
+    const { t } = useTranslation();
 
     return (
         <>
-            <Box
-                boxShadow={theme.customShadows.widgetHeader}
-                sx={{ height: 5, width: 1, mt: "-5px" }}
-                position="absolute"
-            />
+            {headerShadow && (
+                <Box
+                    boxShadow={theme.customShadows.widgetHeader}
+                    sx={{ height: 5, width: 1, mt: "-5px" }}
+                    position="absolute"
+                />
+            )}
             <Box
                 display="flex"
                 flexDirection="column"
@@ -40,7 +48,7 @@ export function Confirmation({
                     {title}
                 </Typography>
                 {boxProps.children}
-                <Box pb={10} display="flex" width={1}>
+                <Box pb={paddingBottom} display="flex" width={1}>
                     <Button
                         type="button"
                         sx={{ mr: 2 }}
@@ -51,7 +59,7 @@ export function Confirmation({
                         onClick={onCancel}
                         disabled={loading}
                     >
-                        Cancel
+                        {t("cancel")}
                     </Button>
                     <LoadingButton
                         fullWidth

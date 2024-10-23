@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 import { useGetArcgisWidgetConfigQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useSceneId } from "hooks/useSceneId";
 import { selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 
@@ -11,7 +11,7 @@ import { FeatureServer } from "../types";
 
 export function useLoadArcgisWidgetConfig() {
     const dispatch = useAppDispatch();
-    const projectId = useExplorerGlobals(true).state.scene.id;
+    const projectId = useSceneId();
     const status = useAppSelector(selectArcgisFeatureServersStatus);
     const isProjectV2 = useAppSelector(selectProjectIsV2);
 

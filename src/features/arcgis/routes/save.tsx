@@ -4,7 +4,7 @@ import { useHistory } from "react-router-dom";
 import { usePutArcgisWidgetConfigMutation } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Confirmation } from "components";
-import { useExplorerGlobals } from "contexts/explorerGlobals";
+import { useSceneId } from "hooks/useSceneId";
 import { AsyncStatus } from "types/misc";
 
 import { ArcgisWidgetConfig } from "..";
@@ -15,7 +15,7 @@ export function Save() {
     const history = useHistory();
     const dispatch = useAppDispatch();
     const saveStatus = useAppSelector(selectArcgisSaveStatus);
-    const projectId = useExplorerGlobals(true).state.scene.id;
+    const projectId = useSceneId();
     const featureServers = useAppSelector(selectArcgisFeatureServers);
 
     const [save] = usePutArcgisWidgetConfigMutation();

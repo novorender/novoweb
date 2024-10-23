@@ -1,15 +1,62 @@
-import { Box } from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 
 import { useAppSelector } from "app/redux-store-interactions";
+import { GlobalSearch } from "features/globalSearch/globalSearch";
+import LocationHud from "features/locationHud/locationHud";
 import { NavigationCube } from "features/navigationCube";
-import { PrimaryMenu } from "features/primaryMenu";
+import { PickerEscSnackbar } from "features/pickerEscSnackbar/pickerEscSnackbar";
+import { PrimaryMenu, PrimaryMenuNew } from "features/primaryMenu";
+import { QuickAccessMenu } from "features/quickAccessMenu/quickAccessMenu";
 import { selectNavigationCube } from "features/render";
 import { SelectionModifierMenu } from "features/selectionModifierMenu";
+import { WidgetGroupPanel } from "features/widgetGroupPanel/widgetGroupPanel";
 import { Widgets } from "features/widgets";
 import { useHandleWidgetLayout } from "features/widgets/useHandleWidgetLayout";
-import { selectWidgetLayout } from "slices/explorer";
+import { selectNewDesign, selectWidgetLayout } from "slices/explorer";
+
+import GlobalSnackbar from "./globalSnackbar";
 
 export function Hud() {
+    const newDesign = useAppSelector(selectNewDesign);
+
+    return (
+        <>
+            {newDesign ? <HudNew /> : <HudOld />}
+            {/* <NewDesignPopup /> */}
+        </>
+    );
+}
+
+function HudNew() {
+    const navigationCube = useAppSelector(selectNavigationCube);
+    const theme = useTheme();
+
+    useHandleWidgetLayout();
+
+    return (
+        <>
+            {navigationCube.enabled && <NavigationCube />}
+            <Box
+                sx={{
+                    position: "absolute",
+                    inset: theme.spacing(theme.customSpacing.hudPadding),
+                    pointerEvents: "none",
+                }}
+            >
+                <LocationHud />
+                <QuickAccessMenu />
+                <WidgetGroupPanel />
+                <PrimaryMenuNew />
+                <Widgets />
+                <GlobalSnackbar />
+                <PickerEscSnackbar />
+            </Box>
+            <GlobalSearch />
+        </>
+    );
+}
+
+function HudOld() {
     const navigationCube = useAppSelector(selectNavigationCube);
 
     useHandleWidgetLayout();

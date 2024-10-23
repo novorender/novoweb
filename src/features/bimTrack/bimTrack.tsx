@@ -1,15 +1,18 @@
 import { Logout, SettingsRounded } from "@mui/icons-material";
 import { Box, ListItemIcon, ListItemText, Menu, MenuItem, MenuProps } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { MemoryRouter, Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { LogoSpeedDial, WidgetContainer, WidgetHeader } from "components";
 import { featuresConfig } from "config/features";
 import { StorageKey } from "config/storage";
 import WidgetList from "features/widgetList/widgetList";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { selectHasAdminCapabilities, selectMaximized, selectMinimized } from "slices/explorer";
+import { selectMaximized, selectMinimized } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { deleteFromStorage } from "utils/storage";
 
@@ -35,7 +38,13 @@ export default function BimTrack() {
         <>
             <MemoryRouter>
                 <WidgetContainer minimized={minimized} maximized={maximized}>
-                    <WidgetHeader WidgetMenu={WidgetMenu} widget={featuresConfig.bimTrack} disableShadow />
+                    <WidgetHeader
+                        menuOpen={menuOpen}
+                        toggleMenu={toggleMenu}
+                        WidgetMenu={WidgetMenu}
+                        widget={featuresConfig.bimTrack}
+                        disableShadow
+                    />
                     <Box
                         display={menuOpen || minimized ? "none" : "flex"}
                         flexGrow={1}
@@ -83,7 +92,8 @@ export default function BimTrack() {
 function WidgetMenu(props: MenuProps) {
     const settingsPaths = ["/*"];
     const token = useAppSelector(selectAccessToken);
-    const isAdmin = useAppSelector(selectHasAdminCapabilities);
+    const checkPermission = useCheckProjectPermission();
+    const canManage = checkPermission(Permission.IntBimTrackManage);
 
     if (token.status !== AsyncStatus.Success) {
         return null;
@@ -93,7 +103,7 @@ function WidgetMenu(props: MenuProps) {
         <>
             <Menu {...props}>
                 <LogoutMenuItem onClose={props.onClose} />
-                {isAdmin && (
+                {canManage && (
                     <Route path={settingsPaths} exact>
                         <SettingsMenuItem onClose={props.onClose} />
                     </Route>
@@ -104,6 +114,7 @@ function WidgetMenu(props: MenuProps) {
 }
 
 function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const dispatch = useAppDispatch();
 
@@ -125,7 +136,7 @@ function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
                     <ListItemIcon>
                         <Logout />
                     </ListItemIcon>
-                    <ListItemText>Log out</ListItemText>
+                    <ListItemText>{t("logOut")}</ListItemText>
                 </>
             </MenuItem>
         </div>
@@ -133,6 +144,7 @@ function LogoutMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
 }
 
 function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
+    const { t } = useTranslation();
     const history = useHistory();
     const match = useRouteMatch();
 
@@ -152,7 +164,7 @@ function SettingsMenuItem({ onClose }: { onClose: MenuProps["onClose"] }) {
                     <ListItemIcon>
                         <SettingsRounded />
                     </ListItemIcon>
-                    <ListItemText>Settings</ListItemText>
+                    <ListItemText>{t("settings")}</ListItemText>
                 </>
             </MenuItem>
         </div>

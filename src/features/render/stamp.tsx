@@ -3,6 +3,7 @@ import { Menu, popoverClasses } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { DeviationStamp } from "features/deviations";
 import { DitioMachineStamp } from "features/ditio";
+import { ClassificationStamp } from "features/pointVisualization/classificationStamp";
 import { PropertiesStamp } from "features/properties";
 import { LogPointStamp, MachineLocationStamp as XsiteMachineLocationStamp } from "features/xsiteManage";
 
@@ -43,6 +44,8 @@ export function Stamp() {
                 <PropertiesStamp />
             ) : stamp.kind === StampKind.DitioMachine ? (
                 <DitioMachineStamp />
+            ) : stamp.kind === StampKind.Classification ? (
+                <ClassificationStamp />
             ) : null}
         </Menu>
     );

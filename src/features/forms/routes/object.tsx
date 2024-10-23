@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Redirect, useHistory, useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -31,6 +32,7 @@ export function Object() {
     const {
         state: { db },
     } = useExplorerGlobals(true);
+    const { t } = useTranslation();
     const { id } = useParams<{ id: FormObjectGuid }>();
     const theme = useTheme();
     const history = useHistory();
@@ -94,7 +96,7 @@ export function Object() {
                   projectId: sceneId,
                   objectGuid: object?.guid,
               }
-            : skipToken
+            : skipToken,
     );
 
     if (forms && (currentFormsList || forms?.length === 1) && object?.guid) {
@@ -102,8 +104,8 @@ export function Object() {
             <Redirect
                 push={false}
                 to={{
-                    pathname: `/search-instance/${object.guid}-${currentFormsList || forms[0].id}`,
-                    state: { objectId: object.id },
+                    pathname: "/search-instance",
+                    search: `?objectGuid=${object.guid}&formId=${currentFormsList || forms[0].id}`,
                 }}
             />
         );
@@ -128,21 +130,19 @@ export function Object() {
     return (
         <>
             <Box boxShadow={theme.customShadows.widgetHeader}>
-                <>
-                    <Box px={1}>
-                        <Divider />
-                    </Box>
-                    <Box display="flex" justifyContent="space-between">
-                        <Button color="grey" onClick={handleBackClick}>
-                            <ArrowBack sx={{ mr: 1 }} />
-                            Back
-                        </Button>
-                        <Button color="grey" onClick={handleHomeClick}>
-                            <Checklist sx={{ mr: 1 }} />
-                            All forms
-                        </Button>
-                    </Box>
-                </>
+                <Box px={1}>
+                    <Divider />
+                </Box>
+                <Box m={1} display="flex" justifyContent="space-between">
+                    <Button color="grey" onClick={handleBackClick}>
+                        <ArrowBack sx={{ mr: 1 }} />
+                        {t("back")}
+                    </Button>
+                    <Button color="grey" onClick={handleHomeClick}>
+                        <Checklist sx={{ mr: 1 }} />
+                        {t("allForms")}
+                    </Button>
+                </Box>
             </Box>
             {isLoading || formsLoading || isUninitialized ? (
                 <Box position="relative">
@@ -163,8 +163,8 @@ export function Object() {
                                         onClick={() => {
                                             if (object?.guid) {
                                                 history.push({
-                                                    pathname: `/search-instance/${object.guid}-${form.id}`,
-                                                    state: { objectId: object.id },
+                                                    pathname: "/search-instance",
+                                                    search: `?objectGuid=${object.guid}&formId=${form.id}`,
                                                 });
                                             }
                                         }}
@@ -185,8 +185,8 @@ export function Object() {
                                                     form.state === "new"
                                                         ? "red"
                                                         : form.state === "finished"
-                                                        ? "green"
-                                                        : "orange"
+                                                          ? "green"
+                                                          : "orange"
                                                 }
                                                 fontSize="inherit"
                                             />
@@ -197,7 +197,7 @@ export function Object() {
                             })}
                         </List>
                     ) : (
-                        <Typography px={1}>No forms attached to the selected object.</Typography>
+                        <Typography px={1}>{t("noFormsAttached")}</Typography>
                     )}
                 </ScrollBox>
             )}

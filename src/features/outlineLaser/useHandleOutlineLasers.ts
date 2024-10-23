@@ -60,7 +60,11 @@ export function useHandleOutlineLasers() {
             const currentTraces = tracesRef.current;
             if (currentTracePlane && view && measureView && currentTraces.length > 0) {
                 const newPlane = planes[0].normalOffset;
-                const oldDir = vec3.fromValues(currentTracePlane[0], currentTracePlane[1], currentTracePlane[2]);
+                const oldDir = vec3.fromValues(
+                    currentTracePlane.normalOffset[0],
+                    currentTracePlane.normalOffset[1],
+                    currentTracePlane.normalOffset[2]
+                );
                 const newDir = vec3.fromValues(newPlane[0], newPlane[1], newPlane[2]);
                 if (generation < generationRef.current) {
                     return;
@@ -72,7 +76,7 @@ export function useHandleOutlineLasers() {
                     return;
                 }
 
-                const diff = newPlane[3] - currentTracePlane[3];
+                const diff = newPlane[3] - currentTracePlane.normalOffset[3];
                 if (diff === 0) {
                     return;
                 }
@@ -82,7 +86,7 @@ export function useHandleOutlineLasers() {
                     const newTracerPosition = vec3.scaleAndAdd(vec3.create(), trace.laserPosition, oldDir, diff);
                     const sp = measureView.draw.toMarkerPoints([newTracerPosition]);
                     if (sp && sp.length > 0 && sp[0]) {
-                        const outlineValues = view.outlineLaser(newTracerPosition, 0);
+                        const outlineValues = view.outlineLaser(newTracerPosition, "clipping", 0, planes[0].rotation);
 
                         if (
                             outlineValues &&
@@ -94,6 +98,8 @@ export function useHandleOutlineLasers() {
                                 right: outlineValues.right,
                                 down: outlineValues.down,
                                 up: outlineValues.up,
+                                zUp: [],
+                                zDown: [],
                                 laserPosition: newTracerPosition,
                                 measurementX:
                                     trace.measurementX &&
@@ -112,7 +118,12 @@ export function useHandleOutlineLasers() {
                 if (generation < generationRef.current) {
                     return;
                 }
-                dispatch(clippingOutlineLaserActions.setLaserPlane(view.renderState.clipping.planes[0].normalOffset));
+                dispatch(
+                    clippingOutlineLaserActions.setLaserPlane({
+                        normalOffset: planes[0].normalOffset,
+                        rotation: planes[0].rotation ?? 0,
+                    })
+                );
                 dispatch(clippingOutlineLaserActions.setLasers(newTraces));
             }
         }

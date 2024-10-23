@@ -5,19 +5,24 @@ import {
     RenderStateDynamicObject,
     RGBA,
 } from "@novorender/api";
-import { ReadonlyVec3 } from "gl-matrix";
+import { ReadonlyQuat, ReadonlyVec3 } from "gl-matrix";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { Permission } from "apis/dataV2/permissions";
 import { useAppSelector } from "app/redux-store-interactions";
+import { featuresConfig } from "config/features";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { areArraysEqual } from "features/arcgis/utils";
 import { CameraType, selectCameraType } from "features/render";
 import { useAbortController } from "hooks/useAbortController";
-import { selectConfig } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
+import { selectConfig, selectWidgets } from "slices/explorer";
 import { AsyncState, AsyncStatus } from "types/misc";
 
-import { useFormsGlobals } from "../formsGlobals";
+import { formsGlobalsActions } from "../formsGlobals";
+import { useDispatchFormsGlobals, useFormsGlobals } from "../formsGlobals/hooks";
 import {
+    selectAlwaysShowMarkers,
     selectAssets,
     selectCurrentFormsList,
     selectLocationForms,
@@ -25,26 +30,43 @@ import {
     selectTemplates,
 } from "../slice";
 import { FormGLtfAsset, LocationTemplate } from "../types";
+import { useFetchAssetList } from "./useFetchAssetList";
+import { useFetchLocationForms } from "./useFetchLocationForms";
 
 type RenderedForm = {
     templateId: string;
     id: string;
     marker: string;
     location: ReadonlyVec3;
+    rotation?: ReadonlyQuat;
+    scale?: number;
 };
 
 function areRenderedFormsEqual(a: RenderedForm, b: RenderedForm) {
-    return a.templateId === b.templateId && a.id === b.id && a.marker === b.marker && a.location === b.location;
+    return (
+        a.templateId === b.templateId &&
+        a.id === b.id &&
+        a.marker === b.marker &&
+        a.location === b.location &&
+        a.rotation === b.rotation &&
+        a.scale === b.scale
+    );
 }
 
 const MAX_ASSET_COUNT = 100_000;
 const SELECTED_OBJECT_ID_OFFSET = MAX_ASSET_COUNT / 2;
 
+function useTransformDraft() {
+    const formsGlobals = useFormsGlobals();
+    return useMemo(() => formsGlobals.transformDraft, [formsGlobals]);
+}
+
 export function useRenderLocationFormAssets() {
     const {
         state: { view },
     } = useExplorerGlobals();
-    const { setState: setFormsGlobals } = useFormsGlobals();
+    const dispatchFormsGlobals = useDispatchFormsGlobals();
+    const transform = useTransformDraft();
     const templates = useAppSelector(selectTemplates);
     const locationForms = useAppSelector(selectLocationForms);
     const assetInfoList = useAppSelector(selectAssets);
@@ -52,8 +74,15 @@ export function useRenderLocationFormAssets() {
     const selectedTemplateId = useAppSelector(selectCurrentFormsList);
     const selectedFormId = useAppSelector(selectSelectedFormId);
     const selectedMeshCache = useRef(new WeakMap<RenderStateDynamicMesh, RenderStateDynamicMesh>());
-    const active = useAppSelector(selectCameraType) === CameraType.Pinhole;
+    const isFormsWidgetOpen = useAppSelector((state) => selectWidgets(state).includes(featuresConfig.forms.key));
+    const alwaysShowMarkers = useAppSelector(selectAlwaysShowMarkers);
+    const active = useAppSelector(selectCameraType) === CameraType.Pinhole && (isFormsWidgetOpen || alwaysShowMarkers);
     const assetsUrl = useAppSelector(selectConfig).assetsUrl;
+    const checkPermission = useCheckProjectPermission();
+    const canView = checkPermission(Permission.FormsView) ?? true;
+
+    useFetchAssetList({ skip: !active });
+    useFetchLocationForms();
 
     const [assetAbortController, assetAbort] = useAbortController();
     const [assetGltfMap, setAssetGltfMap] = useState<AsyncState<Map<string, readonly RenderStateDynamicObject[]>>>({
@@ -63,7 +92,7 @@ export function useRenderLocationFormAssets() {
 
     const prevRenderedForms = useRef<RenderedForm[]>();
     const renderedForms = useMemo(() => {
-        if (!active || templates.status !== AsyncStatus.Success) {
+        if (!canView || !active || templates.status !== AsyncStatus.Success) {
             return [];
         }
 
@@ -72,14 +101,29 @@ export function useRenderLocationFormAssets() {
         const result = locationForms
             .filter((form) => form.location)
             .map((form) => {
-                const template = templateMap.get(form.templateId)! as LocationTemplate;
-                return {
+                const template = templateMap.get(form.templateId) as LocationTemplate | undefined;
+
+                if (!template) {
+                    return null;
+                }
+
+                const result = {
                     templateId: template.id,
                     id: form.id,
                     marker: template.marker,
                     location: form.location!,
+                    rotation: form.rotation,
+                    scale: form.scale,
                 };
-            });
+
+                if (transform && form.templateId === transform.templateId && form.id === transform.formId) {
+                    result.location = transform.location;
+                    result.rotation = transform.rotation;
+                    result.scale = transform.scale;
+                }
+                return result;
+            })
+            .filter((form) => form !== null) as RenderedForm[];
 
         if (areArraysEqual(result, prevRenderedForms.current, areRenderedFormsEqual)) {
             return prevRenderedForms.current!;
@@ -87,7 +131,17 @@ export function useRenderLocationFormAssets() {
             prevRenderedForms.current = result;
             return result;
         }
-    }, [templates, locationForms, active]);
+    }, [templates, locationForms, active, transform, canView]);
+    const baseObjectIdSet = useMemo(() => {
+        const baseObjectIdSet = new Set<number>();
+        if (assetInfoList.status === AsyncStatus.Success) {
+            for (const { baseObjectId } of assetInfoList.data) {
+                baseObjectIdSet.add(baseObjectId);
+                baseObjectIdSet.add(baseObjectId + SELECTED_OBJECT_ID_OFFSET);
+            }
+        }
+        return baseObjectIdSet;
+    }, [assetInfoList]);
 
     const uniqueMarkers = useMemo(() => {
         const uniqueMarkers = new Set<string>();
@@ -99,14 +153,15 @@ export function useRenderLocationFormAssets() {
     }, [renderedForms]);
 
     useEffect(() => {
-        setAssetGltfMap({ status: AsyncStatus.Initial });
-        assetAbort();
         loadAssets();
 
         async function loadAssets() {
-            if (assetInfoList.status !== AsyncStatus.Success) {
+            if (!canView || !active || assetInfoList.status !== AsyncStatus.Success) {
                 return;
             }
+
+            setAssetGltfMap({ status: AsyncStatus.Initial });
+            assetAbort();
 
             const result = new Map<string, readonly RenderStateDynamicObject[]>();
 
@@ -115,15 +170,15 @@ export function useRenderLocationFormAssets() {
                     [...uniqueMarkers].sort().map(async (name) => {
                         const assetInfo = assetInfoList.data.find((a) => a.name === name)!;
                         result.set(name, await loadAsset(assetsUrl, name, assetInfo, assetAbortController.current));
-                    })
+                    }),
                 );
-            } catch (e) {
+            } catch {
                 setAssetGltfMap({ status: AsyncStatus.Error, msg: "Error loading assets" });
             }
 
             setAssetGltfMap({ status: AsyncStatus.Success, data: result });
         }
-    }, [uniqueMarkers, assetInfoList, assetAbort, assetAbortController, assetsUrl]);
+    }, [canView, active, uniqueMarkers, assetInfoList, assetAbort, assetAbortController, assetsUrl]);
 
     const willUnmount = useRef(false);
     useEffect(() => {
@@ -153,23 +208,23 @@ export function useRenderLocationFormAssets() {
                 return;
             }
 
-            const baseObjectIdSet = new Set<number>(assetInfoList.data.map((a) => a.baseObjectId));
-
             const objects = view.renderState.dynamic.objects.filter(
-                (obj) =>
-                    !obj.baseObjectId ||
-                    (!baseObjectIdSet.has(obj.baseObjectId) &&
-                        !baseObjectIdSet.has(obj.baseObjectId + SELECTED_OBJECT_ID_OFFSET))
+                (obj) => !obj.baseObjectId || !baseObjectIdSet.has(obj.baseObjectId),
             );
 
             needCleaning.current = false;
 
             view.modifyRenderState({ dynamic: { objects } });
-            setFormsGlobals((s) => ({ ...s, objectIdToFormIdMap: new Map() }));
+            dispatchFormsGlobals(formsGlobalsActions.setObjectIdToFormIdMap(new Map()));
         }
 
         function updateDynamicObjects() {
-            if (!view || assetInfoList.status !== AsyncStatus.Success || assetGltfMap.status !== AsyncStatus.Success) {
+            if (
+                !canView ||
+                !view ||
+                assetInfoList.status !== AsyncStatus.Success ||
+                assetGltfMap.status !== AsyncStatus.Success
+            ) {
                 return;
             }
 
@@ -197,7 +252,7 @@ export function useRenderLocationFormAssets() {
                         ref,
                         instances: [],
                         selectedInstances: [],
-                    }))
+                    })),
                 );
             });
 
@@ -212,18 +267,25 @@ export function useRenderLocationFormAssets() {
                 for (const { ref, instances, selectedInstances } of asset) {
                     for (const refInst of ref.instances) {
                         let objectId: number;
+                        const position = form.location;
+                        const rotation = form.rotation;
+                        const scale = form.scale;
+
                         if (selectedTemplateId === form.templateId && selectedFormId === form.id) {
                             objectId = ref.baseObjectId! + SELECTED_OBJECT_ID_OFFSET + selectedInstances.length;
                             selectedInstances.push({
                                 ...refInst,
-                                position: form.location,
-                                scale: (refInst.scale ?? 1) * 1.2,
+                                position,
+                                rotation,
+                                scale,
                             });
                         } else {
                             objectId = ref.baseObjectId! + instances.length;
                             instances.push({
                                 ...refInst,
-                                position: form.location,
+                                position,
+                                rotation,
+                                scale,
                             });
                         }
 
@@ -234,13 +296,8 @@ export function useRenderLocationFormAssets() {
 
             let objects = view.renderState.dynamic.objects as RenderStateDynamicObject[];
             if (needCleaning.current) {
-                const baseObjectIdSet = new Set<number>(assetInfoList.data.map((a) => a.baseObjectId));
-
                 objects = view.renderState.dynamic.objects.filter(
-                    (obj) =>
-                        !obj.baseObjectId ||
-                        (!baseObjectIdSet.has(obj.baseObjectId) &&
-                            !baseObjectIdSet.has(obj.baseObjectId + SELECTED_OBJECT_ID_OFFSET))
+                    (obj) => !obj.baseObjectId || !baseObjectIdSet.has(obj.baseObjectId),
                 );
 
                 needCleaning.current = false;
@@ -274,18 +331,20 @@ export function useRenderLocationFormAssets() {
 
             needCleaning.current = true;
             view.modifyRenderState({ dynamic: { objects } });
-            setFormsGlobals((s) => ({ ...s, objectIdToFormIdMap }));
+            dispatchFormsGlobals(formsGlobalsActions.setObjectIdToFormIdMap(objectIdToFormIdMap));
         }
     }, [
         renderedForms,
         view,
         assetInfoList,
         abortController,
-        setFormsGlobals,
         selectedTemplateId,
         selectedFormId,
         active,
         assetGltfMap,
+        dispatchFormsGlobals,
+        canView,
+        baseObjectIdSet,
     ]);
 }
 

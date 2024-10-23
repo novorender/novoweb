@@ -22,7 +22,7 @@ export function getDataV2DynamicBaseQuery(suffix = "") {
     const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
         args,
         api,
-        extraOptions
+        extraOptions,
     ) => {
         const baseUrl = selectConfig(api.getState() as RootState).dataV2ServerUrl + suffix;
         if (!baseUrl) {

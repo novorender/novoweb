@@ -3,9 +3,11 @@ import { mat3, quat, vec3 } from "gl-matrix";
 import { MutableRefObject, useEffect, useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
+import { cameraStateActions, useDispatchCameraState } from "contexts/cameraState";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { measureActions } from "features/measure";
 import { orthoCamActions, selectCurrentTopDownElevation } from "features/orthoCam";
+import { selectNewDesign } from "slices/explorer";
 import { ViewMode } from "types/misc";
 
 import {
@@ -28,10 +30,12 @@ export function useHandleCameraMoved({
         state: { view },
     } = useExplorerGlobals();
     const dispatch = useAppDispatch();
+    const dispatchCameraState = useDispatchCameraState();
     const cameraType = useAppSelector(selectCameraType);
     const viewMode = useAppSelector(selectViewMode);
     const editClipping = useAppSelector(selectClippingInEdit);
     const currentTopDownElevation = useAppSelector(selectCurrentTopDownElevation);
+    const newDesign = useAppSelector(selectNewDesign);
 
     const movementTimer = useRef<ReturnType<typeof setTimeout>>();
     const orthoMovementTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -62,6 +66,7 @@ export function useHandleCameraMoved({
                 containers.forEach((container) => container && container.update());
                 dispatch(renderActions.setStamp(null));
                 dispatch(measureActions.selectHoverObj(undefined));
+                dispatchCameraState(cameraStateActions.set(view.renderState.camera));
 
                 if (movementTimer.current) {
                     clearTimeout(movementTimer.current);
@@ -101,7 +106,7 @@ export function useHandleCameraMoved({
 
                     // Move clipping plane
                     const plane = view.renderState.clipping.planes[0];
-                    if (plane) {
+                    if (plane && !newDesign) {
                         prevCameraDir.current = z;
                         const w = vec3.dot(z, camera.position);
 
@@ -127,7 +132,7 @@ export function useHandleCameraMoved({
                                         .slice(1)
                                         .map((p) => ({ ...p, baseW: p.normalOffset[3] })),
                                 ] as DeepMutable<ReturnType<typeof selectClippingPlanes>["planes"]>,
-                            })
+                            }),
                         );
                     }
                 }, 100);
@@ -145,11 +150,22 @@ export function useHandleCameraMoved({
                             position: vec3.clone(position),
                             rotation: quat.clone(rotation),
                             fov,
-                        })
+                        }),
                     );
                 }, 500);
             }
         },
-        [view, dispatch, currentTopDownElevation, cameraType, viewMode, engine2dRenderFnRef, editClipping, containers]
+        [
+            view,
+            dispatch,
+            dispatchCameraState,
+            currentTopDownElevation,
+            cameraType,
+            viewMode,
+            engine2dRenderFnRef,
+            editClipping,
+            containers,
+            newDesign,
+        ],
     );
 }

@@ -1,10 +1,17 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useReducer, useRef } from "react";
 
-import { Context, initialState } from "./reducer";
+import { DispatchContext, initialState, LazyStateContext, reducer, StateContext } from "./reducer";
 
-export function Provider({ children }: { children: ReactNode }) {
-    const [state, setState] = useState(initialState);
-    const value = { state, setState };
+export function FormsGlobalsProvider({ children }: { children: ReactNode }) {
+    const [state, dispatch] = useReducer(reducer, initialState);
+    const lazyValue = useRef(state);
+    lazyValue.current = state;
 
-    return <Context.Provider value={value}>{children}</Context.Provider>;
+    return (
+        <StateContext.Provider value={state}>
+            <LazyStateContext.Provider value={lazyValue}>
+                <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+            </LazyStateContext.Provider>
+        </StateContext.Provider>
+    );
 }

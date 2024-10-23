@@ -1,6 +1,7 @@
 import { Close, DeleteSweep, OpenInNew } from "@mui/icons-material";
 import { Box, Button, IconButton, List, Snackbar, snackbarContentClasses } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useGetPropertyTreeFavoritesQuery } from "apis/dataV2/dataV2Api";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
@@ -10,16 +11,17 @@ import {
     AccordionSummary,
     LinearProgress,
     LogoSpeedDial,
-    ScrollBox,
+    WidgetBottomScrollBox,
     WidgetContainer,
     WidgetHeader,
 } from "components";
 import { featuresConfig } from "config/features";
 import WidgetList from "features/widgetList/widgetList";
 import { useAbortController } from "hooks/useAbortController";
+import { useOpenWidget } from "hooks/useOpenWidget";
 import { useSceneId } from "hooks/useSceneId";
 import { useToggle } from "hooks/useToggle";
-import { explorerActions, selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
+import { selectMaximized, selectMinimized, selectProjectIsV2 } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
 import { secondsToMs } from "utils/time";
 
@@ -28,6 +30,7 @@ import { RootNode } from "./rootNode";
 import { propertyTreeActions, selectIsPropertyTreeLoading, selectPropertyTreeBookmarkState } from "./slice";
 
 export default function PropertyTree() {
+    const { t } = useTranslation();
     const [menuOpen, toggleMenu] = useToggle();
     const sceneId = useSceneId();
     const minimized = useAppSelector(selectMinimized) === featuresConfig.propertyTree.key;
@@ -38,10 +41,11 @@ export default function PropertyTree() {
     const isLoading = useAppSelector(selectIsPropertyTreeLoading);
     const activeGroups = useAppSelector(selectPropertyTreeBookmarkState);
     const groupsCreationStatus = useAppSelector((state) => state.propertyTree.groupsCreationStatus);
+    const openWidget = useOpenWidget();
 
     const { data: favorites = [], isLoading: isLoadingFavorites } = useGetPropertyTreeFavoritesQuery(
         { projectId: sceneId },
-        { skip: !isV2 }
+        { skip: !isV2 },
     );
 
     const favoritesInitialized = useRef(false);
@@ -98,12 +102,17 @@ export default function PropertyTree() {
     return (
         <>
             <WidgetContainer minimized={minimized} maximized={maximized}>
-                <WidgetHeader widget={featuresConfig.propertyTree} disableShadow={menuOpen}>
+                <WidgetHeader
+                    menuOpen={menuOpen}
+                    toggleMenu={toggleMenu}
+                    widget={featuresConfig.propertyTree}
+                    disableShadow={menuOpen}
+                >
                     {!menuOpen && !minimized && (
                         <Box display={"flex"} justifyContent={"flex-end"}>
                             <Button disabled={!canClear} onClick={clear} color="grey">
                                 <DeleteSweep sx={{ mr: 1 }} />
-                                Clear
+                                {t("clear")}
                             </Button>
                         </Box>
                     )}
@@ -113,7 +122,7 @@ export default function PropertyTree() {
                         <LinearProgress />
                     </Box>
                 )}
-                <ScrollBox display={!menuOpen && !minimized ? "block" : "none"} height={1} pt={1} pb={2}>
+                <WidgetBottomScrollBox display={!menuOpen && !minimized ? "block" : "none"} height={1} pt={1} pb={2}>
                     <Accordion
                         slotProps={{ transition: { timeout: 200 } }}
                         disabled={!favorites.length}
@@ -121,7 +130,7 @@ export default function PropertyTree() {
                         expanded={favoritesExpanded}
                         onChange={(_evt, expanded) => toggleExpandFavorites(expanded)}
                     >
-                        <AccordionSummary>Favorites</AccordionSummary>
+                        <AccordionSummary>{t("favorites")}</AccordionSummary>
                         <AccordionDetails>
                             {favorites.length > 0 && (
                                 <List disablePadding>
@@ -139,12 +148,12 @@ export default function PropertyTree() {
                         </AccordionDetails>
                     </Accordion>
                     <Accordion defaultExpanded={true} slotProps={{ transition: { timeout: 200 } }}>
-                        <AccordionSummary>General</AccordionSummary>
+                        <AccordionSummary>{t("general")}</AccordionSummary>
                         <AccordionDetails>
                             <RootNode abortController={abortController} />
                         </AccordionDetails>
                     </Accordion>
-                </ScrollBox>
+                </WidgetBottomScrollBox>
 
                 {[AsyncStatus.Success, AsyncStatus.Error].includes(groupsCreationStatus) && (
                     <Snackbar
@@ -180,7 +189,7 @@ export default function PropertyTree() {
                                     aria-label="close"
                                     color="inherit"
                                     onClick={() => {
-                                        dispatch(explorerActions.forceOpenWidget(featuresConfig.groups.key));
+                                        openWidget(featuresConfig.groups.key, { force: true });
                                         dispatch(propertyTreeActions.setGroupsCreationStatus(AsyncStatus.Initial));
                                     }}
                                 >

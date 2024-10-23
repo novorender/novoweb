@@ -14,7 +14,6 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
 }
 
 var appSettings = {
-    DATA_SERVER_URL: environment == 'prod' ? 'https://data.novorender.com/api' : 'https://api-old-wa-${environment}.azurewebsites.net/api'
     DATA_V2_SERVER_URL: environment == 'prod' ? 'https://data-v2.novorender.com' : 'https://api-wa-${environment}.azurewebsites.net'
     AUTH_SERVER_URL: environment == 'prod' ? 'https://auth.novorender.com' : 'https://${environment}.auth.novorender.com'
     BIMCOLLAB_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=bimcollab-client-id)'
@@ -27,10 +26,11 @@ var appSettings = {
     NOVORENDER_CLIENT_ID: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=novorender-client-id)'
     NOVORENDER_CLIENT_SECRET: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=novorender-client-secret)'
     ASSETS_URL: 'https://${assetStorageAccountName}.blob.${az.environment().suffixes.storage}/assets'
+    MIXPANEL_TOKEN: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=mixpanel-token)'
     APPINSIGHTS_INSTRUMENTATIONKEY: appInsights.properties.InstrumentationKey
     APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
     ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
-    WEBSITE_NODE_DEFAULT_VERSION: '~18'
+    WEBSITE_NODE_DEFAULT_VERSION: '~20'
     // WEBSITE_RUN_FROM_PACKAGE: 1
 }
 

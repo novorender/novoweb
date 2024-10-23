@@ -4,7 +4,7 @@ import { SVGProps } from "react";
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { featuresConfig } from "config/features";
 import { renderActions } from "features/render";
-import { explorerActions } from "slices/explorer";
+import { useOpenWidget } from "hooks/useOpenWidget";
 import { ViewMode } from "types/misc";
 
 import {
@@ -47,7 +47,7 @@ const PlusMarker = styled(
             <path d="M95,100 L105,100 M100,95 L100,105" strokeWidth={2}></path>
         </g>
     ),
-    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
+    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" },
 )(markerStyles);
 
 const MinusMarker = styled(
@@ -58,7 +58,7 @@ const MinusMarker = styled(
             <path d="M95,100 L105,100" strokeWidth={2}></path>
         </g>
     ),
-    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
+    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" },
 )(markerStyles);
 
 const InfoMarker = styled(
@@ -72,19 +72,25 @@ const InfoMarker = styled(
             ></path>
         </g>
     ),
-    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
+    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" },
 )(markerStyles);
+
+const basicStyle = () => css`
+    cursor: pointer;
+    pointer-events: bounding-box;
+    filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
+`;
 
 const CloseMarker = styled(
     (props: SVGProps<SVGGElement>) => (
         <g {...props}>
             <rect width="24" height="24" fillOpacity={0} transform={"translate(88 88)"} />
-            <circle r="12" transform={"translate(100 100)"} />
-            <path d="M6 18 18 6M6 6l12 12" strokeWidth={2} transform={"translate(88 88)"}></path>
+            <circle r="10" fill="red" transform={"translate(100 100)"} />
+            <path d="M96,96 L104,104 M104,96 L96,104" stroke="white" strokeWidth={2}></path>
         </g>
     ),
-    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" }
-)(markerStyles);
+    { shouldForwardProp: (prop) => prop !== "active" && prop !== "hovered" },
+)(basicStyle);
 
 export function FollowInteractions() {
     const goToProfile = useGoToProfile();
@@ -93,6 +99,7 @@ export function FollowInteractions() {
     const step = useAppSelector(selectStep);
     const dispatch = useAppDispatch();
     const profileRange = useAppSelector(selectProfileRange);
+    const openWidget = useOpenWidget();
 
     const stepFollow = (dir: number) => {
         if (fpObj) {
@@ -136,7 +143,7 @@ export function FollowInteractions() {
                 onClick={() => {
                     dispatch(followPathActions.setLastViewedRouterPath("/followIds"));
                     dispatch(followPathActions.setGoToRouterPath("/followIds"));
-                    dispatch(explorerActions.forceOpenWidget(featuresConfig.followPath.key));
+                    openWidget(featuresConfig.followPath.key, { force: true });
                 }}
             />
             <CloseMarker

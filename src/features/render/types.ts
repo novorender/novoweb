@@ -5,6 +5,7 @@ import { quat, vec3 } from "gl-matrix";
 import { type DitioMachine } from "features/ditio";
 import { type LogPoint, type MachineLocation } from "features/xsiteManage";
 import { type CustomProperties } from "types/project";
+import { VecRGBA } from "utils/color";
 
 export enum CameraSpeedLevel {
     Slow = "slow",
@@ -100,6 +101,7 @@ export enum StampKind {
     Deviation,
     CanvasContextMenu,
     Properties,
+    Classification,
 }
 
 type LogPointStamp = {
@@ -130,6 +132,13 @@ type DeviationStamp = {
     };
 };
 
+type ClassificationStamp = {
+    kind: StampKind.Classification;
+    data: {
+        pointFactor: number;
+    };
+};
+
 type CanvasContextMenuStamp = {
     kind: StampKind.CanvasContextMenu;
     data: {
@@ -151,11 +160,20 @@ export type Stamp = { mouseX: number; mouseY: number; pinned: boolean } & (
     | CanvasContextMenuStamp
     | PropertiesStamp
     | DitioMachineStamp
+    | ClassificationStamp
 );
 
 export type SceneConfig = Omit<SceneData, "settings" | "customProperties"> & {
+    objectGroups: ObjectGroup[];
     settings: Internal.RenderSettingsExt;
     customProperties: CustomProperties;
+    projectId: string;
 };
 
 export type CadCamera = { kind: "pinhole" | "orthographic"; position: vec3; rotation: quat; fov: number };
+
+export type LabeledKnot = {
+    position: number;
+    color: VecRGBA;
+    label: string;
+};

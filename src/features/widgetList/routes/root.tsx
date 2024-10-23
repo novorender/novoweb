@@ -1,4 +1,5 @@
 import { Box, Grid, IconButton, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppSelector } from "app/redux-store-interactions";
@@ -17,6 +18,7 @@ export function Root({
     currentWidget: WidgetKey | undefined;
     handleClick: (key: WidgetKey) => () => void;
 }) {
+    const { t } = useTranslation();
     const theme = useTheme();
     const history = useHistory();
 
@@ -44,15 +46,18 @@ export function Root({
 
                             return (idxA === -1 ? sorting.length : idxA) - (idxB === -1 ? sorting.length : idxB);
                         })
-                        .reduce((prev, curr) => {
-                            if ("tags" in curr) {
-                                return prev.find((v) => v.type === FeatureType.Tag && curr.tags.includes(v.key))
-                                    ? prev
-                                    : prev.concat(curr.tags.map((tag) => featureTags[tag]));
-                            }
-                            return prev.concat(curr);
-                        }, [] as (Widget | FeatureTag)[])
-                        .map(({ Icon, name, key, type, ...widget }) => {
+                        .reduce(
+                            (prev, curr) => {
+                                if ("tags" in curr) {
+                                    return prev.find((v) => v.type === FeatureType.Tag && curr.tags.includes(v.key))
+                                        ? prev
+                                        : prev.concat(curr.tags.map((tag) => featureTags[tag]));
+                                }
+                                return prev.concat(curr);
+                            },
+                            [] as (Widget | FeatureTag)[],
+                        )
+                        .map(({ Icon, nameKey, key, type, ...widget }) => {
                             const activeCurrent = type !== FeatureType.Tag ? key === currentWidget : undefined;
                             const activeElsewhere =
                                 type !== FeatureType.Tag ? !activeCurrent && activeWidgets.includes(key) : undefined;
@@ -77,14 +82,14 @@ export function Root({
                                                 type === FeatureType.Tag
                                                     ? () => history.push(`/tag/${key}`)
                                                     : unavailable
-                                                    ? undefined
-                                                    : handleClick(key)
+                                                      ? undefined
+                                                      : handleClick(key)
                                             }
                                         >
                                             <IconButton disabled={activeElsewhere || unavailable} size="large">
                                                 <Icon />
                                             </IconButton>
-                                            <Typography textAlign={"center"}>{name}</Typography>
+                                            <Typography textAlign={"center"}>{t(nameKey)}</Typography>
                                         </WidgetMenuButtonWrapper>
                                     )}
                                 </Grid>

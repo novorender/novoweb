@@ -1,7 +1,7 @@
-import { View } from "@novorender/api";
+import { ObjectId, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { BoundingSphere, HierarcicalObjectReference, ObjectData } from "@novorender/webgl-api";
-import { vec3 } from "gl-matrix";
+import { quat, vec3 } from "gl-matrix";
 
 import { flip } from "features/render/utils";
 
@@ -16,11 +16,12 @@ export function decodeObjPathName(str: string) {
 }
 
 export function getParentPath(path: string): string {
-    return path.split("/").slice(0, -1).join("/");
+    const lastSlashIdx = path.lastIndexOf("/");
+    return lastSlashIdx > 0 ? path.slice(0, lastSlashIdx) : "";
 }
 
 export function extractObjectIds<T extends { id: number } = HierarcicalObjectReference>(
-    objects: { id: number }[]
+    objects: { id: number }[],
 ): T["id"][] {
     return objects.map((obj) => obj.id);
 }
@@ -34,7 +35,7 @@ export function getObjectNameFromPath(path: string): string {
 export function getFilePathFromObjectPath(objectPath: string): string | null {
     //https://novorender.com/formats-integrations/
     const match = objectPath.match(
-        /^(?<path>.+\.(dem|dwg|dxf|ifc|xml|kof|nwd|obj|pdms|rvm|step|stp|wms|wmts|pts|las|e57|jpg|jpeg|tif|tiff|pdf))/i
+        /^(?<path>.+\.(dem|dwg|dxf|ifc|xml|kof|nwd|obj|pdms|rvm|step|stp|wms|wmts|pts|las|laz|e57|jpg|jpeg|tif|tiff|pdf))/i,
     )?.groups;
 
     if (!match || !match.path) {
@@ -42,6 +43,43 @@ export function getFilePathFromObjectPath(objectPath: string): string | null {
     }
 
     return match.path;
+}
+
+export async function getObjectMetadataRotation(
+    view: View,
+    db: ObjectDB,
+    objectId: ObjectId,
+): Promise<quat | undefined> {
+    const metadata = await (view.data ? view.data.getObjectMetaData(objectId) : db.getObjectMetdata(objectId));
+
+    const filePath = getFilePathFromObjectPath(metadata.path);
+    if (!filePath) {
+        return;
+    }
+
+    const [descendantName] = metadata.path.substring(filePath.length + 1).split("/", 1);
+    if (!descendantName) {
+        return;
+    }
+
+    const descendantPath = `${filePath}/${descendantName}`;
+
+    const objects = db.search(
+        {
+            descentDepth: 0,
+            parentPath: descendantPath,
+            full: true,
+        },
+        undefined,
+    );
+
+    for await (const object of objects) {
+        const fileMetadata = await object.loadMetaData();
+        const rotationProp = fileMetadata.properties.find((p) => p[0] === "Novorender/Rotation")?.[1];
+        if (rotationProp) {
+            return JSON.parse(rotationProp);
+        }
+    }
 }
 
 export function getFileNameFromPath(path: string): string | null {
@@ -80,7 +118,7 @@ export async function objIdsToTotalBoundingSphere({
               abortSignal,
           })
         : (await Promise.all(ids.slice(-50).map((id) => getObjectData({ db, id, view })))).filter(
-              (obj): obj is ObjectData => obj !== undefined
+              (obj): obj is ObjectData => obj !== undefined,
           );
 
     return getTotalBoundingSphere(nodes, { flip });
@@ -88,7 +126,7 @@ export async function objIdsToTotalBoundingSphere({
 
 export function getTotalBoundingSphere(
     nodes: HierarcicalObjectReference[],
-    options?: { flip?: boolean }
+    options?: { flip?: boolean },
 ): BoundingSphere | undefined {
     const spheres: BoundingSphere[] = [];
 
@@ -136,7 +174,7 @@ export function getPropertyDisplayName(property: string): string {
 
     try {
         decoded = decodeURIComponent(property);
-    } catch (e) {
+    } catch {
         console.warn(`Failed to decode property "${property}".`);
     }
 

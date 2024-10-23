@@ -7,12 +7,13 @@ import {
     Straighten,
     VisibilityOff,
 } from "@mui/icons-material";
-import { Box, ListItemIcon, ListItemText, MenuItem, Tab, Tabs, Typography } from "@mui/material";
+import { Box, CircularProgress, ListItemIcon, ListItemText, MenuItem, Tab, Tabs, Typography } from "@mui/material";
 import { MeasureEntity, View } from "@novorender/api";
 import { ObjectDB } from "@novorender/data-js-api";
 import { HierarcicalObjectReference } from "@novorender/webgl-api";
-import { vec3, vec4 } from "gl-matrix";
+import { ReadonlyVec4, vec2, vec3, vec4 } from "gl-matrix";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { Divider, LinearProgress } from "components";
@@ -22,16 +23,37 @@ import { hiddenActions, useDispatchHidden } from "contexts/hidden";
 import { highlightActions, useDispatchHighlighted } from "contexts/highlighted";
 import { selectionBasketActions, useDispatchSelectionBasket } from "contexts/selectionBasket";
 import { areaActions } from "features/area";
-import { measureActions, selectMeasureEntities } from "features/measure";
-import { clippingOutlineLaserActions, getOutlineLaser, OutlineLaser } from "features/outlineLaser";
+import { measureActions, selectMeasureEntities, selectMeasurePickSettings } from "features/measure";
+import {
+    clippingOutlineLaserActions,
+    getOutlineLaser,
+    OutlineLaser,
+    selectOutlineLaser3d,
+    selectOutlineLaserPlane,
+} from "features/outlineLaser";
 import { pointLineActions, selectLockPointLineElevation } from "features/pointLine";
-import { selectCanvasContextMenuFeatures } from "slices/explorer";
+import { useCheckProjectPermission } from "hooks/useCheckProjectPermissions";
+import { selectCanvasContextMenuFeatures, selectIsOnline } from "slices/explorer";
 import { AsyncStatus } from "types/misc";
-import { getFilePathFromObjectPath, getParentPath } from "utils/objectData";
+import { getPerpendicular } from "utils/math";
+import {
+    getFileNameFromPath,
+    getFilePathFromObjectPath,
+    getObjectMetadataRotation,
+    getParentPath,
+} from "utils/objectData";
 import { getObjectData, searchDeepByPatterns } from "utils/search";
+import { sleep } from "utils/time";
 
-import { renderActions, selectCameraType, selectClippingPlanes, selectStamp } from "../renderSlice";
+import {
+    renderActions,
+    selectCameraType,
+    selectClippingPlanes,
+    selectGeneratedParametricData,
+    selectStamp,
+} from "../renderSlice";
 import { CameraType, ObjectVisibility, Picker, StampKind } from "../types";
+import { applyCameraDistanceToMeasureTolerance, getLocalRotationAroundNormal } from "../utils";
 
 const selectionFeatures = [
     canvasContextMenuConfig.addFileToBasket.key,
@@ -103,6 +125,7 @@ function Selection() {
     const {
         state: { db, view },
     } = useExplorerGlobals(true);
+    const checkProjectPermission = useCheckProjectPermission();
 
     const features = useAppSelector(selectCanvasContextMenuFeatures);
     const clippingPlanes = useAppSelector(selectClippingPlanes).planes;
@@ -112,6 +135,8 @@ function Selection() {
         layer: [string, string] | undefined;
         file: [string, string] | undefined;
     }>();
+    const isOnline = useAppSelector(selectIsOnline);
+    const [isClipping, setClipping] = useState(false);
 
     useEffect(() => {
         loadObjectData();
@@ -129,7 +154,7 @@ function Selection() {
                 const obj = await getObjectData({ db, id: objectId, view });
                 const file = getFilePathFromObjectPath(obj?.path ?? "");
                 const layer = obj?.properties.find(([key]) =>
-                    ["ifcClass", "dwg/layer"].map((str) => str.toLowerCase()).includes(key.toLowerCase())
+                    ["ifcClass", "dwg/layer"].map((str) => str.toLowerCase()).includes(key.toLowerCase()),
                 );
                 setProperties({
                     layer,
@@ -206,18 +231,42 @@ function Selection() {
         dispatch(renderActions.removeLoadingHandle(handle));
     };
 
-    const clip = () => {
-        const { position, normal } = stamp.data;
+    const clip = async () => {
+        const { position, normal, object } = stamp.data;
         if (!normal || !position) {
             return;
         }
 
         const w = vec3.dot(normal, position);
+        let rotation = 0;
+        if (object) {
+            try {
+                setClipping(true);
+                const rotationQuat = await getObjectMetadataRotation(view, db, object);
+                if (rotationQuat) {
+                    rotation = getLocalRotationAroundNormal(rotationQuat, normal);
+                }
+            } catch (ex) {
+                console.warn("Error getting clip rotation", ex);
+            } finally {
+                setClipping(false);
+            }
+        }
+        const normalOffset = vec4.fromValues(normal[0], normal[1], normal[2], w);
+        dispatch(
+            clippingOutlineLaserActions.setLaserPlane({
+                normalOffset,
+                rotation: rotation,
+            }),
+        );
         dispatch(
             renderActions.addClippingPlane({
-                normalOffset: vec4.fromValues(normal[0], normal[1], normal[2], w),
+                normalOffset,
                 baseW: w,
-            })
+                rotation,
+                anchorPos: position,
+                showPlane: false,
+            }),
         );
 
         close();
@@ -228,7 +277,10 @@ function Selection() {
             {stamp.data.object !== undefined && !properties && <LinearProgress sx={{ mt: -1 }} />}
             <Box>
                 {features.includes(config.hide.key) && (
-                    <MenuItem onClick={hide} disabled={stamp.data.object === undefined}>
+                    <MenuItem
+                        onClick={hide}
+                        disabled={stamp.data.object === undefined || !checkProjectPermission(config.hide.permission)}
+                    >
                         <ListItemIcon>
                             <VisibilityOff fontSize="small" />
                         </ListItemIcon>
@@ -236,7 +288,12 @@ function Selection() {
                     </MenuItem>
                 )}
                 {features.includes(config.hideLayer.key) && (
-                    <MenuItem onClick={hideLayer} disabled={!properties?.layer}>
+                    <MenuItem
+                        onClick={hideLayer}
+                        disabled={
+                            !isOnline || !properties?.layer || !checkProjectPermission(config.hideLayer.permission)
+                        }
+                    >
                         <ListItemIcon>
                             <LayersClear fontSize="small" />
                         </ListItemIcon>
@@ -244,14 +301,19 @@ function Selection() {
                             {properties?.layer
                                 ? config.hideLayer.name.replace(
                                       "class / layer",
-                                      (properties.layer ?? [""])[0].toLowerCase() === "ifcclass" ? "class" : "layer"
+                                      (properties.layer ?? [""])[0].toLowerCase() === "ifcclass" ? "class" : "layer",
                                   )
                                 : config.hideLayer.name}
                         </ListItemText>
                     </MenuItem>
                 )}
                 {features.includes(config.addFileToBasket.key) && (
-                    <MenuItem onClick={addToBasket} disabled={!properties?.file}>
+                    <MenuItem
+                        onClick={addToBasket}
+                        disabled={
+                            !isOnline || !properties?.file || !checkProjectPermission(config.addFileToBasket.permission)
+                        }
+                    >
                         <ListItemIcon>
                             <Layers fontSize="small" />
                         </ListItemIcon>
@@ -262,10 +324,16 @@ function Selection() {
                 {features.includes(config.clip.key) && (
                     <MenuItem
                         onClick={clip}
-                        disabled={!stamp.data.normal || !stamp.data.position || clippingPlanes.length > 5}
+                        disabled={
+                            !stamp.data.normal ||
+                            !stamp.data.position ||
+                            clippingPlanes.length > 5 ||
+                            !checkProjectPermission(config.clip.permission) ||
+                            isClipping
+                        }
                     >
                         <ListItemIcon>
-                            <CropLandscape fontSize="small" />
+                            {isClipping ? <CircularProgress size={24} /> : <CropLandscape fontSize="small" />}
                         </ListItemIcon>
                         <ListItemText>{config.clip.name}</ListItemText>
                     </MenuItem>
@@ -276,58 +344,94 @@ function Selection() {
 }
 
 type CenterLine = Awaited<ReturnType<NonNullable<View["measure"]>["core"]["pickCurveSegment"]>>;
-async function getRoadCenterLine({ db, view, id }: { db: ObjectDB; view: View; id: number }): Promise<CenterLine> {
+async function getRoadCenterLine({
+    db,
+    view,
+    id,
+}: {
+    db: ObjectDB;
+    view: View;
+    id: number;
+}): Promise<CenterLine | undefined> {
     const obj = await getObjectData({ db, view, id });
 
     if (!obj) {
         return;
     }
 
-    if (obj.properties.find(([key]) => key === "Novorender/Path")) {
+    if (obj.properties.some(([key]) => key === "Novorender/Path" || key === "Novorender/PathId")) {
         return view.measure?.core.pickCurveSegment(obj.id);
     }
 
+    const fileName = getFileNameFromPath(obj.path);
+    const isIfc = fileName?.toLowerCase().endsWith(".ifc") ?? false;
+
     const signal = new AbortController().signal;
-    const iterator = db.search({ parentPath: getParentPath(getParentPath(obj.path)), descentDepth: 0 }, signal);
+    let cl: HierarcicalObjectReference | undefined;
 
-    const res = (await iterator.next()).value as HierarcicalObjectReference | undefined;
-    const clProperty = (await res?.loadMetaData())?.properties.find(([key]) => key.toLowerCase() === "centerline");
+    if (isIfc) {
+        // ifc
+        // Currently we expect single center line under a single project
+        const parts = obj.path.split("/");
+        const fileIndex = parts.lastIndexOf(fileName!);
 
-    if (!clProperty) {
-        return;
+        if (fileIndex === -1 || fileIndex === parts.length - 1) {
+            return;
+        }
+
+        const parentPath = parts.slice(0, fileIndex + 2).join("/");
+        const iterator = db.search(
+            {
+                parentPath,
+                searchPattern: [{ property: "Novorender/PathId", value: "" }],
+            },
+            signal,
+        );
+        cl = (await iterator.next()).value as HierarcicalObjectReference | undefined;
+    } else {
+        // landxml
+        const parentPath = getParentPath(getParentPath(obj.path));
+        const iterator = db.search({ parentPath, descentDepth: 0, full: true }, signal);
+        const clProperty = (await iterator.next()).value?.properties.find(
+            ([key]: [key: string]) => key.toLowerCase() === "centerline",
+        );
+
+        if (!clProperty) {
+            return;
+        }
+
+        const clParentIterator = db.search(
+            {
+                descentDepth: 0,
+                searchPattern: [{ property: "name", value: clProperty[1], exact: true }],
+            },
+            signal,
+        );
+        const clParent = (await clParentIterator.next()).value as HierarcicalObjectReference | undefined;
+
+        if (!clParent) {
+            return;
+        }
+
+        const clIterator = db.search(
+            {
+                parentPath: clParent.path,
+                descentDepth: 1,
+                searchPattern: [
+                    { property: "Novorender/Path", value: "" },
+                    { property: "Novorender/PathId", value: "" },
+                ],
+            },
+            signal,
+        );
+        cl = (await clIterator.next()).value as HierarcicalObjectReference | undefined;
     }
 
-    const clParentIterator = db.search(
-        {
-            searchPattern: [{ property: "name", value: clProperty[1] }],
-        },
-        signal
-    );
-    const clParent = (await clParentIterator.next()).value as HierarcicalObjectReference | undefined;
-
-    if (!clParent) {
-        return;
-    }
-
-    const clIterator = db.search(
-        {
-            searchPattern: [
-                { property: "path", value: clParent.path },
-                { property: "Novorender/Path", value: "" },
-            ],
-        },
-        signal
-    );
-    const cl = (await clIterator.next()).value as HierarcicalObjectReference | undefined;
-
-    if (!cl) {
-        return;
-    }
-
-    return view.measure?.core.pickCurveSegment(cl.id);
+    return cl && view.measure?.core.pickCurveSegment(cl.id);
 }
 
 function Measure() {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const {
         state: { db, view },
@@ -342,7 +446,12 @@ function Measure() {
     const [pickPoint, setPickPoint] = useState<vec3 | undefined>();
     const [centerLine, setCenterLine] = useState<CenterLine>();
     const measurements = useAppSelector(selectMeasureEntities);
+    const laserPlane = useAppSelector(selectOutlineLaserPlane);
+    const laser3d = useAppSelector(selectOutlineLaser3d);
     const lockElevation = useAppSelector(selectLockPointLineElevation);
+    const allowGeneratedParametric = useAppSelector(selectGeneratedParametricData);
+    const measurePickSettings = useAppSelector(selectMeasurePickSettings);
+    const checkProjectPermission = useCheckProjectPermission();
 
     const isCrossSection = cameraType === CameraType.Orthographic && view.renderState.camera.far < 1;
 
@@ -356,36 +465,63 @@ function Measure() {
                 return;
             }
 
+            if (status !== AsyncStatus.Initial) {
+                return;
+            }
+
             const objectId = stamp.data.object;
             let pickPoint = stamp.data.position;
             if (objectId && stamp.data.position) {
                 setStatus(AsyncStatus.Loading);
-                if (!isCrossSection) {
-                    const ent = await view.measure?.core
-                        .pickMeasureEntity(objectId, stamp.data.position)
-                        // .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
-                        .then((res) => res.entity)
-                        .catch(() => undefined);
 
-                    const pickMeasurePoint = await view.measure?.core
-                        .pickMeasureEntity(objectId, stamp.data.position, { point: 0.4 })
-                        // .then((res) => (["face"].includes(res.entity.drawKind) ? res.entity : undefined))
-                        .then((res) => res.entity)
-                        .catch(() => undefined);
-                    if (pickMeasurePoint?.drawKind === "vertex") {
-                        pickPoint = pickMeasurePoint.parameter;
+                const loadMeasureEntity = async () => {
+                    if (!isCrossSection) {
+                        const tolerance = applyCameraDistanceToMeasureTolerance(
+                            stamp.data.position!,
+                            view.renderState.camera.position,
+                            measurePickSettings,
+                        );
+                        const ent = await view.measure?.core
+                            .pickMeasureEntity(
+                                objectId,
+                                stamp.data.position!,
+                                tolerance,
+                                allowGeneratedParametric.enabled,
+                            )
+                            .then((res) => res.entity)
+                            .catch(() => undefined);
+
+                        const pickMeasurePoint = await view.measure?.core
+                            .pickMeasureEntity(
+                                objectId,
+                                stamp.data.position!,
+                                { point: 0.4 },
+                                allowGeneratedParametric.enabled,
+                            )
+                            .then((res) => res.entity)
+                            .catch(() => undefined);
+                        if (pickMeasurePoint?.drawKind === "vertex") {
+                            pickPoint = pickMeasurePoint.parameter;
+                        }
+                        setMeasureEntity(ent);
+                        setPickPoint(pickPoint);
                     }
-                    setMeasureEntity(ent);
-                }
+                };
 
-                setCenterLine(await getRoadCenterLine({ db, view, id: objectId }));
+                const loadCenterLine = async () => {
+                    const centerLine = await getRoadCenterLine({ db, view, id: objectId });
+                    setCenterLine(centerLine);
+                };
+
+                loadCenterLine();
+                loadMeasureEntity();
             }
 
             const plane = view.renderState.clipping.planes[0]?.normalOffset;
             if (cameraType === CameraType.Orthographic) {
-                const pos = view.worldPositionFromPixelPosition(stamp.mouseX, stamp.mouseY);
+                const [pos] = view.convert.screenSpaceToWorldSpace([vec2.fromValues(stamp.mouseX, stamp.mouseY)]);
                 if (pos && plane) {
-                    const laser = await getOutlineLaser(pos, view);
+                    const laser = await getOutlineLaser(pos, view, "clipping", laserPlane?.rotation ?? 0, [plane]);
                     setLaser(laser ? { laser, plane } : undefined);
                     const outlinePoint = view.selectOutlinePoint(pos, 0.2);
                     if (outlinePoint) {
@@ -400,18 +536,74 @@ function Measure() {
                 if (d > 0) {
                     const t = (plane[3] - vec3.dot(planeDir, view.renderState.camera.position)) / d;
                     const pos = vec3.scaleAndAdd(vec3.create(), view.renderState.camera.position, rayDir, t);
-                    const laser = await getOutlineLaser(pos, view);
+                    const laser = await getOutlineLaser(pos, view, "clipping", laserPlane?.rotation ?? 0, [plane]);
                     const outlinePoint = view.selectOutlinePoint(pos, 0.2);
                     setLaser(laser ? { laser, plane } : undefined);
                     if (outlinePoint) {
                         pickPoint = outlinePoint;
                     }
                 }
+            } else if (stamp.data.position && stamp.data.normal) {
+                const { normal, position } = stamp.data;
+                const offsetPos = vec3.scaleAndAdd(vec3.create(), position, normal, 0.0001);
+                const hiddenPlane = vec4.fromValues(normal[0], normal[1], normal[2], vec3.dot(offsetPos, normal));
+                const hiddenPlanes: ReadonlyVec4[] = [hiddenPlane];
+                if (laser3d) {
+                    const perpendicular = getPerpendicular(normal);
+                    hiddenPlanes.push(
+                        vec4.fromValues(
+                            perpendicular[0],
+                            perpendicular[1],
+                            perpendicular[2],
+                            vec3.dot(perpendicular, offsetPos),
+                        ),
+                    );
+                }
+                view.modifyRenderState({
+                    outlines: {
+                        enabled: true,
+                        hidden: true,
+                        planes: hiddenPlanes,
+                    },
+                });
+                await sleep(1000);
+
+                const laser = await getOutlineLaser(
+                    offsetPos,
+                    view,
+                    "outline",
+                    0,
+                    hiddenPlanes,
+                    laser3d ? 1 : undefined,
+                );
+                view.modifyRenderState({ outlines: { enabled: false, hidden: false, planes: [] } });
+                if (laser) {
+                    setLaser({ laser, plane: hiddenPlane });
+                }
             }
+
             setPickPoint(pickPoint);
             setStatus(AsyncStatus.Success);
         }
-    }, [stamp, db, view, cameraType, dispatch, isCrossSection]);
+    }, [
+        stamp,
+        status,
+        view,
+        cameraType,
+        dispatch,
+        isCrossSection,
+        db,
+        laserPlane,
+        laser3d,
+        allowGeneratedParametric,
+        measurePickSettings,
+    ]);
+
+    useEffect(() => {
+        if (stamp) {
+            setStatus(AsyncStatus.Initial);
+        }
+    }, [stamp]);
 
     if (stamp?.kind !== StampKind.CanvasContextMenu) {
         return null;
@@ -435,7 +627,7 @@ function Measure() {
             measureActions.selectEntity({
                 entity: measureEntity,
                 pin: true,
-            })
+            }),
         );
 
         close();
@@ -455,7 +647,7 @@ function Measure() {
                     ObjectId: -1,
                     drawKind: "vertex",
                     parameter: pickPoint,
-                })
+                }),
             );
         } else {
             dispatch(
@@ -467,7 +659,7 @@ function Measure() {
                         settings: { planeMeasure: view.renderState.clipping.planes[0]?.normalOffset },
                     },
                     pin: true,
-                })
+                }),
             );
             close();
         }
@@ -508,8 +700,6 @@ function Measure() {
         if (!laser) {
             return;
         }
-
-        dispatch(clippingOutlineLaserActions.setLaserPlane(laser.plane));
         dispatch(clippingOutlineLaserActions.addLaser(laser.laser));
         close();
     };
@@ -526,10 +716,16 @@ function Measure() {
 
     return (
         <>
-            {[AsyncStatus.Initial, AsyncStatus.Loading].includes(status) && <LinearProgress sx={{ mt: -1 }} />}
             <Box>
                 {features.includes(config.measure.key) && (
-                    <MenuItem onClick={measure} disabled={!measureEntity || measureEntity.drawKind === "vertex"}>
+                    <MenuItem
+                        onClick={measure}
+                        disabled={
+                            !measureEntity ||
+                            measureEntity.drawKind === "vertex" ||
+                            !checkProjectPermission(config.measure.permission)
+                        }
+                    >
                         <ListItemIcon>
                             <Straighten fontSize="small" />
                         </ListItemIcon>
@@ -537,15 +733,27 @@ function Measure() {
                     </MenuItem>
                 )}
                 {features.includes(config.laser.key) && (
-                    <MenuItem onClick={addLaser} disabled={!laser}>
+                    <MenuItem
+                        onClick={addLaser}
+                        disabled={
+                            !laser || status !== AsyncStatus.Success || !checkProjectPermission(config.laser.permission)
+                        }
+                    >
                         <ListItemIcon>
-                            <Height fontSize="small" />
+                            {status !== AsyncStatus.Success ? (
+                                <CircularProgress size={24} />
+                            ) : (
+                                <Height fontSize="small" />
+                            )}
                         </ListItemIcon>
                         <ListItemText>{config.laser.name}</ListItemText>
                     </MenuItem>
                 )}
                 {features.includes(config.area.key) && (
-                    <MenuItem onClick={startArea} disabled={!stamp.data.position}>
+                    <MenuItem
+                        onClick={startArea}
+                        disabled={!stamp.data.position || !checkProjectPermission(config.area.permission)}
+                    >
                         <ListItemIcon>
                             <Straighten fontSize="small" />
                         </ListItemIcon>
@@ -553,7 +761,10 @@ function Measure() {
                     </MenuItem>
                 )}
                 {features.includes(config.pointLine.key) && (
-                    <MenuItem onClick={startPointLine} disabled={!stamp.data.position}>
+                    <MenuItem
+                        onClick={startPointLine}
+                        disabled={!stamp.data.position || !checkProjectPermission(config.pointLine.permission)}
+                    >
                         <ListItemIcon>
                             <Straighten fontSize="small" />
                         </ListItemIcon>
@@ -563,7 +774,7 @@ function Measure() {
                 {features.includes(config.pickPoint.key) && (
                     <MenuItem
                         onClick={handleClickOutlinePoint}
-                        disabled={!pickPoint}
+                        disabled={!pickPoint || !checkProjectPermission(config.pickPoint.permission)}
                         onMouseEnter={handleHoverOutlinePoint}
                         onMouseLeave={removeHover}
                     >
@@ -586,7 +797,7 @@ function Measure() {
                             }}
                         />
                         <Typography px={1} fontWeight={600}>
-                            Road
+                            {t("road")}
                         </Typography>
                         <Divider
                             sx={{
@@ -601,7 +812,7 @@ function Measure() {
                         <ListItemIcon>
                             <RouteOutlined fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Pick center line</ListItemText>
+                        <ListItemText>{t("pickCenterLine")}</ListItemText>
                     </MenuItem>
                 </Box>
             )}

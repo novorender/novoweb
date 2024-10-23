@@ -1,8 +1,10 @@
 import { IFeature } from "@esri/arcgis-rest-request";
 import { AABB2 } from "@novorender/api/types/measure/worker/brep";
+import { ExplorerBookmarkState } from "@novorender/data-js-api";
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { type RootState } from "app";
+import { selectBookmark } from "features/render";
 import { AsyncState, AsyncStatus } from "types/misc";
 
 import { FeatureServerDefinition } from "./arcgisTypes";
@@ -13,6 +15,7 @@ const initialState = {
     featureServers: { status: AsyncStatus.Initial } as AsyncState<FeatureServer[]>,
     saveStatus: AsyncStatus.Initial,
     selectedFeature: undefined as SelectedFeatureId | undefined,
+    selectedBookmarkState: undefined as undefined | ExplorerBookmarkState["arcgis"],
 };
 
 type State = typeof initialState;
@@ -23,6 +26,7 @@ export const arcgisSlice = createSlice({
     reducers: {
         setFeatureServers: (state, action: PayloadAction<AsyncState<FeatureServer[]>>) => {
             state.featureServers = action.payload;
+            applySelectedBookmarkState(state);
         },
         setFeatureServerDefinition: (
             state,
@@ -64,6 +68,8 @@ export const arcgisSlice = createSlice({
                     featureServer.layers = [];
                     break;
             }
+
+            applySelectedBookmarkState(state);
         },
         updateMultipleLayers: (
             state,
@@ -186,6 +192,17 @@ export const arcgisSlice = createSlice({
             layer.features = { status: AsyncStatus.Initial };
         },
     },
+    extraReducers: (builder) => {
+        builder.addCase(selectBookmark, (state, action) => {
+            const { arcgis } = action.payload;
+            if (!arcgis) {
+                return;
+            }
+
+            state.selectedBookmarkState = arcgis;
+            applySelectedBookmarkState(state);
+        });
+    },
 });
 
 function checkLayer(layer: Layer, checked: boolean) {
@@ -249,6 +266,32 @@ export const selectArcgisSelectedFeatureInfo = createSelector(
         } as SelectedFeatureInfo;
     }
 );
+
+function applySelectedBookmarkState(state: State) {
+    if (state.featureServers.status !== AsyncStatus.Success || !state.selectedBookmarkState) {
+        return;
+    }
+
+    for (const fs of state.featureServers.data) {
+        const fsState = state.selectedBookmarkState.featureServers.find((fs2) => fs2.id === fs.id);
+        if (fs.savedLayers) {
+            fs.savedLayers = { ...fs.savedLayers };
+        }
+        if (fsState) {
+            for (const layerState of fsState.layers) {
+                const layer = fs.layers.find((l) => l.id === layerState.id);
+                if (layer) {
+                    layer.checked = layerState.checked;
+                }
+                if (fs.savedLayers) {
+                    fs.savedLayers[layerState.id] = { ...fs.savedLayers[layerState.id], checked: layerState.checked };
+                }
+            }
+        }
+    }
+
+    state.selectedBookmarkState = undefined;
+}
 
 const { actions, reducer } = arcgisSlice;
 export { actions as arcgisActions, reducer as arcgisReducer };

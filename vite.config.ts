@@ -47,7 +47,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
             },
             // Scene config
             {
-                urlPattern: /^https:\/\/data(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}$/i,
+                urlPattern: /^https:\/\/data-v2(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}$/i,
                 handler: "NetworkFirst",
                 options: {
                     cacheableResponse: {
@@ -58,9 +58,9 @@ const pwaOptions: Partial<VitePWAOptions> = {
                     },
                 },
             },
-            // Scene groups/bookmarks etc.
+            // Scene bookmarks, favorites, etc.
             {
-                urlPattern: /^https:\/\/data(-staging)?\.novorender\.com\/api\/scenes\/[\w]{32}\/(?!ditio).+/i,
+                urlPattern: /^https:\/\/data-v2(-staging)?\.novorender\.com\/explorer\/[\w]{32}\/(?!ditio).+/i,
                 handler: "NetworkFirst",
                 options: {
                     cacheableResponse: {
@@ -122,6 +122,16 @@ const pwaOptions: Partial<VitePWAOptions> = {
             },
             {
                 urlPattern: /^https:\/\/data-v2(-staging)?\.novorender\.com\/explorer\/[\w]{32}\/deviations$/,
+                handler: "NetworkFirst",
+                options: {
+                    cacheableResponse: {
+                        statuses: [0, 200],
+                    },
+                },
+            },
+            // epsg.io
+            {
+                urlPattern: /^https:\/\/epsg\.io\/\d+\.(proj4|wkt)$/,
                 handler: "NetworkFirst",
                 options: {
                     cacheableResponse: {
@@ -194,7 +204,6 @@ const serverOptions: ServerOptions = {
             rewrite: (path) => path.replace(/^\/xsitemanage/, ""),
             changeOrigin: true,
         },
-        // NOTE(OLA): Omega365 returns invalid headers and proxy crashes on nodejs version > 18.16.0
         "/omega365": {
             target: "https://nyeveier.pims365.no",
             rewrite: (path) => path.replace(/^\/omega365/, ""),
@@ -202,16 +211,9 @@ const serverOptions: ServerOptions = {
         },
         // use REACT_APP_DATA_V2_SERVER_URL=/data-v2 in .env.local to use local version
         "/data-v2": {
-            target: "http://127.0.0.1:5000",
+            target: process.env.DATA_V2_SERVER_URL_PROXY_TARGET ?? "http://127.0.0.1:5000",
             rewrite: (path) => path.replace(/^\/data-v2/, ""),
             changeOrigin: true,
-        },
-        // use REACT_APP_DATA_SERVER_URL=/data-v1 in .env.local to use local version
-        "/data-v1": {
-            target: "https://127.0.0.1:5000/api",
-            rewrite: (path) => path.replace(/^\/data-v1/, ""),
-            changeOrigin: true,
-            secure: false,
         },
     },
 };
