@@ -715,5 +715,9 @@
     "deleteGroupQuestion_one": "Delete group?",
     "deleteGroupQuestion_other": "Delete groups?",
     "vertical": "Vertical",
-    "normal": "Normal"
+    "normal": "Normal",
+    "syncWithProperty": "Sync with property",
+    "propertyName": "Property name",
+    "synced": "Synced",
+    "propertySyncStatus": "{{sync}} with property \"{{propertyName}}\""
 }

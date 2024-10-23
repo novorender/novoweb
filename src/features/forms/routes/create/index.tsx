@@ -126,7 +126,7 @@ export function Create({ derived }: { derived?: boolean }) {
             </Box>
             <Switch>
                 <Route path={addItemRoute}>
-                    <AddFormItem onSave={handleAddItem} />
+                    <AddFormItem onSave={handleAddItem} templateType={type} />
                 </Route>
                 <Route path={addObjectsRoute}>
                     <AddObjects onSave={handleSaveObjects} objects={objects} />

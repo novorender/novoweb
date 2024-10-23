@@ -236,6 +236,7 @@ function toFormField(item: FormItem): FormField {
             type: "text",
             label: item.title,
             required: item.required,
+            property: item.property,
             ...(item.id ? { id: item.id } : {}),
             ...(item.value?.length ? { value: item.value[0] } : item.value === null ? { value: "" } : {}),
         };
@@ -268,6 +269,7 @@ function toFormField(item: FormItem): FormField {
             type: "select",
             label: item.title,
             required: item.required,
+            property: item.property,
             options: item.options.map((option) => ({
                 label: option,
                 value: option,
@@ -282,6 +284,7 @@ function toFormField(item: FormItem): FormField {
             multiple: true,
             label: item.title,
             required: item.required,
+            property: item.property,
             options: item.options.map((option) => ({
                 label: option,
                 value: option,
@@ -295,6 +298,7 @@ function toFormField(item: FormItem): FormField {
             type: "label",
             label: item.title,
             value: item.value?.length ? item.value[0] : "",
+            property: item.property,
             ...(item.id ? { id: item.id } : {}),
         };
     }
@@ -346,6 +350,7 @@ function toFormItem(field: FormField): FormItem {
             title: field.label ?? "",
             required: field.required ?? false,
             readonly: field.readonly ?? false,
+            property: field.property,
             ...(field.id ? { id: field.id } : {}),
             ...(field.value ? { value: [field.value] } : {}),
         };
@@ -356,6 +361,7 @@ function toFormItem(field: FormField): FormItem {
             title: field.label ?? "",
             required: field.required ?? false,
             readonly: field.readonly ?? false,
+            property: field.property,
             ...(field.id ? { id: field.id } : {}),
             ...(field.value ? { value: [field.value] } : {}),
         };
@@ -377,6 +383,7 @@ function toFormItem(field: FormField): FormItem {
             required: field.required ?? false,
             readonly: field.readonly ?? false,
             options: field.options.map((option) => option.value),
+            property: field.property,
             ...(field.id ? { id: field.id } : {}),
             ...(field.value ? { value: field.value } : field.value === null ? { value: [] } : {}),
         };
@@ -388,6 +395,7 @@ function toFormItem(field: FormField): FormItem {
             value: field.value ? [field.value] : [],
             required: true,
             readonly: true,
+            property: field.property,
             ...(field.id ? { id: field.id } : {}),
         };
     }

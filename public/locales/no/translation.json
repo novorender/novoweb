@@ -715,5 +715,9 @@
     "deleteGroupQuestion_one": "Slette gruppe?",
     "deleteGroupQuestion_other": "Slette grupper?",
     "vertical": "Vertikal",
-    "normal": "Normal"
+    "normal": "Normal",
+    "syncWithProperty": "Synkroniser med egenskap",
+    "propertyName": "Egenskapsnavn",
+    "synched": "Synkronisert",
+    "propertySyncStatus": "{{sync}} med egenskapen \"{{propertyName}}\""
 }

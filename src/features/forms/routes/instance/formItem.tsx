@@ -1,4 +1,4 @@
-import { Close, OpenInNew } from "@mui/icons-material";
+import { Close, Link as LinkIcon, OpenInNew } from "@mui/icons-material";
 import {
     Box,
     Checkbox,
@@ -15,6 +15,7 @@ import {
     Select,
     Snackbar,
     Stack,
+    Tooltip,
     Typography,
     useTheme,
 } from "@mui/material";
@@ -26,6 +27,7 @@ import {
     type MouseEvent,
     type SetStateAction,
     useCallback,
+    useEffect,
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
@@ -36,6 +38,7 @@ import { Confirmation, ImgModal, withCustomScrollbar } from "components";
 import AddFilesButton from "features/forms/addFilesButton";
 import { useUploadFilesMutation } from "features/forms/api";
 import { FILE_SIZE_LIMIT } from "features/forms/constants";
+import { useObjectProperty } from "features/forms/hooks/useObjectProperty";
 import { selectForms } from "features/forms/slice";
 import { ShareLink } from "features/shareLink";
 import { useSceneId } from "hooks/useSceneId";
@@ -131,11 +134,17 @@ const FormItemHeader = ({
     required,
     id,
     disabled,
+    propertyName,
+    isSynced,
+    onClick,
 }: {
     title: string;
     required?: boolean;
     id?: string;
     disabled?: boolean;
+    propertyName?: string;
+    isSynced?: boolean;
+    onClick?: () => void;
 }) => {
     const { t } = useTranslation();
     const forms = useAppSelector(selectForms);
@@ -145,6 +154,18 @@ const FormItemHeader = ({
             <FormLabel component="legend" sx={{ fontWeight: 600, color: "text.primary" }}>
                 {`${title} ${!required ? `(${t("optional")})` : ""}`}
             </FormLabel>
+            {propertyName && (
+                <Tooltip
+                    title={t("propertySyncStatus", { propertyName, sync: t(isSynced ? "synced" : "sync") })}
+                    placement="top"
+                >
+                    <Box>
+                        <IconButton onClick={onClick} disabled={disabled || isSynced}>
+                            <LinkIcon color={isSynced ? "success" : "warning"} />
+                        </IconButton>
+                    </Box>
+                </Tooltip>
+            )}
             {id && !disabled && (
                 <ShareLink
                     variant="primaryMenu"
@@ -168,6 +189,8 @@ export function FormItem({
     const sceneId = useSceneId();
     const theme = useTheme();
     const [uploadFiles, { isLoading: uploading }] = useUploadFilesMutation();
+    const property = useObjectProperty(item.property);
+    const isSynced = Boolean(Array.isArray(item.value) && property?.value && item.value?.[0] === property?.value);
 
     const [modalOpen, toggleModal] = useToggle();
     const [fileIndexToDelete, setFileIndexToDelete] = useState<number | null>(null);
@@ -175,37 +198,63 @@ export function FormItem({
     const [editing, setEditing] = useState(false);
     const [activeImage, setActiveImage] = useState("");
 
-    const handleChange = (value: string | string[] | Date | null | FormsFile[]) => {
-        if (!editing) {
-            setEditing(true);
-        }
-        setItems?.((state) =>
-            state.map((_item) => {
-                if (_item === item) {
-                    switch (item.type) {
-                        case FormItemType.Date:
-                        case FormItemType.Time:
-                        case FormItemType.DateTime:
-                            return {
-                                ...item,
-                                value: value as Date | null,
-                            } as DateTimeItem;
-                        case FormItemType.File:
-                            return {
-                                ...item,
-                                value: value as FormsFile[],
-                            };
-                        default:
-                            return {
-                                ...item,
-                                value: Array.isArray(value) ? value : value ? [value as string] : null,
-                            } as FormItem;
+    const handleChange = useCallback(
+        (
+            value: string | string[] | number | Date | null | FormsFile[],
+            property?: { name: string; value: string | number },
+        ) => {
+            if (!editing && !property) {
+                setEditing(true);
+            }
+            setItems?.((state) =>
+                state.map((_item) => {
+                    if (_item === item) {
+                        switch (item.type) {
+                            case FormItemType.Date:
+                            case FormItemType.Time:
+                            case FormItemType.DateTime:
+                                return {
+                                    ...item,
+                                    value: value as Date | null,
+                                } as DateTimeItem;
+                            case FormItemType.File:
+                                return {
+                                    ...item,
+                                    value: value as FormsFile[],
+                                };
+                            default:
+                                return {
+                                    ...item,
+                                    property: Object.assign({}, item.property, property),
+                                    value: Array.isArray(value) ? value : value ? [value as string] : null,
+                                } as FormItem;
+                        }
                     }
-                }
-                return _item;
-            }),
-        );
-    };
+                    return _item;
+                }),
+            );
+        },
+        [editing, item, setItems],
+    );
+
+    useEffect(() => {
+        if (!property?.value || ![FormItemType.Text, FormItemType.Input].includes(item.type) || editing) {
+            return;
+        }
+
+        // Automatically sync the item value with the property value
+        // if the item value is empty or the same as the previously synced one while property value has changed
+        if (
+            item.value === null ||
+            item.value === undefined ||
+            (Array.isArray(item.value) &&
+                (item.value.length === 0 ||
+                    item.value?.[0] === "" ||
+                    (item.value?.[0] === item?.property?.value && item.value?.[0] !== property?.value)))
+        ) {
+            handleChange(property.value, property);
+        }
+    }, [editing, handleChange, item?.property?.value, item.type, item.value, property]);
 
     const handleTextFieldClick = (event: MouseEvent<HTMLDivElement>) => {
         if (event.target instanceof HTMLAnchorElement || event.target instanceof SVGElement) {
@@ -406,7 +455,19 @@ export function FormItem({
                     size="small"
                     sx={{ pb: 1 }}
                 >
-                    <FormItemHeader title={item.title} required={item.required} id={item.id} disabled={disabled} />
+                    <FormItemHeader
+                        title={item.title}
+                        required={item.required}
+                        id={item.id}
+                        disabled={disabled}
+                        propertyName={property?.name}
+                        isSynced={isSynced}
+                        onClick={() => {
+                            if (property?.value) {
+                                handleChange(property.value, property);
+                            }
+                        }}
+                    />
                     <Box onClick={handleTextFieldClick}>
                         {!editing && Boolean(item.value) ? (
                             <Box>
@@ -445,9 +506,16 @@ export function FormItem({
         case FormItemType.Text:
             return (
                 <FormControl component="fieldset" fullWidth size="small" sx={{ pb: 1 }}>
-                    <FormItemHeader title={item.title} required={item.required} id={item.id} disabled={disabled} />
+                    <FormItemHeader
+                        title={item.title}
+                        required={item.required}
+                        id={item.id}
+                        disabled={disabled}
+                        propertyName={property?.name}
+                        isSynced={isSynced}
+                    />
                     <Box>
-                        {item.value?.[0].split("\n").map((line, idx) => (
+                        {item.value?.[0]?.split("\n").map((line, idx) => (
                             <Box key={item.id! + idx} sx={{ wordWrap: "break-word", overflowWrap: "anywhere" }}>
                                 {mapLinks([line])}
                             </Box>
@@ -462,7 +530,7 @@ export function FormItem({
                     <FormItemHeader title={item.title} required={item.required} id={item.id} disabled={disabled} />
                     <DatePicker
                         value={item.value}
-                        onChange={handleChange}
+                        onChange={(v) => handleChange(v)}
                         disabled={item.readonly}
                         slotProps={{ textField: { size: "small", fullWidth: true } }}
                     />
@@ -475,7 +543,7 @@ export function FormItem({
                     <FormItemHeader title={item.title} required={item.required} id={item.id} disabled={disabled} />
                     <TimePicker
                         value={item.value}
-                        onChange={handleChange}
+                        onChange={(v) => handleChange(v)}
                         disabled={item.readonly}
                         slotProps={{ textField: { size: "small", fullWidth: true } }}
                     />
@@ -488,7 +556,7 @@ export function FormItem({
                     <FormItemHeader title={item.title} required={item.required} id={item.id} disabled={disabled} />
                     <DateTimePicker
                         value={item.value}
-                        onChange={handleChange}
+                        onChange={(v) => handleChange(v)}
                         disabled={item.readonly}
                         slotProps={{ textField: { size: "small", fullWidth: true } }}
                     />
