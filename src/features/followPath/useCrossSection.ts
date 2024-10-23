@@ -1,49 +1,52 @@
-import { RoadCrossSection } from "@novorender/api";
+import { ObjectId } from "@novorender/webgl-api";
 import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { AsyncState, AsyncStatus } from "types/misc";
+import { getFilePathFromObjectPath } from "utils/objectData";
+import { getObjectData } from "utils/search";
 
-import { selectDrawRoadIds, selectFollowCylindersFrom, selectProfile, selectSelectedIds } from "./followPathSlice";
+import { selectProfile, selectSelectedPath } from "./followPathSlice";
 
 export function useCrossSection() {
     const {
-        state: { view },
+        state: { view, db },
     } = useExplorerGlobals();
 
     const followProfile = useAppSelector(selectProfile);
-    const roadIds = useAppSelector(selectDrawRoadIds);
-    const followFrom = useAppSelector(selectFollowCylindersFrom);
-    const toFollow = useAppSelector(selectSelectedIds);
+    const centerLine = useAppSelector(selectSelectedPath);
     const dispatch = useAppDispatch();
 
-    const [objects, setObjects] = useState<AsyncState<RoadCrossSection[]>>({ status: AsyncStatus.Initial });
+    const [objects, setObjects] = useState<AsyncState<Set<ObjectId>>>({ status: AsyncStatus.Initial });
 
     useEffect(() => {
         loadCrossSections();
 
         async function loadCrossSections() {
-            if (roadIds === undefined || followProfile.length === 0) {
-                setObjects({ status: AsyncStatus.Success, data: [] });
+            if (centerLine === undefined || view === undefined || db === undefined) {
+                setObjects({ status: AsyncStatus.Success, data: new Set() });
                 return;
             }
             setObjects({ status: AsyncStatus.Loading });
 
-            try {
-                const fp = await view?.measure?.road.getCrossSections(roadIds, Number(followProfile));
+            const data = await getObjectData({ db, id: centerLine, view });
+            if (data) {
+                const objectPath = data.path;
+                const filePath = getFilePathFromObjectPath(objectPath);
+                const fileName = filePath?.split("/").at(-1);
+                const iterator = db.search({ parentPath: fileName, descentDepth: 0 }, undefined);
+                const fileId = (await iterator.next()).value;
+                const filter = new Set(await db.descendants(fileId, undefined));
 
-                if (!fp) {
-                    setObjects({ status: AsyncStatus.Error, msg: "Cross section not found." });
-                    return;
+                try {
+                    setObjects({ status: AsyncStatus.Success, data: filter });
+                } catch {
+                    setObjects({ status: AsyncStatus.Error, msg: "An error occurred." });
                 }
-
-                setObjects({ status: AsyncStatus.Success, data: fp });
-            } catch {
-                setObjects({ status: AsyncStatus.Error, msg: "An error occurred." });
             }
         }
-    }, [toFollow, view, dispatch, followFrom, roadIds, followProfile]);
+    }, [view, db, dispatch, followProfile, centerLine]);
 
     return objects;
 }

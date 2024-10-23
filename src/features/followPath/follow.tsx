@@ -2,11 +2,9 @@ import { ArrowBack, ArrowForward, ColorLens, Edit, RestartAlt } from "@mui/icons
 import {
     Box,
     Button,
-    Checkbox,
     FormControlLabel,
     Grid,
     InputAdornment,
-    ListItemButton,
     OutlinedInput,
     Radio,
     RadioGroup,
@@ -15,42 +13,37 @@ import {
     useTheme,
 } from "@mui/material";
 import { FollowParametricObject } from "@novorender/api";
-import { HierarcicalObjectReference } from "@novorender/webgl-api";
 import { FormEvent, MouseEvent, SyntheticEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "app/redux-store-interactions";
-import { Accordion, AccordionDetails, AccordionSummary, Divider, IosSwitch, ScrollBox, Tooltip } from "components";
+import { Accordion, AccordionDetails, AccordionSummary, Divider, IosSwitch, ScrollBox } from "components";
 import { useExplorerGlobals } from "contexts/explorerGlobals";
 import { ColorPicker } from "features/colorPicker";
 import { renderActions, selectViewMode } from "features/render";
 import { AsyncStatus, ViewMode } from "types/misc";
 import { rgbToVec, vecToRgb } from "utils/color";
-import { uniqueArray } from "utils/misc";
-import { searchByPatterns } from "utils/search";
 
 import {
     followPathActions,
     selectAutoRecenter,
     selectAutoStepSize,
     selectClipping,
-    selectDrawRoadIds,
     selectFollowDeviations,
     selectLandXmlPaths,
     selectProfile,
     selectProfileRange,
     selectPtHeight,
     selectReset,
-    selectRoadIds,
     selectSelectedPath,
     selectShowGrid,
     selectShowTracer,
     selectStep,
     selectVerticalClipping,
-    selectVerticalTracer,
     selectView2d,
 } from "./followPathSlice";
+import { TracerType } from "./types";
 import { useGoToProfile } from "./useGoToProfile";
 
 const profileFractionDigits = 3;
@@ -59,7 +52,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const theme = useTheme();
     const history = useHistory();
     const {
-        state: { view, db },
+        state: { view },
     } = useExplorerGlobals(true);
     const { t } = useTranslation();
 
@@ -76,10 +69,7 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const selectedPath = useAppSelector(selectSelectedPath);
     const paths = useAppSelector(selectLandXmlPaths);
     const _clipping = useAppSelector(selectClipping);
-    const roadIds = useAppSelector(selectRoadIds);
-    const drawRoadIds = useAppSelector(selectDrawRoadIds);
     const showTracer = useAppSelector(selectShowTracer);
-    const traceVerical = useAppSelector(selectVerticalTracer);
     const deviations = useAppSelector(selectFollowDeviations);
     const goToProfile = useGoToProfile();
     const viewMode = useAppSelector(selectViewMode);
@@ -89,6 +79,10 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
     const [clipping, setClipping] = useState(_clipping);
 
     const dispatch = useAppDispatch();
+
+    const setTracer = (val: TracerType) => {
+        dispatch(followPathActions.setShowTracer(val));
+    };
 
     const pathName =
         paths.status === AsyncStatus.Initial || paths.status === AsyncStatus.Loading
@@ -115,50 +109,6 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             followPathActions.setProfileRange({ min: fpObj.parameterBounds.start, max: fpObj.parameterBounds.end }),
         );
     }, [fpObj, dispatch]);
-
-    useEffect(() => {
-        loadCrossSection();
-
-        async function loadCrossSection() {
-            if (selectedPath !== undefined && paths.status === AsyncStatus.Success && !roadIds) {
-                const path = paths.data.find((p) => p.id === selectedPath);
-
-                if (!path) {
-                    return;
-                }
-
-                const pathName = path.name;
-                let roadIds: string[] = [];
-                let references = [] as HierarcicalObjectReference[];
-                await searchByPatterns({
-                    db,
-                    searchPatterns: [{ property: "Centerline", value: pathName, exact: true }],
-                    callback: (refs) => (references = references.concat(refs)),
-                });
-                await Promise.all(
-                    references.map(async (r) => {
-                        const data = await r.loadMetaData();
-                        const prop = data.properties.find((p) => p[0] === "Novorender/road");
-                        if (prop) {
-                            try {
-                                const ids = JSON.parse(prop[1]) as string[];
-                                ids.forEach((roadId) => roadIds.push(roadId));
-                            } catch (e) {
-                                console.warn(e);
-                                roadIds.push(prop[1]);
-                            }
-                        }
-                    }),
-                );
-
-                roadIds = uniqueArray(roadIds);
-                dispatch(followPathActions.setRoadIds(roadIds));
-                if (!drawRoadIds) {
-                    dispatch(followPathActions.setDrawRoadIds(roadIds));
-                }
-            }
-        }
-    }, [dispatch, paths, db, selectedPath, drawRoadIds, roadIds]);
 
     useEffect(() => {
         if (reset === undefined || !fpObj) {
@@ -576,87 +526,16 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                     </Accordion>
                 )}
 
-                {roadIds && roadIds.length >= 1 && (
-                    <Accordion>
-                        <AccordionSummary>{t("roadLayers")}</AccordionSummary>
-                        <AccordionDetails>
-                            <Box px={1}>
-                                <Divider sx={{ borderColor: theme.palette.grey[300] }} />
-                                <FormControlLabel
-                                    control={
-                                        <IosSwitch
-                                            size="medium"
-                                            color="primary"
-                                            checked={showTracer}
-                                            onChange={() => {
-                                                dispatch(followPathActions.toggleShowTracer());
-                                            }}
-                                        />
-                                    }
-                                    label={<Box>{t("enableTracer2d")}</Box>}
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <IosSwitch
-                                            size="medium"
-                                            color="primary"
-                                            checked={traceVerical}
-                                            onChange={() => {
-                                                dispatch(followPathActions.toggleTraceVerical());
-                                            }}
-                                            disabled={!showTracer}
-                                        />
-                                    }
-                                    label={<Box>{t("verticalMeasure")}</Box>}
-                                />
-                                <Divider sx={{ borderColor: theme.palette.grey[300] }} />
-                            </Box>
-                            {roadIds.map((road) => (
-                                <ListItemButton
-                                    key={road}
-                                    disableGutters
-                                    sx={{
-                                        px: 1,
-                                    }}
-                                    onClick={() => {
-                                        if (drawRoadIds?.includes(road)) {
-                                            dispatch(followPathActions.removeDrawRoad(road));
-                                        } else {
-                                            dispatch(followPathActions.addDrawRoad(road));
-                                        }
-                                    }}
-                                >
-                                    <Box
-                                        sx={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            width: 0,
-                                            flex: "1 1 100%",
-                                        }}
-                                    >
-                                        <Tooltip title={road}>
-                                            <Typography noWrap>{road}</Typography>
-                                        </Tooltip>
-                                    </Box>
-                                    <Checkbox
-                                        aria-label={"Select property"}
-                                        size="small"
-                                        sx={{ py: 0 }}
-                                        checked={drawRoadIds?.includes(road)}
-                                        onChange={(_e, checked) => {
-                                            if (checked) {
-                                                dispatch(followPathActions.addDrawRoad(road));
-                                            } else {
-                                                dispatch(followPathActions.removeDrawRoad(road));
-                                            }
-                                        }}
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
-                                </ListItemButton>
-                            ))}
-                        </AccordionDetails>
-                    </Accordion>
-                )}
+                <RadioGroup
+                    aria-label="Tracer 2d"
+                    value={showTracer}
+                    onChange={(e) => setTracer(e.target.value as TracerType)}
+                    name="radio-buttons-group"
+                >
+                    <FormControlLabel value="off" control={<Radio />} label={t("off")} />
+                    <FormControlLabel value="vertical" control={<Radio />} label={t("vertical")} />
+                    <FormControlLabel value="normal" control={<Radio />} label={t("normal")} />
+                </RadioGroup>
             </ScrollBox>
             <ColorPicker
                 open={Boolean(colorPickerAnchor)}

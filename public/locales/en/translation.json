@@ -713,5 +713,7 @@
     "optional": "Optional",
     "editGroups": "Edit groups",
     "deleteGroupQuestion_one": "Delete group?",
-    "deleteGroupQuestion_other": "Delete groups?"
+    "deleteGroupQuestion_other": "Delete groups?",
+    "vertical": "Vertical",
+    "normal": "Normal"
 }
