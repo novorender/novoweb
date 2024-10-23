@@ -108,20 +108,21 @@ export function FollowPathCanvas({
             return;
         }
 
+        const pixelWidth = 2;
+
+        const textSettings = {
+            type: "default" as const,
+            unit: "m",
+        };
+
+        const colorSettings = {
+            lineColor: "#FFFFFF",
+            pointColor: "#FFFFFF",
+            fillColor: "#FFFFFF",
+        };
+
         for (const product of drawObjectsRef.current) {
             view.measure.draw.updateProduct(product);
-            const pixelWidth = 2;
-
-            const textSettings = {
-                type: "default" as const,
-                unit: "m",
-            };
-
-            const colorSettings = {
-                lineColor: "#FFFFFF",
-                pointColor: "#FFFFFF",
-                fillColor: "#FFFFFF",
-            };
             const cameraState = getCameraState(view.renderState.camera);
             for (const object of product.objects) {
                 for (const part of object.parts) {
