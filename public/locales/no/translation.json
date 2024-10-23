@@ -719,5 +719,6 @@
     "syncWithProperty": "Synkroniser med egenskap",
     "propertyName": "Egenskapsnavn",
     "synched": "Synkronisert",
-    "propertySyncStatus": "{{sync}} med egenskapen \"{{propertyName}}\""
+    "propertySyncStatus": "{{sync}} med egenskapen \"{{propertyName}}\"",
+    "tracer2d": "Tracer 2D"
 }

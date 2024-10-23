@@ -719,5 +719,6 @@
     "syncWithProperty": "Sync with property",
     "propertyName": "Property name",
     "synced": "Synced",
-    "propertySyncStatus": "{{sync}} with property \"{{propertyName}}\""
+    "propertySyncStatus": "{{sync}} with property \"{{propertyName}}\"",
+    "tracer2d": "Tracer 2D"
 }

@@ -43,6 +43,7 @@ import {
     selectVerticalClipping,
     selectView2d,
 } from "./followPathSlice";
+import { useIsCameraAlignedWithClippingPlane } from "./hooks/useIsCameraAlignedWithClippingPlane";
 import { TracerType } from "./types";
 import { useGoToProfile } from "./useGoToProfile";
 
@@ -277,6 +278,8 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
             dispatch(renderActions.setViewMode(ViewMode.FollowPath));
         }
     }, [dispatch]);
+
+    const isCameraAlignedWithClippingPlane = useIsCameraAlignedWithClippingPlane(0);
 
     const { r, g, b } = vecToRgb(deviations.lineColor);
 
@@ -526,16 +529,23 @@ export function Follow({ fpObj }: { fpObj: FollowParametricObject }) {
                     </Accordion>
                 )}
 
-                <RadioGroup
-                    aria-label="Tracer 2d"
-                    value={showTracer}
-                    onChange={(e) => setTracer(e.target.value as TracerType)}
-                    name="radio-buttons-group"
-                >
-                    <FormControlLabel value="off" control={<Radio />} label={t("off")} />
-                    <FormControlLabel value="vertical" control={<Radio />} label={t("vertical")} />
-                    <FormControlLabel value="normal" control={<Radio />} label={t("normal")} />
-                </RadioGroup>
+                {view2d && isCameraAlignedWithClippingPlane && (
+                    <Accordion>
+                        <AccordionSummary>{t("tracer2d")}</AccordionSummary>
+                        <AccordionDetails sx={{ p: 1, display: "flex", flexDirection: "column" }}>
+                            <RadioGroup
+                                value={showTracer}
+                                onChange={(e) => setTracer(e.target.value as TracerType)}
+                                name="radio-buttons-group"
+                                row
+                            >
+                                <FormControlLabel value="off" control={<Radio />} label={t("off")} />
+                                <FormControlLabel value="vertical" control={<Radio />} label={t("vertical")} />
+                                <FormControlLabel value="normal" control={<Radio />} label={t("normal")} />
+                            </RadioGroup>
+                        </AccordionDetails>
+                    </Accordion>
+                )}
             </ScrollBox>
             <ColorPicker
                 open={Boolean(colorPickerAnchor)}
