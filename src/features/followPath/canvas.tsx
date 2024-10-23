@@ -25,6 +25,7 @@ import { vecToHex } from "utils/color";
 import { sleep } from "utils/time";
 
 import {
+    followPathActions,
     selectCurrentCenter,
     selectDrawSelectedPositions,
     selectFollowCylindersFrom,
@@ -92,10 +93,13 @@ export function FollowPathCanvas({
     useEffect(() => {
         async function resetDraw() {
             await sleep(0);
-            drawObjectsRef.current = null;
+            if (drawObjectsRef.current) {
+                drawObjectsRef.current = null;
+                dispatch(followPathActions.setHasTracer2dDrawProducts(false));
+            }
         }
         resetDraw();
-    }, [followProfile, hidden, mainObj, plane]);
+    }, [followProfile, hidden, mainObj, plane, dispatch]);
 
     const drawCrossSection = useCallback(() => {
         if (!view?.measure || !ctx || !canvas) {
@@ -400,6 +404,7 @@ export function FollowPathCanvas({
                     },
                     roadCrossSectionData,
                 );
+                dispatch(followPathActions.setHasTracer2dDrawProducts(drawObjectsRef.current.length > 0));
                 drawCrossSection();
             } else if (moved) {
                 drawCrossSection();
@@ -431,6 +436,7 @@ export function FollowPathCanvas({
         drawDeviations,
         roadCrossSectionData,
         ctx,
+        dispatch,
     ]);
 
     const isFollowPathOrDeviations = viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations;
