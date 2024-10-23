@@ -32,7 +32,9 @@ import {
     selectFollowObject,
     selectProfile,
     selectShowTracer,
+    selectView2d,
 } from "./followPathSlice";
+import { useIsCameraAlignedWithClippingPlane } from "./hooks/useIsCameraAlignedWithClippingPlane";
 import { useCrossSection } from "./useCrossSection";
 import { usePathMeasureObjects } from "./usePathMeasureObjects";
 
@@ -62,6 +64,8 @@ export function FollowPathCanvas({
     const viewMode = useAppSelector(selectViewMode);
     const cameraType = useAppSelector(selectCameraType);
     const isTopDownOrtho = useIsTopDownOrthoCamera();
+    const view2d = useAppSelector(selectView2d);
+    const isCameraAlignedWithClippingPlane = useIsCameraAlignedWithClippingPlane(0);
 
     const roadFilter = useCrossSection();
     const drawObjectsRef = useRef<DrawProduct[] | null>(null);
@@ -133,7 +137,7 @@ export function FollowPathCanvas({
     }, [view, ctx, canvas, roadCrossSectionData, viewMode]);
 
     const drawTracer = useCallback(() => {
-        if (!view || !tracerCtx || !canvas) {
+        if (!view || !tracerCtx || !canvas || !view2d || !isCameraAlignedWithClippingPlane) {
             return;
         }
 
@@ -174,7 +178,7 @@ export function FollowPathCanvas({
                     skipPoints = false;
                 }),
             );
-    }, [canvas, pointerPosRef, size, showTracer, tracerCtx, view]);
+    }, [canvas, pointerPosRef, size, showTracer, tracerCtx, view, view2d, isCameraAlignedWithClippingPlane]);
 
     const selectedEntityDrawId = useRef(0);
     const drawSelectedEntity = useCallback(async () => {
