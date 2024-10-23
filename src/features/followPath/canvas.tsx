@@ -381,7 +381,7 @@ export function FollowPathCanvas({
         return () => (renderFnRef.current = undefined);
 
         async function animate(moved: boolean, idleFrame: boolean): Promise<void> {
-            if (!view) {
+            if (!view || !ctx) {
                 return;
             }
 
@@ -429,6 +429,7 @@ export function FollowPathCanvas({
         drawProfile,
         drawDeviations,
         roadCrossSectionData,
+        ctx,
     ]);
 
     const isFollowPathOrDeviations = viewMode === ViewMode.FollowPath || viewMode === ViewMode.Deviations;
