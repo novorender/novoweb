@@ -384,9 +384,7 @@ function drawLinesOrPolygon(
                         continue;
                     }
                     textStr += `${text.unit ? text.unit : "m"}`;
-                    {
-                        drawText(ctx, [points[i], points[i + 1]], textStr);
-                    }
+                    drawText(ctx, [points[i], points[i + 1]], textStr);
                 }
             } else if (text.type === "center" && part.vertices2D.length > 2) {
                 const textStr = `${

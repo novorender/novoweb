@@ -714,4 +714,6 @@
     "editGroups": "Gruppen bearbeiten",
     "deleteGroupQuestion_one": "Gruppe löschen?",
     "deleteGroupQuestion_other": "Gruppen löschen?"
+    "vertical": "Vertikal",
+    "normal": "Normal"
 }

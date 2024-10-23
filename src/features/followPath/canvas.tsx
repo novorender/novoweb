@@ -65,7 +65,6 @@ export function FollowPathCanvas({
 
     const roadFilter = useCrossSection();
     const drawObjectsRef = useRef<DrawProduct[] | null>(null);
-    const outlinesWereOn = useRef<boolean>(false);
     const roadCrossSectionData = roadFilter.status === AsyncStatus.Success ? roadFilter.data : undefined;
 
     const showTracer = useAppSelector(selectShowTracer);
@@ -108,11 +107,9 @@ export function FollowPathCanvas({
         if (!drawObjectsRef.current) {
             return;
         }
-        for (const product of drawObjectsRef.current) {
-            view.measure.draw.updateProduct(product);
-        }
 
         for (const product of drawObjectsRef.current) {
+            view.measure.draw.updateProduct(product);
             const pixelWidth = 2;
 
             const textSettings = {
@@ -416,7 +413,6 @@ export function FollowPathCanvas({
             if (moved || idleFrame) {
                 drawDeviations(idleFrame);
             }
-            outlinesWereOn.current = true;
         }
     }, [
         view,
