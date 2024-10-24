@@ -545,8 +545,7 @@ function Measure() {
                 }
             } else if (stamp.data.position && stamp.data.normal) {
                 const { normal, position } = stamp.data;
-                const offsetPos = vec3.scaleAndAdd(vec3.create(), position, normal, 0.0001);
-                const hiddenPlane = vec4.fromValues(normal[0], normal[1], normal[2], vec3.dot(offsetPos, normal));
+                const hiddenPlane = vec4.fromValues(normal[0], normal[1], normal[2], vec3.dot(position, normal));
                 const hiddenPlanes: ReadonlyVec4[] = [hiddenPlane];
                 if (laser3d) {
                     const perpendicular = getPerpendicular(normal);
@@ -555,7 +554,7 @@ function Measure() {
                             perpendicular[0],
                             perpendicular[1],
                             perpendicular[2],
-                            vec3.dot(perpendicular, offsetPos),
+                            vec3.dot(perpendicular, position),
                         ),
                     );
                 }
@@ -569,7 +568,7 @@ function Measure() {
                 await sleep(1000);
 
                 const laser = await getOutlineLaser(
-                    offsetPos,
+                    position,
                     view,
                     "outline",
                     0,

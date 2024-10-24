@@ -7,7 +7,7 @@ export function getOutlineLaser(
     mode: "clipping" | "outline",
     rotation: number,
     planes: ReadonlyVec4[],
-    perpendicularIdx?: number
+    perpendicularIdx?: number,
 ) {
     if (view) {
         const sp = view.measure?.draw.toMarkerPoints([pickPosition]);
@@ -18,7 +18,7 @@ export function getOutlineLaser(
                 mode == "clipping" && camera.kind == "pinhole"
                     ? segmentPlaneIntersection(
                           [camera.position, pickPosition],
-                          renderState.clipping.planes[0].normalOffset
+                          renderState.clipping.planes[0].normalOffset,
                       )
                     : pickPosition;
             if (laserPosition) {
@@ -29,7 +29,7 @@ export function getOutlineLaser(
                     mode,
                     0,
                     rotation,
-                    autoAlign ? "closest" : undefined
+                    autoAlign ? "closest" : undefined,
                 );
                 if (outlineValues) {
                     const perpendicularValues =
@@ -41,7 +41,7 @@ export function getOutlineLaser(
                         down: outlineValues.down,
                         up: outlineValues.up,
                         zUp: perpendicularValues ? perpendicularValues.left : [],
-                        zDown: perpendicularValues ? perpendicularValues.right : [],
+                        zDown: [pickPosition],
                         laserPosition: laserPosition,
                         measurementX:
                             outlineValues.left.length > 0 && outlineValues.right.length > 0
@@ -52,9 +52,7 @@ export function getOutlineLaser(
                                 ? { startIdx: 0, endIdx: 0 }
                                 : undefined,
                         measurementZ:
-                            perpendicularValues &&
-                            perpendicularValues.down.length > 0 &&
-                            perpendicularValues.up.length > 0
+                            perpendicularValues && perpendicularValues.left.length > 0
                                 ? { startIdx: 0, endIdx: 0 }
                                 : undefined,
                         laserPlanes: perpendicularIdx ? planes : [],

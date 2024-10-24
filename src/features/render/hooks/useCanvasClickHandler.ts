@@ -248,12 +248,11 @@ export function useCanvasClickHandler({
                             return;
                         }
                         const { normal, position } = result;
-                        const offsetPos = vec3.scaleAndAdd(vec3.create(), position, normal, 0.001);
                         const hiddenPlane = vec4.fromValues(
                             normal[0],
                             normal[1],
                             normal[2],
-                            vec3.dot(offsetPos, normal),
+                            vec3.dot(position, normal),
                         );
                         const hiddenPlanes: ReadonlyVec4[] = [hiddenPlane];
                         if (laser3d && cameraType !== CameraType.Orthographic) {
@@ -263,7 +262,7 @@ export function useCanvasClickHandler({
                                     perpendicular[0],
                                     perpendicular[1],
                                     perpendicular[2],
-                                    vec3.dot(perpendicular, offsetPos),
+                                    vec3.dot(perpendicular, position),
                                 ),
                             );
                         }
@@ -277,7 +276,7 @@ export function useCanvasClickHandler({
                         await sleep(1000);
 
                         const laser = await getOutlineLaser(
-                            offsetPos,
+                            position,
                             view,
                             "outline",
                             0,
