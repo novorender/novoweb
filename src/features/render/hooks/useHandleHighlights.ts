@@ -251,6 +251,7 @@ export function useHandleHighlights() {
                                     prev.coloredGroups.set(colorStr, colorGroups);
                                 }
                                 colorGroups.idLists.push(group.ids);
+                                colorGroups.index = idx;
                                 break;
                             }
                             case GroupStatus.Hidden: {
