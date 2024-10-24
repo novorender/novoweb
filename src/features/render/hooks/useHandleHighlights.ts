@@ -426,9 +426,8 @@ export function useHandleHighlights() {
 
             // colored property tree groups
             keepMapKeysOfAnotherMap(cache.coloredPropertyTreeGroups, coloredPropertyTreeGroups);
-            const coloredPropertyTreeHighlightGroups = coloredPropertyTreeGroups
-                .values()
-                .map(({ ids, color, colorStr }) => {
+            const coloredPropertyTreeHighlightGroups = [...coloredPropertyTreeGroups.values()].map(
+                ({ ids, color, colorStr }) => {
                     let cacheEntry = cache.coloredPropertyTreeGroups.get(colorStr);
                     if (
                         !cacheEntry ||
@@ -450,7 +449,8 @@ export function useHandleHighlights() {
                         cache.coloredPropertyTreeGroups.set(colorStr, cacheEntry);
                     }
                     return cacheEntry.highlightGroup;
-                });
+                },
+            );
 
             // hidden groups
             if (!cache.hiddenGroups.highlightGroup || !areArraysEqual(cache.hiddenGroups.idLists, hiddenGroups)) {
