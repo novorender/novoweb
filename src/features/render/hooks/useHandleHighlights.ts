@@ -34,6 +34,7 @@ import { CameraType, ObjectVisibility, SelectionBasketMode } from "../types";
 
 const TRANSPARENT_HIGHLIGHT_1 = createTransparentHighlight(1);
 const NEUTRAL_HIGHLIGHT = createNeutralHighlight();
+const EMPTY_ID_ARRAY: ObjectId[] = [];
 
 export function useHandleHighlights() {
     const {
@@ -57,6 +58,7 @@ export function useHandleHighlights() {
     const fillGroupIds = useFillGroupIds();
     const deviationProfileIndex = useAppSelector(selectSelectedProfile)?.index;
     const deviationLegendGroups = useAppSelector(selectAllDeviationGroups);
+    const strictBasketIds = basketMode === SelectionBasketMode.Loose ? EMPTY_ID_ARRAY : basket.idArr;
 
     const id = useRef(0);
 
@@ -116,66 +118,66 @@ export function useHandleHighlights() {
             objectIds: new Uint32Array(
                 basketMode === SelectionBasketMode.Loose
                     ? secondaryHighlight.idArr
-                    : basket.idArr.filter((id) => secondaryHighlight.ids[id]),
+                    : strictBasketIds.filter((id) => secondaryHighlight.ids[id]),
             ).sort(),
             action: createColorSetHighlight(secondaryHighlight.color),
         };
-    }, [basket.idArr, basketMode, secondaryHighlight]);
+    }, [strictBasketIds, basketMode, secondaryHighlight]);
 
     const formsNewHighlightGroup = useMemo(() => {
         return {
             objectIds: new Uint32Array(
                 basketMode === SelectionBasketMode.Loose
                     ? formsNew.idArr
-                    : basket.idArr.filter((id) => formsNew.ids[id]),
+                    : strictBasketIds.filter((id) => formsNew.ids[id]),
             ).sort(),
             action: createColorSetHighlight(formsNew.color),
         };
-    }, [basket.idArr, basketMode, formsNew]);
+    }, [strictBasketIds, basketMode, formsNew]);
 
     const formsOngoingHighlightGroup = useMemo(() => {
         return {
             objectIds: new Uint32Array(
                 basketMode === SelectionBasketMode.Loose
                     ? formsOngoing.idArr
-                    : basket.idArr.filter((id) => formsOngoing.ids[id]),
+                    : strictBasketIds.filter((id) => formsOngoing.ids[id]),
             ).sort(),
             action: createColorSetHighlight(formsOngoing.color),
         };
-    }, [basket.idArr, basketMode, formsOngoing]);
+    }, [strictBasketIds, basketMode, formsOngoing]);
 
     const formsCompletedHighlightGroup = useMemo(() => {
         return {
             objectIds: new Uint32Array(
                 basketMode === SelectionBasketMode.Loose
                     ? formsCompleted.idArr
-                    : basket.idArr.filter((id) => formsCompleted.ids[id]),
+                    : strictBasketIds.filter((id) => formsCompleted.ids[id]),
             ).sort(),
             action: createColorSetHighlight(formsCompleted.color),
         };
-    }, [basket.idArr, basketMode, formsCompleted]);
+    }, [strictBasketIds, basketMode, formsCompleted]);
 
     const clashObjects1HighlightGroup = useMemo(() => {
         return {
             objectIds: new Uint32Array(
                 basketMode === SelectionBasketMode.Loose
                     ? clashObjects1.idArr
-                    : basket.idArr.filter((id) => clashObjects1.ids[id]),
+                    : strictBasketIds.filter((id) => clashObjects1.ids[id]),
             ).sort(),
             action: createColorSetHighlight(clashObjects1.color),
         };
-    }, [basket.idArr, basketMode, clashObjects1]);
+    }, [strictBasketIds, basketMode, clashObjects1]);
 
     const clashObjects2HighlightGroup = useMemo(() => {
         return {
             objectIds: new Uint32Array(
                 basketMode === SelectionBasketMode.Loose
                     ? clashObjects2.idArr
-                    : basket.idArr.filter((id) => clashObjects2.ids[id]),
+                    : strictBasketIds.filter((id) => clashObjects2.ids[id]),
             ).sort(),
             action: createColorSetHighlight(clashObjects2.color),
         };
-    }, [basket.idArr, basketMode, clashObjects2]);
+    }, [strictBasketIds, basketMode, clashObjects2]);
 
     const primaryHighlightGroup = useMemo(() => {
         return {
@@ -184,12 +186,12 @@ export function useHandleHighlights() {
                     ? mainObject !== undefined
                         ? highlighted.idArr.concat(mainObject)
                         : highlighted.idArr
-                    : basket.idArr.filter((id) => id === mainObject || highlighted.ids[id]),
+                    : strictBasketIds.filter((id) => id === mainObject || highlighted.ids[id]),
             ).sort(),
             action: createColorSetHighlight(highlighted.color),
             outlineColor: [highlighted.color[0], highlighted.color[1], highlighted.color[3]],
         };
-    }, [basket.idArr, basketMode, highlighted, mainObject]);
+    }, [strictBasketIds, basketMode, highlighted, mainObject]);
 
     useEffect(() => {
         apply();
@@ -336,7 +338,7 @@ export function useHandleHighlights() {
                     if (
                         !cacheEntry ||
                         basketMode !== cache.basketMode ||
-                        basket.idArr !== cache.basketIdArr ||
+                        strictBasketIds !== cache.basketIdArr ||
                         !areArraysEqual(cacheEntry.idLists, idLists)
                     ) {
                         const ids = objectIdSet(idLists);
@@ -346,7 +348,7 @@ export function useHandleHighlights() {
                                 objectIds:
                                     basketMode === SelectionBasketMode.Loose
                                         ? ids.toArray()
-                                        : new Uint32Array(basket.idArr.filter((id) => ids.has(id))).sort(),
+                                        : new Uint32Array(strictBasketIds.filter((id) => ids.has(id))).sort(),
                                 action: createColorSetHighlight(color),
                             },
                         };
@@ -430,7 +432,7 @@ export function useHandleHighlights() {
                     let cacheEntry = cache.coloredPropertyTreeGroups.get(colorStr);
                     if (
                         !cacheEntry ||
-                        basket.idArr !== cache.basketIdArr ||
+                        strictBasketIds !== cache.basketIdArr ||
                         basketMode !== cache.basketMode ||
                         !areArraysEqual(cacheEntry.idLists, ids)
                     ) {
@@ -441,7 +443,7 @@ export function useHandleHighlights() {
                                 objectIds:
                                     basketMode === SelectionBasketMode.Loose
                                         ? idSet.toArray()
-                                        : basket.idArr.filter((id) => idSet.has(id)),
+                                        : strictBasketIds.filter((id) => idSet.has(id)),
                                 action: createColorSetHighlight(color),
                             },
                         };
@@ -490,7 +492,7 @@ export function useHandleHighlights() {
             }
 
             cache.basketMode = basketMode;
-            cache.basketIdArr = basket.idArr;
+            cache.basketIdArr = strictBasketIds;
 
             view.modifyRenderState({
                 highlights: {
@@ -530,7 +532,7 @@ export function useHandleHighlights() {
         groups,
         propertyTreeGroups,
         defaultVisibility,
-        basket,
+        strictBasketIds,
         basketMode,
         outlineGroups,
         cameraType,
