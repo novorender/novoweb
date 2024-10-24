@@ -503,6 +503,7 @@ export function useHandleHighlights() {
                         cache.hiddenGroups.highlightGroup,
                         cache.hiddenPropertyTreeGroups.highlightGroup,
                         cache.hidden.highlightGroup,
+                        basketHighlightGroup,
                         ...coloredHighlightGroups,
                         ...coloredPropertyTreeHighlightGroups,
                         cache.coloredDeviationGroups.highlightGroup,
