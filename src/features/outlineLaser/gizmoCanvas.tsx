@@ -8,6 +8,8 @@ import { useLastPickSample } from "contexts/lastPickSample";
 import { drawPart, getCameraState } from "features/engine2D";
 import { Picker, selectPicker } from "features/render";
 
+import { selectOutlineLaser3d } from "./outlineLaserSlice";
+
 export function OutlineLaserGizmoCanvas({
     renderFnRef,
 }: {
@@ -20,6 +22,7 @@ export function OutlineLaserGizmoCanvas({
     const [ctx, setCtx] = useState<CanvasRenderingContext2D | null | undefined>(null);
     const lastPickSample = useLastPickSample();
     const isOutlineLaserPicker = useAppSelector(selectPicker) === Picker.OutlineLaser;
+    const laser3d = useAppSelector(selectOutlineLaser3d);
     const dirty = useRef(false);
 
     const draw = useCallback(() => {
@@ -88,8 +91,8 @@ export function OutlineLaserGizmoCanvas({
         for (const [p1, p2, found, color] of [
             [x0, x1, foundX, "#8BC34A"],
             [y0, y1, foundY, "#03A9F4"],
-            [z0, z1, foundZ, "#F44336"],
-        ] as const) {
+            ...(laser3d ? [[z0, z1, foundZ, "#F44336"]] : []),
+        ] as [vec3, vec3, boolean, string][]) {
             const drawProduct = view.measure?.draw.getDrawObjectFromPoints([p1, p2], {
                 closed: false,
                 angles: false,
@@ -110,7 +113,7 @@ export function OutlineLaserGizmoCanvas({
                 }
             }
         }
-    }, [ctx, canvas, view, lastPickSample]);
+    }, [ctx, canvas, view, lastPickSample, laser3d]);
 
     useEffect(() => {
         draw();
